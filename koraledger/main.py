@@ -1,4 +1,4 @@
-"""Launch the desktop accounting workspace, or retain the terminal menu with --cli."""
+"""Launch KoraLedger's desktop, browser, or terminal accounting workspace."""
 
 import sys
 
@@ -64,26 +64,38 @@ def main():
     if "--cli" in sys.argv[1:]:
         run_cli()
         return
+    if "--web" in sys.argv[1:]:
+        from modules.web_app import run_web
+
+        run_web()
+        return
     if "--help" in sys.argv[1:] or "-h" in sys.argv[1:]:
-        print("Usage: python main.py [--cli]\n\nOpen the desktop accounting workspace (default), or use --cli for the terminal menu.")
+        print(
+            "Usage: python main.py [--cli | --web]\n\n"
+            "Open the desktop accounting workspace by default, use --cli for the "
+            "terminal menu, or --web for the browser workspace. The web server "
+            "binds to 0.0.0.0:8000 by default; configure KORALEDGER_HOST and "
+            "KORALEDGER_PORT to change it."
+        )
         return
     try:
         import tkinter as tk
     except ImportError as error:
         print(
             "The desktop interface requires Python's Tkinter module. "
-            "Install Tkinter or run `python main.py --cli` instead.\n"
+            "Install Tkinter or run `python main.py --cli` or `python main.py --web` instead.\n"
             f"Details: {error}",
             file=sys.stderr,
         )
         return
     try:
         from modules.desktop_ui import run_desktop
+
         run_desktop()
     except tk.TclError as error:
         print(
             "The desktop interface could not start in this environment. "
-            "Run `python main.py --cli` in a terminal instead.\n"
+            "Run `python main.py --cli` or `python main.py --web` instead.\n"
             f"Details: {error}",
             file=sys.stderr,
         )

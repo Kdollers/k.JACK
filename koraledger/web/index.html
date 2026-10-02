@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="__KORA_CSRF_TOKEN__">
+  <meta name="theme-color" content="#123d35">
+  <title>KoraLedger · Business accounting</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#dashboard" aria-label="KoraLedger home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 36 36" fill="none"><path d="M8 10.2 18 5l10 5.2v15.6L18 31l-10-5.2V10.2Z" stroke="currentColor" stroke-width="1.8"/><path d="m12 22 4.1-8.2h3.8L24 22M14.4 18h7.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="brand-copy"><strong>KoraLedger</strong><small>BUSINESS CLOUD</small></span>
+        <button class="icon-button sidebar-close" id="sidebar-close" aria-label="Close menu">×</button>
+      </a>
+
+      <button class="company-switcher" data-page="settings">
+        <span class="company-avatar">K</span>
+        <span class="company-copy"><small>COMPANY FILE</small><strong id="sidebar-company">My Company</strong></span>
+        <span class="chevron">⌄</span>
+      </button>
+
+      <div class="nav-scroll">
+        <div class="nav-group">
+          <p class="nav-caption">WORKSPACE</p>
+          <button class="nav-link active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Overview</span></button>
+        </div>
+        <div class="nav-group">
+          <p class="nav-caption">SALES & RECEIVABLES</p>
+          <button class="nav-link" data-page="sales"><span class="nav-icon">↗</span><span>Sales invoices</span><span class="nav-count" id="nav-sales-count"></span></button>
+          <button class="nav-link" data-page="customers"><span class="nav-icon">♙</span><span>Customers</span></button>
+          <button class="nav-link" data-page="payments"><span class="nav-icon">⇄</span><span>Money in & out</span></button>
+        </div>
+        <div class="nav-group">
+          <p class="nav-caption">PURCHASING & STOCK</p>
+          <button class="nav-link" data-page="purchases"><span class="nav-icon">↙</span><span>Purchase invoices</span></button>
+          <button class="nav-link" data-page="suppliers"><span class="nav-icon">♧</span><span>Suppliers</span></button>
+          <button class="nav-link" data-page="inventory"><span class="nav-icon">▤</span><span>Items & inventory</span><span class="nav-count warning-count" id="nav-stock-count"></span></button>
+          <button class="nav-link" data-page="adjustments"><span class="nav-icon">⌁</span><span>Stock adjustments</span></button>
+        </div>
+        <div class="nav-group">
+          <p class="nav-caption">ACCOUNTING</p>
+          <button class="nav-link" data-page="accounts"><span class="nav-icon">▦</span><span>Chart of accounts</span></button>
+          <button class="nav-link" data-page="journals"><span class="nav-icon">≡</span><span>Journal entries</span></button>
+          <button class="nav-link" data-page="ledger"><span class="nav-icon">▧</span><span>General ledger</span></button>
+        </div>
+        <div class="nav-group">
+          <p class="nav-caption">REPORTS</p>
+          <button class="nav-link" data-page="reports"><span class="nav-icon">◫</span><span>Financial reports</span></button>
+        </div>
+      </div>
+
+      <div class="sidebar-bottom">
+        <button class="nav-link" data-page="settings"><span class="nav-icon">⚙</span><span>Company settings</span></button>
+        <div class="user-card">
+          <span class="user-avatar">KL</span>
+          <span class="user-copy"><strong>Company owner</strong><small>Local workspace</small></span>
+          <span class="secure-dot" title="Data stored locally"></span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="sidebar-scrim" id="sidebar-scrim"></div>
+    <main class="main-shell">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button menu-toggle" id="menu-toggle" aria-label="Open navigation">☰</button>
+          <div class="breadcrumbs"><span id="breadcrumb-section">WORKSPACE</span><span class="crumb-divider">/</span><strong id="breadcrumb-page">Overview</strong></div>
+        </div>
+        <div class="topbar-tools">
+          <label class="global-search"><span aria-hidden="true">⌕</span><input id="global-search" type="search" placeholder="Search customers, items, invoices…" autocomplete="off"><kbd>⌘ K</kbd></label>
+          <button class="top-date" id="top-date" title="Today's date"></button>
+          <button class="icon-button refresh-button" id="refresh-button" aria-label="Refresh current page" title="Refresh">↻</button>
+          <button class="top-avatar" aria-label="Company owner">KL</button>
+        </div>
+      </header>
+      <section class="page-content" id="page-content" aria-live="polite">
+        <div class="loading-state"><span class="spinner"></span><span>Opening your company workspace…</span></div>
+      </section>
+      <footer class="app-footer"><span><i class="online-dot"></i> All changes are saved to this company file</span><span id="footer-currency">LOCAL COMPANY FILE · DOUBLE-ENTRY ACCOUNTING</span></footer>
+    </main>
+  </div>
+
+  <dialog class="modal" id="modal">
+    <div class="modal-card">
+      <header class="modal-header"><div><p class="eyebrow" id="modal-eyebrow">NEW RECORD</p><h2 id="modal-title">Create record</h2><p id="modal-description" class="modal-description"></p></div><button class="icon-button modal-close" id="modal-close" aria-label="Close dialog">×</button></header>
+      <form id="modal-form" class="modal-form"></form>
+    </div>
+  </dialog>
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

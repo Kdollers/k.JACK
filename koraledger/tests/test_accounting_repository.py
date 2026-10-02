@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import sys
 import tempfile
 import unittest
@@ -12,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from database import connection, cursor  # noqa: E402
 from modules.accounting_repository import AccountingRepository  # noqa: E402
+from modules.web_app import WebApplication  # noqa: E402
 
 
 class AccountingRepositoryTests(unittest.TestCase):
@@ -95,6 +97,52 @@ class AccountingRepositoryTests(unittest.TestCase):
         self.assertEqual(summary["sales_mtd"], 0)
         self.assertGreater(summary["inventory_value"], 0)
         self.assertTrue(summary["recent"])
+
+    def test_web_workspace_posts_documents_and_downloads_verified_backup(self):
+        app = WebApplication(self.repository)
+        self.assertTrue(app.get("/api/health")["ok"])
+
+        customer = app.post(
+            "/api/customers", {"name": "Browser Demo Customer", "phone": "+237 600 000 003"}
+        )
+        product = app.post(
+            "/api/products",
+            {
+                "code": "WEB-API-01",
+                "name": "Browser Demo Item",
+                "cost_price": "8.50",
+                "selling_price": "12.00",
+                "opening_quantity": "8",
+            },
+        )
+        sale = app.post(
+            "/api/sales",
+            {
+                "customer_id": customer["id"],
+                "payment_method": "Accounts Receivable",
+                "posted_date": date.today().isoformat(),
+                "items": [
+                    {"product_id": product["id"], "quantity": 2, "unit_price": "12.00"}
+                ],
+            },
+        )
+        self.assertEqual(sale["total"], 24)
+        detail = app.get(f"/api/sales/{sale['id']}")
+        self.assertEqual(detail["header"]["total"], 24)
+
+        filename, backup = app.company_backup()
+        self.assertTrue(filename.endswith(".db"))
+        backup_path = Path(TEMP_DIRECTORY.name) / "web-company-backup.db"
+        backup_path.write_bytes(backup)
+        with sqlite3.connect(backup_path) as backup_connection:
+            self.assertEqual(
+                backup_connection.execute("PRAGMA integrity_check").fetchone()[0], "ok"
+            )
+            self.assertEqual(
+                backup_connection.execute("SELECT COUNT(*) FROM sales").fetchone()[0],
+                self.repository._one("SELECT COUNT(*) AS count FROM sales")["count"],
+            )
+        backup_path.unlink()
 
     def test_manual_journal_rejects_unbalanced_entries_without_writing(self):
         before = self.repository._one("SELECT COUNT(*) AS count FROM journal_entries")["count"]
