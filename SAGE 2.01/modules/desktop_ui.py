@@ -486,8 +486,9 @@ class AccountingDesktop:
         ]
         content = self._start_page("dashboard", actions)
         content.columnconfigure(0, weight=1)
-        content.rowconfigure(1, weight=2)
-        content.rowconfigure(2, weight=3)
+        content.rowconfigure(1, weight=3)
+        content.rowconfigure(2, weight=1)
+        content.rowconfigure(3, weight=3)
 
         # KPI strip
         cards = tk.Frame(content, bg=C["canvas"])
