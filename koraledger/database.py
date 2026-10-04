@@ -251,6 +251,187 @@ def initialize_database():
     """)
 
     # --------------------------------------------------------
+    # EMPLOYEES (Paie & GRH)
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS employees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_code TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            role TEXT,
+            base_salary REAL NOT NULL DEFAULT 0,
+            hire_date TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1
+        )
+    """)
+
+    # --------------------------------------------------------
+    # PAYROLL RUNS AND PAYSPLIPS (Paie & GRH)
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS payroll_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            period_start TEXT NOT NULL,
+            period_end TEXT NOT NULL,
+            run_date TEXT NOT NULL,
+            employee_count INTEGER NOT NULL DEFAULT 0,
+            total_base REAL NOT NULL DEFAULT 0,
+            total_allowances REAL NOT NULL DEFAULT 0,
+            total_deductions REAL NOT NULL DEFAULT 0,
+            total_net REAL NOT NULL DEFAULT 0
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS payslips (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            payroll_run_id INTEGER NOT NULL,
+            employee_id INTEGER NOT NULL,
+            base_salary REAL NOT NULL DEFAULT 0,
+            allowances REAL NOT NULL DEFAULT 0,
+            deductions REAL NOT NULL DEFAULT 0,
+            net_salary REAL NOT NULL DEFAULT 0,
+
+            FOREIGN KEY (payroll_run_id)
+                REFERENCES payroll_runs(id),
+
+            FOREIGN KEY (employee_id)
+                REFERENCES employees(id)
+        )
+    """)
+
+    # --------------------------------------------------------
+    # FIXED ASSETS (Immobilisations)
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS fixed_assets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            asset_code TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'Equipment',
+            acquisition_date TEXT NOT NULL,
+            acquisition_cost REAL NOT NULL DEFAULT 0,
+            salvage_value REAL NOT NULL DEFAULT 0,
+            useful_life_years INTEGER NOT NULL DEFAULT 5,
+            notes TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS depreciation_entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            asset_id INTEGER NOT NULL,
+            period_year TEXT NOT NULL,
+            posted_date TEXT NOT NULL,
+            amount REAL NOT NULL DEFAULT 0,
+
+            UNIQUE (asset_id, period_year),
+
+            FOREIGN KEY (asset_id)
+                REFERENCES fixed_assets(id)
+        )
+    """)
+
+    # --------------------------------------------------------
+    # TREASURY (Trésorerie)
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bank_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_name TEXT NOT NULL,
+            bank_name TEXT,
+            account_number TEXT,
+            opening_balance REAL NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cash_movements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bank_account_id INTEGER NOT NULL,
+            movement_date TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            amount REAL NOT NULL DEFAULT 0,
+            description TEXT,
+
+            FOREIGN KEY (bank_account_id)
+                REFERENCES bank_accounts(id)
+        )
+    """)
+
+    # --------------------------------------------------------
+    # BANK RECONCILIATION (Rapprochement)
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bank_statement_lines (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bank_account_id INTEGER NOT NULL,
+            statement_date TEXT NOT NULL,
+            reference TEXT,
+            description TEXT,
+            direction TEXT NOT NULL,
+            amount REAL NOT NULL DEFAULT 0,
+            is_reconciled INTEGER NOT NULL DEFAULT 0,
+            reconciled_date TEXT,
+            matched_movement_id INTEGER,
+
+            FOREIGN KEY (bank_account_id)
+                REFERENCES bank_accounts(id),
+
+            FOREIGN KEY (matched_movement_id)
+                REFERENCES cash_movements(id)
+        )
+    """)
+
+    # --------------------------------------------------------
+    # CASH OFFICE (Moyens de paiement / Saisie de caisse)
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cash_registers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            register_name TEXT NOT NULL,
+            opening_balance REAL NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS register_movements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            register_id INTEGER NOT NULL,
+            movement_date TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            amount REAL NOT NULL DEFAULT 0,
+            description TEXT,
+
+            FOREIGN KEY (register_id)
+                REFERENCES cash_registers(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS register_closings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            register_id INTEGER NOT NULL,
+            closing_date TEXT NOT NULL,
+            expected_amount REAL NOT NULL DEFAULT 0,
+            actual_amount REAL NOT NULL DEFAULT 0,
+            difference REAL NOT NULL DEFAULT 0,
+
+            FOREIGN KEY (register_id)
+                REFERENCES cash_registers(id)
+        )
+    """)
+
+    # --------------------------------------------------------
     # DEFAULT ACCOUNTS
     # --------------------------------------------------------
 
@@ -262,8 +443,12 @@ def initialize_database():
 
         ("1100", "Accounts Receivable", "Asset"),
         ("1200", "Inventory", "Asset"),
+        ("1250", "Fixed Assets", "Asset"),
+        ("1260", "Accumulated Depreciation", "Asset"),
 
         ("2010", "Accounts Payable", "Liability"),
+        ("2020", "Payroll Payable", "Liability"),
+        ("2030", "Deductions Payable", "Liability"),
 
         ("3010", "Owner's Capital", "Equity"),
         ("3020", "Retained Earnings", "Equity"),
@@ -272,6 +457,8 @@ def initialize_database():
 
         ("5010", "Cost of Goods Sold", "Expense"),
         ("5020", "Operating Expenses", "Expense"),
+        ("5100", "Salaries & Wages", "Expense"),
+        ("5200", "Depreciation Expense", "Expense"),
     ]
 
     for code, name, account_type in default_accounts:

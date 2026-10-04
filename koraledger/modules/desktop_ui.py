@@ -1,4 +1,10 @@
-"""Sage-inspired desktop ERP workspace for KoraLedger."""
+"""Sage-inspired desktop ERP workspace for KoraLedger.
+
+The navigation follows the SAGE module set: accounting, trade (gestion
+commerciale), payroll & HR (paie & GRH), fixed assets (immobilisations),
+treasury (trésorerie), bank reconciliation (rapprochement), and the cash
+office (moyens de paiement), plus reports and administration.
+"""
 
 import csv
 from datetime import date
@@ -6,6 +12,8 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from languages import LANGUAGE_NAMES
+from languages.ui import ui_t
 from modules.accounting_repository import ACCOUNT_TYPES, AccountingRepository
 from modules.desktop_dialogs import (
     DetailDialog,
@@ -39,6 +47,10 @@ C = {
 }
 
 
+LANGUAGE_CODES = ("en", "fr", "rw", "es", "pt")
+LANGUAGE_SHORT = {"en": "EN", "fr": "FR", "rw": "RW", "es": "ES", "pt": "PT"}
+
+
 def money(value, currency="XAF"):
     try:
         amount = float(value or 0)
@@ -51,35 +63,97 @@ def short_date(value):
     return str(value or "")[:10]
 
 
+class PayslipDialog(tk.Toplevel):
+    """Payslips of one payroll run."""
+
+    def __init__(self, parent, title, summary, rows, currency, label):
+        super().__init__(parent)
+        self.title(title)
+        self.configure(bg=C["canvas"])
+        self.geometry("860x560")
+        self.minsize(640, 420)
+        self.transient(parent)
+        outer = tk.Frame(self, bg=C["white"], padx=24, pady=20)
+        outer.pack(fill="both", expand=True, padx=16, pady=16)
+        tk.Label(outer, text=title, bg=C["white"], fg=C["text"], font=("Segoe UI", 18, "bold")).pack(anchor="w")
+        summary_text = "    ·    ".join(f"{key}: {value}" for key, value in summary.items())
+        tk.Label(outer, text=summary_text, bg=C["white"], fg=C["muted"], font=("Segoe UI", 9), wraplength=780, justify="left").pack(anchor="w", pady=(7, 16))
+        frame = tk.Frame(outer, bg=C["white"])
+        frame.pack(fill="both", expand=True)
+        columns = (
+            ("code", label("col_emp_code"), 110, "w"),
+            ("name", label("col_emp_name"), 240, "w"),
+            ("base", label("col_ps_base"), 140, "e"),
+            ("allow", label("col_ps_allow"), 130, "e"),
+            ("ded", label("col_ps_ded"), 130, "e"),
+            ("net", label("col_ps_net"), 140, "e"),
+        )
+        tree = ttk.Treeview(frame, columns=[column[0] for column in columns], show="headings")
+        for key, caption, width, anchor in columns:
+            tree.heading(key, text=caption)
+            tree.column(key, width=width, anchor=anchor)
+        for index, row in enumerate(rows):
+            tree.insert(
+                "", "end",
+                values=(
+                    row.get("employee_code") or "—",
+                    row.get("name") or "—",
+                    money(row.get("base_salary"), currency),
+                    money(row.get("allowances"), currency),
+                    money(row.get("deductions"), currency),
+                    money(row.get("net_salary"), currency),
+                ),
+                tags=("odd" if index % 2 else "",),
+            )
+        tree.tag_configure("odd", background="#f7f9fa")
+        tree.pack(fill="both", expand=True, side="left")
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        scrollbar.pack(side="right", fill="y")
+        tree.configure(yscrollcommand=scrollbar.set)
+
+
 class AccountingDesktop:
     NAVIGATION = [
-        ("WORKSPACE", [("dashboard", "Dashboard", "⌂")]),
-        ("RECEIVABLES", [("customers", "Customers", "CU"), ("sales", "Sales invoices", "SI"), ("payments", "Customer & supplier payments", "PY")]),
-        ("PAYABLES", [("suppliers", "Suppliers", "SU"), ("purchases", "Purchase invoices", "PI")]),
-        ("INVENTORY", [("inventory", "Items & stock", "ST"), ("adjustments", "Stock adjustments", "AD")]),
-        ("GENERAL LEDGER", [("accounts", "Chart of accounts", "CO"), ("journals", "Journal entries", "JE"), ("ledger", "General ledger", "GL")]),
-        ("REPORTS", [("trial_balance", "Trial balance", "TB"), ("income_statement", "Income statement", "IS"), ("balance_sheet", "Balance sheet", "BS"), ("reports", "Reports center", "RP")]),
-        ("ADMINISTRATION", [("settings", "Company preferences", "⚙")]),
+        ("nav_group_portal", [("dashboard", "nav_portal", "⌂")]),
+        ("nav_group_accounting", [("accounts", "nav_accounts", "CO"), ("journals", "nav_journals", "JE"), ("ledger", "nav_ledger", "GL")]),
+        ("nav_group_trade", [("customers", "nav_customers", "CU"), ("sales", "nav_sales", "SI"), ("payments", "nav_payments", "PY"), ("suppliers", "nav_suppliers", "SU"), ("purchases", "nav_purchases", "PI"), ("inventory", "nav_inventory", "ST"), ("adjustments", "nav_adjustments", "AD")]),
+        ("nav_group_payroll", [("employees", "nav_employees", "EM"), ("payroll_runs", "nav_payroll_runs", "PR")]),
+        ("nav_group_assets", [("fixed_assets", "nav_fixed_assets", "FA"), ("depreciation", "nav_depreciation", "DP")]),
+        ("nav_group_treasury", [("bank_accounts", "nav_bank_accounts", "BA"), ("treasury_movements", "nav_treasury_movements", "TM")]),
+        ("nav_group_reconciliation", [("reconciliation", "nav_reconciliation", "RC")]),
+        ("nav_group_cash_office", [("registers", "nav_registers", "RG"), ("register_movements", "nav_register_movements", "RM"), ("register_closings", "nav_register_closings", "CL")]),
+        ("nav_group_reports", [("trial_balance", "nav_trial_balance", "TB"), ("income_statement", "nav_income_statement", "IS"), ("balance_sheet", "nav_balance_sheet", "BS"), ("reports", "nav_reports", "RP")]),
+        ("nav_group_administration", [("settings", "nav_settings", "⚙")]),
     ]
 
     PAGE_META = {
-        "dashboard": ("Business overview", "A live view of cash flow, trading activity, inventory, and ledger health."),
-        "customers": ("Customer maintenance", "Manage customer records and review their sales activity."),
-        "suppliers": ("Supplier maintenance", "Maintain your vendor list and purchase history."),
-        "inventory": ("Inventory management", "Item master, pricing, stock on hand, and reorder monitoring."),
-        "adjustments": ("Inventory adjustments", "Review posted physical-count variances and their ledger values."),
-        "sales": ("Accounts receivable · Sales invoices", "Enter and review customer invoices. Posted invoices update stock and the general ledger."),
-        "purchases": ("Accounts payable · Purchase invoices", "Record supplier invoices and replenish stock at a weighted-average cost."),
-        "payments": ("Cash receipts & disbursements", "Record customer receipts and supplier payments to the correct control accounts."),
-        "accounts": ("Chart of accounts", "Review the general ledger structure and maintain active posting accounts."),
-        "journals": ("Journal entry register", "Review posted batches and enter balanced general journal transactions."),
-        "ledger": ("General ledger inquiry", "Trace account activity with a running balance and date range."),
-        "trial_balance": ("Trial balance", "Verify debit and credit activity through a selected posting date."),
-        "income_statement": ("Income statement", "Review revenue, expenses, and net income for a selected period."),
-        "balance_sheet": ("Balance sheet", "Review assets, liabilities, equity, and current earnings at a point in time."),
-        "reports": ("Reports center", "Quick access to operational, inventory, and financial statements."),
-        "search": ("Search results", "Find customers, suppliers, and inventory items across the company file."),
-        "settings": ("Company preferences", "Set the company display name and reporting currency."),
+        "dashboard": ("page_title_portal", "page_sub_portal"),
+        "accounts": ("page_title_accounts", "page_sub_accounts"),
+        "journals": ("page_title_journals", "page_sub_journals"),
+        "ledger": ("page_title_ledger", "page_sub_ledger"),
+        "customers": ("page_title_customers", "page_sub_customers"),
+        "sales": ("page_title_sales", "page_sub_sales"),
+        "payments": ("page_title_payments", "page_sub_payments"),
+        "suppliers": ("page_title_suppliers", "page_sub_suppliers"),
+        "purchases": ("page_title_purchases", "page_sub_purchases"),
+        "inventory": ("page_title_inventory", "page_sub_inventory"),
+        "adjustments": ("page_title_adjustments", "page_sub_adjustments"),
+        "employees": ("page_title_employees", "page_sub_employees"),
+        "payroll_runs": ("page_title_payroll_runs", "page_sub_payroll_runs"),
+        "fixed_assets": ("page_title_fixed_assets", "page_sub_fixed_assets"),
+        "depreciation": ("page_title_depreciation", "page_sub_depreciation"),
+        "bank_accounts": ("page_title_bank_accounts", "page_sub_bank_accounts"),
+        "treasury_movements": ("page_title_treasury_movements", "page_sub_treasury_movements"),
+        "reconciliation": ("page_title_reconciliation", "page_sub_reconciliation"),
+        "registers": ("page_title_registers", "page_sub_registers"),
+        "register_movements": ("page_title_register_movements", "page_sub_register_movements"),
+        "register_closings": ("page_title_register_closings", "page_sub_register_closings"),
+        "trial_balance": ("page_title_trial_balance", "page_sub_trial_balance"),
+        "income_statement": ("page_title_income_statement", "page_sub_income_statement"),
+        "balance_sheet": ("page_title_balance_sheet", "page_sub_balance_sheet"),
+        "reports": ("page_title_reports", "page_sub_reports"),
+        "search": ("page_title_search", "page_sub_search"),
+        "settings": ("page_title_settings", "page_sub_settings"),
     }
 
     def __init__(self, root, repository, close_database):
@@ -88,6 +162,9 @@ class AccountingDesktop:
         self.close_database = close_database
         self.currency = repository.get_setting("currency_code", "XAF")
         self.company = repository.get_setting("company_name", "My Company")
+        self.lang = repository.get_setting("ui_language", "en") or "en"
+        if self.lang not in LANGUAGE_CODES:
+            self.lang = "en"
         self.active_page = "dashboard"
         self._record_map = {}
         self._table = None
@@ -95,7 +172,7 @@ class AccountingDesktop:
         self._page_title = ""
         self._new_action = None
         self._sidebar_buttons = {}
-        self.status_var = tk.StringVar(value="Ready")
+        self.status_var = tk.StringVar(value=self._t("chrome_ready"))
         self.company_var = tk.StringVar(value=self.company)
         self.search_var = tk.StringVar()
         self.app_icon = None
@@ -113,7 +190,7 @@ class AccountingDesktop:
                 self.app_icon = None
                 self.brand_icon = None
 
-        self.root.title("KoraLedger · Accounting and Distribution")
+        self.root.title("KoraLedger · SAGE-style Accounting Suite")
         self.root.geometry("1460x920")
         self.root.minsize(1100, 700)
         self.root.configure(bg=C["canvas"])
@@ -125,6 +202,15 @@ class AccountingDesktop:
         self.root.bind("<F1>", lambda _event: self._show_about())
         self.root.protocol("WM_DELETE_WINDOW", self._close)
         self.show_page("dashboard")
+
+    def _t(self, key, fallback=None):
+        return ui_t(self.lang, key, fallback)
+
+    def _page_meta(self, page):
+        title_key, subtitle_key = self.PAGE_META.get(page, (None, None))
+        title = self._t(title_key, page.replace("_", " ").title()) if title_key else page.replace("_", " ").title()
+        subtitle = self._t(subtitle_key, "") if subtitle_key else ""
+        return title, subtitle
 
     def _configure_styles(self):
         style = ttk.Style(self.root)
@@ -166,24 +252,41 @@ class AccountingDesktop:
         brand_copy = tk.Frame(brand, bg=C["navy"])
         brand_copy.pack(side="left", padx=11)
         tk.Label(brand_copy, text="KORALEDGER", bg=C["navy"], fg=C["white"], font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(14, 0))
-        tk.Label(brand_copy, text="ACCOUNTING & DISTRIBUTION", bg=C["navy"], fg="#a9bbc3", font=("Segoe UI", 7, "bold")).pack(anchor="w", pady=(1, 0))
+        tk.Label(brand_copy, text=self._t("chrome_brand_line", "SAGE-STYLE ACCOUNTING SUITE"), bg=C["navy"], fg="#a9bbc3", font=("Segoe UI", 7, "bold")).pack(anchor="w", pady=(1, 0))
 
         right = tk.Frame(header, bg=C["navy"], padx=22)
         right.pack(side="right", fill="y")
         self.search_entry = ttk.Entry(right, textvariable=self.search_var, width=30)
         self.search_entry.pack(side="left", pady=17, padx=(0, 18))
-        self.search_entry.insert(0, "Search records…")
+        self.search_entry.insert(0, self._t("chrome_search_placeholder"))
         self.search_entry.bind("<FocusIn>", self._clear_search_placeholder)
         self.search_entry.bind("<Return>", lambda _event: self.global_search())
+        lang_box = tk.Frame(right, bg=C["navy"])
+        lang_box.pack(side="left", pady=17, padx=(0, 18))
+        tk.Label(lang_box, text=self._t("chrome_language", "Langue"), bg=C["navy"], fg="#b8c8cf", font=("Segoe UI", 8, "bold")).pack(side="left", padx=(0, 5))
+        self.lang_var = tk.StringVar(value=LANGUAGE_SHORT.get(self.lang, "EN"))
+        self.lang_combo = ttk.Combobox(
+            lang_box, textvariable=self.lang_var,
+            values=[LANGUAGE_SHORT[code] for code in LANGUAGE_CODES],
+            state="readonly", width=3,
+        )
+        self.lang_combo.pack(side="left")
+        self.lang_combo.bind("<<ComboboxSelected>>", lambda _event: self._change_language(self.lang_var.get()))
         tk.Label(right, textvariable=self.company_var, bg=C["navy"], fg=C["white"], font=("Segoe UI", 9, "bold")).pack(side="left", padx=(0, 18))
         tk.Label(right, text=date.today().strftime("%d %b %Y"), bg=C["navy"], fg="#b8c8cf", font=("Segoe UI", 9)).pack(side="left")
 
         self.ribbon = tk.Frame(self.root, bg="#e7edef", height=48)
         self.ribbon.pack(side="top", fill="x")
         self.ribbon.pack_propagate(False)
-        tk.Label(self.ribbon, text="TASKS", bg="#e7edef", fg=C["muted"], font=("Segoe UI", 8, "bold")).pack(side="left", padx=(22, 14))
-        for caption, key in (("New sales invoice", "sales"), ("New purchase", "purchases"), ("Receive payment", "payments"), ("Physical count", "adjustments"), ("Financial reports", "reports")):
-            ttk.Button(self.ribbon, text=caption, command=lambda page=key: self._quick_action(page)).pack(side="left", padx=4, pady=6)
+        tk.Label(self.ribbon, text=self._t("chrome_tasks"), bg="#e7edef", fg=C["muted"], font=("Segoe UI", 8, "bold")).pack(side="left", padx=(22, 14))
+        for caption_key, page in (
+            ("chrome_new_sale", "sales"),
+            ("chrome_new_purchase", "purchases"),
+            ("chrome_receive_payment", "payments"),
+            ("chrome_physical_count", "adjustments"),
+            ("chrome_financial_reports", "reports"),
+        ):
+            ttk.Button(self.ribbon, text=self._t(caption_key), command=lambda key=page: self._quick_action(key)).pack(side="left", padx=4, pady=6)
 
         body = tk.Frame(self.root, bg=C["canvas"])
         body.pack(fill="both", expand=True)
@@ -198,7 +301,7 @@ class AccountingDesktop:
         footer.pack(side="bottom", fill="x")
         footer.pack_propagate(False)
         tk.Label(footer, textvariable=self.status_var, bg="#e7edef", fg=C["muted"], font=("Segoe UI", 8), anchor="w").pack(side="left", padx=14, fill="y")
-        tk.Label(footer, text="LOCAL COMPANY FILE   ·   DOUBLE-ENTRY POSTING ENABLED", bg="#e7edef", fg=C["muted"], font=("Segoe UI", 8), anchor="e").pack(side="right", padx=14, fill="y")
+        tk.Label(footer, text=self._t("chrome_footer_local"), bg="#e7edef", fg=C["muted"], font=("Segoe UI", 8), anchor="e").pack(side="right", padx=14, fill="y")
 
     def _build_sidebar(self):
         navigation = tk.Frame(self.sidebar, bg=C["sidebar"])
@@ -220,12 +323,12 @@ class AccountingDesktop:
             lambda event: canvas.itemconfigure(window, width=event.width),
         )
 
-        tk.Label(contents, text="COMPANY WORKSPACE", bg=C["sidebar"], fg="#9db2bc", font=("Segoe UI", 8, "bold"), anchor="w").pack(fill="x", padx=20, pady=(21, 10))
-        for heading, entries in self.NAVIGATION:
-            tk.Label(contents, text=heading, bg=C["sidebar"], fg="#87a0ab", font=("Segoe UI", 7, "bold"), anchor="w").pack(fill="x", padx=20, pady=(15, 5))
-            for page, label, icon in entries:
+        tk.Label(contents, text=self._t("chrome_company_workspace"), bg=C["sidebar"], fg="#9db2bc", font=("Segoe UI", 8, "bold"), anchor="w").pack(fill="x", padx=20, pady=(21, 10))
+        for heading_key, entries in self.NAVIGATION:
+            tk.Label(contents, text=self._t(heading_key), bg=C["sidebar"], fg="#87a0ab", font=("Segoe UI", 7, "bold"), anchor="w").pack(fill="x", padx=20, pady=(15, 5))
+            for page, label_key, icon in entries:
                 button = tk.Button(
-                    contents, text=f"{icon:<3}  {label}", anchor="w",
+                    contents, text=f"{icon:<3}  {self._t(label_key)}", anchor="w",
                     bg=C["sidebar"], fg="#e1e9ec", activebackground=C["sidebar_hover"],
                     activeforeground=C["white"], relief="flat", bd=0,
                     padx=18, pady=8, font=("Segoe UI", 9), cursor="hand2",
@@ -238,7 +341,7 @@ class AccountingDesktop:
         divider = tk.Frame(contents, bg="#345260", height=1)
         divider.pack(fill="x", padx=18, pady=(20, 12))
         tk.Label(contents, text="Local, auditable, double-entry accounting", bg=C["sidebar"], fg="#9db2bc", font=("Segoe UI", 8), wraplength=205, justify="left").pack(anchor="w", padx=20)
-        tk.Button(self.sidebar, text="About KoraLedger", bg=C["sidebar"], fg="#d4e0e4", activebackground=C["sidebar_hover"], activeforeground=C["white"], relief="flat", anchor="w", padx=18, pady=12, command=self._show_about).pack(side="bottom", fill="x", padx=10, pady=8)
+        tk.Button(self.sidebar, text=self._t("chrome_about_button"), bg=C["sidebar"], fg="#d4e0e4", activebackground=C["sidebar_hover"], activeforeground=C["white"], relief="flat", anchor="w", padx=18, pady=12, command=self._show_about).pack(side="bottom", fill="x", padx=10, pady=8)
 
     def _nav_hover(self, widget, page, active):
         if page == self.active_page:
@@ -255,7 +358,7 @@ class AccountingDesktop:
             )
 
     def _clear_search_placeholder(self, _event=None):
-        if self.search_var.get() == "Search records…":
+        if self.search_var.get() == self._t("chrome_search_placeholder"):
             self.search_var.set("")
 
     def _close(self):
@@ -266,16 +369,26 @@ class AccountingDesktop:
         self.root.destroy()
 
     def _show_about(self):
-        messagebox.showinfo(
-            "About KoraLedger",
-            "KoraLedger Accounting & Distribution\n\n"
-            "A local business accounting workspace with customer and supplier subledgers, inventory, sales and purchasing, cash receipts, general ledger, and financial reports.\n\n"
-            "Posted transactions create balanced journal entries. Keep regular backups of the company database.",
-            parent=self.root,
-        )
+        messagebox.showinfo(self._t("chrome_about_title"), self._t("chrome_about_body"), parent=self.root)
 
     def _set_status(self, message):
         self.status_var.set(f"{message}   ·   {date.today().strftime('%d %b %Y')}")
+
+    def _change_language(self, short_code):
+        code = next((key for key, value in LANGUAGE_SHORT.items() if value == short_code), "en")
+        try:
+            self.repository.save_settings(
+                self.repository.get_setting("company_name", "My Company"),
+                self.repository.get_setting("currency_code", "XAF"),
+                self.repository.get_setting("tax_id", ""),
+                self.repository.get_setting("address", ""),
+                code,
+            )
+        except Exception as error:
+            messagebox.showerror(self._t("set_save_error"), str(error), parent=self.root)
+        self.lang = code
+        self.show_page(self.active_page)
+        self._set_status(f"{LANGUAGE_NAMES.get(code, code)} · UI")
 
     def _quick_action(self, page):
         if page == "sales":
@@ -292,7 +405,7 @@ class AccountingDesktop:
     def _start_page(self, page, actions=()):
         self.active_page = page
         self._highlight_nav(page)
-        title, subtitle = self.PAGE_META.get(page, (page.title(), "Company workspace"))
+        title, subtitle = self._page_meta(page)
         self._page_title = title
         self._new_action = None
         for child in self.workspace.winfo_children():
@@ -302,7 +415,8 @@ class AccountingDesktop:
         left = tk.Frame(header, bg=C["canvas"])
         left.pack(side="left", fill="x", expand=True)
         tk.Label(left, text=title, bg=C["canvas"], fg=C["text"], font=("Segoe UI", 21, "bold"), anchor="w").pack(anchor="w")
-        tk.Label(left, text=subtitle, bg=C["canvas"], fg=C["muted"], font=("Segoe UI", 9), anchor="w", wraplength=760).pack(anchor="w", pady=(4, 0))
+        if subtitle:
+            tk.Label(left, text=subtitle, bg=C["canvas"], fg=C["muted"], font=("Segoe UI", 9), anchor="w", wraplength=760).pack(anchor="w", pady=(4, 0))
         right = tk.Frame(header, bg=C["canvas"])
         right.pack(side="right", padx=(16, 0))
         for caption, command, style in actions:
@@ -324,6 +438,16 @@ class AccountingDesktop:
             "accounts": self._render_accounts,
             "journals": self._render_journals,
             "ledger": self._render_ledger,
+            "employees": self._render_employees,
+            "payroll_runs": self._render_payroll_runs,
+            "fixed_assets": self._render_fixed_assets,
+            "depreciation": self._render_depreciation,
+            "bank_accounts": self._render_bank_accounts,
+            "treasury_movements": self._render_treasury_movements,
+            "reconciliation": self._render_reconciliation,
+            "registers": self._render_registers,
+            "register_movements": self._render_register_movements,
+            "register_closings": self._render_register_closings,
             "trial_balance": self._render_trial_balance,
             "income_statement": self._render_income_statement,
             "balance_sheet": self._render_balance_sheet,
@@ -336,7 +460,7 @@ class AccountingDesktop:
             renderer()
         except Exception as error:
             self._start_page(page)
-            tk.Label(self.workspace, text=f"This workspace could not be loaded.\n\n{error}", bg=C["canvas"], fg=C["red"], font=("Segoe UI", 11), justify="left").pack(anchor="w", padx=32, pady=28)
+            tk.Label(self.workspace, text=f"{self._t('chrome_workspace_error')}\n\n{error}", bg=C["canvas"], fg=C["red"], font=("Segoe UI", 11), justify="left").pack(anchor="w", padx=32, pady=28)
             self._set_status("Workspace error")
 
     def refresh_page(self):
@@ -357,77 +481,99 @@ class AccountingDesktop:
         self.company_var.set(self.company)
         self.currency = data["currency"]
         actions = [
-            ("New sales invoice", self._new_sale, "Primary.TButton"),
-            ("New purchase", self._new_purchase, "TButton"),
+            (self._t("chrome_new_sale"), self._new_sale, "Primary.TButton"),
+            (self._t("chrome_new_purchase"), self._new_purchase, "TButton"),
         ]
         content = self._start_page("dashboard", actions)
         content.columnconfigure(0, weight=1)
-        content.rowconfigure(1, weight=1)
-        content.rowconfigure(2, weight=1)
+        content.rowconfigure(1, weight=2)
+        content.rowconfigure(2, weight=3)
 
+        # KPI strip
         cards = tk.Frame(content, bg=C["canvas"])
-        cards.grid(row=0, column=0, sticky="ew", pady=(0, 16))
+        cards.grid(row=0, column=0, sticky="ew", pady=(0, 14))
         for column in range(4):
             cards.columnconfigure(column, weight=1)
         values = [
-            ("Sales · month to date", money(data["sales_mtd"], self.currency), "Posted customer invoices", C["teal"]),
-            ("Open receivables", money(data["receivables"], self.currency), "General ledger · 1100", "#527b9c"),
-            ("Inventory at cost", money(data["inventory_value"], self.currency), f"{data['active_products']} active items", "#947849"),
-            ("Cash & bank", money(data["cash_bank"], self.currency), "Cash, bank and mobile money", C["green"]),
+            (self._t("dash_card_cash"), money(data["cash_bank"], self.currency), self._t("dash_card_cash_note"), C["green"]),
+            (self._t("dash_card_receivables"), money(data["receivables"], self.currency), self._t("dash_card_receivables_note"), "#527b9c"),
+            (self._t("dash_card_payables"), money(data["payables"], self.currency), self._t("dash_card_payables_note"), "#947849"),
+            (self._t("dash_card_income"), money(data["net_profit"], self.currency), self._t("dash_card_income_note"), C["teal"]),
         ]
         for column, values_row in enumerate(values):
             self._card(cards, *values_row, column=column)
 
-        middle = tk.Frame(content, bg=C["canvas"])
-        middle.grid(row=1, column=0, sticky="nsew", pady=(0, 16))
-        middle.columnconfigure(0, weight=3)
-        middle.columnconfigure(1, weight=2)
-        middle.rowconfigure(0, weight=1)
-        chart_panel = self._panel(middle, "Sales trend", "Six-month sales activity", column=0)
-        chart = tk.Canvas(chart_panel, height=185, bg=C["white"], highlightthickness=0)
-        chart.pack(fill="both", expand=True, padx=15, pady=(0, 14))
-        chart.bind("<Configure>", lambda _event, widget=chart, trend=data["trend"]: self._draw_trend(widget, trend))
-        self._draw_trend(chart, data["trend"])
-
-        quick_panel = self._panel(middle, "Quick tasks", "Common accounting actions", column=1, left_pad=14)
-        quicks = [
-            ("Receive customer payment", lambda: self._new_payment("customer"), "AR · apply cash receipts"),
-            ("Pay a supplier", lambda: self._new_payment("supplier"), "AP · record disbursements"),
-            ("Post journal entry", self._new_journal, "GL · balanced debit / credit"),
-            ("Physical stock count", self._new_inventory_adjustment, "Inventory · post variance"),
+        # SAGE module tiles
+        tiles_frame = tk.Frame(content, bg=C["canvas"])
+        tiles_frame.grid(row=1, column=0, sticky="nsew", pady=(0, 14))
+        title_row = tk.Frame(tiles_frame, bg=C["canvas"])
+        title_row.pack(fill="x")
+        tk.Label(title_row, text=self._t("dash_module_title"), bg=C["canvas"], fg=C["muted"], font=("Segoe UI", 8, "bold")).pack(side="left")
+        tk.Label(title_row, text=self._t("dash_module_sub"), bg=C["canvas"], fg=C["muted"], font=("Segoe UI", 8)).pack(side="left", padx=12)
+        tiles_grid = tk.Frame(tiles_frame, bg=C["canvas"])
+        tiles_grid.pack(fill="both", expand=True)
+        for column in range(4):
+            tiles_grid.columnconfigure(column, weight=1)
+        tiles = [
+            ("tile_accounting", "GL", "journals"),
+            ("tile_trade", "CO", "sales"),
+            ("tile_payroll", "PR", "payroll_runs"),
+            ("tile_assets", "FA", "fixed_assets"),
+            ("tile_treasury", "TR", "treasury_movements"),
+            ("tile_reconciliation", "RC", "reconciliation"),
+            ("tile_cash_office", "CA", "registers"),
+            ("tile_reports", "RP", "reports"),
         ]
-        for title, command, detail in quicks:
-            row = tk.Frame(quick_panel, bg=C["white"], padx=16, pady=8)
-            row.pack(fill="x")
-            button = tk.Button(row, text=title, command=command, bg=C["white"], fg=C["teal_dark"], activebackground=C["white"], activeforeground=C["teal"], relief="flat", anchor="w", font=("Segoe UI", 9, "bold"), cursor="hand2")
-            button.pack(anchor="w")
-            tk.Label(row, text=detail, bg=C["white"], fg=C["muted"], font=("Segoe UI", 8)).pack(anchor="w", padx=1)
+        for index, (title_key, icon, page) in enumerate(tiles):
+            card = tk.Frame(tiles_grid, bg=C["white"], highlightbackground=C["line"], highlightthickness=1, padx=16, pady=13, cursor="hand2")
+            card.grid(row=index // 4, column=index % 4, sticky="nsew", padx=(0 if index % 4 == 0 else 9, 0), pady=5)
+            tk.Label(card, text=icon, bg=C["teal_light"], fg=C["teal_dark"], font=("Segoe UI", 9, "bold"), padx=8, pady=5).pack(anchor="w")
+            tk.Label(card, text=self._t(title_key), bg=C["white"], fg=C["text"], font=("Segoe UI", 10, "bold")).pack(anchor="w", pady=(10, 3))
+            tk.Label(card, text=self._t(f"{title_key}_desc"), bg=C["white"], fg=C["muted"], font=("Segoe UI", 8), wraplength=230, justify="left").pack(anchor="w")
+            tk.Label(card, text=self._t("tile_open"), bg=C["white"], fg=C["teal"], font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(10, 0))
+            for widget in (card, *card.winfo_children()):
+                widget.bind("<Button-1>", lambda _event, target=page: self.show_page(target))
+
+        # stat strip
+        stats = tk.Frame(content, bg=C["navy_2"], padx=18, pady=12)
+        stats.grid(row=2, column=0, sticky="ew", pady=(0, 14))
+        stat_items = [
+            (self._t("dash_stat_headcount"), str(data.get("headcount", 0))),
+            (self._t("dash_stat_assets"), money(data.get("asset_net_value", 0), self.currency)),
+            (self._t("dash_stat_treasury"), money(data.get("treasury_net_mtd", 0), self.currency)),
+            (self._t("dash_stat_unreconciled"), str(data.get("unreconciled_lines", 0))),
+        ]
+        for label, value in stat_items:
+            box = tk.Frame(stats, bg=C["navy_2"])
+            box.pack(side="left", padx=(0, 34))
+            tk.Label(box, text=label, bg=C["navy_2"], fg="#b4c5cc", font=("Segoe UI", 8, "bold")).pack(anchor="w")
+            tk.Label(box, text=value, bg=C["navy_2"], fg=C["white"], font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(2, 0))
 
         bottom = tk.Frame(content, bg=C["canvas"])
-        bottom.grid(row=2, column=0, sticky="nsew")
+        bottom.grid(row=3, column=0, sticky="nsew")
         bottom.columnconfigure(0, weight=3)
         bottom.columnconfigure(1, weight=2)
         bottom.rowconfigure(0, weight=1)
-        recent_panel = self._panel(bottom, "Recent activity", "Latest posted documents", column=0)
+        recent_panel = self._panel(bottom, self._t("dash_recent_title"), self._t("dash_recent_sub"), column=0)
         recent_columns = [
-            ("posted_on", "Date", 100, "w", short_date),
-            ("reference", "Reference", 120, "w", None),
-            ("activity", "Type", 160, "w", None),
-            ("party", "Customer / supplier", 220, "w", None),
-            ("amount", "Amount", 130, "e", lambda value: money(value, self.currency)),
+            ("posted_on", self._t("col_date"), 100, "w", short_date),
+            ("reference", self._t("col_reference"), 120, "w", None),
+            ("activity", self._t("col_activity"), 160, "w", None),
+            ("party", self._t("col_party"), 220, "w", None),
+            ("amount", self._t("col_amount"), 130, "e", lambda value: money(value, self.currency)),
         ]
         self._small_table(recent_panel, recent_columns, data["recent"], height=7)
-        stock_panel = self._panel(bottom, "Reorder watch", "Items at or below 5 units", column=1, left_pad=14)
+        stock_panel = self._panel(bottom, self._t("dash_reorder_title"), self._t("dash_reorder_sub"), column=1, left_pad=14)
         stock_rows = data["low_stock_items"]
         stock_columns = [
-            ("code", "Item", 90, "w", None),
-            ("name", "Description", 180, "w", None),
-            ("quantity", "On hand", 75, "e", None),
+            ("code", self._t("col_item"), 90, "w", None),
+            ("name", self._t("col_description"), 180, "w", None),
+            ("quantity", self._t("col_onhand"), 75, "e", None),
         ]
         self._small_table(stock_panel, stock_columns, stock_rows, height=7)
         if data["low_stock"]:
-            tk.Label(stock_panel, text=f"{data['low_stock']} item(s) need a stock review.", bg=C["white"], fg=C["amber"], font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=15, pady=(0, 10))
-        self._set_status(f"{data['customer_count']} customers  ·  {data['active_products']} inventory items  ·  {self.currency}")
+            tk.Label(stock_panel, text=self._t("dash_reorder_note", "{n} item(s) need a stock review.").format(n=data["low_stock"]), bg=C["white"], fg=C["amber"], font=("Segoe UI", 8, "bold")).pack(anchor="w", padx=15, pady=(0, 10))
+        self._set_status(f"{data['customer_count']} {self._t('nav_customers').lower()}  ·  {data.get('headcount', 0)} {self._t('nav_employees').lower()}  ·  {self.currency}")
 
     def _panel(self, parent, title, subtitle, column=0, left_pad=0):
         panel = tk.Frame(parent, bg=C["white"], highlightbackground=C["line"], highlightthickness=1)
@@ -435,29 +581,6 @@ class AccountingDesktop:
         tk.Label(panel, text=title, bg=C["white"], fg=C["text"], font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=15, pady=(13, 0))
         tk.Label(panel, text=subtitle, bg=C["white"], fg=C["muted"], font=("Segoe UI", 8)).pack(anchor="w", padx=15, pady=(2, 10))
         return panel
-
-    def _draw_trend(self, canvas, trend):
-        canvas.delete("all")
-        width = max(canvas.winfo_width(), 320)
-        height = max(canvas.winfo_height(), 150)
-        left, right, top, bottom = 44, width - 18, 18, height - 34
-        if not trend:
-            canvas.create_text(width / 2, height / 2, text="No sales posted yet", fill=C["muted"], font=("Segoe UI", 10))
-            return
-        maximum = max((row["sales"] for row in trend), default=0) or 1
-        canvas.create_line(left, top, left, bottom, fill=C["line"])
-        canvas.create_line(left, bottom, right, bottom, fill=C["line"])
-        slot = (right - left) / max(len(trend), 1)
-        bar_width = min(42, slot * 0.58)
-        for index, row in enumerate(trend):
-            center = left + slot * (index + 0.5)
-            bar_height = (bottom - top - 8) * row["sales"] / maximum
-            x1, x2 = center - bar_width / 2, center + bar_width / 2
-            y1 = bottom - bar_height
-            canvas.create_rectangle(x1, y1, x2, bottom - 1, fill=C["teal"], outline="")
-            canvas.create_text(center, bottom + 15, text=row["label"], fill=C["muted"], font=("Segoe UI", 8))
-            if row["sales"] > 0:
-                canvas.create_text(center, max(top + 5, y1 - 9), text=f"{row['sales']:,.0f}", fill=C["muted"], font=("Segoe UI", 7))
 
     def _small_table(self, parent, columns, rows, height=6):
         frame = tk.Frame(parent, bg=C["white"])
@@ -477,17 +600,17 @@ class AccountingDesktop:
         return tree
 
     def _table_page(self, page, columns, fetch, id_key="id", actions=(), on_open=None, row_tag=None, subtitle=None):
-        title, default_subtitle = self.PAGE_META[page]
+        title, default_subtitle = self._page_meta(page)
         content = self._start_page(page, actions)
         content.columnconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
         searchbar = tk.Frame(content, bg=C["white"], padx=14, pady=12, highlightbackground=C["line"], highlightthickness=1)
         searchbar.grid(row=0, column=0, sticky="ew", pady=(0, 12))
-        tk.Label(searchbar, text="FILTER", bg=C["white"], fg=C["muted"], font=("Segoe UI", 8, "bold")).pack(side="left", padx=(0, 10))
+        tk.Label(searchbar, text=self._t("chrome_filter"), bg=C["white"], fg=C["muted"], font=("Segoe UI", 8, "bold")).pack(side="left", padx=(0, 10))
         search_var = tk.StringVar()
         entry = ttk.Entry(searchbar, textvariable=search_var, width=36)
         entry.pack(side="left")
-        tk.Label(searchbar, text="Filter by name, code, reference or description", bg=C["white"], fg=C["muted"], font=("Segoe UI", 8)).pack(side="left", padx=12)
+        tk.Label(searchbar, text=self._t("chrome_filter_hint"), bg=C["white"], fg=C["muted"], font=("Segoe UI", 8)).pack(side="left", padx=12)
         self._count_var = tk.StringVar(value="")
         tk.Label(searchbar, textvariable=self._count_var, bg=C["white"], fg=C["muted"], font=("Segoe UI", 8, "bold")).pack(side="right")
 
@@ -508,6 +631,7 @@ class AccountingDesktop:
         tree.tag_configure("odd", background="#f7f9fa")
         tree.tag_configure("warning", foreground=C["amber"])
         tree.tag_configure("inactive", foreground="#9aa6ac")
+        tree.tag_configure("ok", foreground=C["green"])
 
         self._table = tree
         self._table_columns = columns
@@ -535,7 +659,7 @@ class AccountingDesktop:
                 self._visible_records = records
             except Exception as error:
                 self._set_status(f"Could not refresh {title.lower()}: {error}")
-                messagebox.showerror("Unable to load records", str(error), parent=self.root)
+                messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
         search_var.trace_add("write", reload)
         reload()
         tree.bind("<Double-1>", lambda _event: on_open(self._selected_record()) if on_open and self._selected_record() else None)
@@ -566,14 +690,14 @@ class AccountingDesktop:
     def _require_selection(self, label="record"):
         record = self._selected_record()
         if not record:
-            messagebox.showinfo("Select a row", f"Select a {label} from the table first.", parent=self.root)
+            messagebox.showinfo(self._t("chrome_select_row_title"), self._t("chrome_select_row_body", "Select a {label} from the table first.").format(label=label), parent=self.root)
         return record
 
     def _export_table(self):
         if not self._table:
             return
         path = filedialog.asksaveasfilename(
-            parent=self.root, title="Export current table", defaultextension=".csv",
+            parent=self.root, title=self._t("chrome_export_title"), defaultextension=".csv",
             filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),
             initialfile=f"{self._table_title.lower().replace(' ', '_')}.csv",
         )
@@ -585,40 +709,40 @@ class AccountingDesktop:
                 writer.writerow([column[1] for column in self._table_columns])
                 for item in self._table.get_children(""):
                     writer.writerow(self._table.item(item, "values"))
-            self._set_status(f"Exported {self._table_title} to CSV")
+            self._set_status(self._t("chrome_exported", "Exported {title} to CSV").format(title=self._table_title))
         except OSError as error:
             messagebox.showerror("Export failed", str(error), parent=self.root)
 
     def _render_customers(self):
         actions = [
             ("New customer", self._new_customer, "Primary.TButton"),
-            ("Edit", self._edit_customer, "TButton"),
-            ("Delete", self._delete_customer, "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("chrome_edit"), self._edit_customer, "TButton"),
+            (self._t("chrome_delete"), self._delete_customer, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("id", "Customer #", 90, "e", lambda value: f"CUS-{int(value):05d}"),
-            ("name", "Customer name", 270, "w", None),
-            ("phone", "Telephone", 170, "w", None),
-            ("invoice_count", "Invoices", 100, "e", None),
-            ("lifetime_sales", "Sales to date", 160, "e", lambda value: money(value, self.currency)),
+            ("id", self._t("col_cust_id"), 90, "e", lambda value: f"CUS-{int(value):05d}"),
+            ("name", self._t("col_cust_name"), 270, "w", None),
+            ("phone", self._t("col_cust_phone"), 170, "w", None),
+            ("invoice_count", self._t("col_cust_invoices"), 100, "e", None),
+            ("lifetime_sales", self._t("col_cust_sales"), 160, "e", lambda value: money(value, self.currency)),
         ]
-        tree = self._table_page("customers", columns, self.repository.list_customers, actions=actions, on_open=lambda _row: self._edit_customer())
+        self._table_page("customers", columns, self.repository.list_customers, actions=actions, on_open=lambda _row: self._edit_customer())
         self._new_action = self._new_customer
 
     def _render_suppliers(self):
         actions = [
             ("New supplier", self._new_supplier, "Primary.TButton"),
-            ("Edit", self._edit_supplier, "TButton"),
-            ("Delete", self._delete_supplier, "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("chrome_edit"), self._edit_supplier, "TButton"),
+            (self._t("chrome_delete"), self._delete_supplier, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("id", "Supplier #", 90, "e", lambda value: f"SUP-{int(value):05d}"),
-            ("name", "Supplier name", 280, "w", None),
-            ("phone", "Telephone", 170, "w", None),
-            ("invoice_count", "Invoices", 100, "e", None),
-            ("lifetime_purchases", "Purchases to date", 170, "e", lambda value: money(value, self.currency)),
+            ("id", self._t("col_sup_id"), 90, "e", lambda value: f"SUP-{int(value):05d}"),
+            ("name", self._t("col_sup_name"), 280, "w", None),
+            ("phone", self._t("col_sup_phone"), 170, "w", None),
+            ("invoice_count", self._t("col_sup_invoices"), 100, "e", None),
+            ("lifetime_purchases", self._t("col_sup_purchases"), 170, "e", lambda value: money(value, self.currency)),
         ]
         self._table_page("suppliers", columns, self.repository.list_suppliers, actions=actions, on_open=lambda _row: self._edit_supplier())
         self._new_action = self._new_supplier
@@ -626,128 +750,128 @@ class AccountingDesktop:
     def _render_inventory(self):
         actions = [
             ("New item", self._new_product, "Primary.TButton"),
-            ("Edit item", self._edit_product, "TButton"),
-            ("Physical count", self._new_inventory_adjustment, "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("chrome_edit"), self._edit_product, "TButton"),
+            (self._t("chrome_physical_count"), self._new_inventory_adjustment, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("code", "Item code", 125, "w", None),
-            ("name", "Description", 260, "w", None),
-            ("cost_price", "Unit cost", 130, "e", lambda value: money(value, self.currency)),
-            ("price", "Unit price", 130, "e", lambda value: money(value, self.currency)),
-            ("unit_margin", "Unit margin", 130, "e", lambda value: money(value, self.currency)),
-            ("quantity", "On hand", 90, "e", None),
-            ("stock_status", "Status", 110, "w", None),
+            ("code", self._t("col_inv_code"), 125, "w", None),
+            ("name", self._t("col_inv_desc"), 260, "w", None),
+            ("cost_price", self._t("col_inv_cost"), 130, "e", lambda value: money(value, self.currency)),
+            ("price", self._t("col_inv_price"), 130, "e", lambda value: money(value, self.currency)),
+            ("unit_margin", self._t("col_inv_margin"), 130, "e", lambda value: money(value, self.currency)),
+            ("quantity", self._t("col_inv_qty"), 90, "e", None),
+            ("stock_status", self._t("col_inv_status"), 110, "w", None),
         ]
         self._table_page("inventory", columns, self.repository.list_products, actions=actions, on_open=lambda _row: self._edit_product(), row_tag=lambda row: "warning" if int(row["quantity"] or 0) <= 5 else None)
         self._new_action = self._new_product
 
     def _render_adjustments(self):
         actions = [
-            ("New physical count", self._new_inventory_adjustment, "Primary.TButton"),
-            ("Refresh", self.refresh_page, "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("chrome_physical_count"), self._new_inventory_adjustment, "Primary.TButton"),
+            (self._t("chrome_refresh"), self.refresh_page, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("id", "Adjustment #", 110, "e", lambda value: f"ADJ-{int(value):05d}"),
-            ("adjustment_date", "Posted", 160, "w", None),
-            ("product_code", "Item code", 120, "w", None),
-            ("product_name", "Description", 230, "w", None),
-            ("old_quantity", "System qty", 100, "e", None),
-            ("new_quantity", "Counted qty", 100, "e", None),
-            ("difference", "Variance", 95, "e", lambda value: f"{int(value):+d}"),
-            ("value_difference", "Value impact", 145, "e", lambda value: money(value, self.currency)),
+            ("id", self._t("col_adj_id"), 110, "e", lambda value: f"ADJ-{int(value):05d}"),
+            ("adjustment_date", self._t("col_adj_date"), 160, "w", None),
+            ("product_code", self._t("col_adj_code"), 120, "w", None),
+            ("product_name", self._t("col_adj_name"), 230, "w", None),
+            ("old_quantity", self._t("col_adj_old"), 100, "e", None),
+            ("new_quantity", self._t("col_adj_new"), 100, "e", None),
+            ("difference", self._t("col_adj_diff"), 95, "e", lambda value: f"{int(value):+d}"),
+            ("value_difference", self._t("col_adj_value"), 145, "e", lambda value: money(value, self.currency)),
         ]
         self._table_page("adjustments", columns, lambda _search: self.repository.list_inventory_adjustments(), actions=actions)
         self._new_action = self._new_inventory_adjustment
 
     def _render_sales(self):
         actions = [
-            ("New sales invoice", self._new_sale, "Primary.TButton"),
-            ("View document", self._view_sale, "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("chrome_new_sale"), self._new_sale, "Primary.TButton"),
+            (self._t("chrome_view"), self._view_sale, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("invoice", "Invoice #", 130, "w", None),
-            ("sale_date", "Posting date", 155, "w", short_date),
-            ("customer", "Customer", 240, "w", None),
-            ("payment_method", "Terms / method", 175, "w", None),
-            ("total", "Document total", 150, "e", lambda value: money(value, self.currency)),
-            ("status", "Status", 110, "w", None),
+            ("invoice", self._t("col_doc_inv"), 130, "w", None),
+            ("sale_date", self._t("col_doc_date"), 155, "w", short_date),
+            ("customer", self._t("col_doc_counterparty"), 240, "w", None),
+            ("payment_method", self._t("col_doc_method"), 175, "w", None),
+            ("total", self._t("col_doc_total"), 150, "e", lambda value: money(value, self.currency)),
+            ("status", self._t("col_doc_status"), 110, "w", None),
         ]
         self._table_page("sales", columns, self.repository.list_sales, actions=actions, on_open=lambda _row: self._view_sale())
         self._new_action = self._new_sale
 
     def _render_purchases(self):
         actions = [
-            ("New purchase invoice", self._new_purchase, "Primary.TButton"),
-            ("View document", self._view_purchase, "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("chrome_new_purchase"), self._new_purchase, "Primary.TButton"),
+            (self._t("chrome_view"), self._view_purchase, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("invoice", "Invoice #", 130, "w", None),
-            ("purchase_date", "Posting date", 155, "w", short_date),
-            ("supplier", "Supplier", 240, "w", None),
-            ("payment_method", "Terms / method", 175, "w", None),
-            ("total", "Document total", 150, "e", lambda value: money(value, self.currency)),
-            ("status", "Status", 110, "w", None),
+            ("invoice", self._t("col_doc_inv"), 130, "w", None),
+            ("purchase_date", self._t("col_doc_date"), 155, "w", short_date),
+            ("supplier", self._t("col_doc_counterparty"), 240, "w", None),
+            ("payment_method", self._t("col_doc_method"), 175, "w", None),
+            ("total", self._t("col_doc_total"), 150, "e", lambda value: money(value, self.currency)),
+            ("status", self._t("col_doc_status"), 110, "w", None),
         ]
         self._table_page("purchases", columns, self.repository.list_purchases, actions=actions, on_open=lambda _row: self._view_purchase())
         self._new_action = self._new_purchase
 
     def _render_payments(self):
         actions = [
-            ("Receive customer payment", lambda: self._new_payment("customer"), "Primary.TButton"),
-            ("Pay supplier", lambda: self._new_payment("supplier"), "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("dash_quick_payment"), lambda: self._new_payment("customer"), "Primary.TButton"),
+            (self._t("dash_quick_supplier"), lambda: self._new_payment("supplier"), "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("reference", "Reference", 125, "w", None),
-            ("payment_date", "Payment date", 150, "w", short_date),
-            ("payment_type", "Type", 155, "w", lambda value: "Customer receipt" if value == "customer" else "Supplier payment"),
-            ("party", "Customer / supplier", 230, "w", None),
-            ("payment_method", "Method", 140, "w", None),
-            ("amount", "Amount", 150, "e", lambda value: money(value, self.currency)),
-            ("description", "Memo", 220, "w", None),
+            ("reference", self._t("col_reference"), 125, "w", None),
+            ("payment_date", self._t("col_pay_date"), 150, "w", short_date),
+            ("payment_type", self._t("col_pay_type"), 155, "w", lambda value: self._t("dash_quick_payment") if value == "customer" else self._t("dash_quick_supplier")),
+            ("party", self._t("col_party"), 230, "w", None),
+            ("payment_method", self._t("col_pay_method"), 140, "w", None),
+            ("amount", self._t("col_amount"), 150, "e", lambda value: money(value, self.currency)),
+            ("description", self._t("col_pay_memo"), 220, "w", None),
         ]
         self._table_page("payments", columns, self.repository.list_payments, actions=actions)
         self._new_action = lambda: self._new_payment("customer")
 
     def _render_accounts(self):
         actions = [
-            ("Add account", self._new_account, "Primary.TButton"),
-            ("Activate / deactivate", self._toggle_account, "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("chrome_add_account"), self._new_account, "Primary.TButton"),
+            (self._t("chrome_toggle_account"), self._toggle_account, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("account_code", "Account #", 125, "w", None),
-            ("account_name", "Account name", 260, "w", None),
-            ("account_type", "Type", 130, "w", None),
-            ("total_debit", "Total debits", 150, "e", lambda value: money(value, self.currency)),
-            ("total_credit", "Total credits", 150, "e", lambda value: money(value, self.currency)),
-            ("is_active", "Status", 110, "w", lambda value: "Active" if value else "Inactive"),
+            ("account_code", self._t("col_acct_code"), 125, "w", None),
+            ("account_name", self._t("col_acct_name"), 260, "w", None),
+            ("account_type", self._t("col_acct_type"), 130, "w", None),
+            ("total_debit", self._t("col_acct_debit"), 150, "e", lambda value: money(value, self.currency)),
+            ("total_credit", self._t("col_acct_credit"), 150, "e", lambda value: money(value, self.currency)),
+            ("is_active", self._t("col_acct_status"), 110, "w", lambda value: self._t("status_active") if value else self._t("status_inactive")),
         ]
         self._table_page("accounts", columns, lambda search: self.repository.list_accounts(search), id_key="id", actions=actions, row_tag=lambda row: None if row["is_active"] else "inactive")
         self._new_action = self._new_account
 
     def _render_journals(self):
         actions = [
-            ("New journal entry", self._new_journal, "Primary.TButton"),
-            ("View entry", self._view_journal, "TButton"),
-            ("Export CSV", self._export_table, "TButton"),
+            (self._t("chrome_new_journal"), self._new_journal, "Primary.TButton"),
+            (self._t("chrome_view_entry"), self._view_journal, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
         ]
         columns = [
-            ("entry_date", "Posting date", 140, "w", None),
-            ("reference", "Reference", 150, "w", None),
-            ("description", "Description", 320, "w", None),
-            ("total_debit", "Debits", 150, "e", lambda value: money(value, self.currency)),
-            ("total_credit", "Credits", 150, "e", lambda value: money(value, self.currency)),
+            ("entry_date", self._t("col_date"), 140, "w", None),
+            ("reference", self._t("col_je_ref"), 150, "w", None),
+            ("description", self._t("col_description"), 320, "w", None),
+            ("total_debit", self._t("col_je_debit"), 150, "e", lambda value: money(value, self.currency)),
+            ("total_credit", self._t("col_je_credit"), 150, "e", lambda value: money(value, self.currency)),
         ]
         self._table_page("journals", columns, self.repository.list_journal_entries, actions=actions, on_open=lambda _row: self._view_journal())
         self._new_action = self._new_journal
 
     def _render_ledger(self):
-        content = self._start_page("ledger", [("Export CSV", self._export_table, "TButton")])
+        content = self._start_page("ledger", [(self._t("chrome_export_csv"), self._export_table, "TButton")])
         content.columnconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
         filters = tk.Frame(content, bg=C["white"], padx=14, pady=12, highlightbackground=C["line"], highlightthickness=1)
@@ -755,33 +879,33 @@ class AccountingDesktop:
         accounts = self.repository.list_accounts()
         self._account_map = {f"{row['account_code']} · {row['account_name']}": row["account_code"] for row in accounts}
         self.ledger_account_var = tk.StringVar(value=next(iter(self._account_map), ""))
-        ttk.Label(filters, text="ACCOUNT").pack(side="left", padx=(0, 7))
+        ttk.Label(filters, text=self._t("chrome_account")).pack(side="left", padx=(0, 7))
         account_combo = ttk.Combobox(filters, textvariable=self.ledger_account_var, values=list(self._account_map), state="readonly", width=37)
         account_combo.pack(side="left", padx=(0, 16))
         self.ledger_start_var = tk.StringVar(value=date.today().replace(day=1).isoformat())
         self.ledger_end_var = tk.StringVar(value=date.today().isoformat())
-        ttk.Label(filters, text="FROM").pack(side="left", padx=(0, 7))
+        ttk.Label(filters, text=self._t("chrome_from")).pack(side="left", padx=(0, 7))
         ttk.Entry(filters, textvariable=self.ledger_start_var, width=13).pack(side="left", padx=(0, 14))
-        ttk.Label(filters, text="THROUGH").pack(side="left", padx=(0, 7))
+        ttk.Label(filters, text=self._t("chrome_through")).pack(side="left", padx=(0, 7))
         ttk.Entry(filters, textvariable=self.ledger_end_var, width=13).pack(side="left", padx=(0, 14))
-        ttk.Button(filters, text="Run inquiry", style="Primary.TButton", command=self._load_ledger).pack(side="left")
-        self.ledger_summary_var = tk.StringVar(value="Choose an account and date range.")
+        ttk.Button(filters, text=self._t("chrome_ledger_inquiry"), style="Primary.TButton", command=self._load_ledger).pack(side="left")
+        self.ledger_summary_var = tk.StringVar(value="")
         ttk.Label(filters, textvariable=self.ledger_summary_var, style="Muted.TLabel").pack(side="right", padx=(12, 0))
         frame = tk.Frame(content, bg=C["white"], highlightbackground=C["line"], highlightthickness=1)
         frame.grid(row=1, column=0, sticky="nsew")
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(0, weight=1)
         columns = [
-            ("entry_date", "Date", 135, "w", None),
-            ("reference", "Reference", 160, "w", None),
-            ("description", "Description", 320, "w", None),
-            ("debit", "Debit", 145, "e", lambda value: money(value, self.currency)),
-            ("credit", "Credit", 145, "e", lambda value: money(value, self.currency)),
-            ("balance", "Running balance", 160, "e", lambda value: money(value, self.currency)),
+            ("entry_date", self._t("col_date"), 135, "w", None),
+            ("reference", self._t("col_reference"), 160, "w", None),
+            ("description", self._t("col_description"), 320, "w", None),
+            ("debit", self._t("col_gl_debit"), 145, "e", lambda value: money(value, self.currency)),
+            ("credit", self._t("col_gl_credit"), 145, "e", lambda value: money(value, self.currency)),
+            ("balance", self._t("col_gl_balance"), 160, "e", lambda value: money(value, self.currency)),
         ]
         self.ledger_tree = self._create_tree(frame, columns)
         self._table_columns = columns
-        self._table_title = "General ledger"
+        self._table_title = self._page_title
         self._table = self.ledger_tree
         account_combo.bind("<<ComboboxSelected>>", lambda _event: self._load_ledger())
         if self.ledger_account_var.get():
@@ -819,17 +943,240 @@ class AccountingDesktop:
         except Exception as error:
             messagebox.showerror("Ledger inquiry failed", str(error), parent=self.root)
 
+    # -------------------------
+    # Payroll & HR (Paie & GRH)
+    # -------------------------
+    def _render_employees(self):
+        actions = [
+            (self._t("chrome_new_employee"), self._new_employee, "Primary.TButton"),
+            (self._t("chrome_edit_employee"), self._edit_employee, "TButton"),
+            (self._t("chrome_toggle_employee"), self._toggle_employee, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("employee_code", self._t("col_emp_code"), 110, "w", None),
+            ("name", self._t("col_emp_name"), 250, "w", None),
+            ("role", self._t("col_emp_role"), 200, "w", None),
+            ("base_salary", self._t("col_emp_salary"), 150, "e", lambda value: money(value, self.currency)),
+            ("hire_date", self._t("col_emp_hire"), 120, "w", None),
+            ("payslip_count", self._t("col_emp_payslips"), 100, "e", None),
+            ("is_active", self._t("col_emp_status"), 100, "w", lambda value: self._t("status_active") if value else self._t("status_inactive")),
+        ]
+        self._table_page("employees", columns, self.repository.list_employees, id_key="id", actions=actions, row_tag=lambda row: None if row["is_active"] else "inactive")
+        self._new_action = self._new_employee
+
+    def _render_payroll_runs(self):
+        actions = [
+            (self._t("chrome_run_payroll"), self._run_payroll, "Primary.TButton"),
+            (self._t("chrome_view_payslips"), self._view_payslips, "TButton"),
+            (self._t("chrome_refresh"), self.refresh_page, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("id", self._t("col_pr_id"), 90, "e", lambda value: f"PR-{int(value):05d}"),
+            ("period_start", self._t("col_pr_start"), 125, "w", None),
+            ("period_end", self._t("col_pr_end"), 125, "w", None),
+            ("run_date", self._t("col_pr_run"), 120, "w", None),
+            ("employee_count", self._t("col_pr_count"), 100, "e", None),
+            ("total_base", self._t("col_pr_base"), 150, "e", lambda value: money(value, self.currency)),
+            ("total_allowances", self._t("col_pr_allow"), 135, "e", lambda value: money(value, self.currency)),
+            ("total_deductions", self._t("col_pr_ded"), 135, "e", lambda value: money(value, self.currency)),
+            ("total_net", self._t("col_pr_net"), 150, "e", lambda value: money(value, self.currency)),
+        ]
+        self._table_page("payroll_runs", columns, lambda _search: self.repository.list_payroll_runs(), actions=actions, on_open=lambda _row: self._view_payslips())
+        self._new_action = self._run_payroll
+
+    # -------------------------
+    # Fixed assets (Immobilisations)
+    # -------------------------
+    def _render_fixed_assets(self):
+        actions = [
+            (self._t("chrome_new_asset"), self._new_asset, "Primary.TButton"),
+            (self._t("chrome_edit_asset"), self._edit_asset, "TButton"),
+            (self._t("chrome_post_depreciation"), self._post_depreciation, "TButton"),
+            (self._t("chrome_toggle_asset"), self._toggle_asset, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("asset_code", self._t("col_fa_code"), 110, "w", None),
+            ("name", self._t("col_fa_name"), 240, "w", None),
+            ("category", self._t("col_fa_cat"), 140, "w", None),
+            ("acquisition_date", self._t("col_fa_date"), 120, "w", None),
+            ("acquisition_cost", self._t("col_fa_cost"), 145, "e", lambda value: money(value, self.currency)),
+            ("accumulated_depreciation", self._t("col_fa_acc"), 145, "e", lambda value: money(value, self.currency)),
+            ("net_book_value", self._t("col_fa_nbv"), 150, "e", lambda value: money(value, self.currency)),
+            ("is_active", self._t("col_fa_status"), 100, "w", lambda value: self._t("status_active") if value else self._t("status_inactive")),
+        ]
+        self._table_page("fixed_assets", columns, self.repository.list_assets, id_key="id", actions=actions, row_tag=lambda row: None if row["is_active"] else "inactive")
+        self._new_action = self._new_asset
+
+    def _render_depreciation(self):
+        actions = [
+            (self._t("chrome_refresh"), self.refresh_page, "Primary.TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("asset_code", self._t("col_dp_asset"), 110, "w", None),
+            ("asset_name", self._t("col_dp_name"), 260, "w", None),
+            ("period_year", self._t("col_dp_year"), 90, "e", None),
+            ("posted_date", self._t("col_dp_posted"), 130, "w", None),
+            ("amount", self._t("col_dp_amount"), 150, "e", lambda value: money(value, self.currency)),
+            ("cumulative", self._t("col_dp_cum"), 150, "e", lambda value: money(value, self.currency)),
+        ]
+        self._table_page("depreciation", columns, self.repository.list_depreciation)
+        self._new_action = None
+
+    # -------------------------
+    # Treasury (Trésorerie)
+    # -------------------------
+    def _render_bank_accounts(self):
+        actions = [
+            (self._t("chrome_new_bank_account"), self._new_bank_account, "Primary.TButton"),
+            (self._t("chrome_edit_bank_account"), self._edit_bank_account, "TButton"),
+            (self._t("chrome_toggle_bank_account"), self._toggle_bank_account, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("id", self._t("col_ba_id"), 90, "e", None),
+            ("account_name", self._t("col_ba_name"), 240, "w", None),
+            ("bank_name", self._t("col_ba_bank"), 200, "w", None),
+            ("account_number", self._t("col_ba_number"), 180, "w", None),
+            ("opening_balance", self._t("col_ba_open"), 145, "e", lambda value: money(value, self.currency)),
+            ("net_movements", self._t("col_ba_net"), 145, "e", lambda value: money(value, self.currency)),
+            ("current_balance", self._t("col_ba_cur"), 150, "e", lambda value: money(value, self.currency)),
+            ("is_active", self._t("col_ba_status"), 100, "w", lambda value: self._t("status_active") if value else self._t("status_inactive")),
+        ]
+        self._table_page("bank_accounts", columns, self.repository.list_bank_accounts, id_key="id", actions=actions, row_tag=lambda row: None if row["is_active"] else "inactive")
+        self._new_action = self._new_bank_account
+
+    def _render_treasury_movements(self):
+        actions = [
+            (self._t("chrome_new_movement"), self._new_treasury_movement, "Primary.TButton"),
+            (self._t("chrome_refresh"), self.refresh_page, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("reference", self._t("col_reference"), 125, "w", None),
+            ("movement_date", self._t("col_date"), 130, "w", short_date),
+            ("account_name", self._t("col_tm_account"), 220, "w", None),
+            ("direction", self._t("col_tm_dir"), 110, "w", lambda value: self._t("value_in") if value == "in" else self._t("value_out")),
+            ("amount", self._t("col_amount"), 150, "e", lambda value: money(value, self.currency)),
+            ("description", self._t("col_description"), 260, "w", None),
+        ]
+        self._table_page("treasury_movements", columns, self.repository.list_cash_movements, actions=actions)
+        self._new_action = self._new_treasury_movement
+
+    # -------------------------
+    # Bank reconciliation (Rapprochement)
+    # -------------------------
+    def _render_reconciliation(self):
+        actions = [
+            (self._t("chrome_add_line"), self._new_statement_line, "Primary.TButton"),
+            (self._t("chrome_reconcile"), self._reconcile_line, "TButton"),
+            (self._t("chrome_unreconcile"), self._unreconcile_line, "TButton"),
+            (self._t("chrome_delete"), self._delete_statement_line, "TButton"),
+            (self._t("view_reconciliation_summary", "Reconciliation summary"), self._view_reconciliation_summary, "TButton"),
+            (self._t("chrome_refresh"), self.refresh_page, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("id", self._t("col_rc_id"), 80, "e", None),
+            ("statement_date", self._t("col_date"), 125, "w", None),
+            ("account_name", self._t("col_tm_account"), 200, "w", None),
+            ("reference", self._t("col_rc_ref"), 200, "w", None),
+            ("description", self._t("col_description"), 220, "w", None),
+            ("direction", self._t("col_tm_dir"), 105, "w", lambda value: self._t("value_in") if value == "in" else self._t("value_out")),
+            ("amount", self._t("col_amount"), 145, "e", lambda value: money(value, self.currency)),
+            ("is_reconciled", self._t("col_rc_status"), 115, "w", lambda value: self._t("status_reconciled") if value else self._t("status_unreconciled")),
+            ("matched_reference", self._t("col_rc_matched"), 125, "w", None),
+        ]
+        self._table_page("reconciliation", columns, lambda search: self.repository.list_statement_lines(search), actions=actions, row_tag=lambda row: "ok" if row["is_reconciled"] else None)
+        self._new_action = self._new_statement_line
+
+    def _view_reconciliation_summary(self):
+        try:
+            summary = self.repository.reconciliation_summary()
+        except Exception as error:
+            messagebox.showerror(self._t("view_reconciliation_summary", "Reconciliation summary"), str(error), parent=self.root)
+            return
+        lines = [
+            (self._t("rc_book"), money(summary["book_balance"], self.currency)),
+            (self._t("rc_statement"), money(summary["statement_balance"], self.currency)),
+            (self._t("rc_diff"), money(summary["difference"], self.currency)),
+            (self._t("rc_recon_count"), str(summary["reconciled_count"])),
+            (self._t("reconciled_amount", "Reconciled amount"), money(summary["reconciled_amount"], self.currency)),
+        ]
+        text = "\n".join(f"{label:<24} {value}" for label, value in lines)
+        messagebox.showinfo(self._t("view_reconciliation_summary", "Reconciliation summary"), text, parent=self.root)
+
+    # -------------------------
+    # Cash office (Moyens de paiement)
+    # -------------------------
+    def _render_registers(self):
+        actions = [
+            (self._t("chrome_new_register"), self._new_register, "Primary.TButton"),
+            (self._t("chrome_edit_register"), self._edit_register, "TButton"),
+            (self._t("chrome_close_register"), self._close_register, "TButton"),
+            (self._t("chrome_toggle_register"), self._toggle_register, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("id", self._t("col_rg_id"), 90, "e", None),
+            ("register_name", self._t("col_rg_name"), 260, "w", None),
+            ("opening_balance", self._t("col_rg_float"), 150, "e", lambda value: money(value, self.currency)),
+            ("expected_cash", self._t("col_rg_expected"), 160, "e", lambda value: money(value, self.currency)),
+            ("is_active", self._t("col_rg_status"), 100, "w", lambda value: self._t("status_active") if value else self._t("status_inactive")),
+        ]
+        self._table_page("registers", columns, self.repository.list_registers, id_key="id", actions=actions, row_tag=lambda row: None if row["is_active"] else "inactive")
+        self._new_action = self._new_register
+
+    def _render_register_movements(self):
+        actions = [
+            (self._t("chrome_new_movement"), self._new_register_movement, "Primary.TButton"),
+            (self._t("chrome_refresh"), self.refresh_page, "TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("id", self._t("col_rm_id"), 90, "e", None),
+            ("movement_date", self._t("col_date"), 130, "w", short_date),
+            ("register_name", self._t("col_rm_register"), 220, "w", None),
+            ("direction", self._t("col_rm_dir"), 110, "w", lambda value: self._t("value_in") if value == "in" else self._t("value_out")),
+            ("amount", self._t("col_amount"), 150, "e", lambda value: money(value, self.currency)),
+            ("description", self._t("col_description"), 280, "w", None),
+        ]
+        self._table_page("register_movements", columns, self.repository.list_register_movements)
+        self._new_action = self._new_register_movement
+
+    def _render_register_closings(self):
+        actions = [
+            (self._t("chrome_refresh"), self.refresh_page, "Primary.TButton"),
+            (self._t("chrome_export_csv"), self._export_table, "TButton"),
+        ]
+        columns = [
+            ("id", self._t("col_rcl_id"), 90, "e", None),
+            ("closing_date", self._t("col_date"), 130, "w", None),
+            ("register_name", self._t("col_rcl_register"), 240, "w", None),
+            ("expected_amount", self._t("col_rcl_expected"), 160, "e", lambda value: money(value, self.currency)),
+            ("actual_amount", self._t("col_rcl_actual"), 160, "e", lambda value: money(value, self.currency)),
+            ("difference", self._t("col_rcl_diff"), 140, "e", lambda value: f"{float(value or 0):+,.2f}"),
+        ]
+        self._table_page("register_closings", columns, self.repository.list_register_closings, row_tag=lambda row: "warning" if abs(float(row.get("difference") or 0)) >= 0.005 else None)
+        self._new_action = None
+
+    # -------------------------
+    # Reports & statements (unchanged logic, translated chrome)
+    # -------------------------
     def _render_trial_balance(self):
-        actions = [("Export CSV", self._export_table, "TButton")]
+        actions = [(self._t("chrome_export_csv"), self._export_table, "TButton")]
         content = self._start_page("trial_balance", actions)
         content.columnconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
         control = tk.Frame(content, bg=C["white"], padx=14, pady=12, highlightbackground=C["line"], highlightthickness=1)
         control.grid(row=0, column=0, sticky="ew", pady=(0, 12))
-        ttk.Label(control, text="AS OF DATE").pack(side="left", padx=(0, 10))
+        ttk.Label(control, text=self._t("chrome_as_of_date")).pack(side="left", padx=(0, 10))
         self.trial_date_var = tk.StringVar(value=date.today().isoformat())
         ttk.Entry(control, textvariable=self.trial_date_var, width=16).pack(side="left", padx=(0, 12))
-        ttk.Button(control, text="Refresh statement", style="Primary.TButton", command=self._load_trial_balance).pack(side="left")
+        ttk.Button(control, text=self._t("chrome_refresh_statement"), style="Primary.TButton", command=self._load_trial_balance).pack(side="left")
         self.trial_totals_var = tk.StringVar(value="")
         ttk.Label(control, textvariable=self.trial_totals_var, style="Muted.TLabel").pack(side="right")
         table = tk.Frame(content, bg=C["white"], highlightbackground=C["line"], highlightthickness=1)
@@ -837,15 +1184,15 @@ class AccountingDesktop:
         table.rowconfigure(0, weight=1)
         table.columnconfigure(0, weight=1)
         columns = [
-            ("account_code", "Account #", 125, "w", None),
-            ("account_name", "Account name", 260, "w", None),
-            ("account_type", "Type", 130, "w", None),
-            ("debit", "Debits", 170, "e", lambda value: money(value, self.currency)),
-            ("credit", "Credits", 170, "e", lambda value: money(value, self.currency)),
-            ("balance", "Normal balance", 170, "e", lambda value: money(value, self.currency)),
+            ("account_code", self._t("col_acct_code"), 125, "w", None),
+            ("account_name", self._t("col_acct_name"), 260, "w", None),
+            ("account_type", self._t("col_acct_type"), 130, "w", None),
+            ("debit", self._t("col_je_debit"), 170, "e", lambda value: money(value, self.currency)),
+            ("credit", self._t("col_je_credit"), 170, "e", lambda value: money(value, self.currency)),
+            ("balance", self._t("col_tb_balance"), 170, "e", lambda value: money(value, self.currency)),
         ]
         self.trial_tree = self._create_tree(table, columns)
-        self._table_columns, self._table, self._table_title = columns, self.trial_tree, "Trial balance"
+        self._table_columns, self._table, self._table_title = columns, self.trial_tree, self._page_title
         self.trial_tree.tag_configure("total", background=C["teal_light"], font=("Segoe UI", 9, "bold"))
         self._load_trial_balance()
 
@@ -862,12 +1209,12 @@ class AccountingDesktop:
             self.trial_tree.insert("", "end", iid="total-row", values=("", "TOTAL", "Balanced" if balanced else "Out of balance", money(debit_total, self.currency), money(credit_total, self.currency), ""), tags=("total",))
             self.trial_totals_var.set(f"{len(rows)} accounts   ·   {'Debits equal credits' if balanced else 'Difference ' + money(debit_total - credit_total, self.currency)}")
             self._visible_records = rows
-            self._set_status("Trial balance refreshed")
+            self._set_status(self._t("chrome_refresh", "Refresh") + " ✓")
         except Exception as error:
             messagebox.showerror("Trial balance failed", str(error), parent=self.root)
 
     def _render_income_statement(self):
-        actions = [("Export CSV", self._export_table, "TButton")]
+        actions = [(self._t("chrome_export_csv"), self._export_table, "TButton")]
         content = self._start_page("income_statement", actions)
         content.columnconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
@@ -875,20 +1222,20 @@ class AccountingDesktop:
         control.grid(row=0, column=0, sticky="ew", pady=(0, 12))
         start = date.today().replace(month=1, day=1).isoformat()
         self.pl_start_var, self.pl_end_var = tk.StringVar(value=start), tk.StringVar(value=date.today().isoformat())
-        ttk.Label(control, text="FROM").pack(side="left", padx=(0, 7))
+        ttk.Label(control, text=self._t("chrome_from")).pack(side="left", padx=(0, 7))
         ttk.Entry(control, textvariable=self.pl_start_var, width=14).pack(side="left", padx=(0, 15))
-        ttk.Label(control, text="THROUGH").pack(side="left", padx=(0, 7))
+        ttk.Label(control, text=self._t("chrome_through")).pack(side="left", padx=(0, 7))
         ttk.Entry(control, textvariable=self.pl_end_var, width=14).pack(side="left", padx=(0, 15))
-        ttk.Button(control, text="Run statement", style="Primary.TButton", command=self._load_income_statement).pack(side="left")
+        ttk.Button(control, text=self._t("chrome_run_statement"), style="Primary.TButton", command=self._load_income_statement).pack(side="left")
         self.pl_summary_var = tk.StringVar()
         ttk.Label(control, textvariable=self.pl_summary_var, style="Muted.TLabel").pack(side="right")
         table = tk.Frame(content, bg=C["white"], highlightbackground=C["line"], highlightthickness=1)
         table.grid(row=1, column=0, sticky="nsew")
         table.rowconfigure(0, weight=1)
         table.columnconfigure(0, weight=1)
-        columns = [("account_code", "Account #", 130, "w", None), ("account_name", "Account name", 300, "w", None), ("account_type", "Classification", 160, "w", None), ("amount", "Period amount", 190, "e", lambda value: money(value, self.currency))]
+        columns = [("account_code", self._t("col_acct_code"), 130, "w", None), ("account_name", self._t("col_acct_name"), 300, "w", None), ("account_type", self._t("col_pl_class"), 160, "w", None), ("amount", self._t("col_pl_amount"), 190, "e", lambda value: money(value, self.currency))]
         self.pl_tree = self._create_tree(table, columns)
-        self._table_columns, self._table, self._table_title = columns, self.pl_tree, "Income statement"
+        self._table_columns, self._table, self._table_title = columns, self.pl_tree, self._page_title
         self._load_income_statement()
 
     def _load_income_statement(self):
@@ -901,30 +1248,30 @@ class AccountingDesktop:
             result_label = "Net income" if net >= 0 else "Net loss"
             self.pl_summary_var.set(f"Revenue {money(revenue, self.currency)}   ·   Expenses {money(expenses, self.currency)}   ·   {result_label} {money(abs(net), self.currency)}")
             self._visible_records = rows
-            self._set_status("Income statement refreshed")
+            self._set_status(self._t("chrome_refresh", "Refresh") + " ✓")
         except Exception as error:
             messagebox.showerror("Income statement failed", str(error), parent=self.root)
 
     def _render_balance_sheet(self):
-        actions = [("Export CSV", self._export_table, "TButton")]
+        actions = [(self._t("chrome_export_csv"), self._export_table, "TButton")]
         content = self._start_page("balance_sheet", actions)
         content.columnconfigure(0, weight=1)
         content.rowconfigure(1, weight=1)
         control = tk.Frame(content, bg=C["white"], padx=14, pady=12, highlightbackground=C["line"], highlightthickness=1)
         control.grid(row=0, column=0, sticky="ew", pady=(0, 12))
-        ttk.Label(control, text="AS OF DATE").pack(side="left", padx=(0, 10))
+        ttk.Label(control, text=self._t("chrome_as_of_date")).pack(side="left", padx=(0, 10))
         self.bs_date_var = tk.StringVar(value=date.today().isoformat())
         ttk.Entry(control, textvariable=self.bs_date_var, width=16).pack(side="left", padx=(0, 12))
-        ttk.Button(control, text="Refresh statement", style="Primary.TButton", command=self._load_balance_sheet).pack(side="left")
+        ttk.Button(control, text=self._t("chrome_refresh_statement"), style="Primary.TButton", command=self._load_balance_sheet).pack(side="left")
         self.bs_summary_var = tk.StringVar()
         ttk.Label(control, textvariable=self.bs_summary_var, style="Muted.TLabel").pack(side="right")
         table = tk.Frame(content, bg=C["white"], highlightbackground=C["line"], highlightthickness=1)
         table.grid(row=1, column=0, sticky="nsew")
         table.rowconfigure(0, weight=1)
         table.columnconfigure(0, weight=1)
-        columns = [("account_type", "Section", 145, "w", None), ("account_code", "Account #", 130, "w", None), ("account_name", "Account name", 340, "w", None), ("amount", "Balance", 190, "e", lambda value: money(value, self.currency))]
+        columns = [("account_type", self._t("col_bs_section"), 145, "w", None), ("account_code", self._t("col_acct_code"), 130, "w", None), ("account_name", self._t("col_acct_name"), 340, "w", None), ("amount", self._t("col_bs_balance"), 190, "e", lambda value: money(value, self.currency))]
         self.bs_tree = self._create_tree(table, columns)
-        self._table_columns, self._table, self._table_title = columns, self.bs_tree, "Balance sheet"
+        self._table_columns, self._table, self._table_title = columns, self.bs_tree, self._page_title
         self._load_balance_sheet()
 
     def _load_balance_sheet(self):
@@ -942,7 +1289,7 @@ class AccountingDesktop:
             difference = totals["Asset"] - totals["Liabilities and equity"]
             self.bs_summary_var.set(f"Assets {money(totals['Asset'], self.currency)}   ·   Liabilities & equity {money(totals['Liabilities and equity'], self.currency)}   ·   {'Balanced' if abs(difference) < 0.01 else 'Difference ' + money(difference, self.currency)}")
             self._visible_records = rows
-            self._set_status("Balance sheet refreshed")
+            self._set_status(self._t("chrome_refresh", "Refresh") + " ✓")
         except Exception as error:
             messagebox.showerror("Balance sheet failed", str(error), parent=self.root)
 
@@ -953,15 +1300,15 @@ class AccountingDesktop:
         for column in range(3):
             content.columnconfigure(column, weight=1)
         tiles = [
-            ("General ledger", "Account detail and running balances", "ledger", "GL"),
-            ("Trial balance", "Debits, credits, and account balances", "trial_balance", "TB"),
-            ("Income statement", "Revenue, expenses, and net income", "income_statement", "IS"),
-            ("Balance sheet", "Assets, liabilities, and equity", "balance_sheet", "BS"),
-            ("Sales invoices", "Customer invoices over time", "sales", "AR"),
-            ("Purchases", "Supplier invoices and inventory spend", "purchases", "AP"),
-            ("Cash activity", "Customer receipts and supplier payments", "payments", "CM"),
-            ("Inventory valuation", "On-hand quantities at weighted cost", "inventory", "IV"),
-            ("Stock adjustments", "Physical counts and posted variance history", "adjustments", "AD"),
+            (self._t("nav_ledger"), self._t("page_sub_ledger"), "ledger", "GL"),
+            (self._t("nav_trial_balance"), self._t("page_sub_trial_balance"), "trial_balance", "TB"),
+            (self._t("nav_income_statement"), self._t("page_sub_income_statement"), "income_statement", "IS"),
+            (self._t("nav_balance_sheet"), self._t("page_sub_balance_sheet"), "balance_sheet", "BS"),
+            (self._t("nav_sales"), self._t("page_sub_sales"), "sales", "AR"),
+            (self._t("nav_purchases"), self._t("page_sub_purchases"), "purchases", "AP"),
+            (self._t("nav_payments"), self._t("page_sub_payments"), "payments", "CM"),
+            (self._t("nav_inventory"), self._t("page_sub_inventory"), "inventory", "IV"),
+            (self._t("nav_adjustments"), self._t("page_sub_adjustments"), "adjustments", "AD"),
         ]
         for index, (title, detail, page, icon) in enumerate(tiles):
             card = tk.Frame(content, bg=C["white"], highlightbackground=C["line"], highlightthickness=1, padx=18, pady=16, cursor="hand2")
@@ -969,50 +1316,76 @@ class AccountingDesktop:
             tk.Label(card, text=icon, bg=C["teal_light"], fg=C["teal_dark"], font=("Segoe UI", 9, "bold"), padx=8, pady=6).pack(anchor="w")
             tk.Label(card, text=title, bg=C["white"], fg=C["text"], font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(12, 4))
             tk.Label(card, text=detail, bg=C["white"], fg=C["muted"], font=("Segoe UI", 8), wraplength=250, justify="left").pack(anchor="w")
-            tk.Label(card, text="Open report  →", bg=C["white"], fg=C["teal"], font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(13, 0))
+            tk.Label(card, text=self._t("tile_open").replace("module", "report"), bg=C["white"], fg=C["teal"], font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(13, 0))
             for widget in (card, *card.winfo_children()):
                 widget.bind("<Button-1>", lambda _event, target=page: self.show_page(target))
         summary = tk.Frame(content, bg=C["navy_2"], padx=20, pady=17)
         summary.grid(row=3, column=0, columnspan=3, sticky="ew", pady=(5, 0))
         tk.Label(summary, text="PERIOD SNAPSHOT", bg=C["navy_2"], fg="#b4c5cc", font=("Segoe UI", 8, "bold")).pack(anchor="w")
-        tk.Label(summary, text=f"Sales MTD  {money(data['sales_mtd'], self.currency)}      Purchases MTD  {money(data['purchases_mtd'], self.currency)}      Net income  {money(data['net_profit'], self.currency)}", bg=C["navy_2"], fg=C["white"], font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(8, 0))
+        tk.Label(summary, text=f"{self._t('dash_sales_mtd')}  {money(data['sales_mtd'], self.currency)}      {self._t('dash_purchases_mtd')}  {money(data['purchases_mtd'], self.currency)}      {self._t('dash_card_income').title()}  {money(data['net_profit'], self.currency)}", bg=C["navy_2"], fg=C["white"], font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(8, 0))
 
     def _render_settings(self):
         content = self._start_page("settings")
         content.columnconfigure(0, weight=1)
         panel = tk.Frame(content, bg=C["white"], padx=25, pady=24, highlightbackground=C["line"], highlightthickness=1)
         panel.pack(fill="x", anchor="n")
-        tk.Label(panel, text="Company identity", bg=C["white"], fg=C["text"], font=("Segoe UI", 14, "bold")).grid(row=0, column=0, columnspan=2, sticky="w")
-        tk.Label(panel, text="These settings affect the workspace header and financial statement display.", bg=C["white"], fg=C["muted"], font=("Segoe UI", 9)).grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 18))
+        tk.Label(panel, text=self._t("set_title_identity"), bg=C["white"], fg=C["text"], font=("Segoe UI", 14, "bold")).grid(row=0, column=0, columnspan=2, sticky="w")
+        tk.Label(panel, text=self._t("set_identity_sub"), bg=C["white"], fg=C["muted"], font=("Segoe UI", 9)).grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 18))
         company_var = tk.StringVar(value=self.repository.get_setting("company_name", "My Company"))
         currency_var = tk.StringVar(value=self.repository.get_setting("currency_code", "XAF"))
-        for row, (label, variable) in enumerate((("Company display name", company_var), ("Reporting currency (ISO code)", currency_var)), start=2):
+        tax_id_var = tk.StringVar(value=self.repository.get_setting("tax_id", ""))
+        address_var = tk.StringVar(value=self.repository.get_setting("address", ""))
+        for row, (label, variable) in enumerate((
+            (self._t("set_company"), company_var),
+            (self._t("set_currency"), currency_var),
+            (self._t("set_taxid"), tax_id_var),
+            (self._t("set_address"), address_var),
+        ), start=2):
             tk.Label(panel, text=label, bg=C["white"], fg=C["text"], font=("Segoe UI", 9, "bold")).grid(row=row, column=0, sticky="w", padx=(0, 20), pady=8)
             ttk.Entry(panel, textvariable=variable, width=42).grid(row=row, column=1, sticky="ew", pady=8)
+        tk.Label(panel, text=self._t("set_language"), bg=C["white"], fg=C["text"], font=("Segoe UI", 9, "bold")).grid(row=6, column=0, sticky="w", padx=(0, 20), pady=8)
+        self.settings_lang_var = tk.StringVar(value=LANGUAGE_NAMES.get(self.lang, "English"))
+        lang_combo = ttk.Combobox(
+            panel, textvariable=self.settings_lang_var,
+            values=[LANGUAGE_NAMES.get(code, code) for code in LANGUAGE_CODES],
+            state="readonly", width=39,
+        )
+        lang_combo.grid(row=6, column=1, sticky="ew", pady=8)
         panel.columnconfigure(1, weight=1)
+
         def save():
             try:
-                self.repository.save_settings(company_var.get(), currency_var.get())
+                code = next((key for key in LANGUAGE_CODES if LANGUAGE_NAMES.get(key, key) == self.settings_lang_var.get()), self.lang)
+                self.repository.save_settings(
+                    company_var.get(), currency_var.get(), tax_id_var.get(), address_var.get(), code,
+                )
+                self.lang = code
                 self.company = self.repository.get_setting("company_name", "My Company")
                 self.currency = self.repository.get_setting("currency_code", "XAF")
                 self.company_var.set(self.company)
-                self._set_status("Company preferences saved")
-                messagebox.showinfo("Preferences saved", "Company display and reporting currency were updated.", parent=self.root)
+                self.lang_var.set(LANGUAGE_SHORT.get(code, "EN"))
+                self._set_status(self._t("set_saved_title"))
+                messagebox.showinfo(self._t("set_saved_title"), self._t("set_saved_body"), parent=self.root)
+                self.show_page("settings")
             except Exception as error:
-                messagebox.showerror("Could not save preferences", str(error), parent=self.root)
-        ttk.Button(panel, text="Save preferences", style="Primary.TButton", command=save).grid(row=4, column=1, sticky="e", pady=(18, 0))
+                messagebox.showerror(self._t("set_save_error"), str(error), parent=self.root)
+
+        ttk.Button(panel, text=self._t("set_save"), style="Primary.TButton", command=save).grid(row=7, column=1, sticky="e", pady=(18, 0))
 
         note = tk.Frame(content, bg=C["teal_light"], padx=18, pady=15)
         note.pack(fill="x", pady=(14, 0))
-        tk.Label(note, text="Company file and data", bg=C["teal_light"], fg=C["teal_dark"], font=("Segoe UI", 9, "bold")).pack(anchor="w")
-        tk.Label(note, text="The accounting records are stored locally in the company SQLite file. Back it up before maintenance, upgrades, or moving this workstation. Settings do not replace a backup.", bg=C["teal_light"], fg=C["text"], font=("Segoe UI", 9), wraplength=820, justify="left").pack(anchor="w", pady=(5, 0))
+        tk.Label(note, text=self._t("set_file_title"), bg=C["teal_light"], fg=C["teal_dark"], font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        tk.Label(note, text=self._t("set_file_body"), bg=C["teal_light"], fg=C["text"], font=("Segoe UI", 9), wraplength=820, justify="left").pack(anchor="w", pady=(5, 0))
 
     def _render_search(self):
         query = self.search_var.get().strip()
-        actions = [("Clear search", lambda: (self.search_var.set(""), self.show_page("dashboard")), "TButton"), ("Export CSV", self._export_table, "TButton")]
-        columns = [("kind", "Record type", 145, "w", None), ("label", "Description", 280, "w", None), ("detail", "Code / telephone", 230, "w", None)]
-        self._table_page("search", columns, lambda search: self.repository.global_search(search or query), id_key="result_id", actions=actions, subtitle=f"Matches for “{query}”")
+        actions = [("Clear search", lambda: (self.search_var.set(""), self.show_page("dashboard")), "TButton"), (self._t("chrome_export_csv"), self._export_table, "TButton")]
+        columns = [("kind", self._t("col_se_kind"), 145, "w", None), ("label", self._t("col_se_label"), 280, "w", None), ("detail", self._t("col_se_detail"), 230, "w", None)]
+        self._table_page("search", columns, lambda search: self.repository.global_search(search or query), id_key="result_id", actions=actions, subtitle=f'Matches for "{query}"')
 
+    # -------------------------
+    # Dialog actions (existing)
+    # -------------------------
     def _new_customer(self):
         self._party_form("customer")
 
@@ -1172,7 +1545,7 @@ class AccountingDesktop:
             self.repository.create_account(values["account_code"], values["account_name"], values["account_type"])
             self.show_page("accounts")
             self._set_status("General ledger account added")
-        SimpleFormDialog(self.root, "Add general ledger account", fields, {"account_type": "Asset"}, submit)
+        SimpleFormDialog(self.root, self._t("chrome_new_account"), fields, {"account_type": "Asset"}, submit)
 
     def _toggle_account(self):
         record = self._require_selection("account")
@@ -1216,12 +1589,490 @@ class AccountingDesktop:
             summary = {"Date": header["entry_date"], "Reference": header["reference"] or "—", "Description": header["description"]}
             DetailDialog(self.root, f"Journal entry #{header['id']}", summary, lines, self.currency)
 
+    # -------------------------
+    # Dialog actions (Payroll & HR)
+    # -------------------------
+    def _new_employee(self):
+        self._employee_form()
+
+    def _edit_employee(self):
+        record = self._require_selection("employee")
+        if record:
+            self._employee_form(record)
+
+    def _employee_form(self, record=None):
+        fields = [
+            {"key": "code", "label": self._t("dlg_emp_code")},
+            {"key": "name", "label": self._t("dlg_emp_name")},
+            {"key": "role", "label": self._t("dlg_emp_role"), "required": False},
+            {"key": "base_salary", "label": self._t("dlg_emp_salary")},
+            {"key": "hire_date", "label": self._t("dlg_emp_hire")},
+        ]
+        initial = {}
+        if record:
+            initial = {
+                "code": record["employee_code"],
+                "name": record["name"],
+                "role": record["role"] or "",
+                "base_salary": record["base_salary"],
+                "hire_date": record["hire_date"] or "",
+            }
+        else:
+            initial = {"base_salary": "0.00", "hire_date": date.today().isoformat()}
+        def submit(values):
+            try:
+                self.repository.save_employee(
+                    values["name"], values.get("role", ""), values["base_salary"],
+                    values.get("hire_date") or date.today().isoformat(),
+                    values.get("code", ""), record["id"] if record else None,
+                )
+                self._set_status(self._t("chrome_edit_employee") if record else self._t("chrome_new_employee"))
+                self.show_page("employees")
+            except Exception as error:
+                messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
+        SimpleFormDialog(
+            self.root,
+            self._t("dlg_employee_edit") if record else self._t("dlg_employee_new"),
+            fields, initial, submit,
+        )
+
+    def _toggle_employee(self):
+        record = self._require_selection("employee")
+        if not record:
+            return
+        activate = not bool(record["is_active"])
+        if not messagebox.askyesno(self._t("chrome_toggle_employee"), f"{record['employee_code']} · {record['name']}?", parent=self.root):
+            return
+        try:
+            self.repository.set_employee_active(record["id"], activate)
+            self.refresh_page()
+            self._set_status(self._t("status_active") if activate else self._t("status_inactive"))
+        except Exception as error:
+            messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
+
+    def _run_payroll(self):
+        employees = [row for row in self.repository.list_employees() if row["is_active"]]
+        if not employees:
+            messagebox.showinfo(self._t("nav_employees"), self._t("no_active_employees", "No active employees found."), parent=self.root)
+            self.show_page("employees")
+            return
+        first_of_month = date.today().replace(day=1).isoformat()
+        today = date.today().isoformat()
+        fields = [
+            {"key": "period_start", "label": self._t("dlg_pr_start"), "default": first_of_month},
+            {"key": "period_end", "label": self._t("dlg_pr_end"), "default": today},
+        ]
+        def submit(values):
+            try:
+                result = self.repository.run_payroll(values["period_start"], values["period_end"])
+                self.show_page("payroll_runs")
+                self._set_status(f"{result['reference']} · {money(result['total_net'], self.currency)}")
+                messagebox.showinfo(
+                    self._t("dlg_payroll_title"),
+                    f"{result['reference']}\n\n{result['employee_count']} {self._t('col_pr_count').lower()}   ·   {self._t('col_pr_net')} {money(result['total_net'], self.currency)}",
+                    parent=self.root,
+                )
+            except Exception as error:
+                messagebox.showerror(self._t("dlg_payroll_title"), str(error), parent=self.root)
+        SimpleFormDialog(
+            self.root,
+            self._t("dlg_payroll_title"),
+            fields + [{"key": "note", "label": " ", "kind": "text", "default": self._t("dlg_payroll_note", "Every active employee is paid their base salary.")}],
+            None,
+            submit,
+        )
+
+    def _view_payslips(self):
+        record = self._require_selection("payroll run")
+        if not record:
+            return
+        header, lines = self.repository.payroll_run_details(record["id"])
+        if not header:
+            return
+        summary = {
+            "Period": f"{short_date(header['period_start'])} → {short_date(header['period_end'])}",
+            self._t("col_pr_count"): header["employee_count"],
+            self._t("col_pr_base"): money(header["total_base"], self.currency),
+            self._t("col_pr_net"): money(header["total_net"], self.currency),
+        }
+        PayslipDialog(self.root, f"{self._t('nav_payroll_runs')} · PR-{int(record['id']):05d}", summary, lines, self.currency, self._t)
+
+    # -------------------------
+    # Dialog actions (Fixed assets)
+    # -------------------------
+    def _new_asset(self):
+        self._asset_form()
+
+    def _edit_asset(self):
+        record = self._require_selection("fixed asset")
+        if record:
+            self._asset_form(record)
+
+    def _asset_form(self, record=None):
+        fields = [
+            {"key": "code", "label": self._t("dlg_fa_code")},
+            {"key": "name", "label": self._t("dlg_fa_name")},
+            {"key": "category", "label": self._t("dlg_fa_cat"), "kind": "combo", "values": self.repository.ASSET_CATEGORIES},
+            {"key": "acquisition_date", "label": self._t("dlg_fa_date")},
+            {"key": "acquisition_cost", "label": self._t("dlg_fa_cost")},
+            {"key": "salvage_value", "label": self._t("dlg_fa_salvage"), "required": False},
+            {"key": "useful_life_years", "label": self._t("dlg_fa_life")},
+            {"key": "notes", "label": self._t("dlg_fa_notes"), "kind": "text", "required": False},
+        ]
+        initial = {}
+        if record:
+            initial = {
+                "code": record["asset_code"],
+                "name": record["name"],
+                "category": record["category"] or "Other",
+                "acquisition_date": record["acquisition_date"],
+                "acquisition_cost": record["acquisition_cost"],
+                "salvage_value": record["salvage_value"] or "0.00",
+                "useful_life_years": record["useful_life_years"],
+                "notes": record["notes"] or "",
+            }
+        else:
+            initial = {
+                "category": "Equipment",
+                "acquisition_date": date.today().isoformat(),
+                "salvage_value": "0.00",
+                "useful_life_years": "5",
+                "acquisition_cost": "0.00",
+            }
+        def submit(values):
+            try:
+                self.repository.save_asset(
+                    values["code"], values["name"], values["category"],
+                    values["acquisition_date"], values["acquisition_cost"],
+                    values.get("salvage_value") or "0.00", values["useful_life_years"],
+                    values.get("notes", ""), record["id"] if record else None,
+                )
+                self._set_status(self._t("chrome_edit_asset") if record else self._t("asset_acquisition_posted", "Asset acquisition posted."))
+                self.show_page("fixed_assets")
+            except Exception as error:
+                messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
+        SimpleFormDialog(
+            self.root,
+            self._t("dlg_asset_edit") if record else self._t("dlg_asset_new"),
+            fields, initial, submit, width=580,
+        )
+
+    def _toggle_asset(self):
+        record = self._require_selection("fixed asset")
+        if not record:
+            return
+        activate = not bool(record["is_active"])
+        if not messagebox.askyesno(self._t("chrome_toggle_asset"), f"{record['asset_code']} · {record['name']}?", parent=self.root):
+            return
+        try:
+            self.repository.set_asset_active(record["id"], activate)
+            self.refresh_page()
+            self._set_status(self._t("status_active") if activate else self._t("status_inactive"))
+        except Exception as error:
+            messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
+
+    def _post_depreciation(self):
+        record = self._require_selection("fixed asset")
+        if not record:
+            return
+        if not record["is_active"]:
+            messagebox.showinfo(self._t("nav_fixed_assets"), self._t("status_inactive"), parent=self.root)
+            return
+        today = date.today().isoformat()[:4]
+        fields = [
+            {"key": "asset", "label": self._t("col_fa_name"), "default": f"{record['asset_code']} · {record['name']}", "disabled": True},
+            {"key": "period_year", "label": self._t("dlg_depr_year"), "default": today},
+        ]
+        def submit(values):
+            try:
+                self.repository.post_depreciation(record["id"], values["period_year"])
+                self.refresh_page()
+                self._set_status(self._t("depreciation_posted", "Depreciation posted."))
+                messagebox.showinfo(self._t("dlg_depr_title"), self._t("depreciation_posted", "Depreciation posted."), parent=self.root)
+            except Exception as error:
+                messagebox.showerror(self._t("dlg_depr_title"), str(error), parent=self.root)
+        SimpleFormDialog(self.root, self._t("dlg_depr_title"), fields, None, submit)
+
+    # -------------------------
+    # Dialog actions (Treasury)
+    # -------------------------
+    def _new_bank_account(self):
+        self._bank_account_form()
+
+    def _edit_bank_account(self):
+        record = self._require_selection("bank account")
+        if record:
+            self._bank_account_form(record)
+
+    def _bank_account_form(self, record=None):
+        fields = [
+            {"key": "account_name", "label": self._t("dlg_ba_name")},
+            {"key": "bank_name", "label": self._t("dlg_ba_bank"), "required": False},
+            {"key": "account_number", "label": self._t("dlg_ba_number"), "required": False},
+            {"key": "opening_balance", "label": self._t("dlg_ba_open"), "required": False},
+        ]
+        initial = {}
+        if record:
+            initial = {
+                "account_name": record["account_name"],
+                "bank_name": record["bank_name"] or "",
+                "account_number": record["account_number"] or "",
+                "opening_balance": record["opening_balance"],
+            }
+        else:
+            initial = {"opening_balance": "0.00"}
+        def submit(values):
+            try:
+                self.repository.save_bank_account(
+                    values["account_name"], values.get("bank_name", ""),
+                    values.get("account_number", ""), values.get("opening_balance") or "0.00",
+                    record["id"] if record else None,
+                )
+                self._set_status(self._t("chrome_edit_bank_account") if record else self._t("chrome_new_bank_account"))
+                self.show_page("bank_accounts")
+            except Exception as error:
+                messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
+        SimpleFormDialog(
+            self.root,
+            self._t("dlg_ba_edit") if record else self._t("dlg_ba_new"),
+            fields, initial, submit,
+        )
+
+    def _toggle_bank_account(self):
+        record = self._require_selection("bank account")
+        if not record:
+            return
+        activate = not bool(record["is_active"])
+        if not messagebox.askyesno(self._t("chrome_toggle_bank_account"), f"{record['account_name']}?", parent=self.root):
+            return
+        try:
+            self.repository.set_bank_account_active(record["id"], activate)
+            self.refresh_page()
+            self._set_status(self._t("status_active") if activate else self._t("status_inactive"))
+        except Exception as error:
+            messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
+
+    def _new_treasury_movement(self):
+        accounts = [row for row in self.repository.list_bank_accounts() if row["is_active"]]
+        if not accounts:
+            messagebox.showinfo(self._t("nav_bank_accounts"), self._t("no_bank_accounts", "No active bank accounts. Add one first."), parent=self.root)
+            self.show_page("bank_accounts")
+            return
+        account_labels = [f"{row['account_name']} (#{row['id']})" for row in accounts]
+        fields = [
+            {"key": "account", "label": self._t("dlg_tm_account"), "kind": "combo", "values": account_labels, "default": account_labels[0]},
+            {"key": "movement_date", "label": self._t("dlg_tm_date"), "default": date.today().isoformat()},
+            {"key": "direction", "label": self._t("dlg_tm_dir"), "kind": "combo", "values": ["in", "out"], "default": "in"},
+            {"key": "amount", "label": self._t("dlg_tm_amount")},
+            {"key": "description", "label": self._t("dlg_tm_desc"), "required": False},
+        ]
+        def submit(values):
+            try:
+                account = accounts[next(i for i, label in enumerate(account_labels) if label == values["account"])]
+                result = self.repository.create_cash_movement(
+                    account["id"], values["movement_date"], values["direction"],
+                    values["amount"], values.get("description", ""),
+                )
+                self.show_page("treasury_movements")
+                self._set_status(f"{result['reference']} · {self._t('movement_posted', 'Movement posted.')}")
+            except Exception as error:
+                messagebox.showerror(self._t("dlg_tm_new"), str(error), parent=self.root)
+        SimpleFormDialog(self.root, self._t("dlg_tm_new"), fields, None, submit)
+
+    # -------------------------
+    # Dialog actions (Reconciliation)
+    # -------------------------
+    def _new_statement_line(self):
+        accounts = [row for row in self.repository.list_bank_accounts() if row["is_active"]]
+        if not accounts:
+            messagebox.showinfo(self._t("nav_bank_accounts"), self._t("no_bank_accounts", "No active bank accounts. Add one first."), parent=self.root)
+            self.show_page("bank_accounts")
+            return
+        account_labels = [f"{row['account_name']} (#{row['id']})" for row in accounts]
+        fields = [
+            {"key": "account", "label": self._t("dlg_tm_account"), "kind": "combo", "values": account_labels, "default": account_labels[0]},
+            {"key": "statement_date", "label": self._t("dlg_rc_date"), "default": date.today().isoformat()},
+            {"key": "direction", "label": self._t("dlg_rc_dir"), "kind": "combo", "values": ["in", "out"], "default": "in"},
+            {"key": "amount", "label": self._t("dlg_rc_amount")},
+            {"key": "reference", "label": self._t("dlg_rc_ref"), "required": False},
+            {"key": "description", "label": self._t("dlg_rc_desc"), "required": False},
+        ]
+        def submit(values):
+            try:
+                account = accounts[next(i for i, label in enumerate(account_labels) if label == values["account"])]
+                self.repository.add_statement_line(
+                    account["id"], values["statement_date"], values["direction"],
+                    values["amount"], values.get("reference", ""), values.get("description", ""),
+                )
+                self.refresh_page()
+                self._set_status(self._t("chrome_add_line"))
+            except Exception as error:
+                messagebox.showerror(self._t("dlg_rc_new"), str(error), parent=self.root)
+        SimpleFormDialog(self.root, self._t("dlg_rc_new"), fields, None, submit)
+
+    def _reconcile_line(self):
+        record = self._require_selection("statement line")
+        if not record:
+            return
+        if record["is_reconciled"]:
+            messagebox.showinfo(self._t("chrome_reconcile"), self._t("status_reconciled"), parent=self.root)
+            return
+        movements = self.repository.list_reconcilable_movements(record["bank_account_id"])
+        if not movements:
+            messagebox.showinfo(self._t("chrome_reconcile"), self._t("no_reconcilable_movements", "No unmatched treasury movements available."), parent=self.root)
+            self.show_page("treasury_movements")
+            return
+        movement_labels = []
+        for row in movements:
+            movement_labels.append(f"{row['reference']} · {short_date(row['movement_date'])} · {row['direction']} · {float(row['amount']):,.2f} · {row['description'] or '—'}")
+        fields = [
+            {"key": "line", "label": self._t("col_rc_ref"), "default": f"#{record['id']} · {short_date(record['statement_date'])} · {float(record['amount']):,.2f} {record['direction']}", "disabled": True},
+            {"key": "movement", "label": self._t("dlg_recon_pick"), "kind": "combo", "values": movement_labels, "default": movement_labels[0]},
+        ]
+        def submit(values):
+            try:
+                movement = movements[next(i for i, label in enumerate(movement_labels) if label == values["movement"])]
+                self.repository.reconcile_statement_line(record["id"], movement["id"])
+                self.refresh_page()
+                self._set_status(self._t("line_reconciled", "Statement line reconciled."))
+            except Exception as error:
+                messagebox.showerror(self._t("dlg_recon_title"), str(error), parent=self.root)
+        SimpleFormDialog(self.root, self._t("dlg_recon_title"), fields, None, submit, width=640)
+
+    def _unreconcile_line(self):
+        record = self._require_selection("statement line")
+        if not record:
+            return
+        if not record["is_reconciled"]:
+            messagebox.showinfo(self._t("chrome_unreconcile"), self._t("status_unreconciled"), parent=self.root)
+            return
+        try:
+            self.repository.unreconcile_statement_line(record["id"])
+            self.refresh_page()
+            self._set_status(self._t("line_unreconciled", "Statement line unreconciled."))
+        except Exception as error:
+            messagebox.showerror(self._t("chrome_unreconcile"), str(error), parent=self.root)
+
+    def _delete_statement_line(self):
+        record = self._require_selection("statement line")
+        if not record:
+            return
+        if not messagebox.askyesno(self._t("chrome_delete"), f"#{record['id']} · {short_date(record['statement_date'])} · {float(record['amount']):,.2f}?", parent=self.root):
+            return
+        try:
+            self.repository.delete_statement_line(record["id"])
+            self.refresh_page()
+            self._set_status(self._t("chrome_delete"))
+        except Exception as error:
+            messagebox.showerror(self._t("chrome_delete"), str(error), parent=self.root)
+
+    # -------------------------
+    # Dialog actions (Cash office)
+    # -------------------------
+    def _new_register(self):
+        self._register_form()
+
+    def _edit_register(self):
+        record = self._require_selection("cash register")
+        if record:
+            self._register_form(record)
+
+    def _register_form(self, record=None):
+        fields = [
+            {"key": "name", "label": self._t("dlg_rg_name")},
+            {"key": "opening_balance", "label": self._t("dlg_rg_float"), "required": False},
+        ]
+        initial = {}
+        if record:
+            initial = {"name": record["register_name"], "opening_balance": record["opening_balance"]}
+        else:
+            initial = {"opening_balance": "0.00"}
+        def submit(values):
+            try:
+                self.repository.save_register(values["name"], values.get("opening_balance") or "0.00", record["id"] if record else None)
+                self._set_status(self._t("chrome_edit_register") if record else self._t("chrome_new_register"))
+                self.show_page("registers")
+            except Exception as error:
+                messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
+        SimpleFormDialog(
+            self.root,
+            self._t("dlg_rg_edit") if record else self._t("dlg_rg_new"),
+            fields, initial, submit,
+        )
+
+    def _toggle_register(self):
+        record = self._require_selection("cash register")
+        if not record:
+            return
+        activate = not bool(record["is_active"])
+        if not messagebox.askyesno(self._t("chrome_toggle_register"), f"{record['register_name']}?", parent=self.root):
+            return
+        try:
+            self.repository.set_register_active(record["id"], activate)
+            self.refresh_page()
+            self._set_status(self._t("status_active") if activate else self._t("status_inactive"))
+        except Exception as error:
+            messagebox.showerror(self._t("chrome_could_not_load"), str(error), parent=self.root)
+
+    def _new_register_movement(self):
+        registers = [row for row in self.repository.list_registers() if row["is_active"]]
+        if not registers:
+            messagebox.showinfo(self._t("nav_registers"), self._t("no_registers", "No active registers found."), parent=self.root)
+            self.show_page("registers")
+            return
+        register_labels = [f"{row['register_name']} (#{row['id']})" for row in registers]
+        fields = [
+            {"key": "register", "label": self._t("dlg_rm_register"), "kind": "combo", "values": register_labels, "default": register_labels[0]},
+            {"key": "movement_date", "label": self._t("dlg_rm_date"), "default": date.today().isoformat()},
+            {"key": "direction", "label": self._t("dlg_rm_dir"), "kind": "combo", "values": ["in", "out"], "default": "in"},
+            {"key": "amount", "label": self._t("dlg_rm_amount")},
+            {"key": "description", "label": self._t("dlg_rm_desc"), "required": False},
+        ]
+        def submit(values):
+            try:
+                register = registers[next(i for i, label in enumerate(register_labels) if label == values["register"])]
+                self.repository.add_register_movement(
+                    register["id"], values["movement_date"], values["direction"],
+                    values["amount"], values.get("description", ""),
+                )
+                self.show_page("register_movements")
+                self._set_status(self._t("chrome_new_movement"))
+            except Exception as error:
+                messagebox.showerror(self._t("dlg_rm_new"), str(error), parent=self.root)
+        SimpleFormDialog(self.root, self._t("dlg_rm_new"), fields, None, submit)
+
+    def _close_register(self):
+        record = self._require_selection("cash register")
+        if not record:
+            return
+        expected = float(record["expected_cash"] or 0)
+        fields = [
+            {"key": "register", "label": self._t("dlg_close_register"), "default": record["register_name"], "disabled": True},
+            {"key": "closing_date", "label": self._t("dlg_close_date"), "default": date.today().isoformat()},
+            {"key": "actual_amount", "label": self._t("dlg_close_actual"), "default": f"{expected:,.2f}"},
+        ]
+        def submit(values):
+            try:
+                result = self.repository.close_register(record["id"], values["closing_date"], values["actual_amount"])
+                self.refresh_page()
+                self._set_status(self._t("register_closed", "Register closed."))
+                messagebox.showinfo(
+                    self._t("dlg_close_title"),
+                    f"{self._t('col_rcl_expected')}  {money(result['expected'], self.currency)}\n"
+                    f"{self._t('col_rcl_actual')}  {money(result['actual'], self.currency)}\n"
+                    f"{self._t('col_rcl_diff')}  {money(result['difference'], self.currency)}",
+                    parent=self.root,
+                )
+            except Exception as error:
+                messagebox.showerror(self._t("dlg_close_title"), str(error), parent=self.root)
+        SimpleFormDialog(self.root, self._t("dlg_close_title"), fields, None, submit)
+
     def _load_dashboard_summary(self):
         self.show_page("dashboard")
 
     def global_search(self):
         query = self.search_var.get().strip()
-        if not query or query == "Search records…":
+        if not query or query == self._t("chrome_search_placeholder"):
             return
         self.show_page("search")
 

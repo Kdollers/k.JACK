@@ -9,13 +9,18 @@ def run_cli():
     try:
         from languages import choose_language, t
         from modules.accounting import accounting_menu
+        from modules.cash_register import cash_register_menu
         from modules.customers import customer_menu
+        from modules.fixed_assets import fixed_assets_menu
         from modules.payments import payment_menu
+        from modules.payroll import payroll_menu
         from modules.products import product_menu
         from modules.purchases import purchase_menu
+        from modules.reconciliation import reconciliation_menu
         from modules.reports import reports_menu
         from modules.sales import sales_menu
         from modules.suppliers import supplier_menu
+        from modules.treasury import treasury_menu
 
         choose_language()
         modules = {
@@ -26,7 +31,12 @@ def run_cli():
             "5": purchase_menu,
             "6": payment_menu,
             "7": accounting_menu,
-            "8": reports_menu,
+            "8": payroll_menu,
+            "9": fixed_assets_menu,
+            "10": treasury_menu,
+            "11": reconciliation_menu,
+            "12": cash_register_menu,
+            "13": reports_menu,
         }
         while True:
             print()
@@ -41,12 +51,17 @@ def run_cli():
                 ("5", "purchases"),
                 ("6", "payments"),
                 ("7", "accounting"),
-                ("8", "reports"),
-                ("9", "exit"),
+                ("8", "payroll"),
+                ("9", "fixed_assets"),
+                ("10", "treasury"),
+                ("11", "reconciliation"),
+                ("12", "cash_office"),
+                ("13", "reports"),
+                ("14", "exit"),
             ):
                 print(f"{number}. {t(label)}")
             choice = input(f"\n{t('choose_option')} ").strip()
-            if choice == "9":
+            if choice == "14":
                 print(f"\n{t('exit')}")
                 break
             action = modules.get(choice)

@@ -1,5 +1,7 @@
 from languages.en import TRANSLATIONS as ENGLISH
+from languages.es import TRANSLATIONS as SPANISH
 from languages.fr import TRANSLATIONS as FRENCH
+from languages.pt import TRANSLATIONS as PORTUGUESE
 from languages.rw import TRANSLATIONS as KINYARWANDA
 
 
@@ -7,18 +9,32 @@ LANGUAGES = {
     "1": "en",
     "2": "fr",
     "3": "rw",
+    "4": "es",
+    "5": "pt",
 }
 
 LANGUAGE_NAMES = {
     "en": "English",
     "fr": "Français",
     "rw": "Kinyarwanda",
+    "es": "Español",
+    "pt": "Português",
+}
+
+LANGUAGE_KEYS = {
+    "en": "english",
+    "fr": "french",
+    "rw": "kinyarwanda",
+    "es": "spanish",
+    "pt": "portuguese",
 }
 
 TRANSLATION_TABLES = {
     "en": ENGLISH,
     "fr": FRENCH,
     "rw": KINYARWANDA,
+    "es": SPANISH,
+    "pt": PORTUGUESE,
 }
 
 _current_language = "en"
@@ -53,17 +69,13 @@ def choose_language():
         print("================================")
         print(t("select_language"))
         print("================================")
-        print("1.", t("english"))
-        print("2.", t("french"))
-        print("3.", t("kinyarwanda"))
-
+        for number, code in LANGUAGES.items():
+            print(number + ".", t(LANGUAGE_KEYS[code]))
+        print()
         choice = input(f"{t('choose_option')} ").strip()
-        language_code = LANGUAGES.get(choice)
-        if language_code is None:
+        if choice not in LANGUAGES:
             print(t("invalid_option"))
             continue
-
-        set_language(language_code)
-        print()
-        print(f"{t('language_selected')}: {get_language_name()}")
-        return True
+        set_language(LANGUAGES[choice])
+        print(t("language_selected") + ": " + get_language_name())
+        return

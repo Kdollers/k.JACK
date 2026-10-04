@@ -96,6 +96,120 @@ class AccountingRepositoryTests(unittest.TestCase):
         self.assertGreater(summary["inventory_value"], 0)
         self.assertTrue(summary["recent"])
 
+    def _assert_gl_balanced(self):
+        row = self.repository._one(
+            "SELECT COALESCE(SUM(debit), 0) AS d, COALESCE(SUM(credit), 0) AS c FROM journal_lines"
+        )
+        self.assertAlmostEqual(row["d"], row["c"], places=5)
+
+    def test_payroll_run_posts_payslips_and_balanced_gl(self):
+        employee_id = self.repository.save_employee(
+            "Payroll Test Clerk", "Test role", 150000, "2024-05-01", "PT-001"
+        )
+        before = self.repository._one("SELECT COUNT(*) AS count FROM journal_entries")["count"]
+        run = self.repository.run_payroll(
+            "2026-01-01", "2026-01-31",
+            {str(employee_id): {"allowances": 25000, "deductions": 10000}},
+        )
+        self.assertEqual(run["employee_count"], 1)
+        self.assertEqual(run["total_net"], 165000)
+        header, payslips = self.repository.payroll_run_details(run["id"])
+        self.assertEqual(len(payslips), 1)
+        self.assertEqual(payslips[0]["net_salary"], 165000)
+        after = self.repository._one("SELECT COUNT(*) AS count FROM journal_entries")["count"]
+        self.assertEqual(after, before + 1)
+        self._assert_gl_balanced()
+        # duplicate run for a new period is allowed; run totals reflect both periods
+        second = self.repository.run_payroll("2026-02-01", "2026-02-28")
+        self.assertEqual(second["total_net"], 150000)
+        # deactivated employees are excluded from future runs
+        self.repository.set_employee_active(employee_id, False)
+        with self.assertRaisesRegex(ValueError, "no active employees"):
+            self.repository.run_payroll("2026-03-01", "2026-03-31")
+        self.repository.set_employee_active(employee_id, True)
+
+    def test_fixed_asset_acquisition_and_depreciation_post_gl(self):
+        asset_id = self.repository.save_asset(
+            "PT-A01", "Test machine", "Equipment", "2026-02-01", 4000000,
+            0, 4, "unit test asset",
+        )
+        self.assertTrue(asset_id)
+        asset = next(row for row in self.repository.list_assets() if row["id"] == asset_id)
+        self.assertAlmostEqual(asset["net_book_value"], 4000000)
+        result = self.repository.post_depreciation(asset_id, "2026")
+        self.assertEqual(result["amount"], 1000000)
+        with self.assertRaisesRegex(ValueError, "already posted"):
+            self.repository.post_depreciation(asset_id, "2026")
+        asset = next(row for row in self.repository.list_assets() if row["id"] == asset_id)
+        self.assertAlmostEqual(asset["accumulated_depreciation"], 1000000)
+        self.assertAlmostEqual(asset["net_book_value"], 3000000)
+        self._assert_gl_balanced()
+
+    def test_treasury_movements_post_gl_and_track_positions(self):
+        account_id = self.repository.save_bank_account(
+            "Test current account", "Test Bank", "PT-123", 1000000
+        )
+        movement = self.repository.create_cash_movement(
+            account_id, "2026-02-10", "in", 750000, "Test receipt"
+        )
+        self.assertEqual(movement["reference"], f"TREAS-{movement['id']:06d}")
+        positions, totals = self.repository.treasury_positions()
+        account = next(row for row in positions if row["id"] == account_id)
+        self.assertAlmostEqual(account["current_balance"], 1750000)
+        self.assertGreaterEqual(totals["net"], 750000)
+        movements = self.repository.list_cash_movements("Test receipt")
+        self.assertEqual(len(movements), 1)
+        self._assert_gl_balanced()
+
+    def test_bank_reconciliation_matching_and_protection(self):
+        account_id = self.repository.save_bank_account(
+            "Test reconciliation account", "Test Bank 2", "PT-456", 0
+        )
+        movement = self.repository.create_cash_movement(
+            account_id, "2026-02-11", "in", 420000, "Test payment to reconcile"
+        )
+        line = self.repository.add_statement_line(
+            account_id, "2026-02-11", "in", 420000, "VIR TEST", "Matching entry"
+        )
+        candidates = self.repository.list_reconcilable_movements(account_id)
+        self.assertEqual([row["id"] for row in candidates], [movement["id"]])
+        self.repository.reconcile_statement_line(line, movement["id"])
+        line_row = self.repository._one(
+            "SELECT is_reconciled, matched_movement_id FROM bank_statement_lines WHERE id = ?",
+            (line,),
+        )
+        self.assertTrue(line_row["is_reconciled"])
+        self.assertEqual(line_row["matched_movement_id"], movement["id"])
+        with self.assertRaisesRegex(ValueError, "cannot be deleted"):
+            self.repository.delete_statement_line(line)
+        with self.assertRaisesRegex(ValueError, "already matched"):
+            second_line = self.repository.add_statement_line(
+                account_id, "2026-02-12", "in", 1, "VIR TEST 2", "Second entry"
+            )
+            self.repository.reconcile_statement_line(second_line, movement["id"])
+        summary = self.repository.reconciliation_summary(account_id)
+        self.assertGreaterEqual(summary["reconciled_count"], 1)
+        self.assertAlmostEqual(summary["reconciled_amount"], 420000)
+        self.repository.unreconcile_statement_line(line)
+        self._assert_gl_balanced()
+
+    def test_cash_register_movements_and_closing_variance_posts_gl(self):
+        register_id = self.repository.save_register("Test register", 100000)
+        self.repository.add_register_movement(
+            register_id, "2026-02-12", "in", 300000, "Test intake"
+        )
+        self.repository.add_register_movement(
+            register_id, "2026-02-12", "out", 50000, "Test spend"
+        )
+        register = next(row for row in self.repository.list_registers() if row["id"] == register_id)
+        self.assertAlmostEqual(register["expected_cash"], 350000)
+        closing = self.repository.close_register(register_id, "2026-02-12", 345000)
+        self.assertAlmostEqual(closing["expected"], 350000)
+        self.assertAlmostEqual(closing["difference"], -5000)
+        closings = self.repository.list_register_closings()
+        self.assertEqual(len(closings), 1)
+        self._assert_gl_balanced()
+
     def test_manual_journal_rejects_unbalanced_entries_without_writing(self):
         before = self.repository._one("SELECT COUNT(*) AS count FROM journal_entries")["count"]
         with self.assertRaisesRegex(ValueError, "not balanced"):
