@@ -19,6 +19,41 @@ COLORS = {
 }
 
 
+def _drag_handle(window, caption):
+    """Insert a thin draggable bar at the top of a dialog window.
+
+    On Windows a tkinter global grab (grab_set) makes the OS title bar
+    undraggable, so dialogs would otherwise sit frozen in the middle of
+    the screen. This strip lets the user move any window at all times.
+    """
+    bar = tk.Frame(window, bg=COLORS["navy"], height=26)
+    slaves = window.pack_slaves()
+    if slaves:
+        bar.pack(side="top", fill="x", before=slaves[0])
+    else:
+        bar.pack(side="top", fill="x")
+    bar.pack_propagate(False)
+    label = tk.Label(
+        bar, text=f"  ⠿  {caption}  —  drag to move",
+        bg=COLORS["navy"], fg="#b8c8cf", font=("Segoe UI", 8, "bold"), anchor="w",
+    )
+    label.pack(side="left", fill="y")
+    bar.configure(cursor="fleur")
+    label.configure(cursor="fleur")
+
+    def _press(event):
+        window._drag_offset = (event.x_root, event.y_root)
+
+    def _drag(event):
+        offset_x, offset_y = window._drag_offset
+        window.geometry(f"+{event.x_root - offset_x}+{event.y_root - offset_y}")
+
+    for widget in (bar, label):
+        widget.bind("<ButtonPress-1>", _press)
+        widget.bind("<B1-Motion>", _drag, add=True)
+    return bar
+
+
 class SimpleFormDialog(tk.Toplevel):
     def __init__(self, parent, title, fields, initial=None, on_submit=None, width=520):
         super().__init__(parent)
@@ -32,6 +67,9 @@ class SimpleFormDialog(tk.Toplevel):
         self.resizable(False, False)
         self.transient(parent)
         self._build(width)
+        _drag_handle(self, title)
+        self.update_idletasks()
+        self.geometry(f"{width}x{max(250, self.winfo_reqheight())}")
         self.grab_set()
         self.bind("<Escape>", lambda _event: self.destroy())
         self.after(80, self._focus_first)
@@ -124,6 +162,7 @@ class InvoiceDialog(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
         self._build()
+        _drag_handle(self, self.title())
         self._center()
         self.bind("<Escape>", lambda _event: self.destroy())
 
@@ -333,6 +372,7 @@ class PaymentDialog(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
         self._build()
+        _drag_handle(self, self.title())
         self._center(parent)
 
     def _build(self):
@@ -415,6 +455,7 @@ class InventoryCountDialog(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
         self._build()
+        _drag_handle(self, self.title())
         self._center(parent)
 
     def _build(self):
@@ -511,6 +552,7 @@ class JournalEntryDialog(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
         self._build()
+        _drag_handle(self, self.title())
         self._center(parent)
 
     def _build(self):
@@ -715,6 +757,7 @@ class DetailDialog(tk.Toplevel):
         scrollbar.pack(side="right", fill="y")
         tree.configure(yscrollcommand=scrollbar.set)
         ttk.Button(outer, text="Close", command=self.destroy).pack(anchor="e", pady=(14, 0))
+        _drag_handle(self, title)
         self.update_idletasks()
         x = parent.winfo_rootx() + max(0, (parent.winfo_width() - self.winfo_width()) // 2)
         y = parent.winfo_rooty() + max(0, (parent.winfo_height() - self.winfo_height()) // 2)
