@@ -1,0 +1,2 @@
+[console_scripts]
+genesis = genesis.__main__:main

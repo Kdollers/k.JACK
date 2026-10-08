@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Runtime data: company databases, registry and backups are never versioned
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.genesis-backup.db
+*.genesis-backup.db.manifest.json
+
+# Node tooling for the browser smoke test
+node_modules/

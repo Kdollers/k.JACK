@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: genesis-accounting
+Version: 1.0.0
+Summary: GENESIS: business accounting and management (ledger, sales, purchases, inventory, payments, reports, tax, backups).
+License: Proprietary
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown

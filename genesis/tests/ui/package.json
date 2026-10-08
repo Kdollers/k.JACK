@@ -1,0 +1,12 @@
+{
+  "name": "genesis-ui-smoke",
+  "private": true,
+  "type": "module",
+  "description": "Headless DOM smoke test for the GENESIS web client (run by tests/test_ui_smoke.py).",
+  "scripts": {
+    "smoke": "node smoke.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "24.1.3"
+  }
+}
