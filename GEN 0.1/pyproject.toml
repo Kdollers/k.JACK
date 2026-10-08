@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genesis-accounting"
+version = "1.0.0"
+description = "GENESIS: business accounting and management (ledger, sales, purchases, inventory, payments, reports, tax, backups)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+dependencies = []
+
+[project.scripts]
+genesis = "genesis.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["genesis", "genesis.*"]
+
+[tool.setuptools.package-data]
+genesis = ["web/*.html", "web/css/*.css", "web/js/*.js"]
