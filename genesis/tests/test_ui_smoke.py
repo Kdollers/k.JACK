@@ -15,6 +15,7 @@ from pathlib import Path
 from genesis import server
 from genesis.app import Application
 from tests.helpers import ADMIN_PASSWORD, Env
+from tests.test_documents import make_customer, make_product, stock_in
 
 UI_DIR = Path(__file__).resolve().parent / "ui"
 
@@ -40,6 +41,10 @@ class UiSmokeTests(unittest.TestCase):
     def test_client_signs_in_navigates_translates_and_saves(self):
         env = Env()
         try:
+            # Data the browser workflow uses: a customer and a stocked product priced at 1500.
+            make_customer(env, "Sales Harness Customer")
+            product = make_product(env, "UI-SKU-1", price=1500, cost=1000)
+            stock_in(env, product, 50, 1000)
             result = run_smoke(env.app, GENESIS_MODE="signin", GENESIS_COMPANY=env.slug)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("checks passed", result.stdout)

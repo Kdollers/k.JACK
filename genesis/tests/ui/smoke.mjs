@@ -153,6 +153,80 @@ if (nameInput) {
   check("customer saved and listed", !!listed);
 }
 
+// 5b. Business workflows, using data the Python test seeds (sign-in mode only)
+const labelled = (label) => [...document.querySelectorAll("label")]
+  .find((l) => text(l) === label)?.parentElement.querySelector("input,select");
+const selectWith = (needle) => [...document.querySelectorAll("select")]
+  .find((s) => [...s.options].some((o) => o.textContent.includes(needle)));
+const pick = (select, needle) => {
+  if (!select) {
+    const seen = [...document.querySelectorAll("select")].map((s) => [...s.options].map((o) => text(o)).join(";"));
+    const editorHtml = document.querySelector("main")?.innerHTML.slice(0, 600);
+    throw new Error(`no select offers "${needle}"; lines tables: ${document.querySelectorAll("table.lines").length}; selects seen: ${JSON.stringify(seen)}; main: ${editorHtml}`);
+  }
+  const option = [...select.options].find((o) => o.textContent.includes(needle));
+  select.value = option.value;
+  fire(select, "change");
+};
+const rowWith = (needle) => [...document.querySelectorAll("main table tbody tr")]
+  .find((tr) => text(tr).includes(needle));
+
+if (MODE === "signin") {
+  // 5b-1. Post a sales invoice: 2 x 1500 plus 18% VAT = 3540
+  window.location.hash = "#/sales";
+  await waitFor(() => buttonByText("New sales invoice"));
+  buttonByText("New sales invoice")?.click();
+  const partyPicker = await waitFor(() => selectWith("Sales Harness Customer"));
+  check("invoice editor lists the seeded customer", !!partyPicker);
+  if (partyPicker) {
+    pick(partyPicker, "Sales Harness Customer");
+    const productPicker = selectWith("UI-SKU-1");
+    pick(productPicker, "UI-SKU-1");
+    const qty = document.querySelector("table.lines tbody tr input");
+    qty.value = "2";
+    (await waitFor(() => buttonByText("Save and post"))).click();
+    const posted = await waitFor(() => text(document.querySelector("main")).includes("Posted") && text(document.querySelector("main")).includes("3,540"), 6000);
+    check("sales invoice posted with VAT total 3,540", !!posted, text(document.querySelector("main")).slice(0, 200));
+  }
+
+  // 5b-2. Record a partial customer payment of 1,000 against the invoice
+  window.location.hash = "#/payments";
+  await waitFor(() => buttonByText("New payment"));
+  buttonByText("New payment")?.click();
+  const payParty = await waitFor(() => selectWith("Sales Harness Customer"));
+  check("payment editor opens", !!payParty);
+  if (payParty) {
+    pick(payParty, "Sales Harness Customer");
+    pick(selectWith("Cash"), "Cash");
+    labelled("Amount").value = "1000";
+    (await waitFor(() => buttonByText("Record payment"))).click();
+    const recorded = await waitFor(() => rowWith("1,000"), 6000);
+    check("payment of 1,000 is listed as posted", !!recorded && text(recorded).includes("Posted"), text(recorded));
+  }
+
+  // 5b-3. Backup: create, verify, then restore it (the restore keeps the company's data)
+  window.location.hash = "#/backups";
+  await waitFor(() => buttonByText("Create backup"));
+  buttonByText("Create backup")?.click();
+  const backupRow = await waitFor(() => rowWith(".genesis-backup.db"), 8000);
+  check("backup created and listed", !!backupRow);
+  if (backupRow) {
+    [...backupRow.querySelectorAll("button")].find((b) => text(b) === "Verify").click();
+    const verified = await waitFor(() => text(document.querySelector("main .notice")) === "Backup verified.", 6000);
+    check("backup verifies", !!verified, text(document.querySelector("main .notice")));
+    const restoreLink = [...backupRow.querySelectorAll("button")].find((b) => text(b) === "Restore");
+    check("backup row offers Restore", !!restoreLink, [...backupRow.querySelectorAll("button")].map(text).join("|"));
+    restoreLink?.click();
+    const typed = await waitFor(() => document.querySelector('main input[placeholder="RESTORE"]'));
+    if (typed) typed.value = "RESTORE";
+    const confirm = await waitFor(() => [...document.querySelectorAll("button")]
+      .find((b) => b.className === "danger" && text(b) === "Restore"));
+    confirm?.click();
+    const restored = await waitFor(() => text(document.querySelector("main .notice")).startsWith("Restore complete."), 8000);
+    check("restore completes with a safety copy", !!restored, text(document.querySelector("main .notice")));
+  }
+}
+
 // 6. Sign out returns to the sign-in form
 buttonByText("Sign out")?.click();
 const back = await waitFor(() => document.querySelector("form") && !document.querySelector("header.top"), 5000);

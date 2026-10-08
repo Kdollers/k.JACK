@@ -31,9 +31,10 @@ function option(value, label) {
 }
 
 // Show a form inside a card and return the card so the caller can hide it.
-function formCard(title, body, actions) {
+// A titled card holding any number of parts. An array part is a row of buttons.
+function formCard(title, ...parts) {
   return h("div", { class: "card" }, h("div", { class: "panel-title" }, h("h3", null, title)),
-    body, h("div", { class: "actions" }, actions));
+    parts.map((part) => (Array.isArray(part) ? h("div", { class: "actions" }, part) : part)));
 }
 
 // ---- dashboard ------------------------------------------------------------
