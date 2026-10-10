@@ -91,6 +91,7 @@ async function startBackend() {
         GENESIS_DIST_DIR: distDir()
       },
       onLog: writeLog,
+      childLogPath: path.join(userData, 'logs', 'backend-child.log'),
       startupTimeoutMs: 25000
     });
     try {

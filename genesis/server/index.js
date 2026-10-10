@@ -95,8 +95,18 @@ function startServer(options = {}) {
 module.exports = { createApp, startServer, APP_NAME, APP_VERSION, DB_PATH };
 
 if (require.main === module) {
+  // Optional startup trace for the desktop shell (GENESIS_CHILD_LOG). Helps diagnose
+  // why a packaged backend exits; it records progress and the exit code only.
+  const childLog = (msg) => {
+    if (!process.env.GENESIS_CHILD_LOG) return;
+    try { require('fs').appendFileSync(process.env.GENESIS_CHILD_LOG, `${new Date().toISOString()} ${msg}\n`); } catch (_) { /* ignore */ }
+  };
+  childLog(`backend process started (node ${process.version}, pid ${process.pid}, port ${process.env.GENESIS_PORT || '?'})`);
+  process.on('exit', (code) => childLog(`backend process exiting with code ${code}`));
+  process.on('uncaughtException', (err) => { childLog(`uncaught exception: ${err && err.stack ? err.stack : err}`); process.exit(1); });
   startServer()
     .then(({ host, port, close }) => {
+      childLog(`listening on http://${host}:${port}`);
       console.log(`GENESIS server running at http://${host}:${port}`);
       const shutdown = () => {
         close().then(() => process.exit(0));
@@ -107,6 +117,7 @@ if (require.main === module) {
       if (process.send) process.on('message', (m) => { if (m === 'shutdown') shutdown(); });
     })
     .catch((err) => {
+      childLog(`startup failed: ${err && err.stack ? err.stack : err}`);
       console.error('GENESIS server failed to start:', err.message);
       process.exit(1);
     });

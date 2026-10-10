@@ -111,6 +111,7 @@ class BackendProcess {
       NODE_ENV: 'production'
     };
     if (this.opts.runAsNode !== false) env.ELECTRON_RUN_AS_NODE = '1';
+    if (this.opts.childLogPath) env.GENESIS_CHILD_LOG = this.opts.childLogPath;
 
     this.child = spawn(this.opts.nodeExecutable, [this.opts.serverEntry], {
       cwd: this.opts.cwd,

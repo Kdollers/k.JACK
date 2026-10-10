@@ -83,8 +83,8 @@ jobs:
           if (Test-Path release-listing.txt) { Copy-Item release-listing.txt ../ci-logs/release-listing.txt }
           if (Test-Path native-binaries.txt) { Copy-Item native-binaries.txt ../ci-logs/native-binaries.txt }
           if (Test-Path smoke-test.log) { Copy-Item smoke-test.log ../ci-logs/smoke-test.log }
-          $appLog = Join-Path $env:APPDATA 'GENESIS\logs\desktop.log'
-          if (Test-Path $appLog) { Copy-Item $appLog ../ci-logs/desktop-app.log }
+          $appLogs = Join-Path $env:APPDATA 'GENESIS\logs'
+          if (Test-Path $appLogs) { Get-ChildItem $appLogs | ForEach-Object { Copy-Item $_.FullName ("../ci-logs/app-" + $_.Name) } }
           if (Test-Path build-output.log) { Get-Content build-output.log -Tail 1500 | Set-Content -Path ../ci-logs/build-output-tail.log }
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
