@@ -1,0 +1,7 @@
+2026-10-10T22:15:07.603Z Data directory: C:\Users\runneradmin\AppData\Roaming\GENESIS
+2026-10-10T22:15:08.188Z [stderr] [1010/221508.183:ERROR:crashpad_client_win.cc(868)] not connected
+2026-10-10T22:15:08.299Z Backend start attempt 1 failed: The GENESIS backend process exited before it became ready. (exit code 4294930435)
+2026-10-10T22:15:08.509Z [stderr] [1010/221508.507:ERROR:crashpad_client_win.cc(868)] not connected
+2026-10-10T22:15:08.623Z Backend start attempt 2 failed: The GENESIS backend process exited before it became ready. (exit code 4294930435)
+2026-10-10T22:15:08.796Z [stderr] [1010/221508.799:ERROR:crashpad_client_win.cc(868)] not connected
+2026-10-10T22:15:08.952Z Backend start attempt 3 failed: The GENESIS backend process exited before it became ready. (exit code 4294930435)
