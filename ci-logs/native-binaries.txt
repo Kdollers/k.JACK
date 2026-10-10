@@ -1,0 +1,4 @@
+D:\a\k.JACK\k.JACK\genesis\node_modules\@rollup\rollup-win32-x64-gnu\rollup.win32-x64-gnu.node
+D:\a\k.JACK\k.JACK\genesis\node_modules\@rollup\rollup-win32-x64-msvc\rollup.win32-x64-msvc.node
+D:\a\k.JACK\k.JACK\genesis\node_modules\better-sqlite3\build\Release\better_sqlite3.node
+D:\a\k.JACK\k.JACK\genesis\release\win-unpacked\resources\app.asar.unpacked\node_modules\better-sqlite3\build\Release\better_sqlite3.node
