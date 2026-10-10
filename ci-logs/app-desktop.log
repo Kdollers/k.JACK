@@ -1,0 +1,9 @@
+2026-10-10T23:02:49.411Z Data directory: C:\Users\runneradmin\AppData\Roaming\GENESIS
+2026-10-10T23:02:49.992Z GENESIS server running at http://127.0.0.1:54080
+2026-10-10T23:02:50.093Z Backend ready at http://127.0.0.1:54080/ (attempt 1)
+2026-10-10T23:02:54.228Z Stopping backend...
+2026-10-10T23:02:54.328Z Backend stopped.
+2026-10-10T23:02:56.726Z Data directory: C:\Users\runneradmin\AppData\Roaming\GENESIS
+2026-10-10T23:02:56.726Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\GENESIS\backups\genesis-20261010-230256.db
+2026-10-10T23:02:57.025Z GENESIS server running at http://127.0.0.1:54107
+2026-10-10T23:02:57.088Z Backend ready at http://127.0.0.1:54107/ (attempt 1)
