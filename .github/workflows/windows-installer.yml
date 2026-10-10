@@ -45,7 +45,7 @@ jobs:
         shell: pwsh
         env:
           npm_config_python: ${{ env.pythonLocation }}\python.exe
-        run: npm run desktop:dist
+        run: npm run desktop:dist *> build-output.log; $code = $LASTEXITCODE; Get-Content build-output.log -Tail 300; exit $code
 
       - name: Verify package contents
         run: node scripts/verify-package.cjs release/win-unpacked *> verify.log; $code = $LASTEXITCODE; Get-Content verify.log; exit $code
@@ -68,7 +68,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Continue'
-          Get-ChildItem release -Recurse -Depth 2 -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName } | Set-Content release-listing.txt
+          Get-ChildItem release -Recurse -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName } | Set-Content release-listing.txt
+          Get-ChildItem . -Recurse -Filter *.node -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notmatch 'hostedtoolcache' } | ForEach-Object { $_.FullName } | Set-Content native-binaries.txt
           # Artifact and log downloads are not reachable from every network, so the
           # failing job commits its tail of logs to ci-logs/ on the same branch.
           New-Item -ItemType Directory -Force -Path ../ci-logs | Out-Null
@@ -77,6 +78,8 @@ jobs:
           $tail | Set-Content -Path ../ci-logs/npm-ci-failure.log
           if (Test-Path verify.log) { Get-Content verify.log | Set-Content -Path ../ci-logs/verify-failure.log }
           if (Test-Path release-listing.txt) { Copy-Item release-listing.txt ../ci-logs/release-listing.txt }
+          if (Test-Path native-binaries.txt) { Copy-Item native-binaries.txt ../ci-logs/native-binaries.txt }
+          if (Test-Path build-output.log) { Get-Content build-output.log -Tail 1500 | Set-Content -Path ../ci-logs/build-output-tail.log }
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add -f ../ci-logs/*

@@ -65,6 +65,14 @@ function run(unpackedDir) {
 
   const nativeBinary = path.join(unpackedDir, 'resources', 'app.asar.unpacked', 'node_modules', 'better-sqlite3', 'build', 'Release', 'better_sqlite3.node');
   need(fs.existsSync(nativeBinary), 'SQLite native binary unpacked (better_sqlite3.node)');
+  if (!fs.existsSync(nativeBinary)) {
+    const dir = path.join(unpackedDir, 'resources', 'app.asar.unpacked', 'node_modules', 'better-sqlite3');
+    if (fs.existsSync(dir)) {
+      console.log(`better-sqlite3 unpacked folder contents: ${fs.readdirSync(dir, { recursive: true }).join(', ')}`);
+    } else {
+      console.log('no better-sqlite3 folder under app.asar.unpacked/node_modules');
+    }
+  }
 
   if (fs.existsSync(asar)) {
     const index = readAsarIndex(asar);
