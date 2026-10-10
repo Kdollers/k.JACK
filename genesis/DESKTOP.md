@@ -99,7 +99,7 @@ if `%APPDATA%\GENESIS` already exists, so it cannot touch a real business databa
 ### Diagnostics for failed CI runs
 The GitHub log and artifact endpoints were not reachable from the development sandbox, so a failed job
 commits its diagnostics to `ci-logs/` on the same branch (npm log, verifier output, package listing,
-smoke-test transcript, desktop and backend startup logs). The folder is removed once a run passes.
+smoke-test transcript, desktop and backend startup logs). Delete the folder once the fix is confirmed; a passing run does not create it.
 
 ### Browser and Chromium
 Electron embeds Chromium to render the interface. It runs inside the GENESIS.exe process and does not open
