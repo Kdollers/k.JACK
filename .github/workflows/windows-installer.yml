@@ -22,7 +22,17 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --foreground-scripts --loglevel=http
+
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics
+          path: |
+            ~/AppData/Local/npm-cache/_logs/*.log
+            genesis/npm-debug.log*
+          if-no-files-found: warn
 
       - name: Run automated tests
         run: npm run test:all
