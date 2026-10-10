@@ -136,7 +136,7 @@ Step 'Application starts from the executable, with no manual server or terminal'
   $before = if (Test-Path $LogFile) { (Get-Content $LogFile).Count } else { 0 }
   Start-Process -FilePath $ExePath | Out-Null
   $script:baseUrl = Wait-ForBackend -AfterLines $before
-  Assert ($script:baseUrl -match '^http://127\.0\.0\.1:\d+$') "Backend is not on loopback: $($script:baseUrl)"
+  Assert ([bool]($script:baseUrl -match '^http://127\.0\.0\.1:\d+$')) "Backend is not on loopback: $($script:baseUrl)"
 }
 
 Step 'Backend listens on loopback only (not reachable on a LAN address)' {
@@ -177,7 +177,7 @@ Step 'First-run setup creates the company and administrator' {
 
 Step 'Sign in and reach the application (no forced password change)' {
   $login = Invoke-Api $baseUrl 'POST' '/auth/login' @{ username = 'smoke.admin'; password = $script:Password }
-  Assert ($login.token) 'Login did not return a session token.'
+  Assert ([bool]$login.token) 'Login did not return a session token.'
   Assert ($login.mustChangePassword -eq $false) 'A newly created administrator should not be asked to change password.'
   $script:Token = $login.token
   $me = Invoke-Api $baseUrl 'GET' '/auth/me' $null $script:Token
@@ -192,7 +192,7 @@ Step 'Accounting transaction: balanced journal entry is posted' {
       @{ accountId = 'acc-3010'; debit = 0; credit = 1000; description = 'Capital' }
     )
   } $script:Token
-  Assert ($entry) 'The journal entry was not accepted.'
+  Assert ([bool]$entry) 'The journal entry was not accepted.'
 }
 
 Step 'Trial balance is balanced' {
