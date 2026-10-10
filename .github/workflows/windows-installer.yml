@@ -1,0 +1,47 @@
+name: Windows installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "arena/**" ]
+    paths: [ "genesis/**", ".github/workflows/windows-installer.yml" ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-2022
+    defaults:
+      run:
+        working-directory: genesis
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run automated tests
+        run: npm run test:all
+
+      - name: Build the Windows installer
+        run: npm run desktop:dist
+
+      - name: Verify package contents
+        run: node scripts/verify-package.cjs release/win-unpacked
+
+      - name: Install, launch and test the installed application
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem release -Filter 'GENESIS-Setup-*.exe' | Select-Object -First 1
+          ./scripts/smoke-test-installed.ps1 -InstallerPath $installer.FullName
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: GENESIS-Windows-installer
+          path: genesis/release/GENESIS-Setup-*.exe
+          if-no-files-found: error

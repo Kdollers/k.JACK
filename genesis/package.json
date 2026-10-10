@@ -33,6 +33,7 @@
       "server/**/*",
       "dist/**/*",
       "package.json",
+      "build/icon.ico",
       "!**/*.map",
       "!**/tests/**"
     ],

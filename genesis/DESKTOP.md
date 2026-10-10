@@ -53,3 +53,41 @@ files only. `%APPDATA%\GENESIS` (your business data) is kept unless you delete i
 - The installer ships no database and no default accounts. The first run shows the setup screen.
 - Before each launch the database is copied to `%APPDATA%\GENESIS\backups\`, and before any schema
   migration or backup restore a further copy is made (`pre-migration-*`, `pre-restore-*`).
+
+## Build and verification status
+
+### Automated in CI (GitHub Actions, `windows-2022`)
+Workflow: `.github/workflows/windows-installer.yml` (repository root). It runs on pushes to `arena/**`
+and on manual dispatch, and performs:
+1. `npm ci` and `npm run test:all` (accounting, authentication, desktop backend lifecycle).
+2. `npm run desktop:dist`: builds the frontend and the NSIS installer `release/GENESIS-Setup-<version>.exe`.
+3. `node scripts/verify-package.cjs release/win-unpacked`: checks the packaged app contains the
+   required files and the unpacked SQLite native binary, and contains no tests, no Electron dev
+   package and no database.
+4. `scripts/smoke-test-installed.ps1`: silently installs the installer and launches GENESIS.exe, then checks:
+   backend ready on loopback, no external browser opened on the backend address, unauthenticated access refused,
+   first-run setup, sign-in, a balanced journal entry, trial balance balanced, backup export containing the entry,
+   graceful window close with all processes exiting, relaunch with the entry still present, backup restore with
+   a pre-restore copy written, silent uninstall that keeps `%APPDATA%\GENESIS\genesis.db`.
+5. Uploads the installer as the `GENESIS-Windows-installer` artifact.
+
+### On a Windows machine
+`scripts\build-windows.ps1` runs the same build steps locally (needs Node.js 22 on the build machine only).
+`scripts\smoke-test-installed.ps1 -InstallerPath <installer>` runs the installed-application test. It refuses to run
+if `%APPDATA%\GENESIS` already exists, so it cannot touch a real business database.
+
+### Not yet verified
+- Electron launch and the Windows installer have not been run in this development environment: Electron's
+  Windows binary and the NSIS tools are downloaded from GitHub release assets, which the development sandbox
+  cannot reach. They are verified only when the CI workflow (or the commands above) actually runs.
+- The smoke-test script was written without being executed (PowerShell was not available in the sandbox).
+- Code signing is not configured. Windows SmartScreen will warn about an unsigned installer until a
+  code-signing certificate is added (`CSC_LINK` / `CSC_KEY_PASSWORD` in CI).
+- Installer updates have not been tested. Updates must keep `%APPDATA%\GENESIS` untouched, which the
+  current NSIS settings do (`deleteAppDataOnUninstall: false`), but an automatic updater is not implemented.
+
+### Browser and Chromium
+Electron embeds Chromium to render the interface. It runs inside the GENESIS.exe process and does not open
+Chrome, Edge or any other browser. If a future requirement prohibits any embedded browser engine, GENESIS would
+need its interface rebuilt with a native Windows UI toolkit (e.g. WinUI/WPF or Qt), keeping the Node-free
+backend, the database and the accounting engine, which would be a separate project.
