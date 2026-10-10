@@ -72,19 +72,34 @@ and on manual dispatch, and performs:
 5. Uploads the installer as the `GENESIS-Windows-installer` artifact.
 
 ### On a Windows machine
+The same steps can be run by hand on a Windows 10/11 x64 machine with Node.js 22 and Python 3.11 installed (build machine only).
 `scripts\build-windows.ps1` runs the same build steps locally (needs Node.js 22 on the build machine only).
 `scripts\smoke-test-installed.ps1 -InstallerPath <installer>` runs the installed-application test. It refuses to run
 if `%APPDATA%\GENESIS` already exists, so it cannot touch a real business database.
 
-### Not yet verified
-- Electron launch and the Windows installer have not been run in this development environment: Electron's
-  Windows binary and the NSIS tools are downloaded from GitHub release assets, which the development sandbox
-  cannot reach. They are verified only when the CI workflow (or the commands above) actually runs.
-- The smoke-test script was written without being executed (PowerShell was not available in the sandbox).
+### Verified so far (GitHub Actions run 38092287331, branch `arena/f172e2ac-k-jack`, all steps green)
+- `npm ci` on Windows Server 2022 (Python 3.11 is installed for node-gyp; `better-sqlite3` is pinned to 12.x, which supports Node 20 used by Electron 33).
+- `npm run test:all` on the runner.
+- `npm run desktop:dist` produced `GENESIS-Setup-1.0.0.exe` (about 85 MB artifact).
+- Package verification passed.
+- Installed-application smoke test passed on the runner: silent install, shortcuts, backend start on loopback,
+  no external browser, unauthenticated refusal, first-run setup, sign-in, journal entry, balanced trial balance,
+  backup export, graceful close, relaunch with data kept, backup restore with pre-restore copy, silent uninstall
+  that keeps the database.
+
+### Limits of that verification
+- The runner is a fresh GitHub-hosted Windows Server 2022 VM, not a physical Windows 10/11 PC. Results on a
+  consumer Windows machine (Defender, SmartScreen, user profile differences) are not yet confirmed.
+- The smoke test does not check offline operation (network disabled) or installer updates.
+- Installer updates are not implemented or tested. Updates must keep `%APPDATA%\GENESIS` untouched, which the
+  NSIS settings do (`deleteAppDataOnUninstall: false`).
 - Code signing is not configured. Windows SmartScreen will warn about an unsigned installer until a
   code-signing certificate is added (`CSC_LINK` / `CSC_KEY_PASSWORD` in CI).
-- Installer updates have not been tested. Updates must keep `%APPDATA%\GENESIS` untouched, which the
-  current NSIS settings do (`deleteAppDataOnUninstall: false`), but an automatic updater is not implemented.
+
+### Diagnostics for failed CI runs
+The GitHub log and artifact endpoints were not reachable from the development sandbox, so a failed job
+commits its diagnostics to `ci-logs/` on the same branch (npm log, verifier output, package listing,
+smoke-test transcript, desktop and backend startup logs). The folder is removed once a run passes.
 
 ### Browser and Chromium
 Electron embeds Chromium to render the interface. It runs inside the GENESIS.exe process and does not open
