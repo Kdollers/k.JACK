@@ -9,16 +9,31 @@ const DB_PATH = process.env.GENESIS_DB_PATH || path.join(__dirname, '..', 'genes
 
 let db = null;
 
+// Startup trace for the desktop shell (GENESIS_CHILD_LOG). No effect when unset.
+function trace(msg) {
+  if (!process.env.GENESIS_CHILD_LOG) return;
+  try { fs.appendFileSync(process.env.GENESIS_CHILD_LOG, `${new Date().toISOString()} [db] ${msg}\n`); } catch (_) { /* ignore */ }
+}
+
 function getDb() {
   if (!db) {
+    trace(`mkdir ${path.dirname(DB_PATH)}`);
     fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+    trace(`open ${DB_PATH}`);
     db = new Database(DB_PATH);
+    trace('opened; setting journal_mode');
     db.pragma('journal_mode = WAL');
+    trace('journal_mode set; setting foreign_keys');
     db.pragma('foreign_keys = ON');
+    trace('initSchema');
     initSchema(db);
+    trace('backupBeforeMigrations');
     backupBeforeMigrations(db);
+    trace('runMigrations');
     runMigrations(db);
+    trace('seedDefaultData');
     seedDefaultData(db);
+    trace('database ready');
   }
   return db;
 }
