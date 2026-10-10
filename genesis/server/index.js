@@ -1,8 +1,17 @@
+const trace = (msg) => {
+  if (!process.env.GENESIS_CHILD_LOG) return;
+  try { require('fs').appendFileSync(process.env.GENESIS_CHILD_LOG, `${new Date().toISOString()} [trace] ${msg}\n`); } catch (_) { /* ignore */ }
+};
+trace('loading express');
 const express = require('express');
+trace('loading cors');
 const cors = require('cors');
 const path = require('path');
+trace('loading routes');
 const apiRoutes = require('./routes/api');
+trace('loading db module (better-sqlite3)');
 const { getDb, closeDb, DB_PATH } = require('./db');
+trace('modules loaded');
 
 const APP_NAME = 'GENESIS Business Management & Accounting Software';
 const APP_VERSION = require('../package.json').version;
@@ -64,7 +73,9 @@ function startServer(options = {}) {
   const port = options.port !== undefined ? Number(options.port) : Number(process.env.GENESIS_PORT || process.env.PORT || 3000);
 
   // Ensure the database is opened and migrated before accepting requests.
+  trace('opening database');
   getDb();
+  trace('database ready');
   const app = createApp(options);
 
   return new Promise((resolve, reject) => {
