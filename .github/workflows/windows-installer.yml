@@ -38,27 +38,6 @@ jobs:
           Get-Content npm-ci.log -Tail 300
           if ($code -ne 0) { exit $code }
 
-      - name: Publish diagnostics on failure
-        if: failure()
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Continue'
-          Get-ChildItem release -Recurse -Depth 2 -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName } | Set-Content release-listing.txt
-          # Artifact and log downloads are not reachable from every network, so the
-          # failing job commits its tail of logs to ci-logs/ on the same branch.
-          New-Item -ItemType Directory -Force -Path ../ci-logs | Out-Null
-          $tail = @()
-          if (Test-Path npm-ci.log) { $tail = Get-Content npm-ci.log -Tail 400 }
-          $tail | Set-Content -Path ../ci-logs/npm-ci-failure.log
-          if (Test-Path verify.log) { Get-Content verify.log | Set-Content -Path ../ci-logs/verify-failure.log }
-          if (Test-Path release-listing.txt) { Copy-Item release-listing.txt ../ci-logs/release-listing.txt }
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add -f ../ci-logs/*
-          git commit -m "CI diagnostics from failed run" | Out-Null
-          git pull --rebase origin $env:GITHUB_REF_NAME | Out-Null
-          git push origin HEAD:$env:GITHUB_REF_NAME
-
       - name: Run automated tests
         run: npm run test:all
 
@@ -83,3 +62,24 @@ jobs:
           name: GENESIS-Windows-installer
           path: genesis/release/GENESIS-Setup-*.exe
           if-no-files-found: error
+
+      - name: Publish diagnostics on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          Get-ChildItem release -Recurse -Depth 2 -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName } | Set-Content release-listing.txt
+          # Artifact and log downloads are not reachable from every network, so the
+          # failing job commits its tail of logs to ci-logs/ on the same branch.
+          New-Item -ItemType Directory -Force -Path ../ci-logs | Out-Null
+          $tail = @()
+          if (Test-Path npm-ci.log) { $tail = Get-Content npm-ci.log -Tail 400 }
+          $tail | Set-Content -Path ../ci-logs/npm-ci-failure.log
+          if (Test-Path verify.log) { Get-Content verify.log | Set-Content -Path ../ci-logs/verify-failure.log }
+          if (Test-Path release-listing.txt) { Copy-Item release-listing.txt ../ci-logs/release-listing.txt }
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f ../ci-logs/*
+          git commit -m "CI diagnostics from failed run" | Out-Null
+          git pull --rebase origin $env:GITHUB_REF_NAME | Out-Null
+          git push origin HEAD:$env:GITHUB_REF_NAME
