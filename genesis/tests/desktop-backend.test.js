@@ -171,6 +171,21 @@ test('startup fails with a clear message when the backend cannot start', async (
   await assert.rejects(() => proc.start(port), /exited before it became ready/);
 });
 
+test('a working directory that is a file is reported as a spawn error (packaged app.asar case)', async () => {
+  const dir = tmpDir('badcwd');
+  const fileAsCwd = path.join(dir, 'app.asar');
+  fs.writeFileSync(fileAsCwd, 'not a directory');
+  const proc = new BackendProcess({
+    nodeExecutable: process.execPath,
+    serverEntry: path.join(ROOT, 'server', 'index.js'),
+    cwd: fileAsCwd,
+    env: {},
+    startupTimeoutMs: 3000
+  });
+  const port = await findFreePort();
+  await assert.rejects(() => proc.start(port), /ENOTDIR|spawn error/);
+});
+
 test('startup times out with a clear message when nothing answers', async () => {
   const port = await findFreePort();
   await assert.rejects(

@@ -83,7 +83,9 @@ async function startBackend() {
     const proc = new BackendProcess({
       nodeExecutable: process.execPath,
       serverEntry: serverEntry(),
-      cwd: appRoot(),
+      // Must be a real directory: inside a packaged app, appRoot() is app.asar (a file),
+      // and spawning with a file as cwd fails before the backend starts.
+      cwd: userData,
       env: {
         GENESIS_DB_PATH: prepared.dbPath,
         GENESIS_DIST_DIR: distDir()

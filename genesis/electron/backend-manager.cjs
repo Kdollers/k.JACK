@@ -139,11 +139,21 @@ class BackendProcess {
       });
     });
 
-    await waitForHealth({
-      port,
-      timeoutMs: this.opts.startupTimeoutMs || 25000,
-      isAlive: () => !this.exited
-    });
+    try {
+      await waitForHealth({
+        port,
+        timeoutMs: this.opts.startupTimeoutMs || 25000,
+        isAlive: () => !this.exited
+      });
+    } catch (err) {
+      if (this.exited && this.exitInfo) {
+        const detail = this.exitInfo.error
+          ? `spawn error: ${this.exitInfo.error.message}`
+          : `exit code ${this.exitInfo.code}${this.exitInfo.signal ? `, signal ${this.exitInfo.signal}` : ''}`;
+        throw new Error(`${err.message} (${detail})`);
+      }
+      throw err;
+    }
     return port;
   }
 
