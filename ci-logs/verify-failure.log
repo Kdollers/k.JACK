@@ -1,0 +1,46 @@
+PASS  GENESIS.exe present
+PASS  resources/app.asar present
+PASS  no bundled seed database folder
+PASS  app contains electron/main.cjs
+PASS  app contains electron/preload.cjs
+PASS  app contains electron/backend-manager.cjs
+PASS  app contains electron/data-location.cjs
+PASS  app contains server/index.js
+PASS  app contains server/db.js
+PASS  app contains server/auth.js
+PASS  app contains server/routes/api.js
+PASS  app contains dist/index.html
+PASS  app contains package.json
+PASS  app contains node_modules/express/package.json
+PASS  app contains node_modules/better-sqlite3/package.json
+PASS  app does not contain test code
+PASS  app does not contain the Electron development package
+PASS  app does not contain the packaging tool
+PASS  app does not contain the build tool
+PASS  app does not contain a bundled database with business data
+PASS  app does not contain a bundled database seed folder
+PASS  app does not contain database files (0 found)
+FAIL  SQLite native binary unpacked (better_sqlite3.node)
+
+Contents of D:\a\k.JACK\k.JACK\genesis\release\win-unpacked (top level):
+  chrome_100_percent.pak
+  chrome_200_percent.pak
+  d3dcompiler_47.dll
+  ffmpeg.dll
+  GENESIS.exe
+  icudtl.dat
+  libEGL.dll
+  libGLESv2.dll
+  LICENSE.electron.txt
+  LICENSES.chromium.html
+  locales
+  resources
+  resources.pak
+  snapshot_blob.bin
+  v8_context_snapshot.bin
+  vk_swiftshader.dll
+  vk_swiftshader_icd.json
+  vulkan-1.dll
+app.asar top level: node_modules, build, dist, electron, package.json, server
+
+Package verification FAILED (1 problem(s)).
