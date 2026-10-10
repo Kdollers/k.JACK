@@ -24,9 +24,15 @@ jobs:
         with:
           node-version: "22"
 
+      # node-gyp (used to compile better-sqlite3 when no prebuilt binary is used) needs Python <= 3.11.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Install dependencies
         shell: pwsh
         run: |
+          $env:npm_config_python = Join-Path $env:pythonLocation 'python.exe'
           cmd /c "npm ci --foreground-scripts --loglevel=http > npm-ci.log 2>&1"
           $code = $LASTEXITCODE
           Get-Content npm-ci.log -Tail 300
@@ -53,6 +59,9 @@ jobs:
         run: npm run test:all
 
       - name: Build the Windows installer
+        shell: pwsh
+        env:
+          npm_config_python: ${{ env.pythonLocation }}\python.exe
         run: npm run desktop:dist
 
       - name: Verify package contents
