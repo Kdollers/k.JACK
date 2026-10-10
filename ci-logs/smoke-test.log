@@ -8,7 +8,17 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\GenesisSmokeTest\GENESIS
 ==> Desktop and Start menu shortcuts were created
     PASS
 ==> Application starts from the executable, with no manual server or terminal
-    FAIL: The backend did not become ready within 120 seconds. See C:\Users\runneradmin\AppData\Roaming\GENESIS\logs\desktop.log
+    PASS
+==> Backend listens on loopback only (not reachable on a LAN address)
+    PASS
+==> No external browser window was opened for GENESIS
+    PASS
+==> Unauthenticated API requests are refused
+    PASS
+==> First-run setup creates the company and administrator
+    PASS
+==> Sign in and reach the application (no forced password change)
+    FAIL: Cannot process argument transformation on parameter 'Condition'. Cannot convert value "System.String" to type "System.Boolean". Boolean parameters accept only Boolean values and numbers, such as $True, $False, 1 or 0.
 
 Summary
 
@@ -17,6 +27,11 @@ Step                                                                      Result
 Preconditions: no existing GENESIS user data or running instance          PASS
 Silent install into a normal application folder                           PASS
 Desktop and Start menu shortcuts were created                             PASS
-Application starts from the executable, with no manual server or terminal FAIL: The backend did not become ready within…
+Application starts from the executable, with no manual server or terminal PASS
+Backend listens on loopback only (not reachable on a LAN address)         PASS
+No external browser window was opened for GENESIS                         PASS
+Unauthenticated API requests are refused                                  PASS
+First-run setup creates the company and administrator                     PASS
+Sign in and reach the application (no forced password change)             FAIL: Cannot process argument transformation …
 
 

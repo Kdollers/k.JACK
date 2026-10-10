@@ -1,4 +1,4 @@
-SQLite native binary found at resources\app.asar.unpacked\node_modules\better-sqlite3\prebuilds\win32-x64.node
+SQLite native binary found at resources\app.asar.unpacked\node_modules\better-sqlite3\build\Release\better_sqlite3.node
 PASS  GENESIS.exe present
 PASS  resources/app.asar present
 PASS  no bundled seed database folder
