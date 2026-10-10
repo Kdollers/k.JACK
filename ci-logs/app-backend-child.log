@@ -1,3 +1,21 @@
-2026-10-10T22:15:08.172Z backend process started (node v20.18.3, pid 2508, port 62413)
-2026-10-10T22:15:08.501Z backend process started (node v20.18.3, pid 7740, port 62416)
-2026-10-10T22:15:08.795Z backend process started (node v20.18.3, pid 6548, port 62419)
+2026-10-10T22:23:32.923Z [trace] loading express
+2026-10-10T22:23:33.052Z [trace] loading cors
+2026-10-10T22:23:33.053Z [trace] loading routes
+2026-10-10T22:23:33.067Z [trace] loading db module (better-sqlite3)
+2026-10-10T22:23:33.068Z [trace] modules loaded
+2026-10-10T22:23:33.068Z backend process started (node v20.18.3, pid 4604, port 52082)
+2026-10-10T22:23:33.068Z [trace] opening database
+2026-10-10T22:23:33.245Z [trace] loading express
+2026-10-10T22:23:33.335Z [trace] loading cors
+2026-10-10T22:23:33.336Z [trace] loading routes
+2026-10-10T22:23:33.348Z [trace] loading db module (better-sqlite3)
+2026-10-10T22:23:33.350Z [trace] modules loaded
+2026-10-10T22:23:33.350Z backend process started (node v20.18.3, pid 2332, port 52085)
+2026-10-10T22:23:33.351Z [trace] opening database
+2026-10-10T22:23:33.643Z [trace] loading express
+2026-10-10T22:23:33.735Z [trace] loading cors
+2026-10-10T22:23:33.736Z [trace] loading routes
+2026-10-10T22:23:33.749Z [trace] loading db module (better-sqlite3)
+2026-10-10T22:23:33.749Z [trace] modules loaded
+2026-10-10T22:23:33.749Z backend process started (node v20.18.3, pid 7960, port 52088)
+2026-10-10T22:23:33.750Z [trace] opening database
