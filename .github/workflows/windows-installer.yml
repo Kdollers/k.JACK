@@ -1,5 +1,8 @@
 name: Windows installer
 
+permissions:
+  contents: write   # the failure step commits diagnostic logs to ci-logs/ on this branch
+
 on:
   workflow_dispatch:
   push:
@@ -29,15 +32,22 @@ jobs:
           Get-Content npm-ci.log -Tail 300
           if ($code -ne 0) { exit $code }
 
-      - name: Upload diagnostics on failure
+      - name: Publish diagnostics on failure
         if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: diagnostics
-          path: |
-            genesis/npm-ci.log
-            genesis/npm-debug.log*
-          if-no-files-found: warn
+        shell: pwsh
+        run: |
+          # Artifact and log downloads are not reachable from every network, so the
+          # failing job commits its tail of logs to ci-logs/ on the same branch.
+          New-Item -ItemType Directory -Force -Path ../ci-logs | Out-Null
+          $tail = @()
+          if (Test-Path npm-ci.log) { $tail = Get-Content npm-ci.log -Tail 400 }
+          $tail | Set-Content -Path ../ci-logs/npm-ci-failure.log
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f ../ci-logs/npm-ci-failure.log
+          git commit -m "CI diagnostics: npm ci failure log" | Out-Null
+          git pull --rebase origin $env:GITHUB_REF_NAME | Out-Null
+          git push origin HEAD:$env:GITHUB_REF_NAME
 
       - name: Run automated tests
         run: npm run test:all
