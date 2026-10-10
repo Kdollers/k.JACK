@@ -63,9 +63,16 @@ function run(unpackedDir) {
   need(fs.existsSync(asar), 'resources/app.asar present');
   need(!fs.existsSync(path.join(unpackedDir, 'resources', 'seed')), 'no bundled seed database folder');
 
-  const nativeBinary = path.join(unpackedDir, 'resources', 'app.asar.unpacked', 'node_modules', 'better-sqlite3', 'build', 'Release', 'better_sqlite3.node');
-  need(fs.existsSync(nativeBinary), 'SQLite native binary unpacked (better_sqlite3.node)');
-  if (!fs.existsSync(nativeBinary)) {
+  // better-sqlite3 loads either a node-gyp build (build/Release) or its shipped prebuild (prebuilds/win32-x64.node).
+  const sqliteDir = path.join(unpackedDir, 'resources', 'app.asar.unpacked', 'node_modules', 'better-sqlite3');
+  const candidates = [
+    path.join(sqliteDir, 'build', 'Release', 'better_sqlite3.node'),
+    path.join(sqliteDir, 'prebuilds', 'win32-x64.node')
+  ];
+  const nativeBinary = candidates.find((c) => fs.existsSync(c));
+  need(Boolean(nativeBinary), 'SQLite native binary unpacked (better_sqlite3.node or prebuilds/win32-x64.node)');
+  if (nativeBinary) console.log(`SQLite native binary found at ${path.relative(unpackedDir, nativeBinary)}`);
+  if (!nativeBinary) {
     const dir = path.join(unpackedDir, 'resources', 'app.asar.unpacked', 'node_modules', 'better-sqlite3');
     if (fs.existsSync(dir)) {
       console.log(`better-sqlite3 unpacked folder contents: ${fs.readdirSync(dir, { recursive: true }).join(', ')}`);
