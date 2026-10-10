@@ -213,7 +213,8 @@ Step 'Full backup export is produced and contains the transaction' {
   $headers = @{ Authorization = "Bearer $script:Token" }
   Invoke-WebRequest -Uri "$baseUrl/api/backup/export" -Headers $headers -OutFile $script:BackupFile -UseBasicParsing -TimeoutSec 30
   $backup = Get-Content $script:BackupFile -Raw | ConvertFrom-Json
-  Assert ($backup.journalEntries.Count -ge 1) 'Backup does not contain the journal entry.'
+  Assert ($backup.rowCounts.journal_entries -ge 1) 'Backup does not contain the journal entry.'
+  Assert ($backup.checksum -ne $null) 'Backup has no checksum.'
 }
 
 Step 'Graceful shutdown: window closes and all processes exit' {
