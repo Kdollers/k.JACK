@@ -47,6 +47,10 @@ function listFiles(node, prefix = '', out = []) {
   return out;
 }
 
+function asarPath(unpackedDir) {
+  return path.join(unpackedDir, 'resources', 'app.asar');
+}
+
 function run(unpackedDir) {
   const problems = [];
   const ok = [];
@@ -99,6 +103,15 @@ function run(unpackedDir) {
 
   ok.forEach((m) => console.log(`PASS  ${m}`));
   problems.forEach((m) => console.log(`FAIL  ${m}`));
+  if (problems.length > 0 && fs.existsSync(unpackedDir)) {
+    // Diagnostics for failed packaging runs: show what the folder actually contains.
+    console.log(`\nContents of ${unpackedDir} (top level):`);
+    for (const e of fs.readdirSync(unpackedDir)) console.log(`  ${e}`);
+    if (fs.existsSync(asarPath(unpackedDir))) {
+      const top = Object.keys(readAsarIndex(asarPath(unpackedDir)).files || {});
+      console.log(`app.asar top level: ${top.join(', ')}`);
+    }
+  }
   console.log(problems.length === 0 ? '\nPackage verification passed.' : `\nPackage verification FAILED (${problems.length} problem(s)).`);
   return problems.length === 0;
 }
