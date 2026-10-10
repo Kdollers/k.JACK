@@ -1,0 +1,22 @@
+GENESIS installed-application smoke test
+Installer: D:\a\k.JACK\k.JACK\genesis\release\GENESIS-Setup-1.0.0.exe
+Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\GenesisSmokeTest\GENESIS
+==> Preconditions: no existing GENESIS user data or running instance
+    PASS
+==> Silent install into a normal application folder
+    PASS
+==> Desktop and Start menu shortcuts were created
+    PASS
+==> Application starts from the executable, with no manual server or terminal
+    FAIL: The backend did not become ready within 120 seconds. See C:\Users\runneradmin\AppData\Roaming\GENESIS\logs\desktop.log
+
+Summary
+
+Step                                                                      Result
+----                                                                      ------
+Preconditions: no existing GENESIS user data or running instance          PASS
+Silent install into a normal application folder                           PASS
+Desktop and Start menu shortcuts were created                             PASS
+Application starts from the executable, with no manual server or terminal FAIL: The backend did not become ready within…
+
+
