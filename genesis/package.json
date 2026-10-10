@@ -14,11 +14,13 @@
     "build": "vite build",
     "test": "node tests/accounting-engine.test.js",
     "test:desktop": "node tests/desktop-backend.test.js",
-    "test:all": "npm test && npm run test:auth && npm run test:desktop",
+    "test:all": "npm test && npm run test:auth && npm run test:security && npm run test:desktop",
     "desktop": "electron .",
     "desktop:pack": "npm run build && electron-builder --win --dir",
     "desktop:dist": "npm run build && electron-builder --win nsis",
-    "test:auth": "node tests/auth-security.test.js"
+    "test:auth": "node tests/auth-security.test.js",
+    "test:security": "node tests/security-hardening.test.js",
+    "test:e2e": "python3 tests/e2e/auth_ui_test.py"
   },
   "build": {
     "appId": "com.genesis.accounting",

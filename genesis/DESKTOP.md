@@ -106,3 +106,28 @@ Electron embeds Chromium to render the interface. It runs inside the GENESIS.exe
 Chrome, Edge or any other browser. If a future requirement prohibits any embedded browser engine, GENESIS would
 need its interface rebuilt with a native Windows UI toolkit (e.g. WinUI/WPF or Qt), keeping the Node-free
 backend, the database and the accounting engine, which would be a separate project.
+
+## Backup and restore policy
+- **Contents:** a backup holds one company's business data (settings, chart of accounts, contacts, products,
+  journals, sales, purchases, payments, inventory, counts). It never holds user accounts, password hashes,
+  sessions or the audit log. Restoring therefore never brings back old credentials or permissions.
+- **Export:** requires `backup:export`. Format version 2 with a SHA-256 checksum.
+- **Restore:** requires `backup:restore`, the current administrator's password, and the typed word `RESTORE`.
+  It is refused unless the checksum matches, the backup belongs to the signed-in company, every journal entry
+  balances, and all foreign keys resolve. Restores are limited to 5 per hour per user.
+- **Safety:** a verified copy of the live database is written to `backups/pre-restore-*.db` before any change.
+  The restore runs in one transaction; a failure leaves the data untouched.
+- **After restore:** every session is revoked. Users sign in again with their existing credentials.
+- **Old backups:** files from the earlier export format (no checksum, incomplete tables) are refused, because
+  restoring them would silently lose journal entries and invoices.
+
+## Security controls (tested)
+- Rate limits: sign-in (10 failures per account per 15 minutes, 100 per client per 15 minutes), password change
+  (10 per 15 minutes), first-run setup (10 per 15 minutes), restore (5 per hour), and a general API limit
+  (1200 per minute). Rejected requests get HTTP 429 with `Retry-After`.
+- Content-Security-Policy: `default-src 'self'`, no external scripts, styles, fonts, frames or connections.
+  `'unsafe-inline'` is allowed for styles only (React style attributes). Also sent: `X-Frame-Options: DENY`,
+  `nosniff`, `no-referrer`, and `Cache-Control: no-store` on API responses.
+- Electron: sandboxed renderer, context isolation, no Node integration, all permission requests denied, no
+  `<webview>`, no pop-up windows, navigation limited to the backend origin.
+- Limitation: Electron fuses (for example disabling inspect arguments) are not configured yet.

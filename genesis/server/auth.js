@@ -146,6 +146,11 @@ function revokeUserSessions(userId, exceptSessionId = null) {
   }
 }
 
+/** Revokes every live session (used after a backup restore). */
+function revokeAllSessions() {
+  getDb().prepare('UPDATE sessions SET revoked_at = ? WHERE revoked_at IS NULL').run(nowIso());
+}
+
 /** Resolves a bearer token to a live session and user, or null. */
 function resolveSession(token) {
   if (!token || typeof token !== 'string' || token.length > 200) return null;
@@ -297,6 +302,7 @@ module.exports = {
   createSession,
   revokeSession,
   revokeUserSessions,
+  revokeAllSessions,
   resolveSession,
   login,
   authenticate,

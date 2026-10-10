@@ -13,6 +13,10 @@ trace('loading db module (better-sqlite3)');
 const { getDb, closeDb, DB_PATH } = require('./db');
 trace('modules loaded');
 
+const { securityHeaders } = require('./security');
+const { createLimiter, clientIp, MINUTE } = require('./rateLimit');
+const apiLimiter = createLimiter({ name: 'api', windowMs: MINUTE, max: 1200, keyFn: (req) => clientIp(req) });
+
 const APP_NAME = 'GENESIS Business Management & Accounting Software';
 const APP_VERSION = require('../package.json').version;
 
@@ -23,6 +27,10 @@ const APP_VERSION = require('../package.json').version;
 function createApp(options = {}) {
   const distPath = options.distPath || process.env.GENESIS_DIST_DIR || path.join(__dirname, '..', 'dist');
   const app = express();
+  app.disable('x-powered-by');
+  app.use(securityHeaders);
+  // Global per-client limit for the API as a backstop against runaway or hostile clients.
+  app.use('/api', apiLimiter.middleware);
 
   // The app is served from the same origin as the API (desktop window or Vite proxy),
   // so cross-origin access is not needed. Keep CORS for the existing dev workflow only.

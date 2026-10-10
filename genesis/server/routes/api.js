@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { getDb } = require('../db');
+const path = require('path');
+const { getDb, DB_PATH } = require('../db');
+const { buildBackup, validateBackup, restoreBackup, verifiedCopy } = require('../backup');
+const { createLimiter, clientIp, MINUTE } = require('../rateLimit');
 const { hashPassword, verifyPassword } = require('../passwords');
 const {
   authenticate,
@@ -9,6 +12,7 @@ const {
   createSession,
   revokeSession,
   revokeUserSessions,
+  revokeAllSessions,
   login,
   bearerToken,
   ROLES
@@ -29,6 +33,18 @@ const {
   postPurchaseReturn
 } = require('../accountingEngine');
 const reports = require('../reports');
+
+const APP_VERSION = require('../../package.json').version;
+
+// Rate limits for sensitive operations (see server/rateLimit.js).
+const loginLimiter = createLimiter({
+  name: 'login-account', windowMs: 15 * MINUTE, max: 10,
+  keyFn: (req) => `${clientIp(req)}|${String((req.body && req.body.username) || '').toLowerCase().slice(0, 64)}`
+});
+const loginIpLimiter = createLimiter({ name: 'login-ip', windowMs: 15 * MINUTE, max: 100, keyFn: (req) => clientIp(req) });
+const setupLimiter = createLimiter({ name: 'setup', windowMs: 15 * MINUTE, max: 10, keyFn: (req) => clientIp(req) });
+const passwordLimiter = createLimiter({ name: 'change-password', windowMs: 15 * MINUTE, max: 10, keyFn: (req) => (req.auth ? req.auth.user.id : null) });
+const restoreLimiter = createLimiter({ name: 'restore', windowMs: 60 * MINUTE, max: 5, keyFn: (req) => (req.auth ? req.auth.user.id : null) });
 
 // Public endpoints: the only routes reachable without a valid session.
 const PUBLIC_ROUTES = new Set([
@@ -68,7 +84,7 @@ function publicUser(u) {
   };
 }
 
-router.post('/auth/login', (req, res) => {
+router.post('/auth/login', loginIpLimiter.middleware, loginLimiter.middleware, (req, res) => {
   const { username, password } = req.body || {};
   const result = login({ username, password, ...clientInfo(req) });
   if (!result.ok) {
@@ -96,7 +112,7 @@ router.post('/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
-router.post('/auth/change-password', (req, res) => {
+router.post('/auth/change-password', passwordLimiter.middleware, (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { current_password, new_password } = req.body || {};
   const db = getDb();
@@ -121,7 +137,7 @@ router.get('/setup/status', (req, res) => {
   res.json({ needsSetup: users === 0 });
 });
 
-router.post('/setup/initialize', (req, res) => {
+router.post('/setup/initialize', setupLimiter.middleware, (req, res) => {
   const db = getDb();
   const activeUsers = db.prepare('SELECT COUNT(*) AS n FROM users WHERE active = 1').get().n;
   if (activeUsers > 0) {
@@ -1489,112 +1505,60 @@ router.get('/audit-trail', requirePermission('audit:read'), (req, res) => {
 // --------------------------------------------------------------------------
 router.get('/backup/export', requirePermission('backup:export'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
-  const db = getDb();
   try {
-    const backupData = {
-      genesisVersion: '1.0.0',
-      exportedAt: new Date().toISOString(),
-      company: db.prepare('SELECT * FROM companies WHERE id = ?').get(companyId),
-      accounts: db.prepare('SELECT * FROM accounts WHERE company_id = ?').all(companyId),
-      taxRates: db.prepare('SELECT * FROM tax_rates WHERE company_id = ?').all(companyId),
-      bankAccounts: db.prepare('SELECT * FROM bank_accounts WHERE company_id = ?').all(companyId),
-      customers: db.prepare('SELECT * FROM customers WHERE company_id = ?').all(companyId),
-      suppliers: db.prepare('SELECT * FROM suppliers WHERE company_id = ?').all(companyId),
-      products: db.prepare('SELECT * FROM products WHERE company_id = ?').all(companyId),
-      journalEntries: db.prepare('SELECT * FROM journal_entries WHERE company_id = ?').all(companyId),
-      journalLines: db.prepare(`
-        SELECT jel.* FROM journal_entry_lines jel
-        JOIN journal_entries je ON jel.journal_entry_id = je.id
-        WHERE je.company_id = ?
-      `).all(companyId),
-      inventoryMovements: db.prepare('SELECT * FROM inventory_movements WHERE company_id = ?').all(companyId),
-      salesInvoices: db.prepare('SELECT * FROM sales_invoices WHERE company_id = ?').all(companyId),
-      salesInvoiceLines: db.prepare(`
-        SELECT sil.* FROM sales_invoice_lines sil
-        JOIN sales_invoices si ON sil.invoice_id = si.id
-        WHERE si.company_id = ?
-      `).all(companyId),
-      purchaseInvoices: db.prepare('SELECT * FROM purchase_invoices WHERE company_id = ?').all(companyId),
-      purchaseInvoiceLines: db.prepare(`
-        SELECT pil.* FROM purchase_invoice_lines pil
-        JOIN purchase_invoices pi ON pil.bill_id = pi.id
-        WHERE pi.company_id = ?
-      `).all(companyId),
-      payments: db.prepare('SELECT * FROM payments WHERE company_id = ?').all(companyId)
-    };
-
-    logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'BACKUP', companyId, 'Exported complete database backup JSON');
-
+    const backup = buildBackup(getDb(), companyId, { genesisVersion: APP_VERSION });
+    logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'BACKUP', companyId, `Exported company backup (${backup.rowCounts.journal_entries} journal entries)`);
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="genesis-backup-${Date.now()}.json"`);
-    res.send(JSON.stringify(backupData, null, 2));
+    res.send(JSON.stringify(backup, null, 2));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.post('/backup/import', requirePermission('backup:restore'), (req, res) => {
+// Restore: step-up authentication (current password) and typed confirmation are required.
+// Body: { backup: <export document>, password: "<current password>", confirm: "RESTORE" }
+router.post('/backup/import', requirePermission('backup:restore'), restoreLimiter.middleware, (req, res) => {
   const { companyId, user } = getSessionContext(req);
-  const data = req.body;
-  if (!data || !data.genesisVersion) {
-    return res.status(400).json({ error: 'Invalid backup file format' });
+  const { backup, password, confirm } = req.body || {};
+  const db = getDb();
+
+  if (confirm !== 'RESTORE') {
+    return res.status(400).json({ error: 'Type RESTORE to confirm.', code: 'CONFIRMATION_REQUIRED' });
+  }
+  const row = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(user.id);
+  if (typeof password !== 'string' || !row || !verifyPassword(password, row.password_hash).ok) {
+    logAudit(companyId, user.id, user.full_name, 'AUTH', 'RESTORE_DENIED', companyId, 'Restore refused: password re-entry failed');
+    return res.status(403).json({ error: 'Your password is required to restore a backup.', code: 'REAUTH_FAILED' });
+  }
+  const check = validateBackup(backup, companyId);
+  if (!check.ok) {
+    return res.status(400).json({ error: check.error, code: check.code });
   }
 
-  const db = getDb();
-  // Keep a full copy of the database before the restore replaces company data.
-  const preRestoreCopy = require('../db').backupDatabaseFile('pre-restore');
+  let safetyCopy;
   try {
-    db.transaction(() => {
-      // Clear current company data
-      db.prepare('DELETE FROM journal_entry_lines WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE company_id = ?)').run(companyId);
-      db.prepare('DELETE FROM journal_entries WHERE company_id = ?').run(companyId);
-      db.prepare('DELETE FROM sales_invoice_lines WHERE invoice_id IN (SELECT id FROM sales_invoices WHERE company_id = ?)').run(companyId);
-      db.prepare('DELETE FROM sales_invoices WHERE company_id = ?').run(companyId);
-      db.prepare('DELETE FROM purchase_invoice_lines WHERE bill_id IN (SELECT id FROM purchase_invoices WHERE company_id = ?)').run(companyId);
-      db.prepare('DELETE FROM purchase_invoices WHERE company_id = ?').run(companyId);
-      db.prepare('DELETE FROM inventory_movements WHERE company_id = ?').run(companyId);
-      db.prepare('DELETE FROM payments WHERE company_id = ?').run(companyId);
-      db.prepare('DELETE FROM products WHERE company_id = ?').run(companyId);
-      db.prepare('DELETE FROM customers WHERE company_id = ?').run(companyId);
-      db.prepare('DELETE FROM suppliers WHERE company_id = ?').run(companyId);
-
-      // Restore accounts if provided
-      if (Array.isArray(data.products)) {
-        const insP = db.prepare(`
-          INSERT OR REPLACE INTO products (id, company_id, sku, barcode, name, description, category, type, unit, cost_price, selling_price, tax_rate_id, min_stock_level, current_stock, warehouse_location, sales_account_id, cogs_account_id, inventory_account_id, active)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-        for (const p of data.products) {
-          insP.run(p.id, companyId, p.sku, p.barcode, p.name, p.description, p.category, p.type, p.unit, p.cost_price, p.selling_price, p.tax_rate_id, p.min_stock_level, p.current_stock, p.warehouse_location, p.sales_account_id, p.cogs_account_id, p.inventory_account_id, p.active);
-        }
-      }
-
-      if (Array.isArray(data.customers)) {
-        const insC = db.prepare(`
-          INSERT OR REPLACE INTO customers (id, company_id, code, name, contact_person, email, phone, address, tax_id, credit_limit, payment_terms, opening_balance, current_balance, active)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-        for (const c of data.customers) {
-          insC.run(c.id, companyId, c.code, c.name, c.contact_person, c.email, c.phone, c.address, c.tax_id, c.credit_limit, c.payment_terms, c.opening_balance, c.current_balance, c.active);
-        }
-      }
-
-      if (Array.isArray(data.suppliers)) {
-        const insS = db.prepare(`
-          INSERT OR REPLACE INTO suppliers (id, company_id, code, name, contact_person, email, phone, address, tax_id, payment_terms, opening_balance, current_balance, active)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-        for (const s of data.suppliers) {
-          insS.run(s.id, companyId, s.code, s.name, s.contact_person, s.email, s.phone, s.address, s.tax_id, s.payment_terms, s.opening_balance, s.current_balance, s.active);
-        }
-      }
-
-      logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'RESTORE', companyId, 'Restored database from uploaded backup JSON');
-    })();
-
-    res.json({ success: true, message: 'Backup restored successfully' });
+    safetyCopy = verifiedCopy(db, DB_PATH, path.join(path.dirname(DB_PATH), 'backups'), 'pre-restore');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message, code: 'SAFETY_COPY_FAILED' });
+  }
+
+  try {
+    const restored = restoreBackup(db, companyId, backup);
+    // Everyone must sign in again; credentials and permissions are not changed by a restore.
+    revokeAllSessions();
+    logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'RESTORE', companyId,
+      `Restored company backup from ${backup.exportedAt} (${restored.journal_entries} journal entries); all sessions revoked`);
+    res.json({
+      success: true,
+      message: 'Backup restored. All sessions were signed out; sign in again.',
+      restored,
+      safetyCopy: path.basename(safetyCopy),
+      signedOut: true
+    });
+  } catch (err) {
+    res.status(err.code === 'BACKUP_FK_FAILED' || err.code === 'BACKUP_UNBALANCED' ? 400 : 500)
+      .json({ error: err.message, code: err.code || 'RESTORE_FAILED', safetyCopy: path.basename(safetyCopy) });
   }
 });
 
