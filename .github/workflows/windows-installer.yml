@@ -54,7 +54,10 @@ jobs:
         shell: pwsh
         run: |
           $installer = Get-ChildItem release -Filter 'GENESIS-Setup-*.exe' | Select-Object -First 1
-          ./scripts/smoke-test-installed.ps1 -InstallerPath $installer.FullName
+          ./scripts/smoke-test-installed.ps1 -InstallerPath $installer.FullName *> smoke-test.log
+          $code = $LASTEXITCODE
+          Get-Content smoke-test.log
+          exit $code
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
@@ -79,6 +82,9 @@ jobs:
           if (Test-Path verify.log) { Get-Content verify.log | Set-Content -Path ../ci-logs/verify-failure.log }
           if (Test-Path release-listing.txt) { Copy-Item release-listing.txt ../ci-logs/release-listing.txt }
           if (Test-Path native-binaries.txt) { Copy-Item native-binaries.txt ../ci-logs/native-binaries.txt }
+          if (Test-Path smoke-test.log) { Copy-Item smoke-test.log ../ci-logs/smoke-test.log }
+          $appLog = Join-Path $env:APPDATA 'GENESIS\logs\desktop.log'
+          if (Test-Path $appLog) { Copy-Item $appLog ../ci-logs/desktop-app.log }
           if (Test-Path build-output.log) { Get-Content build-output.log -Tail 1500 | Set-Content -Path ../ci-logs/build-output-tail.log }
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
