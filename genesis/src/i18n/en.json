@@ -356,7 +356,19 @@
     "restore_backup": "Restore Database from Backup",
     "restore_desc": "Upload a verified backup file to restore system state.",
     "reset_demo": "Reset to Initial Demo State",
-    "reset_demo_desc": "Cleans current database and reloads default demonstration company, sample chart of accounts, and inventory."
+    "reset_demo_desc": "Cleans current database and reloads default demonstration company, sample chart of accounts, and inventory.",
+    "restore_choose_file": "Choose backup file (.json)",
+    "restore_invalid_file": "The selected file is not a valid backup",
+    "restore_warning": "Restoring replaces this company's current business data with the backup. Make sure you have chosen the correct file.",
+    "restore_file": "File",
+    "restore_signout_notice": "After the restore every user is signed out and must sign in again with their existing password.",
+    "restore_password_label": "Your password (required)",
+    "restore_type_confirm": "Type RESTORE to confirm",
+    "restore_cancel": "Cancel",
+    "restore_confirm_button": "Restore backup",
+    "restore_running": "Restoring…",
+    "restore_done": "Backup restored. Please sign in again.",
+    "restore_failed": "Restore failed (nothing was changed)"
   },
   "auth": {
     "app_tagline": "Business accounting & management",

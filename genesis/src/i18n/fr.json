@@ -356,7 +356,19 @@
     "restore_backup": "Restaurer la base de données",
     "restore_desc": "Chargez un fichier de sauvegarde vérifié pour restaurer l'état du système.",
     "reset_demo": "Réinitialiser aux données de démonstration",
-    "reset_demo_desc": "Efface les données actuelles et réinitialise l'entreprise modèle, le plan comptable type et les articles de démonstration."
+    "reset_demo_desc": "Efface les données actuelles et réinitialise l'entreprise modèle, le plan comptable type et les articles de démonstration.",
+    "restore_choose_file": "Choisir un fichier de sauvegarde (.json)",
+    "restore_invalid_file": "Le fichier choisi n'est pas une sauvegarde valide",
+    "restore_warning": "La restauration remplace les données actuelles de cette entreprise par la sauvegarde. Vérifiez que vous avez choisi le bon fichier.",
+    "restore_file": "Fichier",
+    "restore_signout_notice": "Après la restauration, tous les utilisateurs sont déconnectés et doivent se reconnecter avec leur mot de passe actuel.",
+    "restore_password_label": "Votre mot de passe (obligatoire)",
+    "restore_type_confirm": "Saisissez RESTORE pour confirmer",
+    "restore_cancel": "Annuler",
+    "restore_confirm_button": "Restaurer la sauvegarde",
+    "restore_running": "Restauration…",
+    "restore_done": "Sauvegarde restaurée. Veuillez vous reconnecter.",
+    "restore_failed": "Échec de la restauration (aucune modification effectuée)"
   },
   "auth": {
     "app_tagline": "Gestion et comptabilité d’entreprise",

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function SettingsView() {
-  const { currentCompany, companies, switchCompany, users, showToast, refreshKey, triggerRefresh } = useApp();
+  const { currentCompany, companies, switchCompany, users, showToast, refreshKey, triggerRefresh, logout } = useApp();
   const { lang, setLang, t } = useI18n();
 
   const [activeTab, setActiveTab] = useState('company'); // 'company', 'users', 'taxes', 'audit', 'backup'
@@ -189,25 +189,48 @@ export default function SettingsView() {
     }
   };
 
+  // Restore is staged: choose a file, then confirm with the current password and the word RESTORE.
+  const [restoreDraft, setRestoreDraft] = useState(null);
+  const [restorePassword, setRestorePassword] = useState('');
+  const [restoreConfirm, setRestoreConfirm] = useState('');
+  const [restoreBusy, setRestoreBusy] = useState(false);
+
   const handleRestoreUpload = async (e) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
-
-    if (!confirm('Warning: Restoring from a backup will overwrite the current company database. Do you wish to continue?')) {
-      return;
-    }
-
     try {
       const text = await file.text();
       const backupJson = JSON.parse(text);
-      await apiRequest('/api/backup/import', {
-        method: 'POST',
-        body: JSON.stringify(backupJson)
-      });
-      showToast('Database backup successfully restored!', 'success');
-      triggerRefresh();
+      setRestorePassword('');
+      setRestoreConfirm('');
+      setRestoreDraft({ fileName: file.name, text: text.trim(), backup: backupJson });
     } catch (err) {
-      showToast(`Failed to restore backup: ${err.message}`, 'error');
+      showToast(`${t('settings.restore_invalid_file')}: ${err.message}`, 'error');
+    }
+  };
+
+  const cancelRestore = () => {
+    setRestoreDraft(null);
+    setRestorePassword('');
+    setRestoreConfirm('');
+  };
+
+  const submitRestore = async () => {
+    if (!restoreDraft || restoreConfirm !== 'RESTORE' || !restorePassword) return;
+    setRestoreBusy(true);
+    try {
+      // The file text is sent unchanged inside the envelope so its checksum still matches.
+      const payload = `{"backup":${restoreDraft.text},"password":${JSON.stringify(restorePassword)},"confirm":"RESTORE"}`;
+      await apiRequest('/api/backup/import', { method: 'POST', body: payload });
+      cancelRestore();
+      showToast(t('settings.restore_done'), 'success');
+      // The server has revoked every session: return to sign-in.
+      await logout();
+    } catch (err) {
+      showToast(`${t('settings.restore_failed')}: ${err.message}`, 'error');
+    } finally {
+      setRestoreBusy(false);
     }
   };
 
@@ -579,13 +602,45 @@ export default function SettingsView() {
               <h3 className="font-bold text-sm text-slate-900">{t('settings.restore_backup')}</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">{t('settings.restore_desc')}</p>
             </div>
-            <div>
-              <label className="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-lg text-xs font-semibold shadow transition flex items-center justify-center space-x-2 cursor-pointer">
-                <Upload className="w-3.5 h-3.5" />
-                <span>Upload & Restore (.json)</span>
-                <input type="file" accept=".json" onChange={handleRestoreUpload} className="hidden" />
-              </label>
-            </div>
+            {!restoreDraft && (
+              <div>
+                <label className="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-lg text-xs font-semibold shadow transition flex items-center justify-center space-x-2 cursor-pointer">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{t('settings.restore_choose_file')}</span>
+                  <input type="file" accept=".json" onChange={handleRestoreUpload} className="hidden" />
+                </label>
+              </div>
+            )}
+            {restoreDraft && (
+              <div className="space-y-3 border border-amber-300 bg-amber-50 rounded-lg p-3" role="group" aria-label={t('settings.restore_backup')}>
+                <p className="text-xs font-semibold text-amber-900">{t('settings.restore_warning')}</p>
+                <p className="text-[11px] text-amber-900">{t('settings.restore_file')}: {restoreDraft.fileName}</p>
+                <p className="text-[11px] text-amber-900">{t('settings.restore_signout_notice')}</p>
+                <label className="block space-y-1">
+                  <span className="text-xs font-semibold text-slate-700">{t('settings.restore_password_label')}</span>
+                  <input type="password" autoComplete="current-password" value={restorePassword}
+                    onChange={(e) => setRestorePassword(e.target.value)}
+                    className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-xs" />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-xs font-semibold text-slate-700">{t('settings.restore_type_confirm')}</span>
+                  <input type="text" value={restoreConfirm}
+                    onChange={(e) => setRestoreConfirm(e.target.value)}
+                    className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-xs font-mono" />
+                </label>
+                <div className="flex space-x-2">
+                  <button type="button" onClick={cancelRestore} disabled={restoreBusy}
+                    className="flex-1 border border-slate-300 bg-white text-slate-700 py-2 rounded-lg text-xs font-semibold">
+                    {t('settings.restore_cancel')}
+                  </button>
+                  <button type="button" onClick={submitRestore}
+                    disabled={restoreBusy || restoreConfirm !== 'RESTORE' || !restorePassword}
+                    className="flex-1 bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-semibold">
+                    {restoreBusy ? t('settings.restore_running') : t('settings.restore_confirm_button')}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

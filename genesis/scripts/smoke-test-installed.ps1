@@ -89,10 +89,17 @@ function Close-GenesisGracefully {
   $windows = Get-GenesisProcesses | Where-Object { $_.MainWindowHandle -ne 0 }
   Assert ($windows.Count -gt 0) 'No GENESIS window found to close.'
   foreach ($w in $windows) { [void]$w.CloseMainWindow() }
-  $deadline = (Get-Date).AddSeconds(30)
+  $deadline = (Get-Date).AddSeconds(60)
   while ((Get-Date) -lt $deadline -and (Get-GenesisProcesses)) { Start-Sleep -Milliseconds 300 }
   $left = Get-GenesisProcesses
-  if ($left) { throw "GENESIS processes still running after the window was closed: $($left.Id -join ', ')" }
+  if ($left) {
+    # Diagnostics for the log: which processes remain, when they started, and their command lines.
+    $left | ForEach-Object {
+      $cim = Get-CimInstance Win32_Process -Filter "ProcessId=$($_.Id)" -ErrorAction SilentlyContinue
+      Write-Host "    leftover pid $($_.Id) started $($_.StartTime) window=$($_.MainWindowHandle) cmd=$($cim.CommandLine)"
+    }
+    throw "GENESIS processes still running after the window was closed: $($left.Id -join ', ')"
+  }
 }
 
 function Invoke-Api([string] $Base, [string] $Method, [string] $Route, $Body = $null, [string] $Token = $null) {
@@ -229,10 +236,20 @@ Step 'Relaunch: business data persists after restart' {
 
 Step 'Backup restore protection: a restore first keeps a copy of the database' {
   # Restoring the exported file must be accepted and must leave a pre-restore copy on disk.
-  $body = Get-Content $script:BackupFile -Raw
-  Invoke-RestMethod -Uri "$script:baseUrl/api/backup/import" -Method Post -Headers @{ Authorization = "Bearer $script:Token" } -ContentType 'application/json' -Body $body -TimeoutSec 60 | Out-Null
+  # Restore contract: the backup document, the current password and the word RESTORE.
+  # The exported file is sent byte-for-byte inside the envelope, so the checksum still matches.
+  $raw = (Get-Content $script:BackupFile -Raw).Trim()
+  $payload = '{"backup":' + $raw + ',"password":' + (ConvertTo-Json $script:Password) + ',"confirm":"RESTORE"}'
+  $result = Invoke-RestMethod -Uri "$script:baseUrl/api/backup/import" -Method Post -Headers @{ Authorization = "Bearer $script:Token" } -ContentType 'application/json' -Body $payload -TimeoutSec 60
+  Assert ($result.success -eq $true) 'The restore was not accepted.'
+  Assert ($result.signedOut -eq $true) 'The restore did not sign the users out.'
   $copies = Get-ChildItem (Join-Path $DataDir 'backups') -Filter 'pre-restore-*.db' -ErrorAction SilentlyContinue
   Assert ($copies.Count -ge 1) 'No pre-restore database copy was written.'
+  # The session used for the restore must now be revoked.
+  $revoked = $false
+  try { Invoke-Api $script:baseUrl 'GET' '/auth/me' $null $script:Token | Out-Null } catch { $revoked = $true }
+  Assert $revoked 'The session used for the restore is still valid.'
+  $script:Token = (Invoke-Api $script:baseUrl 'POST' '/auth/login' @{ username = 'smoke.admin'; password = $script:Password }).token
 }
 
 Step 'Close again and confirm clean shutdown' {

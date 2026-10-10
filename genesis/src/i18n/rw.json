@@ -356,7 +356,19 @@
     "restore_backup": "Kugarura Amakuru muri Sisitemu",
     "restore_desc": "Shyiramo idosiye ya kopi yemejwe kugira ngo ugarure amakuru.",
     "reset_demo": "Kugarura Isosiyete y'Urugero (Demo)",
-    "reset_demo_desc": "Gusiba ibiriho byose ugasubizaho isosiyete y'urugero yuzuye ibaruramari ry'iteganywa."
+    "reset_demo_desc": "Gusiba ibiriho byose ugasubizaho isosiyete y'urugero yuzuye ibaruramari ry'iteganywa.",
+    "restore_choose_file": "Hitamo dosiye yo gusubiza inyuma (.json)",
+    "restore_invalid_file": "Dosiye wahisemo ntabwo ari backup yemewe",
+    "restore_warning": "Gusubiza inyuma bisimbuza amakuru y'ubucuruzi y'iki kigo na backup. Reba neza ko wahisemo dosiye ikwiye.",
+    "restore_file": "Dosiye",
+    "restore_signout_notice": "Nyuma yo gusubiza inyuma, abakoresha bose basohoka kandi bagomba kongera kwinjira n'ijambobanga risanzwe.",
+    "restore_password_label": "Ijambobanga ryawe (ngombwa)",
+    "restore_type_confirm": "Andika RESTORE kugira ngo wemeze",
+    "restore_cancel": "Hagarika",
+    "restore_confirm_button": "Subiza inyuma backup",
+    "restore_running": "Irimo gusubizwa inyuma…",
+    "restore_done": "Backup yasubijwe inyuma. Nyamuneka ongera winjire.",
+    "restore_failed": "Gusubiza inyuma byanze (nta kintu cyahindutse)"
   },
   "auth": {
     "app_tagline": "Imicungire n’ibaruramari ry’ubucuruzi",
