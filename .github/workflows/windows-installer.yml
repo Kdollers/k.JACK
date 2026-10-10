@@ -22,7 +22,12 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm ci --foreground-scripts --loglevel=http
+        shell: pwsh
+        run: |
+          cmd /c "npm ci --foreground-scripts --loglevel=http > npm-ci.log 2>&1"
+          $code = $LASTEXITCODE
+          Get-Content npm-ci.log -Tail 300
+          if ($code -ne 0) { exit $code }
 
       - name: Upload diagnostics on failure
         if: failure()
@@ -30,7 +35,7 @@ jobs:
         with:
           name: diagnostics
           path: |
-            ~/AppData/Local/npm-cache/_logs/*.log
+            genesis/npm-ci.log
             genesis/npm-debug.log*
           if-no-files-found: warn
 
