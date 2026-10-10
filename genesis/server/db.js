@@ -2,6 +2,8 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { runMigrations } = require('./migrations');
+const { hashPassword } = require('./passwords');
 
 const DB_PATH = process.env.GENESIS_DB_PATH || path.join(__dirname, '..', 'genesis.db');
 
@@ -14,9 +16,41 @@ function getDb() {
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
     initSchema(db);
+    backupBeforeMigrations(db);
+    runMigrations(db);
     seedDefaultData(db);
   }
   return db;
+}
+
+/** Takes a file copy of the database before pending migrations change it. */
+function backupBeforeMigrations(database) {
+  const { MIGRATIONS } = require('./migrations');
+  if (DB_PATH === ':memory:' || !fs.existsSync(DB_PATH)) return null;
+  const applied = new Set(
+    database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_migrations'").get()
+      ? database.prepare('SELECT version FROM schema_migrations').all().map((r) => r.version)
+      : []
+  );
+  const pending = MIGRATIONS.filter((m) => !applied.has(m.version));
+  if (pending.length === 0) return null;
+  const dir = path.join(path.dirname(DB_PATH), 'backups');
+  fs.mkdirSync(dir, { recursive: true });
+  const target = path.join(dir, `pre-migration-v${pending[0].version}-${new Date().toISOString().replace(/[:.]/g, '-')}.db`);
+  database.pragma('wal_checkpoint(TRUNCATE)');
+  fs.copyFileSync(DB_PATH, target, fs.constants.COPYFILE_EXCL);
+  return target;
+}
+
+/** Copies the live database file (after a WAL checkpoint) to backups/ with a label. */
+function backupDatabaseFile(label) {
+  if (DB_PATH === ':memory:' || !fs.existsSync(DB_PATH) || !db) return null;
+  const dir = path.join(path.dirname(DB_PATH), 'backups');
+  fs.mkdirSync(dir, { recursive: true });
+  db.pragma('wal_checkpoint(TRUNCATE)');
+  const target = path.join(dir, `${label}-${new Date().toISOString().replace(/[:.]/g, '-')}.db`);
+  fs.copyFileSync(DB_PATH, target, fs.constants.COPYFILE_EXCL);
+  return target;
 }
 
 function closeDb() {
@@ -25,10 +59,6 @@ function closeDb() {
     db.close();
     db = null;
   }
-}
-
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password + 'genesis_salt_2026').digest('hex');
 }
 
 function initSchema(database) {
@@ -574,7 +604,7 @@ function initSchema(database) {
   `);
 }
 
-function seedDefaultData(database) {
+function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1' } = {}) {
   const companyCount = database.prepare('SELECT COUNT(*) as count FROM companies').get().count;
   if (companyCount > 0) return;
 
@@ -605,15 +635,15 @@ function seedDefaultData(database) {
     'en', 0, 'WEIGHTED_AVERAGE', now, now
   );
 
-  // 2. Default Users
-  const users = [
+  // 2. Demo users (only when GENESIS_SEED_DEMO=1; never in production)
+  const users = demo ? [
     { id: 'usr-admin', username: 'admin', name: 'System Administrator', role: 'admin', email: 'admin@genesiserp.com' },
     { id: 'usr-accountant', username: 'accountant', name: 'Jean-Paul Nsengiyumva', role: 'accountant', email: 'accountant@genesiserp.com' },
     { id: 'usr-sales', username: 'sales', name: 'Claire Uwase', role: 'sales', email: 'sales@genesiserp.com' },
     { id: 'usr-purchases', username: 'purchases', name: 'Patrick Mugisha', role: 'purchases', email: 'purchases@genesiserp.com' },
     { id: 'usr-inventory', username: 'inventory', name: 'Eric Habimana', role: 'inventory', email: 'inventory@genesiserp.com' },
     { id: 'usr-manager', username: 'manager', name: 'Grace Mutoni', role: 'manager', email: 'manager@genesiserp.com' }
-  ];
+  ] : [];
 
   const defaultPasswordHash = hashPassword('admin123');
   const insertUser = database.prepare(`
@@ -710,6 +740,13 @@ function seedDefaultData(database) {
 
   for (const b of bankAccounts) {
     insertBank.run(b.id, companyId, b.account_id, b.name, b.num, b.type, b.curr, b.bal);
+  }
+
+  // Non-demo installs stop here: the company is completed by the setup wizard.
+  if (!demo) {
+    database.prepare('UPDATE companies SET name = ?, legal_name = ?, address = NULL, phone = NULL, email = NULL, tax_id = NULL WHERE id = ?')
+      .run('New Company', 'New Company', companyId);
+    return;
   }
 
   // 6. Default Customers
@@ -854,6 +891,7 @@ function seedDefaultData(database) {
 module.exports = {
   getDb,
   closeDb,
+  backupDatabaseFile,
   hashPassword,
   DB_PATH
 };

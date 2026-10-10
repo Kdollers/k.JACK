@@ -16,21 +16,25 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar() {
-  const { activeView, setActiveView } = useApp();
+  const { activeView, setActiveView, hasPermission } = useApp();
   const { t } = useI18n();
 
-  const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
-    { id: 'customers', icon: Users, label: t('nav.customers') },
-    { id: 'suppliers', icon: Building, label: t('nav.suppliers') },
-    { id: 'inventory', icon: Package, label: t('nav.inventory') },
-    { id: 'sales', icon: ShoppingCart, label: t('nav.sales') },
-    { id: 'purchases', icon: ShoppingBag, label: t('nav.purchases') },
-    { id: 'banking', icon: CreditCard, label: t('nav.banking') },
-    { id: 'accounting', icon: BookOpen, label: t('nav.accounting') },
-    { id: 'reports', icon: BarChart3, label: t('nav.reports') },
-    { id: 'settings', icon: Settings, label: t('nav.settings') }
+  // Visibility only. The backend enforces the same permissions on every API call.
+  const allItems = [
+    { id: 'dashboard', icon: LayoutDashboard, label: t('nav.dashboard'), perm: 'dashboard:read' },
+    { id: 'customers', icon: Users, label: t('nav.customers'), perm: 'contacts:read' },
+    { id: 'suppliers', icon: Building, label: t('nav.suppliers'), perm: 'contacts:read' },
+    { id: 'inventory', icon: Package, label: t('nav.inventory'), perm: 'inventory:read' },
+    { id: 'sales', icon: ShoppingCart, label: t('nav.sales'), perm: 'sales:read' },
+    { id: 'purchases', icon: ShoppingBag, label: t('nav.purchases'), perm: 'purchases:read' },
+    { id: 'banking', icon: CreditCard, label: t('nav.banking'), perm: 'banking:read' },
+    { id: 'accounting', icon: BookOpen, label: t('nav.accounting'), perm: 'accounting:read' },
+    { id: 'reports', icon: BarChart3, label: t('nav.reports'), perm: 'reports:read' },
+    { id: 'settings', icon: Settings, label: t('nav.settings'), perm: ['company:manage', 'users:manage', 'backup:export'] }
   ];
+  const menuItems = allItems.filter((item) =>
+    Array.isArray(item.perm) ? item.perm.some((p) => hasPermission(p)) : hasPermission(item.perm)
+  );
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 select-none">

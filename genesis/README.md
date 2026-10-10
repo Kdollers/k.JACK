@@ -99,6 +99,7 @@ npm test
 ```
 
 ### 3. Build Client & Start Production Server
+(Test commands: `npm test`, `npm run test:auth`, `npm run test:desktop`, or `npm run test:all`.)
 ```bash
 npm run build
 npm start
@@ -107,16 +108,20 @@ The server will start on port `3000` (e.g., `http://localhost:3000`).
 
 ---
 
-## 👥 Default Demo Credentials
+## 👥 First Start, Sign-in and Accounts
 
-| Role | Username | Password |
-|---|---|---|
-| System Administrator | `admin` | `admin123` |
-| Chief Accountant | `accountant` | `admin123` |
-| Sales Executive | `sales` | `admin123` |
-| Purchasing Officer | `purchases` | `admin123` |
-| Warehouse Manager | `inventory` | `admin123` |
-| Operations Manager | `manager` | `admin123` |
+- **New installation:** GENESIS opens a one-time setup screen. Enter the company name and create the first
+  administrator. There are no default accounts and no default passwords.
+- **Existing database:** sign in with your existing username. Accounts that still use an old password format
+  are asked to choose a new password at first sign-in.
+- **Roles:** Administrator, Accountant, Sales, Purchases, Inventory, Manager. Each role has a fixed permission
+  set enforced by the server (see `server/auth.js`). The manager role is read-only.
+- **Sessions:** sign-in tokens expire after 30 minutes of inactivity and after 12 hours in total.
+  Five consecutive wrong passwords lock the account for 15 minutes.
+- **Demo data (development only):** `GENESIS_SEED_DEMO=1` on a *new* database creates sample data with the
+  accounts `admin`, `accountant`, `sales`, `purchases`, `inventory`, `manager` and password `admin123`.
+  Never use this in production.
+
 
 ---
 

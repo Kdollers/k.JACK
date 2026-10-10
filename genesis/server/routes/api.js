@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { getDb, hashPassword } = require('../db');
+const { getDb } = require('../db');
+const { hashPassword, verifyPassword } = require('../passwords');
+const {
+  authenticate,
+  requirePermission,
+  checkPasswordPolicy,
+  createSession,
+  revokeSession,
+  revokeUserSessions,
+  login,
+  bearerToken,
+  ROLES
+} = require('../auth');
 const {
   roundTo,
   generateId,
@@ -18,112 +30,228 @@ const {
 } = require('../accountingEngine');
 const reports = require('../reports');
 
-// Middleware to resolve active company and user
+// Public endpoints: the only routes reachable without a valid session.
+const PUBLIC_ROUTES = new Set([
+  'POST /auth/login',
+  'GET /setup/status',
+  'POST /setup/initialize'
+]);
+
+// Every other route requires a valid session. Each route additionally declares
+// its permission with requirePermission(...). A test verifies no route is unguarded.
+router.use((req, res, next) => {
+  if (PUBLIC_ROUTES.has(`${req.method} ${req.path}`)) return next();
+  return authenticate(req, res, next);
+});
+
+/** Returns the authenticated company and user for the current request. */
 function getSessionContext(req) {
-  const db = getDb();
-  let companyId = req.headers['x-company-id'];
-  if (!companyId) {
-    const firstComp = db.prepare('SELECT id FROM companies ORDER BY created_at ASC LIMIT 1').get();
-    companyId = firstComp ? firstComp.id : 'comp-genesis-01';
-  }
-
-  const userId = req.headers['x-user-id'] || 'usr-admin';
-  const user = db.prepare('SELECT id, username, full_name, role FROM users WHERE id = ?').get(userId) || {
-    id: 'usr-admin',
-    username: 'admin',
-    full_name: 'System Administrator',
-    role: 'admin'
-  };
-
-  return { companyId, user };
+  if (!req.auth) throw new Error('getSessionContext called without authentication');
+  return { companyId: req.auth.companyId, user: req.auth.user };
 }
 
 // --------------------------------------------------------------------------
-// 1. AUTH & USERS
+// 1. AUTH, SESSIONS & USERS
 // --------------------------------------------------------------------------
+function clientInfo(req) {
+  return { ip: req.socket?.remoteAddress || null, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) };
+}
+
+function publicUser(u) {
+  return {
+    id: u.id,
+    username: u.username,
+    full_name: u.full_name,
+    role: u.role,
+    email: u.email,
+    must_change_password: !!u.must_change_password
+  };
+}
+
 router.post('/auth/login', (req, res) => {
-  const { username, password } = req.body;
-  const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE username = ? AND active = 1').get(username);
-  
-  if (!user || user.password_hash !== hashPassword(password)) {
-    return res.status(401).json({ error: 'Invalid username or password' });
+  const { username, password } = req.body || {};
+  const result = login({ username, password, ...clientInfo(req) });
+  if (!result.ok) {
+    return res.status(result.status).json({ error: result.error, code: result.code });
   }
-
-  const company = db.prepare('SELECT * FROM companies WHERE id = ?').get(user.company_id) ||
-                  db.prepare('SELECT * FROM companies ORDER BY created_at ASC LIMIT 1').get();
-
-  logAudit(company?.id, user.id, user.full_name, 'AUTH', 'LOGIN', user.id, `User ${user.username} logged in`);
-
+  const company = getDb().prepare('SELECT * FROM companies WHERE id = ?').get(result.companyId);
+  logAudit(result.companyId, result.user.id, result.user.full_name, 'AUTH', 'LOGIN', result.user.id, `User ${result.user.username} logged in`);
   res.json({
-    user: {
-      id: user.id,
-      username: user.username,
-      full_name: user.full_name,
-      role: user.role,
-      email: user.email
-    },
-    company
+    token: result.token,
+    user: publicUser({ ...result.user, must_change_password: result.mustChangePassword }),
+    company,
+    mustChangePassword: result.mustChangePassword
   });
 });
 
-router.get('/auth/users', (req, res) => {
+router.get('/auth/me', (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const fresh = getDb().prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+  const company = getDb().prepare('SELECT * FROM companies WHERE id = ?').get(companyId);
+  res.json({ user: publicUser(fresh), company, permissions: [...req.auth.permissions].sort() });
+});
+
+router.post('/auth/logout', (req, res) => {
+  revokeSession(bearerToken(req));
+  res.json({ success: true });
+});
+
+router.post('/auth/change-password', (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const { current_password, new_password } = req.body || {};
   const db = getDb();
-  const users = db.prepare('SELECT id, username, full_name, email, role, active, created_at FROM users ORDER BY full_name ASC').all();
+  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+  if (!verifyPassword(current_password, row.password_hash).ok) {
+    return res.status(400).json({ error: 'Current password is incorrect.', code: 'CURRENT_PASSWORD_INCORRECT' });
+  }
+  const policy = checkPasswordPolicy(new_password, row.username);
+  if (policy) return res.status(400).json({ error: policy.error, code: policy.code });
+  db.prepare('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?')
+    .run(hashPassword(new_password), user.id);
+  // Other sessions of this user are no longer trusted after a password change.
+  revokeUserSessions(user.id, req.auth.session.id);
+  logAudit(companyId, user.id, user.full_name, 'AUTH', 'PASSWORD_CHANGE', user.id, `User ${user.username} changed password`);
+  res.json({ success: true });
+});
+
+// Initial administrator setup: only possible while no active user exists.
+router.get('/setup/status', (req, res) => {
+  const db = getDb();
+  const users = db.prepare('SELECT COUNT(*) AS n FROM users WHERE active = 1').get().n;
+  res.json({ needsSetup: users === 0 });
+});
+
+router.post('/setup/initialize', (req, res) => {
+  const db = getDb();
+  const activeUsers = db.prepare('SELECT COUNT(*) AS n FROM users WHERE active = 1').get().n;
+  if (activeUsers > 0) {
+    return res.status(409).json({ error: 'Setup has already been completed.', code: 'SETUP_COMPLETE' });
+  }
+  const { company_name, username, password, full_name, email } = req.body || {};
+  if (!company_name || !String(company_name).trim()) {
+    return res.status(400).json({ error: 'Company name is required.', code: 'COMPANY_NAME_REQUIRED' });
+  }
+  if (!username || !/^[A-Za-z0-9._-]{3,40}$/.test(String(username))) {
+    return res.status(400).json({ error: 'Username must be 3-40 characters: letters, digits, dot, dash or underscore.', code: 'USERNAME_INVALID' });
+  }
+  if (!full_name || !String(full_name).trim()) {
+    return res.status(400).json({ error: 'Full name is required.', code: 'FULL_NAME_REQUIRED' });
+  }
+  const policy = checkPasswordPolicy(password, username);
+  if (policy) return res.status(400).json({ error: policy.error, code: policy.code });
+
+  const companyRow = db.prepare('SELECT id FROM companies ORDER BY created_at ASC LIMIT 1').get();
+  if (!companyRow) {
+    return res.status(500).json({ error: 'No company record exists. Restart GENESIS to initialise the database.', code: 'NO_COMPANY' });
+  }
+  const id = generateId('usr');
+  db.transaction(() => {
+    db.prepare('UPDATE companies SET name = ?, legal_name = ? WHERE id = ?')
+      .run(String(company_name).trim(), String(company_name).trim(), companyRow.id);
+    db.prepare(`
+      INSERT INTO users (id, username, password_hash, full_name, email, role, company_id, active, created_at, must_change_password)
+      VALUES (?, ?, ?, ?, ?, 'admin', ?, 1, datetime('now'), 0)
+    `).run(id, username, hashPassword(password), String(full_name).trim(), email || null, companyRow.id);
+  })();
+  logAudit(companyRow.id, id, String(full_name).trim(), 'AUTH', 'SETUP', id, `Initial administrator ${username} created`);
+  res.json({ success: true });
+});
+
+router.get('/auth/users', requirePermission('users:manage'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const users = getDb().prepare(`
+    SELECT id, username, full_name, email, role, active, must_change_password, last_login_at, created_at
+    FROM users WHERE company_id = ? ORDER BY full_name ASC
+  `).all(companyId);
   res.json(users);
 });
 
-router.post('/auth/users', (req, res) => {
+router.post('/auth/users', requirePermission('users:manage'), (req, res) => {
   const { companyId, user: currentUser } = getSessionContext(req);
-  const { username, password, full_name, email, role } = req.body;
+  const { username, password, full_name, email, role } = req.body || {};
   if (!username || !password || !full_name || !role) {
-    return res.status(400).json({ error: 'Missing required user fields' });
+    return res.status(400).json({ error: 'Missing required user fields', code: 'MISSING_FIELDS' });
   }
+  if (!ROLES.includes(role)) {
+    return res.status(400).json({ error: 'Unknown role.', code: 'ROLE_INVALID' });
+  }
+  const policy = checkPasswordPolicy(password, username);
+  if (policy) return res.status(400).json({ error: policy.error, code: policy.code });
 
   const db = getDb();
   const id = generateId('usr');
   try {
     db.prepare(`
-      INSERT INTO users (id, username, password_hash, full_name, email, role, company_id, active, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'))
+      INSERT INTO users (id, username, password_hash, full_name, email, role, company_id, active, created_at, must_change_password)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), 1)
     `).run(id, username, hashPassword(password), full_name, email, role, companyId);
 
     logAudit(companyId, currentUser.id, currentUser.full_name, 'USERS', 'CREATE', id, `Created user ${username} (${role})`);
-    res.json({ id, username, full_name, email, role, active: 1 });
+    res.json({ id, username, full_name, email, role, active: 1, must_change_password: 1 });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message.includes('UNIQUE') ? 'Username already exists.' : err.message, code: 'USER_CREATE_FAILED' });
   }
 });
 
-router.put('/auth/users/:id', (req, res) => {
+router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
   const { companyId, user: currentUser } = getSessionContext(req);
-  const { full_name, email, role, active, password } = req.body;
+  const { full_name, email, role, active, password } = req.body || {};
   const db = getDb();
+  const target = db.prepare('SELECT * FROM users WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
+  if (!target) return res.status(404).json({ error: 'User not found.', code: 'NOT_FOUND' });
+
+  if (role !== undefined && !ROLES.includes(role)) {
+    return res.status(400).json({ error: 'Unknown role.', code: 'ROLE_INVALID' });
+  }
+  const newRole = role !== undefined ? role : target.role;
+  const newActive = active !== undefined ? (active ? 1 : 0) : target.active;
+
+  // Protect against lock-out: administrators cannot remove their own admin rights or disable themselves,
+  // and the last active administrator can never be demoted or disabled.
+  const losesAdmin = target.role === 'admin' && (newRole !== 'admin' || newActive === 0);
+  if (losesAdmin) {
+    if (target.id === currentUser.id) {
+      return res.status(400).json({ error: 'You cannot remove your own administrator rights or disable your own account.', code: 'SELF_LOCKOUT' });
+    }
+    const otherAdmins = db.prepare(`SELECT COUNT(*) AS n FROM users WHERE company_id = ? AND role = 'admin' AND active = 1 AND id <> ?`)
+      .get(companyId, target.id).n;
+    if (otherAdmins === 0) {
+      return res.status(400).json({ error: 'At least one active administrator must remain.', code: 'LAST_ADMIN' });
+    }
+  }
+  if (target.id === currentUser.id && newActive === 0) {
+    return res.status(400).json({ error: 'You cannot disable your own account.', code: 'SELF_LOCKOUT' });
+  }
 
   try {
-    if (password) {
-      db.prepare(`
-        UPDATE users SET full_name = ?, email = ?, role = ?, active = ?, password_hash = ? WHERE id = ?
-      `).run(full_name, email, role, active !== undefined ? (active ? 1 : 0) : 1, hashPassword(password), req.params.id);
-    } else {
-      db.prepare(`
-        UPDATE users SET full_name = ?, email = ?, role = ?, active = ? WHERE id = ?
-      `).run(full_name, email, role, active !== undefined ? (active ? 1 : 0) : 1, req.params.id);
+    db.transaction(() => {
+      db.prepare('UPDATE users SET full_name = ?, email = ?, role = ?, active = ? WHERE id = ?')
+        .run(full_name ?? target.full_name, email ?? target.email, newRole, newActive, target.id);
+      if (password) {
+        const policy = checkPasswordPolicy(password, target.username);
+        if (policy) throw Object.assign(new Error(policy.error), { code: policy.code });
+        db.prepare('UPDATE users SET password_hash = ?, must_change_password = 1, failed_login_count = 0, locked_until = NULL WHERE id = ?')
+          .run(hashPassword(password), target.id);
+      }
+    })();
+    if (password || newActive === 0 || newRole !== target.role) {
+      revokeUserSessions(target.id);
     }
-
-    logAudit(companyId, currentUser.id, currentUser.full_name, 'USERS', 'UPDATE', req.params.id, `Updated user ${req.params.id}`);
+    logAudit(companyId, currentUser.id, currentUser.full_name, 'USERS', 'UPDATE', target.id,
+      `Updated user ${target.username}: role=${newRole}, active=${newActive}${password ? ', password reset' : ''}`);
     res.json({ success: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message, code: err.code || 'USER_UPDATE_FAILED' });
   }
 });
 
 // --------------------------------------------------------------------------
 // 2. COMPANIES
 // --------------------------------------------------------------------------
+// Users can only see the company bound to their session.
 router.get('/companies', (req, res) => {
-  const db = getDb();
-  const list = db.prepare('SELECT * FROM companies ORDER BY name ASC').all();
+  const { companyId } = getSessionContext(req);
+  const list = getDb().prepare('SELECT * FROM companies WHERE id = ?').all(companyId);
   res.json(list);
 });
 
@@ -134,7 +262,7 @@ router.get('/companies/current', (req, res) => {
   res.json(company || null);
 });
 
-router.put('/companies/current', (req, res) => {
+router.put('/companies/current', requirePermission('company:manage'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const db = getDb();
   const {
@@ -166,7 +294,7 @@ router.put('/companies/current', (req, res) => {
   }
 });
 
-router.post('/companies', (req, res) => {
+router.post('/companies', requirePermission('company:manage'), (req, res) => {
   const { user } = getSessionContext(req);
   const db = getDb();
   const {
@@ -231,7 +359,7 @@ router.post('/companies', (req, res) => {
 // --------------------------------------------------------------------------
 // 3. CHART OF ACCOUNTS
 // --------------------------------------------------------------------------
-router.get('/accounts', (req, res) => {
+router.get('/accounts', requirePermission('accounting:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const accounts = db.prepare(`
@@ -258,7 +386,7 @@ router.get('/accounts', (req, res) => {
   res.json(formatted);
 });
 
-router.post('/accounts', (req, res) => {
+router.post('/accounts', requirePermission('accounting:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { code, name, type, subtype, normal_balance, notes } = req.body;
   if (!code || !name || !type || !normal_balance) {
@@ -280,7 +408,7 @@ router.post('/accounts', (req, res) => {
   }
 });
 
-router.put('/accounts/:id', (req, res) => {
+router.put('/accounts/:id', requirePermission('accounting:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { name, subtype, active, notes } = req.body;
   const db = getDb();
@@ -300,7 +428,7 @@ router.put('/accounts/:id', (req, res) => {
 // --------------------------------------------------------------------------
 // 4. CUSTOMERS
 // --------------------------------------------------------------------------
-router.get('/customers', (req, res) => {
+router.get('/customers', requirePermission('contacts:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const search = req.query.search ? `%${req.query.search}%` : null;
@@ -314,7 +442,7 @@ router.get('/customers', (req, res) => {
   res.json(db.prepare(sql).all(...params));
 });
 
-router.post('/customers', (req, res) => {
+router.post('/customers', requirePermission('contacts:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { name, contact_person, email, phone, address, tax_id, credit_limit = 0, payment_terms = 'NET_30' } = req.body;
   if (!name) return res.status(400).json({ error: 'Customer name is required' });
@@ -337,7 +465,7 @@ router.post('/customers', (req, res) => {
   }
 });
 
-router.put('/customers/:id', (req, res) => {
+router.put('/customers/:id', requirePermission('contacts:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { name, contact_person, email, phone, address, tax_id, credit_limit, payment_terms, active } = req.body;
   const db = getDb();
@@ -357,7 +485,7 @@ router.put('/customers/:id', (req, res) => {
   }
 });
 
-router.get('/customers/:id/statement', (req, res) => {
+router.get('/customers/:id/statement', requirePermission('contacts:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -371,7 +499,7 @@ router.get('/customers/:id/statement', (req, res) => {
 // --------------------------------------------------------------------------
 // 5. SUPPLIERS
 // --------------------------------------------------------------------------
-router.get('/suppliers', (req, res) => {
+router.get('/suppliers', requirePermission('contacts:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const search = req.query.search ? `%${req.query.search}%` : null;
@@ -385,7 +513,7 @@ router.get('/suppliers', (req, res) => {
   res.json(db.prepare(sql).all(...params));
 });
 
-router.post('/suppliers', (req, res) => {
+router.post('/suppliers', requirePermission('contacts:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { name, contact_person, email, phone, address, tax_id, payment_terms = 'NET_30' } = req.body;
   if (!name) return res.status(400).json({ error: 'Supplier name is required' });
@@ -408,7 +536,7 @@ router.post('/suppliers', (req, res) => {
   }
 });
 
-router.put('/suppliers/:id', (req, res) => {
+router.put('/suppliers/:id', requirePermission('contacts:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { name, contact_person, email, phone, address, tax_id, payment_terms, active } = req.body;
   const db = getDb();
@@ -428,7 +556,7 @@ router.put('/suppliers/:id', (req, res) => {
   }
 });
 
-router.get('/suppliers/:id/statement', (req, res) => {
+router.get('/suppliers/:id/statement', requirePermission('contacts:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -442,7 +570,7 @@ router.get('/suppliers/:id/statement', (req, res) => {
 // --------------------------------------------------------------------------
 // 6. PRODUCTS & INVENTORY
 // --------------------------------------------------------------------------
-router.get('/products', (req, res) => {
+router.get('/products', requirePermission('inventory:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const search = req.query.search ? `%${req.query.search}%` : null;
@@ -456,7 +584,7 @@ router.get('/products', (req, res) => {
   res.json(db.prepare(sql).all(...params));
 });
 
-router.post('/products', (req, res) => {
+router.post('/products', requirePermission('inventory:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const {
     sku, barcode, name, description, category = 'General', type = 'GOODS',
@@ -493,7 +621,7 @@ router.post('/products', (req, res) => {
   }
 });
 
-router.put('/products/:id', (req, res) => {
+router.put('/products/:id', requirePermission('inventory:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const {
     sku, barcode, name, description, category, type, unit,
@@ -522,7 +650,7 @@ router.put('/products/:id', (req, res) => {
   }
 });
 
-router.get('/inventory/movements', (req, res) => {
+router.get('/inventory/movements', requirePermission('inventory:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const productId = req.query.productId;
@@ -541,7 +669,7 @@ router.get('/inventory/movements', (req, res) => {
   res.json(db.prepare(sql).all(...params));
 });
 
-router.get('/inventory/valuation', (req, res) => {
+router.get('/inventory/valuation', requirePermission('inventory:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   try {
     res.json(reports.getInventoryValuation(companyId));
@@ -550,14 +678,14 @@ router.get('/inventory/valuation', (req, res) => {
   }
 });
 
-router.get('/inventory/adjustments', (req, res) => {
+router.get('/inventory/adjustments', requirePermission('inventory:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const adjs = db.prepare(`SELECT * FROM stock_adjustments WHERE company_id = ? ORDER BY date DESC, created_at DESC`).all(companyId);
   res.json(adjs);
 });
 
-router.post('/inventory/adjustments', (req, res) => {
+router.post('/inventory/adjustments', requirePermission('inventory:adjust'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
     const result = postStockAdjustment(companyId, req.body, user);
@@ -567,14 +695,14 @@ router.post('/inventory/adjustments', (req, res) => {
   }
 });
 
-router.get('/inventory/counts', (req, res) => {
+router.get('/inventory/counts', requirePermission('inventory:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const counts = db.prepare(`SELECT * FROM physical_inventory_counts WHERE company_id = ? ORDER BY date DESC, created_at DESC`).all(companyId);
   res.json(counts);
 });
 
-router.post('/inventory/counts', (req, res) => {
+router.post('/inventory/counts', requirePermission('inventory:adjust'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
     const result = postPhysicalCount(companyId, req.body, user);
@@ -587,7 +715,7 @@ router.post('/inventory/counts', (req, res) => {
 // --------------------------------------------------------------------------
 // 7. SALES (Quotes, Orders, Invoices, Credit Notes)
 // --------------------------------------------------------------------------
-router.get('/sales/quotes', (req, res) => {
+router.get('/sales/quotes', requirePermission('sales:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const quotes = db.prepare(`
@@ -600,7 +728,7 @@ router.get('/sales/quotes', (req, res) => {
   res.json(quotes);
 });
 
-router.post('/sales/quotes', (req, res) => {
+router.post('/sales/quotes', requirePermission('sales:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { date = new Date().toISOString().split('T')[0], valid_until, customer_id, notes, lines } = req.body;
   if (!customer_id || !lines || lines.length === 0) {
@@ -668,7 +796,7 @@ router.post('/sales/quotes', (req, res) => {
   }
 });
 
-router.post('/sales/quotes/:id/convert-to-invoice', (req, res) => {
+router.post('/sales/quotes/:id/convert-to-invoice', requirePermission('sales:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const db = getDb();
   try {
@@ -706,7 +834,7 @@ router.post('/sales/quotes/:id/convert-to-invoice', (req, res) => {
   }
 });
 
-router.get('/sales/invoices', (req, res) => {
+router.get('/sales/invoices', requirePermission('sales:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const invoices = db.prepare(`
@@ -719,7 +847,7 @@ router.get('/sales/invoices', (req, res) => {
   res.json(invoices);
 });
 
-router.get('/sales/invoices/:id', (req, res) => {
+router.get('/sales/invoices/:id', requirePermission('sales:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const invoice = db.prepare(`
@@ -743,7 +871,7 @@ router.get('/sales/invoices/:id', (req, res) => {
   res.json({ ...invoice, lines, payments });
 });
 
-router.post('/sales/invoices', (req, res) => {
+router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { date = new Date().toISOString().split('T')[0], due_date, customer_id, notes, lines, autoPost = false } = req.body;
   if (!customer_id || !lines || lines.length === 0) {
@@ -822,7 +950,7 @@ router.post('/sales/invoices', (req, res) => {
   }
 });
 
-router.post('/sales/invoices/:id/post', (req, res) => {
+router.post('/sales/invoices/:id/post', requirePermission('sales:post'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
     const result = postSalesInvoice(companyId, req.params.id, user);
@@ -832,7 +960,7 @@ router.post('/sales/invoices/:id/post', (req, res) => {
   }
 });
 
-router.get('/sales/credit-notes', (req, res) => {
+router.get('/sales/credit-notes', requirePermission('sales:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const cns = db.prepare(`
@@ -845,7 +973,7 @@ router.get('/sales/credit-notes', (req, res) => {
   res.json(cns);
 });
 
-router.post('/sales/credit-notes', (req, res) => {
+router.post('/sales/credit-notes', requirePermission('sales:post'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
     const result = postCreditNote(companyId, req.body, user);
@@ -858,7 +986,7 @@ router.post('/sales/credit-notes', (req, res) => {
 // --------------------------------------------------------------------------
 // 8. PURCHASES (Bills, Orders, Returns)
 // --------------------------------------------------------------------------
-router.get('/purchases/orders', (req, res) => {
+router.get('/purchases/orders', requirePermission('purchases:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const orders = db.prepare(`
@@ -871,7 +999,7 @@ router.get('/purchases/orders', (req, res) => {
   res.json(orders);
 });
 
-router.post('/purchases/orders', (req, res) => {
+router.post('/purchases/orders', requirePermission('purchases:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { date = new Date().toISOString().split('T')[0], expected_date, supplier_id, notes, lines } = req.body;
   if (!supplier_id || !lines || lines.length === 0) {
@@ -935,7 +1063,7 @@ router.post('/purchases/orders', (req, res) => {
   }
 });
 
-router.get('/purchases/bills', (req, res) => {
+router.get('/purchases/bills', requirePermission('purchases:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const bills = db.prepare(`
@@ -948,7 +1076,7 @@ router.get('/purchases/bills', (req, res) => {
   res.json(bills);
 });
 
-router.get('/purchases/bills/:id', (req, res) => {
+router.get('/purchases/bills/:id', requirePermission('purchases:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const bill = db.prepare(`
@@ -972,7 +1100,7 @@ router.get('/purchases/bills/:id', (req, res) => {
   res.json({ ...bill, lines, payments });
 });
 
-router.post('/purchases/bills', (req, res) => {
+router.post('/purchases/bills', requirePermission('purchases:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const {
     vendor_invoice_number, date = new Date().toISOString().split('T')[0],
@@ -1044,7 +1172,7 @@ router.post('/purchases/bills', (req, res) => {
   }
 });
 
-router.post('/purchases/bills/:id/post', (req, res) => {
+router.post('/purchases/bills/:id/post', requirePermission('purchases:post'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
     const result = postPurchaseInvoice(companyId, req.params.id, user);
@@ -1054,7 +1182,7 @@ router.post('/purchases/bills/:id/post', (req, res) => {
   }
 });
 
-router.get('/purchases/returns', (req, res) => {
+router.get('/purchases/returns', requirePermission('purchases:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const returns = db.prepare(`
@@ -1067,7 +1195,7 @@ router.get('/purchases/returns', (req, res) => {
   res.json(returns);
 });
 
-router.post('/purchases/returns', (req, res) => {
+router.post('/purchases/returns', requirePermission('purchases:post'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
     const result = postPurchaseReturn(companyId, req.body, user);
@@ -1080,7 +1208,7 @@ router.post('/purchases/returns', (req, res) => {
 // --------------------------------------------------------------------------
 // 9. PAYMENTS & CASH / BANK
 // --------------------------------------------------------------------------
-router.get('/payments/bank-accounts', (req, res) => {
+router.get('/payments/bank-accounts', requirePermission('banking:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const accounts = db.prepare(`
@@ -1093,7 +1221,7 @@ router.get('/payments/bank-accounts', (req, res) => {
   res.json(accounts);
 });
 
-router.post('/payments/bank-accounts', (req, res) => {
+router.post('/payments/bank-accounts', requirePermission('banking:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { bank_name, account_number, account_type = 'BANK', currency = 'USD', opening_balance = 0, gl_code } = req.body;
   if (!bank_name || !account_number) {
@@ -1122,7 +1250,7 @@ router.post('/payments/bank-accounts', (req, res) => {
   }
 });
 
-router.get('/payments', (req, res) => {
+router.get('/payments', requirePermission('banking:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const payments = db.prepare(`
@@ -1141,7 +1269,7 @@ router.get('/payments', (req, res) => {
   res.json(payments);
 });
 
-router.post('/payments', (req, res) => {
+router.post('/payments', requirePermission('banking:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
     const result = recordPayment(companyId, req.body, user);
@@ -1154,7 +1282,7 @@ router.post('/payments', (req, res) => {
 // --------------------------------------------------------------------------
 // 10. JOURNAL ENTRIES & ACCOUNTING
 // --------------------------------------------------------------------------
-router.get('/journal-entries', (req, res) => {
+router.get('/journal-entries', requirePermission('accounting:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const entries = db.prepare(`
@@ -1167,7 +1295,7 @@ router.get('/journal-entries', (req, res) => {
   res.json(entries);
 });
 
-router.get('/journal-entries/:id', (req, res) => {
+router.get('/journal-entries/:id', requirePermission('accounting:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const entry = db.prepare(`SELECT * FROM journal_entries WHERE id = ? AND company_id = ?`).get(req.params.id, companyId);
@@ -1184,7 +1312,7 @@ router.get('/journal-entries/:id', (req, res) => {
   res.json({ ...entry, lines });
 });
 
-router.post('/journal-entries', (req, res) => {
+router.post('/journal-entries', requirePermission('journal:post'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { date, reference, description, lines } = req.body;
   if (!description || !lines || lines.length < 2) {
@@ -1207,7 +1335,7 @@ router.post('/journal-entries', (req, res) => {
   }
 });
 
-router.post('/journal-entries/:id/reverse', (req, res) => {
+router.post('/journal-entries/:id/reverse', requirePermission('journal:reverse'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { reason } = req.body;
   try {
@@ -1221,7 +1349,7 @@ router.post('/journal-entries/:id/reverse', (req, res) => {
 // --------------------------------------------------------------------------
 // 11. FINANCIAL REPORTS
 // --------------------------------------------------------------------------
-router.get('/reports/dashboard', (req, res) => {
+router.get('/reports/dashboard', requirePermission('dashboard:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -1231,7 +1359,7 @@ router.get('/reports/dashboard', (req, res) => {
   }
 });
 
-router.get('/reports/trial-balance', (req, res) => {
+router.get('/reports/trial-balance', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   try {
     res.json(reports.getTrialBalance(companyId, req.query.asOfDate));
@@ -1240,7 +1368,7 @@ router.get('/reports/trial-balance', (req, res) => {
   }
 });
 
-router.get('/reports/profit-loss', (req, res) => {
+router.get('/reports/profit-loss', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -1250,7 +1378,7 @@ router.get('/reports/profit-loss', (req, res) => {
   }
 });
 
-router.get('/reports/balance-sheet', (req, res) => {
+router.get('/reports/balance-sheet', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   try {
     res.json(reports.getBalanceSheet(companyId, req.query.asOfDate));
@@ -1259,7 +1387,7 @@ router.get('/reports/balance-sheet', (req, res) => {
   }
 });
 
-router.get('/reports/cash-flow', (req, res) => {
+router.get('/reports/cash-flow', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -1269,7 +1397,7 @@ router.get('/reports/cash-flow', (req, res) => {
   }
 });
 
-router.get('/reports/general-ledger', (req, res) => {
+router.get('/reports/general-ledger', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { accountId, startDate, endDate } = req.query;
   if (!accountId) return res.status(400).json({ error: 'accountId is required' });
@@ -1280,7 +1408,7 @@ router.get('/reports/general-ledger', (req, res) => {
   }
 });
 
-router.get('/reports/ar-aging', (req, res) => {
+router.get('/reports/ar-aging', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   try {
     res.json(reports.getArAging(companyId, req.query.asOfDate));
@@ -1289,7 +1417,7 @@ router.get('/reports/ar-aging', (req, res) => {
   }
 });
 
-router.get('/reports/ap-aging', (req, res) => {
+router.get('/reports/ap-aging', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   try {
     res.json(reports.getApAging(companyId, req.query.asOfDate));
@@ -1298,7 +1426,7 @@ router.get('/reports/ap-aging', (req, res) => {
   }
 });
 
-router.get('/reports/tax-report', (req, res) => {
+router.get('/reports/tax-report', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -1311,13 +1439,13 @@ router.get('/reports/tax-report', (req, res) => {
 // --------------------------------------------------------------------------
 // 12. TAX RATES
 // --------------------------------------------------------------------------
-router.get('/taxes', (req, res) => {
+router.get('/taxes', requirePermission('accounting:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   res.json(db.prepare('SELECT * FROM tax_rates WHERE company_id = ? ORDER BY rate DESC').all(companyId));
 });
 
-router.post('/taxes', (req, res) => {
+router.post('/taxes', requirePermission('accounting:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { code, name, rate, sales_tax_account_id, purchase_tax_account_id, is_inclusive } = req.body;
   if (!code || !name || rate === undefined) {
@@ -1342,7 +1470,7 @@ router.post('/taxes', (req, res) => {
 // --------------------------------------------------------------------------
 // 13. AUDIT TRAIL
 // --------------------------------------------------------------------------
-router.get('/audit-trail', (req, res) => {
+router.get('/audit-trail', requirePermission('audit:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const moduleName = req.query.module;
@@ -1359,7 +1487,7 @@ router.get('/audit-trail', (req, res) => {
 // --------------------------------------------------------------------------
 // 14. BACKUP & RESTORE / DEMO RESET
 // --------------------------------------------------------------------------
-router.get('/backup/export', (req, res) => {
+router.get('/backup/export', requirePermission('backup:export'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const db = getDb();
   try {
@@ -1405,7 +1533,7 @@ router.get('/backup/export', (req, res) => {
   }
 });
 
-router.post('/backup/import', (req, res) => {
+router.post('/backup/import', requirePermission('backup:restore'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const data = req.body;
   if (!data || !data.genesisVersion) {
@@ -1413,6 +1541,8 @@ router.post('/backup/import', (req, res) => {
   }
 
   const db = getDb();
+  // Keep a full copy of the database before the restore replaces company data.
+  const preRestoreCopy = require('../db').backupDatabaseFile('pre-restore');
   try {
     db.transaction(() => {
       // Clear current company data
@@ -1468,37 +1598,14 @@ router.post('/backup/import', (req, res) => {
   }
 });
 
-router.post('/backup/reset-demo', (req, res) => {
-  const { user } = getSessionContext(req);
-  const db = getDb();
-  try {
-    // Drop all tables and re-initialize
-    const tables = [
-      'audit_logs', 'payments', 'purchase_return_lines', 'purchase_returns',
-      'purchase_invoice_lines', 'purchase_invoices', 'purchase_order_lines', 'purchase_orders',
-      'credit_note_lines', 'credit_notes', 'sales_invoice_lines', 'sales_invoices',
-      'sales_order_lines', 'sales_orders', 'sales_quote_lines', 'sales_quotes',
-      'physical_inventory_lines', 'physical_inventory_counts', 'stock_adjustment_lines', 'stock_adjustments',
-      'inventory_movements', 'journal_entry_lines', 'journal_entries', 'products',
-      'suppliers', 'customers', 'bank_accounts', 'tax_rates', 'accounts', 'users', 'companies'
-    ];
-
-    db.transaction(() => {
-      for (const t of tables) {
-        db.prepare(`DROP TABLE IF EXISTS ${t}`).run();
-      }
-    })();
-
-    // Re-seed
-    const { DB_PATH } = require('../db');
-    // Re-trigger schema & seed
-    const newDb = getDb();
-
-    logAudit('comp-genesis-01', user.id, user.full_name, 'SYSTEM', 'RESTORE', 'all', 'Reset database to pristine demo state');
-    res.json({ success: true, message: 'Database reset to demo state successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+// The former "reset to demo" endpoint dropped every table, including users, and could
+// not re-seed the already-open database. It is disabled. Demo data is created only on a
+// fresh database started with GENESIS_SEED_DEMO=1.
+router.post('/backup/reset-demo', requirePermission('demo:reset'), (req, res) => {
+  return res.status(410).json({
+    error: 'Resetting the database from the interface is disabled. Use a backup and restore instead.',
+    code: 'RESET_DISABLED'
+  });
 });
 
 module.exports = router;

@@ -4,6 +4,7 @@ import { I18nProvider } from './i18n';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Toast from './components/Toast';
+import { LoginScreen, SetupScreen, ChangePasswordScreen, BackendUnavailable } from './components/AuthScreens';
 
 import DashboardView from './views/DashboardView';
 import CustomersView from './views/CustomersView';
@@ -17,7 +18,12 @@ import ReportsView from './views/ReportsView';
 import SettingsView from './views/SettingsView';
 
 function AppContent() {
-  const { activeView, loading } = useApp();
+  const { activeView, loading, authState, authError } = useApp();
+
+  if (authState === 'setup') return <SetupScreen />;
+  if (authState === 'login') return <LoginScreen />;
+  if (authState === 'change-password') return <ChangePasswordScreen />;
+  if (authState === 'error') return <BackendUnavailable message={authError} />;
 
   if (loading) {
     return (

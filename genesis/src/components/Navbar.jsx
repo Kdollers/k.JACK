@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function Navbar() {
-  const { currentCompany, companies, switchCompany, currentUser, users, switchUser, setActiveView } = useApp();
+  const { currentCompany, companies, switchCompany, currentUser, logout, setActiveView } = useApp();
   const { lang, setLang, t } = useI18n();
 
   const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
@@ -193,26 +193,17 @@ export default function Navbar() {
                 <div className="text-[11px] text-slate-400">@{currentUser.username} • {currentUser.email || 'user@genesis.com'}</div>
               </div>
               <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                {t('common.switch_user')}
+                {t('auth.account', 'Account')}
               </div>
-              {users.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => {
-                    switchUser(u);
-                    setUserMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-1.5 flex items-center justify-between hover:bg-slate-700 transition ${
-                    u.id === currentUser.id ? 'text-blue-400 font-semibold bg-slate-750' : 'text-slate-300'
-                  }`}
-                >
-                  <div className="truncate">
-                    <span className="font-medium">{u.full_name}</span>
-                    <span className="text-[10px] text-slate-400 ml-1.5">({u.role})</span>
-                  </div>
-                  {u.id === currentUser.id && <Check className="w-3.5 h-3.5 text-blue-400" />}
-                </button>
-              ))}
+              <button
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  logout();
+                }}
+                className="w-full text-left px-3 py-2 text-slate-200 hover:bg-slate-700 transition"
+              >
+                {t('auth.sign_out', 'Sign out')}
+              </button>
             </div>
           )}
         </div>

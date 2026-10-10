@@ -82,8 +82,10 @@ test('backend starts on loopback, identifies itself, serves UI and stops cleanly
     assert.strictEqual(body.appId, 'genesis-accounting');
     assert.strictEqual(body.status, 'healthy');
 
+    // Unknown API paths are answered only after authentication, so anonymous callers
+    // cannot use 404/200 differences to map the API.
     const unknownApi = await getJson(`http://127.0.0.1:${port}/api/does-not-exist`);
-    assert.strictEqual(unknownApi.status, 404);
+    assert.strictEqual(unknownApi.status, 401);
     assert.ok(unknownApi.headers['content-type'].includes('application/json'));
 
     if (fs.existsSync(path.join(ROOT, 'dist', 'index.html'))) {

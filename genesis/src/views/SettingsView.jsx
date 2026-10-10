@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
-import { apiRequest } from '../services/api';
+import { apiRequest, downloadAuthenticated } from '../services/api';
 import {
   Settings,
   Building,
@@ -181,8 +181,12 @@ export default function SettingsView() {
     }
   };
 
-  const handleDownloadBackup = () => {
-    window.location.href = '/api/backup/export';
+  const handleDownloadBackup = async () => {
+    try {
+      await downloadAuthenticated('/api/backup/export', `genesis-backup-${Date.now()}.json`);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   };
 
   const handleRestoreUpload = async (e) => {
@@ -204,20 +208,6 @@ export default function SettingsView() {
       triggerRefresh();
     } catch (err) {
       showToast(`Failed to restore backup: ${err.message}`, 'error');
-    }
-  };
-
-  const handleResetDemo = async () => {
-    if (!confirm('Are you sure you want to reset to initial demonstration state? All current sample data will be restored to clean opening balances.')) {
-      return;
-    }
-
-    try {
-      await apiRequest('/api/backup/reset-demo', { method: 'POST' });
-      showToast('System reset to pristine demo state successfully!', 'success');
-      triggerRefresh();
-    } catch (err) {
-      showToast(err.message, 'error');
     }
   };
 
@@ -596,23 +586,6 @@ export default function SettingsView() {
                 <input type="file" accept=".json" onChange={handleRestoreUpload} className="hidden" />
               </label>
             </div>
-          </div>
-
-          {/* Demo Reset Card */}
-          <div className="md:col-span-2 bg-amber-50/60 border border-amber-200 p-6 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-sm text-amber-900 flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                <span>{t('settings.reset_demo')}</span>
-              </h3>
-              <p className="text-xs text-amber-800/80 mt-1 max-w-xl">{t('settings.reset_demo_desc')}</p>
-            </div>
-            <button
-              onClick={handleResetDemo}
-              className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition shrink-0"
-            >
-              Reset Demo
-            </button>
           </div>
         </div>
       )}

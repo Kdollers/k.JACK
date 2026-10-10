@@ -44,9 +44,10 @@ function distDir() {
 }
 
 function seedDatabasePath() {
-  // Read-only starter database bundled with the installer (packaged builds only).
-  // It is copied only when the user has no database yet; see data-location.cjs.
-  return app.isPackaged ? path.join(process.resourcesPath, 'seed', 'genesis.db') : null;
+  // No starter database is bundled. A new installation creates an empty database and
+  // the first administrator is created by the setup wizard. Demo accounts with known
+  // passwords are never shipped in the installer.
+  return null;
 }
 
 function logFilePath() {

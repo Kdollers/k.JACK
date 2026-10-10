@@ -14,6 +14,7 @@ itself healthy, and then opens the GENESIS window. The browser is not needed.
 | All tests | `npm run test:all` |
 | Build the web interface (`dist/`) | `npm run build` |
 | Browser development (existing workflow) | terminal 1: `npm run dev:server`; terminal 2: `npx vite` (open http://localhost:5173) |
+| Authentication and permission tests | `npm run test:auth` |
 | Run the desktop app from source | `npm run build` then `npm run desktop` |
 | Unpacked Windows build (test folder) | `npm run desktop:pack` → `release/win-unpacked/GENESIS.exe` |
 | Windows installer (NSIS) | `npm run desktop:dist` → `release/GENESIS-Setup-1.0.0.exe` |
@@ -47,5 +48,8 @@ files only. `%APPDATA%\GENESIS` (your business data) is kept unless you delete i
 - The renderer runs with contextIsolation, sandbox and nodeIntegration disabled.
   Its only desktop API is `window.genesisDesktop.getAppInfo()` (read-only).
 - Navigation is limited to the GENESIS origin, and browser permission prompts are denied.
-- Known limitation: the backend API does not yet enforce authentication (see
-  "Known limitations" in the release notes).
+- Every API route except sign-in, setup status and setup requires a valid session token.
+  Permissions are enforced by the server for every route, not only by hiding menu items.
+- The installer ships no database and no default accounts. The first run shows the setup screen.
+- Before each launch the database is copied to `%APPDATA%\GENESIS\backups\`, and before any schema
+  migration or backup restore a further copy is made (`pre-migration-*`, `pre-restore-*`).
