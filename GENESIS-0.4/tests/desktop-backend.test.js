@@ -265,10 +265,17 @@ test('backend binds only to the loopback interface', async () => {
     const nets = os.networkInterfaces();
     const lan = Object.values(nets).flat().find((i) => i && i.family === 'IPv4' && !i.internal);
     if (lan) {
-      await assert.rejects(
-        () => getJson(`http://${lan.address}:${port}/api/health`),
-        'backend must not listen on a LAN address'
-      );
+      // A different process may independently listen on this LAN address and
+      // port even though the port is free on loopback. Refuse *our* backend's
+      // identity, not every possible HTTP response on another interface.
+      let remote = null;
+      try { remote = await getJson(`http://${lan.address}:${port}/api/health`); }
+      catch (err) { if (!['ECONNREFUSED', 'EHOSTUNREACH', 'ENETUNREACH'].includes(err.code)) throw err; }
+      if (remote) {
+        let body;
+        try { body = JSON.parse(remote.text); } catch { /* unrelated listener */ }
+        assert.notStrictEqual(body?.appId, 'jenesis-accounting', 'backend must not serve a LAN address');
+      }
     }
     const res = await getJson(`http://127.0.0.1:${port}/api/health`);
     assert.strictEqual(res.status, 200);

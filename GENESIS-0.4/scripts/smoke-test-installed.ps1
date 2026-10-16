@@ -361,7 +361,13 @@ foreach ($mode in @('seller', 'network')) {
         ForEach-Object { $_.MainWindowTitle })
       $expected = if ($mode -eq 'seller') { 'Seller' } else { 'Network & Maintenance' }
     } until ((@($titles | Where-Object { $_ -like "*$expected*" }).Count -gt 0) -or (Get-Date) -gt $deadline)
-    Assert (@($titles | Where-Object { $_ -like "*$expected*" }).Count -gt 0) "No $expected window: $($titles -join '; ')"
+    if (@($titles | Where-Object { $_ -like "*$expected*" }).Count -eq 0) {
+      $procs = @(Get-CimInstance Win32_Process -Filter "Name='JENESIS.exe'" -ErrorAction SilentlyContinue |
+        ForEach-Object { "pid=$($_.ProcessId) cmd=$($_.CommandLine)" })
+      $logTail = @(Get-Content $LogFile -Tail 18 -ErrorAction SilentlyContinue)
+      $childTail = @(Get-Content (Join-Path $DataDir 'logs\backend-child.log') -Tail 6 -ErrorAction SilentlyContinue)
+      throw "No $expected window: $($titles -join '; '). Processes: $($procs -join ' | '). Desktop log: $($logTail -join ' | '). Backend log: $($childTail -join ' | ')"
+    }
     $again = Invoke-Api $modeUrl 'POST' '/auth/login' @{ username = 'smoke.admin'; password = $script:Password; mode = $mode }
     Assert ([bool]$again.token) "Administrator cannot sign in via $mode entry point."
     Assert (Test-Path (Join-Path $DataDir 'genesis.db')) 'Installed ledger was replaced by a blank database.'

@@ -226,7 +226,12 @@ function createWindow(mode = 'administrator') {
   });
 
   win.on('closed', () => { windows.delete(win); });
-  return win.loadURL(modeUrl(backendUrl, mode));
+  // Some Windows display drivers never emit ready-to-show for a hidden window
+  // after a backend restart. A successful page load is an independent signal
+  // that it is safe to reveal the UI instead of leaving a running, invisible app.
+  return win.loadURL(modeUrl(backendUrl, mode)).then(() => {
+    if (!win.isDestroyed() && !win.isVisible()) win.show();
+  });
 }
 
 function showStartupError(err) {
