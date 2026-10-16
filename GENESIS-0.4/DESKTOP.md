@@ -100,8 +100,11 @@ files only. `%APPDATA%\GENESIS` (your business data) is kept unless you delete i
 - `npm run build` passed. Vite reports a non-blocking warning for a JavaScript chunk over
   500 kB. `node scripts/check-i18n.cjs` found 0 issues across 908 matching dictionary keys.
 - Electron's executable could not be downloaded in this Linux sandbox due to a certificate
-  verification failure. **Native Electron launch, installer creation and an installed-app
-  smoke test have not been verified here.** This is not a claim about Windows compatibility.
+  verification failure, so **native Electron launch was not tested locally**. The Windows CI
+  verification described below built and exercised the actual installed application.
+- The browser-driven `npm run test:e2e` was not run locally: Chromium/Playwright is not
+  available here. The Windows smoke test checks the installed backend and accounting flow,
+  not a visual translation review or every language-switch interaction.
 
 ### Windows packaging
 `.github/workflows/windows-installer.yml` runs on pushes to this Arena branch. On a fresh
@@ -110,9 +113,13 @@ Windows installer, verifies the unpacked package, then uses
 `scripts/smoke-test-installed.ps1` to install, launch, test first setup/login/accounting,
 close, reopen, restore and uninstall without using any existing customer database. The
 installer is uploaded as a testing artifact; no release is published automatically.
-**Check that run's status before distributing this revision.** A previous successful
-GitHub Actions run (38092287331) belonged to a *different* branch and does not verify
-these changes.
+**Current result:** [Windows installer run 38831290302](https://github.com/Kdollers/k.JACK/actions/runs/38831290302)
+passed on 2026-10-16 for commit `82bc661`: tests, NSIS installer creation, package verification
+(including the unpacked SQLite native binary and absence of a database), installed-app
+smoke test and artifact upload all succeeded. The `GENESIS-Windows-installer` artifact is
+available from that run (~85 MB). This verifies the CI runner, **not** a physical Windows PC.
+A previous successful run (38092287331) belonged to a *different* branch and is not the
+basis for this revision's result.
 
 On a separate, clean Windows 10/11 x64 test machine (with Node.js 22 and Python 3.11
 on the **build machine** only), run:
