@@ -38,6 +38,10 @@ function Step([string] $Name, [scriptblock] $Body) {
   } catch {
     $script:Results += [pscustomobject]@{ Step = $Name; Result = "FAIL: $($_.Exception.Message)" }
     Write-Host "    FAIL: $($_.Exception.Message)" -ForegroundColor Red
+    # Expose the failing assertion through GitHub's check annotations as well as
+    # runner logs; the latter are not always retrievable from restricted networks.
+    $detail = "$($Name): $($_.Exception.Message)" -replace '%', '%25' -replace "`r", '%0D' -replace "`n", '%0A'
+    Write-Host "::error title=JENESIS Windows installer smoke::$detail"
     Write-Summary
     exit 1
   }
