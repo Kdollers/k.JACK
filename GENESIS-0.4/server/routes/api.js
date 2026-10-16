@@ -77,6 +77,40 @@ function getSessionContext(req) {
 // XAF/RWF/UGX have no minor monetary unit. Until jurisdiction-specific
 // fractional-tax rounding is implemented, refuse a draft whose totals would be
 // rounded away when displayed. USD/EUR keep the existing two-decimal behavior.
+// Every monetary API body is in the company's base currency. Explicit foreign
+// currency tags (including per-line tags) must never be silently reinterpreted;
+// a foreign-currency contact cannot be invoiced without an FX ledger either.
+function assertBaseCurrency(db, companyId, body, contactTable, contactId) {
+  const base = db.prepare('SELECT currency_code FROM companies WHERE id = ?').get(companyId)?.currency_code;
+  if (!base) throw new ValidationError('NOT_FOUND', 404);
+  for (const entry of [body, ...(Array.isArray(body?.lines) ? body.lines : [])]) {
+    if (!entry || typeof entry !== 'object') continue;
+    for (const key of ['currency', 'currency_code', 'currencyCode']) {
+      if (entry[key] !== undefined && entry[key] !== base) {
+        throw new ValidationError('FOREIGN_CURRENCY_UNSUPPORTED', 409);
+      }
+    }
+    const productId = entry.product_id ?? entry.productId;
+    if (productId && !db.prepare('SELECT 1 FROM products WHERE id = ? AND company_id = ?').get(productId, companyId)) {
+      throw new ValidationError('INVALID_REFERENCE', 409);
+    }
+    const taxId = entry.tax_rate_id ?? entry.taxRateId;
+    if (taxId && !db.prepare('SELECT 1 FROM tax_rates WHERE id = ? AND company_id = ?').get(taxId, companyId)) {
+      throw new ValidationError('INVALID_REFERENCE', 409);
+    }
+  }
+  if (contactTable && contactId) {
+    if (!['customers', 'suppliers'].includes(contactTable)) throw new Error('Invalid contact table');
+    const contact = db.prepare(`SELECT default_currency FROM ${contactTable} WHERE id = ? AND company_id = ?`)
+      .get(contactId, companyId);
+    if (!contact) throw new ValidationError('INVALID_REFERENCE', 409);
+    if (contact.default_currency && contact.default_currency !== base) {
+      throw new ValidationError('FOREIGN_CURRENCY_UNSUPPORTED', 409);
+    }
+  }
+  return base;
+}
+
 function assertLineMoney(db, companyId, qty, unitPrice, discountPercent, taxRate) {
   assertMoneyPrecision(db, companyId, unitPrice);
   if (db.prepare('SELECT currency_decimals FROM companies WHERE id = ?').get(companyId)?.currency_decimals === 0) {
@@ -730,6 +764,7 @@ router.get('/suppliers/:id/statement', requirePermission('suppliers:read'), (req
 // 6. PRODUCTS & INVENTORY
 // --------------------------------------------------------------------------
 function productFields(db, companyId, body, previous) {
+  assertBaseCurrency(db, companyId, body);
   const read = (key) => body[key] === undefined ? previous?.[key] : body[key];
   const sku = entityCode(read('sku'), 'SKU_REQUIRED', 50);
   const name = requiredText(read('name'), 'PRODUCT_NAME_REQUIRED');
@@ -895,9 +930,11 @@ router.get('/inventory/adjustments', requirePermission('inventory:valuation:read
 router.post('/inventory/adjustments', requirePermission('inventory:adjust'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
+    assertBaseCurrency(getDb(), companyId, req.body);
     const result = postStockAdjustment(companyId, req.body, user);
     res.json(result);
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -912,9 +949,11 @@ router.get('/inventory/counts', requirePermission('inventory:valuation:read'), (
 router.post('/inventory/counts', requirePermission('inventory:adjust'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
+    assertBaseCurrency(getDb(), companyId, req.body);
     const result = postPhysicalCount(companyId, req.body, user);
     res.json(result);
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -951,6 +990,7 @@ router.post('/sales/quotes', requirePermission('sales:write'), (req, res) => {
   let discountTotal = 0;
 
   try {
+  assertBaseCurrency(db, companyId, req.body, 'customers', customer_id);
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const price = Number(l.unit_price) || 0;
@@ -1011,8 +1051,17 @@ router.post('/sales/quotes/:id/convert-to-invoice', requirePermission('sales:wri
   try {
     const quote = db.prepare('SELECT * FROM sales_quotes WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
     if (!quote) return res.status(404).json({ error: 'Quote not found' });
+    assertBaseCurrency(db, companyId, req.body, 'customers', quote.customer_id);
+    for (const value of [quote.subtotal, quote.tax_total, quote.discount_total, quote.total]) {
+      assertMoneyPrecision(db, companyId, value);
+    }
 
     const quoteLines = db.prepare('SELECT * FROM sales_quote_lines WHERE quote_id = ?').all(quote.id);
+    for (const line of quoteLines) {
+      for (const value of [line.unit_price, line.tax_amount, line.line_total]) {
+        assertMoneyPrecision(db, companyId, value);
+      }
+    }
     const invId = generateId('inv');
     const invNumber = nextSequenceNumber(companyId, 'INVOICE', 'INV');
     const today = new Date().toISOString().split('T')[0];
@@ -1039,6 +1088,7 @@ router.post('/sales/quotes/:id/convert-to-invoice', requirePermission('sales:wri
 
     res.json({ invoiceId: invId, invoiceNumber: invNumber });
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1098,6 +1148,7 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
   let discountTotal = 0;
 
   try {
+  assertBaseCurrency(db, companyId, req.body, 'customers', customer_id);
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const price = Number(l.unit_price) || 0;
@@ -1166,6 +1217,7 @@ router.post('/sales/invoices/:id/post', requirePermission('sales:post'), (req, r
     const result = postSalesInvoice(companyId, req.params.id, user);
     res.json(result);
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1186,9 +1238,11 @@ router.get('/sales/credit-notes', requirePermission('sales:read'), (req, res) =>
 router.post('/sales/credit-notes', requirePermission('sales:post'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
+    assertBaseCurrency(getDb(), companyId, req.body, 'customers', req.body?.customerId);
     const result = postCreditNote(companyId, req.body, user);
     res.json(result);
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1224,6 +1278,7 @@ router.post('/purchases/orders', requirePermission('purchases:write'), (req, res
   let taxTotal = 0;
 
   try {
+  assertBaseCurrency(db, companyId, req.body, 'suppliers', supplier_id);
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const cost = Number(l.unit_cost) || 0;
@@ -1331,6 +1386,7 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
   let taxTotal = 0;
 
   try {
+  assertBaseCurrency(db, companyId, req.body, 'suppliers', supplier_id);
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const cost = Number(l.unit_cost) || 0;
@@ -1389,6 +1445,7 @@ router.post('/purchases/bills/:id/post', requirePermission('purchases:post'), (r
     const result = postPurchaseInvoice(companyId, req.params.id, user);
     res.json(result);
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1409,9 +1466,11 @@ router.get('/purchases/returns', requirePermission('purchases:read'), (req, res)
 router.post('/purchases/returns', requirePermission('purchases:post'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
+    assertBaseCurrency(getDb(), companyId, req.body, 'suppliers', req.body?.supplierId);
     const result = postPurchaseReturn(companyId, req.body, user);
     res.json(result);
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1489,9 +1548,11 @@ router.get('/payments', requirePermission('banking:read'), (req, res) => {
 router.post('/payments', requirePermission('banking:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
+    assertBaseCurrency(getDb(), companyId, req.body);
     const result = recordPayment(companyId, req.body, user);
     res.json(result);
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1537,6 +1598,7 @@ router.post('/journal-entries', requirePermission('journal:post'), (req, res) =>
   }
 
   try {
+    assertBaseCurrency(getDb(), companyId, req.body);
     const result = createJournalEntry({
       companyId,
       date,
@@ -1548,6 +1610,7 @@ router.post('/journal-entries', requirePermission('journal:post'), (req, res) =>
     });
     res.json(result);
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1588,6 +1651,29 @@ router.get('/network/health', requirePermission('network:read'), (req, res) => {
   res.json({ status: 'healthy', database: db.pragma('quick_check', { simple: true }),
     foreign_keys: db.pragma('foreign_keys', { simple: true }) === 1,
     version: require('../../package.json').version, timestamp: new Date().toISOString() });
+});
+
+router.get('/network/hosting', requirePermission('network:read'), (req, res) => {
+  res.json(require('../lan-host').lanHost.status());
+});
+router.post('/network/hosting', requirePermission('network:manage'), async (req, res) => {
+  // Never allow a remote session to reconfigure the LAN listener. Sessions and
+  // permissions still apply to requests from the host's local desktop window.
+  if (req.socket.encrypted || !require('../lan-host').isLoopback(req.socket.remoteAddress)) {
+    return res.status(403).json({ code: 'LAN_HOST_ONLY' });
+  }
+  if (typeof req.body?.enabled !== 'boolean') return res.status(400).json({ code: 'INVALID_INPUT' });
+  try {
+    const lan = require('../lan-host').lanHost;
+    const result = req.body.enabled ? await lan.enable() : await lan.disable();
+    logAudit(req.auth.companyId, req.auth.user.id, req.auth.user.full_name, 'NETWORK',
+      req.body.enabled ? 'ENABLE' : 'DISABLE', req.auth.companyId,
+      req.body.enabled ? 'TLS LAN hosting enabled on the host' : 'TLS LAN hosting disabled on the host');
+    res.json(result);
+  } catch (err) {
+    console.error('LAN hosting change failed:', err.code || err.name);
+    res.status(409).json({ code: err.code?.startsWith('LAN_') ? err.code : 'LAN_START_FAILED' });
+  }
 });
 
 // Maintenance can create an integrity-checked SQLite snapshot on the host.

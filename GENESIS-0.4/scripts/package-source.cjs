@@ -60,8 +60,8 @@ function verify(zip) {
   for (const required of ['package.json', 'package-lock.json', 'README.md', 'DESKTOP.md',
     'assets/j-seller.ico', 'assets/j-administrator.ico', 'assets/j-network.ico',
     'public/favicon.svg', 'installer/shortcuts.nsh', 'electron/entry-points.cjs', 'electron/main.cjs',
-    'server/index.js', 'scripts/recover-administrator.cjs',
-    'src/i18n/en.json', 'src/i18n/fr.json', 'src/i18n/rw.json', 'dist/index.html']) {
+    'server/index.js', 'server/lan-host.js', 'scripts/recover-administrator.cjs',
+    'tests/lan-host.test.cjs', 'src/i18n/en.json', 'src/i18n/fr.json', 'src/i18n/rw.json', 'dist/index.html']) {
     assert.ok(names.includes(PREFIX + required), `missing ${required} in ZIP`);
   }
   const manifest = JSON.parse(zip.getEntry(PREFIX + 'package.json').getData().toString('utf8'));

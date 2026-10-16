@@ -25,6 +25,13 @@ function assertMoneyPrecision(db, companyId, value) {
   return Number(value);
 }
 
+function assertContactCurrency(db, companyId, contact) {
+  const base = db.prepare('SELECT currency_code FROM companies WHERE id = ?').get(companyId)?.currency_code;
+  if (contact.default_currency && contact.default_currency !== base) {
+    throw new ValidationError('FOREIGN_CURRENCY_UNSUPPORTED', 409);
+  }
+}
+
 function nextSequenceNumber(companyId, type, prefix) {
   const db = getDb();
   const year = new Date().getFullYear();
@@ -225,6 +232,7 @@ function postSalesInvoice(companyId, invoiceId, user) {
 
     const customer = db.prepare(`SELECT * FROM customers WHERE id = ? AND company_id = ?`).get(inv.customer_id, companyId);
     if (!customer) throw new Error('Customer not found');
+    assertContactCurrency(db, companyId, customer);
 
     const arAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND subtype = 'ACCOUNTS_RECEIVABLE' LIMIT 1`).get(companyId);
     const defaultSalesAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '4010' LIMIT 1`).get(companyId);
@@ -387,6 +395,7 @@ function postPurchaseInvoice(companyId, billId, user) {
 
     const supplier = db.prepare(`SELECT * FROM suppliers WHERE id = ? AND company_id = ?`).get(bill.supplier_id, companyId);
     if (!supplier) throw new Error('Supplier not found');
+    assertContactCurrency(db, companyId, supplier);
 
     const apAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND subtype = 'ACCOUNTS_PAYABLE' LIMIT 1`).get(companyId);
     const defaultInvAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '1200' LIMIT 1`).get(companyId);
@@ -555,6 +564,7 @@ function recordPayment(companyId, paymentData, user) {
     if (paymentType === 'CUSTOMER_RECEIPT') {
       const customer = db.prepare(`SELECT * FROM customers WHERE id = ? AND company_id = ?`).get(customerId, companyId);
       if (!customer) throw new Error('Customer is required for customer receipt');
+      assertContactCurrency(db, companyId, customer);
 
       desc = `Customer Receipt ${paymentNumber} from ${customer.name}`;
 
@@ -594,6 +604,7 @@ function recordPayment(companyId, paymentData, user) {
     } else if (paymentType === 'SUPPLIER_PAYMENT') {
       const supplier = db.prepare(`SELECT * FROM suppliers WHERE id = ? AND company_id = ?`).get(supplierId, companyId);
       if (!supplier) throw new Error('Supplier is required for supplier payment');
+      assertContactCurrency(db, companyId, supplier);
 
       desc = `Supplier Payment ${paymentNumber} to ${supplier.name}`;
 
@@ -1060,6 +1071,7 @@ function postCreditNote(companyId, creditNoteData, user) {
 
     const customer = db.prepare(`SELECT * FROM customers WHERE id = ? AND company_id = ?`).get(customerId, companyId);
     if (!customer) throw new Error('Customer not found');
+    assertContactCurrency(db, companyId, customer);
 
     const cnNumber = nextSequenceNumber(companyId, 'CREDIT_NOTE', 'CN');
     const cnId = generateId('cn');
@@ -1080,7 +1092,12 @@ function postCreditNote(companyId, creditNoteData, user) {
     for (const l of lines) {
       const qty = roundTo(Number(l.quantity), 4);
       const unitPrice = roundTo(Number(l.unitPrice), 2);
+      assertMoneyPrecision(db, companyId, Number(l.unitPrice));
       const taxRate = roundTo(Number(l.taxRate || 0), 2);
+      if (db.prepare('SELECT currency_decimals FROM companies WHERE id = ?').get(companyId)?.currency_decimals === 0) {
+        assertMoneyPrecision(db, companyId, qty * unitPrice);
+        assertMoneyPrecision(db, companyId, qty * unitPrice * taxRate / 100);
+      }
       const lineSub = roundTo(qty * unitPrice, 2);
       const lineTax = roundTo(lineSub * (taxRate / 100), 2);
       const lineTot = roundTo(lineSub + lineTax, 2);
@@ -1238,6 +1255,7 @@ function postPurchaseReturn(companyId, returnData, user) {
 
     const supplier = db.prepare(`SELECT * FROM suppliers WHERE id = ? AND company_id = ?`).get(supplierId, companyId);
     if (!supplier) throw new Error('Supplier not found');
+    assertContactCurrency(db, companyId, supplier);
 
     const retNumber = nextSequenceNumber(companyId, 'PURCHASE_RETURN', 'PRET');
     const retId = generateId('pret');
@@ -1255,7 +1273,12 @@ function postPurchaseReturn(companyId, returnData, user) {
     for (const l of lines) {
       const qty = roundTo(Number(l.quantity), 4);
       const unitCost = roundTo(Number(l.unitCost), 2);
+      assertMoneyPrecision(db, companyId, Number(l.unitCost));
       const taxRate = roundTo(Number(l.taxRate || 0), 2);
+      if (db.prepare('SELECT currency_decimals FROM companies WHERE id = ?').get(companyId)?.currency_decimals === 0) {
+        assertMoneyPrecision(db, companyId, qty * unitCost);
+        assertMoneyPrecision(db, companyId, qty * unitCost * taxRate / 100);
+      }
       const lineSub = roundTo(qty * unitCost, 2);
       const lineTax = roundTo(lineSub * (taxRate / 100), 2);
       const lineTot = roundTo(lineSub + lineTax, 2);

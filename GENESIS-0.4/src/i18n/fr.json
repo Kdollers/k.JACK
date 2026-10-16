@@ -805,7 +805,21 @@
     "APP_MODE_INVALID": "Ouvrez Vendeur, Administrateur ou Réseau et maintenance depuis leur propre raccourci.",
     "APP_MODE_FORBIDDEN": "Votre compte n’est pas autorisé pour cette application. Utilisez un accès autorisé.",
     "BANK_TYPE_INVALID": "Choisissez un type de compte bancaire, de caisse ou de monnaie mobile valide.",
-    "OPENING_BALANCE_REQUIRES_JOURNAL": "Un nouveau compte bancaire ou de caisse doit commencer à zéro. Passez une écriture d’ouverture équilibrée pour établir son solde."
+    "OPENING_BALANCE_REQUIRES_JOURNAL": "Un nouveau compte bancaire ou de caisse doit commencer à zéro. Passez une écriture d’ouverture équilibrée pour établir son solde.",
+    "LAN_NO_PRIVATE_INTERFACE": "Aucune interface IPv4 privée n’est disponible sur cet hôte.",
+    "LAN_IDENTITY_INCOMPLETE": "Le certificat ou la clé privée de l’hôte manque. Service arrêté ; restaurez cette identité prudemment.",
+    "LAN_IDENTITY_INVALID": "Le certificat ou la clé privée de l’hôte est invalide ou expiré. Service arrêté.",
+    "LAN_ADDRESS_CHANGED": "L’adresse IP de l’hôte a changé depuis la création du certificat. Le service ne démarre pas sur la nouvelle adresse ; faites vérifier l’identité par un administrateur réseau.",
+    "LAN_PORT_BUSY": "Le port LAN HTTPS est déjà occupé ; service non démarré.",
+    "LAN_START_FAILED": "Le service LAN HTTPS ne peut pas démarrer. Vérifiez les journaux locaux et le pare-feu.",
+    "LAN_HOST_ONLY": "Seule une session dans l’application Réseau locale de l’hôte peut modifier le LAN.",
+    "LAN_SETUP_LOCAL_ONLY": "La configuration initiale de l’administrateur se fait sur l’hôte, jamais par le LAN.",
+    "LAN_TLS_REQUIRED": "L’accès distant sans HTTPS est refusé.",
+    "LAN_CONFIG_INVALID": "La configuration LAN enregistrée est endommagée. L’accès local reste disponible.",
+    "LAN_NOT_AVAILABLE": "Le LAN n’est pas disponible sur ce service.",
+    "LAN_ALREADY_ATTACHED": "Un service LAN est déjà associé à ce serveur.",
+    "LAN_PERSISTENT_DATABASE_REQUIRED": "Le LAN nécessite une base persistante sur l’hôte.",
+    "LAN_PRIVATE_ONLY": "Les adresses IP publiques sont refusées ; utilisez un réseau privé fiable."
   },
   "languages": {
     "en": "English",
@@ -1060,7 +1074,24 @@
     "snapshot_help": "Crée une copie SQLite cohérente et vérifiée sur cet ordinateur. Seul un administrateur peut télécharger ou restaurer les données d’une entreprise.",
     "create_snapshot": "Créer une copie vérifiée",
     "snapshot_done": "Copie de sécurité vérifiée créée : {name}",
-    "lan_unavailable": "L’hébergement LAN n’est pas activé dans cette version. Toutes les connexions utilisent le service local ; ne partagez pas des fichiers de base entre ordinateurs."
+    "lan_title": "Hébergement sur réseau privé (HTTPS)",
+    "lan_intro": "Désactivé par défaut. Créez d’abord un administrateur sur cet ordinateur. Activez le service uniquement sur un réseau local de confiance ; les clients ouvrent une adresse ci-dessous dans un navigateur et accèdent à la base de cet hôte.",
+    "lan_status": "Service LAN",
+    "lan_enabled": "Activé sur cet hôte",
+    "lan_disabled": "Arrêté — accès local uniquement",
+    "lan_enable": "Activer le LAN en HTTPS",
+    "lan_disable": "Désactiver le LAN",
+    "lan_started": "Le service LAN est activé. Vérifiez l’empreinte du certificat avant de connecter les clients.",
+    "lan_stopped": "Le service LAN est désactivé. L’accès local et les données sont inchangés.",
+    "lan_fingerprint": "Empreinte SHA-256 du certificat du serveur",
+    "lan_expires": "Expiration du certificat",
+    "lan_urls": "Adresses à ouvrir sur les postes clients",
+    "lan_seller": "Vendeur",
+    "lan_administrator": "Administrateur",
+    "lan_network": "Réseau et maintenance",
+    "lan_warning": "Avant d’accepter un avertissement de certificat dans le navigateur, comparez son empreinte SHA-256 à celle affichée sur l’hôte, par un canal fiable distinct. N’acceptez jamais une différence et n’exposez pas le port à Internet. Les clients utilisent l’adresse de l’hôte, pas une copie SQLite ; le pare-feu peut nécessiter l’ouverture du port TCP 34671.",
+    "lan_only_host": "Seule l’application Réseau et maintenance locale de l’hôte peut modifier le service LAN.",
+    "lan_error": "Le service LAN nécessite une intervention"
   },
   "calculator": {
     "title": "Calculatrice",
@@ -1156,7 +1187,8 @@
       "step1": "Connectez-vous comme utilisateur Réseau (ou administrateur). Vérifier l’état affiche le service, l’intégrité SQLite et la vérification des clés étrangères.",
       "step2": "Créer une copie vérifiée produit une copie SQLite cohérente dans le dossier de sauvegardes de l’hôte. Notez le nom ; copiez-la sur un autre support par un accès autorisé au système.",
       "step3": "Seul un administrateur peut télécharger un export d’entreprise ou en restaurer un ici. Un utilisateur Réseau ne voit ni articles, ni clients, ni comptes, ni rapports financiers.",
-      "step4": "Cette version ne propose pas d’hôte LAN. Ne partagez ni ne synchronisez les fichiers SQLite entre ordinateurs ; utilisez le service local en attendant une fonction hôte/client sécurisée."
+      "step4": "Le LAN est désactivé par défaut. Après la configuration initiale sur l’hôte, activez HTTPS dans l’application Réseau. Communiquez l’adresse navigateur Vendeur ou Administrateur aux clients : tous utilisent l’unique base de l’hôte. Ne partagez ni ne synchronisez les fichiers SQLite actifs.",
+      "step5": "Lisez l’empreinte SHA-256 du certificat dans la fenêtre Réseau de l’hôte. Sur chaque client, comparez-la par un canal fiable distinct avant d’accepter le certificat autosigné ; n’acceptez jamais une différence. Maintenez l’hôte allumé et sauvegardé. Le pare-feu peut devoir ouvrir TCP 34671 uniquement sur le réseau privé ; l’accès Internet public est interdit."
     },
     "safety": {
       "title": "Mots de passe et précautions",
@@ -1169,7 +1201,7 @@
       "title": "Limites actuelles",
       "intro": "JENESIS 0.1 est une version précoce et non signée. Vérifiez les résultats avant de vous y fier.",
       "step1": "Les devises prises en charge sont des devises de base indépendantes par entreprise, pas une conversion automatique. La réévaluation ou conversion historique des changes n’est pas validée.",
-      "step2": "L’hôte/client LAN, l’accès distant partagé, les copies automatiques hors site et la reprise après sinistre sans intervention ne sont pas disponibles. Vous devez conserver vos copies externes.",
+      "step2": "Les navigateurs clients sur un LAN privé utilisent HTTPS seulement après activation locale. Cette version ne fournit ni application cliente de bureau distante, ni accès Internet, ni sauvegardes automatiques hors site, ni reprise sans intervention. Ne copiez ni ne synchronisez jamais la base active sur un autre PC ; conservez des copies externes manuelles.",
       "step3": "Un test d’installateur sur un runner Windows ne constitue pas une certification sur PC réel, pour les mises à jour, les antivirus ou l’installation hors ligne. Consultez un comptable pour vos obligations fiscales.",
       "step4": "Pour XAF, RWF et UGX, les montants fractionnaires sont refusés plutôt que masqués par un affichage sans décimales. Corrigez la pièce avec l’accord du comptable ; aucune règle d’arrondi locale n’a été certifiée."
     }

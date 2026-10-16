@@ -16,6 +16,7 @@ trace('modules loaded');
 const { securityHeaders } = require('./security');
 const { errorPayload } = require('./error-codes');
 const { createLimiter, clientIp, MINUTE } = require('./rateLimit');
+const { lanHost, isLoopback, isPrivateLan } = require('./lan-host');
 const apiLimiter = createLimiter({ name: 'api', windowMs: MINUTE, max: 1200, keyFn: (req) => clientIp(req) });
 
 const APP_NAME = 'JENESIS Business Management & Accounting Software';
@@ -30,6 +31,20 @@ function createApp(options = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use(securityHeaders);
+  // Plain HTTP is strictly local. Remote clients use the opt-in HTTPS listener
+  // and an RFC1918 address; a public/WAN peer must not reach a business API.
+  app.use((req, res, next) => {
+    const ip = req.socket.remoteAddress;
+    if (req.socket.encrypted) {
+      if (!isLoopback(ip) && !isPrivateLan(ip)) return res.status(403).json({ code: 'LAN_PRIVATE_ONLY' });
+      // The browser needs GET /api/setup/status to render its login screen.
+      // Initial administrator registration is done on the host only.
+      if (req.path === '/api/setup/initialize') return res.status(403).json({ code: 'LAN_SETUP_LOCAL_ONLY' });
+    } else if (!isLoopback(ip)) {
+      return res.status(403).json({ code: 'LAN_TLS_REQUIRED' });
+    }
+    next();
+  });
   app.use('/api', (req, res, next) => {
     const sendJson = res.json.bind(res);
     res.json = (body) => sendJson(errorPayload(body, res.statusCode));
@@ -88,43 +103,46 @@ function createApp(options = {}) {
   return app;
 }
 
-/**
- * Starts the HTTP server. Binds to the loopback interface by default.
- * @returns {Promise<{ server: import('http').Server, port: number, host: string, close: () => Promise<void> }>}
- */
-function startServer(options = {}) {
+/** Starts the local desktop listener and, only if explicitly enabled, the
+ * separate TLS-only LAN listener. Both serve the SAME Express app and database. */
+async function startServer(options = {}) {
   const host = options.host || process.env.GENESIS_HOST || '127.0.0.1';
   const port = options.port !== undefined ? Number(options.port) : Number(process.env.GENESIS_PORT || process.env.PORT || 3000);
 
-  // Ensure the database is opened and migrated before accepting requests.
+  // Ensure the database is opened, backed up and migrated before any request.
   trace('opening database');
   getDb();
   trace('database ready');
   const app = createApp(options);
-
-  return new Promise((resolve, reject) => {
-    const server = app.listen(port, host, () => {
-      const address = server.address();
-      const actualPort = typeof address === 'object' && address ? address.port : port;
-      resolve({
-        server,
-        host,
-        port: actualPort,
-        close: () => new Promise((res) => {
-          server.close(() => {
+  lanHost.attach(app, DB_PATH, { lanPort: options.lanPort });
+  await lanHost.resume();
+  try {
+    return await new Promise((resolve, reject) => {
+      const server = app.listen(port, host, () => {
+        server.off('error', reject);
+        const address = server.address();
+        const actualPort = typeof address === 'object' && address ? address.port : port;
+        resolve({
+          server, host, port: actualPort,
+          close: async () => {
+            // Stop the remote listener FIRST. No remote socket can race against
+            // DB closure. Don't change the saved opt-in for the next start.
+            await lanHost.detach();
+            await new Promise((res) => {
+              server.close(res);
+              if (typeof server.closeIdleConnections === 'function') server.closeIdleConnections();
+            });
             closeDb();
-            res();
-          });
-          // Drop idle keep-alive sockets so shutdown is not delayed.
-          if (typeof server.closeIdleConnections === 'function') server.closeIdleConnections();
-        })
+          }
+        });
       });
+      server.once('error', reject);
     });
-    server.on('error', (err) => {
-      closeDb();
-      reject(err);
-    });
-  });
+  } catch (err) {
+    await lanHost.detach();
+    closeDb();
+    throw err;
+  }
 }
 
 module.exports = { createApp, startServer, APP_NAME, APP_VERSION, DB_PATH };

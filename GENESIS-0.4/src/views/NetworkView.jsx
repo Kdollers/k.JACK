@@ -8,13 +8,29 @@ export default function NetworkView() {
   const { hasPermission, showToast, formatDateTime, logout } = useApp();
   const { t } = useI18n();
   const [health, setHealth] = useState(null);
+  const [hosting, setHosting] = useState(null);
   const [working, setWorking] = useState(false);
   const [restore, setRestore] = useState(null);
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const refresh = async () => {
-    try { setHealth(await apiRequest('/api/network/health')); }
-    catch (err) { showToast(err, 'error'); }
+    try {
+      const [nextHealth, nextHosting] = await Promise.all([
+        apiRequest('/api/network/health'), apiRequest('/api/network/hosting')
+      ]);
+      setHealth(nextHealth);
+      setHosting(nextHosting);
+    } catch (err) { showToast(err, 'error'); }
+  };
+  const changeHosting = async (enabled) => {
+    setWorking(true);
+    try {
+      setHosting(await apiRequest('/api/network/hosting', {
+        method: 'POST', body: JSON.stringify({ enabled })
+      }));
+      showToast({ key: enabled ? 'network.lan_started' : 'network.lan_stopped' }, 'success');
+    } catch (err) { showToast(err, 'error'); }
+    finally { setWorking(false); }
   };
   useEffect(() => { refresh(); }, []);
   const snapshot = async () => {
@@ -95,6 +111,36 @@ export default function NetworkView() {
         </button>
       </div>}
     </div>}
-    <p className="text-xs text-slate-500">{t('network.lan_unavailable')}</p>
+    <section className="bg-white rounded-xl border border-green-100 p-5 space-y-3" aria-label={t('network.lan_title')}>
+      <h2 className="font-bold text-green-800">{t('network.lan_title')}</h2>
+      <p className="text-sm text-slate-700">{t('network.lan_intro')}</p>
+      <p className="text-sm">{t('network.lan_status')}: <strong>{hosting
+        ? (hosting.enabled ? t('network.lan_enabled') : t('network.lan_disabled'))
+        : t('network.unknown')}</strong></p>
+      {hosting?.errorCode && <p className="text-sm text-amber-800" role="alert">
+        {t('network.lan_error')}: {t(`errors.${hosting.errorCode}`)}
+      </p>}
+      {hosting?.enabled && <div className="space-y-2">
+        <p className="text-sm">{t('network.lan_fingerprint')}:
+          <code className="block text-xs break-all select-all bg-green-50 p-2 rounded">{hosting.fingerprintSha256}</code>
+        </p>
+        <p className="text-xs text-slate-600">{t('network.lan_expires')}: {formatDateTime(hosting.expiresAt)}</p>
+        <p className="text-sm font-semibold">{t('network.lan_urls')}</p>
+        {hosting.addresses?.map((url) => <div key={url} className="text-xs space-y-1 border-l-2 border-green-200 pl-3">
+          <p>{t('network.lan_seller')}: <code className="select-all break-all">{`${url}/seller`}</code></p>
+          <p>{t('network.lan_administrator')}: <code className="select-all break-all">{`${url}/administrator`}</code></p>
+          <p>{t('network.lan_network')}: <code className="select-all break-all">{`${url}/network`}</code></p>
+        </div>)}
+      </div>}
+      <p className="text-xs text-amber-900">{t('network.lan_warning')}</p>
+      {hasPermission('network:manage') && ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+        window.location.protocol === 'http:' && <button type="button" disabled={working || !hosting}
+          onClick={() => changeHosting(!hosting.enabled)}
+          className="bg-green-700 disabled:opacity-50 text-white rounded-md px-4 py-2 text-sm">
+          {hosting?.enabled ? t('network.lan_disable') : t('network.lan_enable')}
+        </button>}
+      {hasPermission('network:manage') && window.location.protocol === 'https:' &&
+        <p className="text-xs text-slate-600">{t('network.lan_only_host')}</p>}
+    </section>
   </div>;
 }

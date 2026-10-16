@@ -9,7 +9,7 @@
 # Safety: the script refuses to run when JENESIS user data already exists, so it can never
 # touch a real business database. Run it on a clean test machine or a CI runner.
 #
-# Usage (PowerShell 5.1+ or PowerShell 7):
+# Usage (PowerShell 7+; installed on the hosted Windows runner):
 #   .\scripts\smoke-test-installed.ps1 -InstallerPath .\release\JENESIS-Setup-0.1.0.exe
 #
 # Exit code 0 = all checks passed. Any failure stops the run and reports the step.
@@ -236,6 +236,45 @@ Step 'Seller and Network entry points open separate windows on one backend' {
   Assert ($sellerMe.mode -eq 'seller' -and $networkMe.mode -eq 'network') 'Sessions were not mode-bound.'
   Assert (-not ($sellerMe.permissions -contains 'accounting:read')) 'Seller acquired accounting rights.'
   Assert (-not ($networkMe.permissions -contains 'sales:read')) 'Network acquired sales rights.'
+}
+
+Step 'Opt-in HTTPS LAN listener serves the same host, with a stable certificate identity' {
+  $network = Invoke-Api $baseUrl 'POST' '/auth/login' @{
+    username = 'smoke.admin'; password = $script:Password; mode = 'network'
+  }
+  $hosting = Invoke-Api $baseUrl 'POST' '/network/hosting' @{ enabled = $true } $network.token
+  Assert ($hosting.enabled -eq $true -and $hosting.configured -eq $true) 'LAN hosting did not start.'
+  Assert (@($hosting.addresses).Count -ge 1) 'No private LAN URL was advertised.'
+  $lanUrl = [uri]$hosting.addresses[0]
+  Assert ($lanUrl.Scheme -eq 'https') 'LAN URL is not HTTPS.'
+  # The test explicitly pins the presented self-signed cert to the fingerprint
+  # shown on the LOCAL host. Remote clients must check it out of band.
+  $tcp = [System.Net.Sockets.TcpClient]::new()
+  $tls = $null
+  $hasher = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $tcp.Connect($lanUrl.Host, $lanUrl.Port)
+    $tls = [System.Net.Security.SslStream]::new($tcp.GetStream(), $false, { $true })
+    $tls.AuthenticateAsClient($lanUrl.Host)
+    $pin = [System.BitConverter]::ToString($hasher.ComputeHash($tls.RemoteCertificate.GetRawCertData())).Replace('-', ':')
+    Assert ($pin -eq $hosting.fingerprintSha256) "LAN certificate fingerprint mismatch: $pin"
+  } finally {
+    if ($tls) { $tls.Dispose() }
+    $tcp.Dispose()
+    $hasher.Dispose()
+  }
+  $status = Invoke-RestMethod -Uri "$($lanUrl.AbsoluteUri.TrimEnd('/'))/api/setup/status" -SkipCertificateCheck -TimeoutSec 15
+  Assert ($status.needsSetup -eq $false) 'A remote browser cannot reach its login screen.'
+  $client = Invoke-RestMethod -Uri "$($lanUrl.AbsoluteUri.TrimEnd('/'))/api/auth/login" -SkipCertificateCheck -Method Post `
+    -ContentType 'application/json' -Body (@{
+      username = 'smoke.admin'; password = $script:Password; mode = 'seller'
+    } | ConvertTo-Json) -TimeoutSec 15
+  Assert ([bool]$client.token) 'The LAN client cannot sign in to the host.'
+  $me = Invoke-RestMethod -Uri "$($lanUrl.AbsoluteUri.TrimEnd('/'))/api/auth/me" -SkipCertificateCheck `
+    -Headers @{ Authorization = "Bearer $($client.token)" } -TimeoutSec 15
+  Assert ($me.mode -eq 'seller') 'The LAN client lost its mode-bound session.'
+  $stopped = Invoke-Api $baseUrl 'POST' '/network/hosting' @{ enabled = $false } $network.token
+  Assert ($stopped.enabled -eq $false) 'LAN hosting did not stop on request.'
 }
 
 Step 'Accounting transaction: balanced journal entry is posted' {

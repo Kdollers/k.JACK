@@ -100,10 +100,13 @@ function run(unpackedDir) {
       'server/index.js',
       'server/db.js',
       'server/auth.js',
+      'server/lan-host.js',
       'server/routes/api.js',
       'dist/index.html',
       'package.json',
       'node_modules/express/package.json',
+      'node_modules/@peculiar/x509/package.json',
+      'node_modules/reflect-metadata/package.json',
       'node_modules/better-sqlite3/package.json'
     ];
     for (const rel of required) need(lookup(index, rel) && !lookup(index, rel).files, `app contains ${rel}`);

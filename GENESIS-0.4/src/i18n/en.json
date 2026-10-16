@@ -805,7 +805,21 @@
     "APP_MODE_INVALID": "Open Seller, Administrator or Network & Maintenance from its own entry point.",
     "APP_MODE_FORBIDDEN": "Your account is not authorized for this application. Use a permitted entry point.",
     "BANK_TYPE_INVALID": "Choose a valid bank, cash or mobile-money account type.",
-    "OPENING_BALANCE_REQUIRES_JOURNAL": "A new bank or cash account must start at zero. Post a balanced opening journal to establish its balance."
+    "OPENING_BALANCE_REQUIRES_JOURNAL": "A new bank or cash account must start at zero. Post a balanced opening journal to establish its balance.",
+    "LAN_NO_PRIVATE_INTERFACE": "No private IPv4 network interface is available on this host.",
+    "LAN_IDENTITY_INCOMPLETE": "The host certificate or private key is missing. Hosting was not started; restore the identity safely before retrying.",
+    "LAN_IDENTITY_INVALID": "The host certificate or private key is invalid or expired. Hosting was not started.",
+    "LAN_ADDRESS_CHANGED": "The host IP address changed since its certificate was made. Hosting was not started for the new address; ask a network administrator to review the identity.",
+    "LAN_PORT_BUSY": "The HTTPS LAN port is already in use; hosting was not started.",
+    "LAN_START_FAILED": "HTTPS LAN hosting could not start. Check the local service log and firewall.",
+    "LAN_HOST_ONLY": "Only a session in the host’s local Network app can change LAN hosting.",
+    "LAN_SETUP_LOCAL_ONLY": "First-run administrator setup must be completed on the host, not over LAN.",
+    "LAN_TLS_REQUIRED": "Remote access without HTTPS is refused.",
+    "LAN_CONFIG_INVALID": "The saved LAN host configuration is damaged. Local access is still available.",
+    "LAN_NOT_AVAILABLE": "LAN hosting is not available on this service.",
+    "LAN_ALREADY_ATTACHED": "A LAN listener is already attached to this service.",
+    "LAN_PERSISTENT_DATABASE_REQUIRED": "LAN hosting requires a persistent database on the host.",
+    "LAN_PRIVATE_ONLY": "Public IP connections are refused; use a trusted private network."
   },
   "languages": {
     "en": "English",
@@ -1060,7 +1074,24 @@
     "snapshot_help": "Creates a verified, consistent SQLite snapshot on this host. Only an administrator can download company data or restore a company backup.",
     "create_snapshot": "Create verified snapshot",
     "snapshot_done": "Verified safety copy created: {name}",
-    "lan_unavailable": "LAN hosting is not enabled in this build. All connections currently use the local service; do not share database files across computers."
+    "lan_title": "Private LAN hosting (HTTPS)",
+    "lan_intro": "Off by default. First set up an administrator on this computer. Enable hosting here only on a trusted local network; clients open one of the URLs below in a browser and sign in to this host’s database.",
+    "lan_status": "LAN listener",
+    "lan_enabled": "Enabled on this host",
+    "lan_disabled": "Off — local access only",
+    "lan_enable": "Enable HTTPS LAN hosting",
+    "lan_disable": "Disable LAN hosting",
+    "lan_started": "LAN hosting is enabled. Verify the certificate fingerprint before connecting clients.",
+    "lan_stopped": "LAN hosting is disabled. Local access and data are unchanged.",
+    "lan_fingerprint": "Server certificate SHA-256 fingerprint",
+    "lan_expires": "Certificate expires",
+    "lan_urls": "Client browser addresses",
+    "lan_seller": "Seller",
+    "lan_administrator": "Administrator",
+    "lan_network": "Network & Maintenance",
+    "lan_warning": "Before accepting a browser certificate warning, compare its SHA-256 fingerprint with the one shown on the host, via a separate trusted channel. Never accept a mismatch or forward the LAN port to the Internet. Clients use the host URL, not a copied SQLite file; an OS firewall may require permitting TCP 34671.",
+    "lan_only_host": "Hosting may be changed only from the host’s local Network & Maintenance window.",
+    "lan_error": "Hosting needs attention"
   },
   "calculator": {
     "title": "Calculator",
@@ -1156,7 +1187,8 @@
       "step1": "Sign in with a Network role (or as administrator). Use Run health check to inspect service status, SQLite integrity and foreign-key enforcement.",
       "step2": "Use Create verified snapshot to make a consistent full SQLite copy in the host’s backups folder. Record the name; copy it to separate storage using authorized operating-system access.",
       "step3": "Only an administrator can download a company export or restore one here. A Network user cannot see products, customers, accounts or financial reports.",
-      "step4": "This version does not enable LAN hosting. Do not share or synchronize SQLite files between computers; use the local service until a secure host/client feature is released."
+      "step4": "LAN hosting is off by default. After first-run setup on the host, use the Network application to enable HTTPS hosting. Give clients its Seller or Administrator browser address; all users sign in to the host’s one database. Never share or sync live SQLite files.",
+      "step5": "Read the SHA-256 certificate fingerprint from the host’s own Network window. On each client, compare it using a separate trusted channel before accepting the self-signed certificate; never accept a mismatch. Keep the host powered on and backed up. Firewalls may need TCP 34671 opened only for the private network; public Internet access is forbidden."
     },
     "safety": {
       "title": "Passwords and safe operation",
@@ -1169,7 +1201,7 @@
       "title": "Current limitations",
       "intro": "JENESIS 0.1 is an early, unsigned release. Verify results before relying on them.",
       "step1": "Supported currencies are separate company base currencies, not automatic exchange conversion. There is no proven historical FX revaluation or conversion in this release.",
-      "step2": "LAN host/client, shared remote access, automatic off-site backups and unattended disaster recovery are not enabled. Manual external copies remain your responsibility.",
+      "step2": "Private LAN browser clients can connect by HTTPS only after a local operator opts in. A remote installed desktop/client mode, Internet access, automatic off-site backups and unattended disaster recovery are not provided. Never copy or sync a live database to another PC; keep manual external backups.",
       "step3": "An installer test on a Windows CI runner is not a physical-PC, upgrade, antivirus or offline-installation certification. Consult an accountant for legal tax and reporting obligations.",
       "step4": "For XAF, RWF and UGX, fractional monetary amounts are refused instead of being hidden by a zero-decimal display. Adjust the source transaction with accounting approval; no country-specific rounding policy has been certified."
     }

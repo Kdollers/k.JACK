@@ -17,7 +17,7 @@ const TOPICS = [
   { id: 'accounting', modes: ['administrator', 'general'], steps: 3, target: 'accounting', permission: 'accounting:read' },
   { id: 'reports', modes: ['administrator', 'general'], steps: 3, target: 'reports', permission: 'reports:read' },
   { id: 'backup', modes: ['administrator', 'general'], steps: 4, target: 'settings', permission: 'backup:export' },
-  { id: 'network', modes: ['network'], steps: 4, target: 'dashboard', permission: 'network:read' },
+  { id: 'network', modes: ['network'], steps: 5, target: 'dashboard', permission: 'network:read' },
   { id: 'safety', modes: ['seller', 'administrator', 'network', 'general'], steps: 3 },
   { id: 'limits', modes: ['seller', 'administrator', 'network', 'general'], steps: 4 }
 ];

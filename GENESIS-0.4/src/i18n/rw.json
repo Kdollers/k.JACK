@@ -805,7 +805,21 @@
     "APP_MODE_INVALID": "Fungura Umugurisha, Umuyobozi cyangwa Urusobe no kubungabunga ukoresheje aho buri imwe itangirira.",
     "APP_MODE_FORBIDDEN": "Konti yawe ntiyemerewe gukoresha iyi porogaramu. Koresha iyo wemerewe.",
     "BANK_TYPE_INVALID": "Hitamo ubwoko bwemewe bwa konti ya banki, amafaranga mu ntoki cyangwa amafaranga yo kuri telefoni.",
-    "OPENING_BALANCE_REQUIRES_JOURNAL": "Konti nshya ya banki cyangwa y’amafaranga mu ntoki igomba gutangira kuri zeru. Andika inyandiko y’itangiriro ifite impande zingana kugira ngo ushyireho amafaranga ya mbere."
+    "OPENING_BALANCE_REQUIRES_JOURNAL": "Konti nshya ya banki cyangwa y’amafaranga mu ntoki igomba gutangira kuri zeru. Andika inyandiko y’itangiriro ifite impande zingana kugira ngo ushyireho amafaranga ya mbere.",
+    "LAN_NO_PRIVATE_INTERFACE": "Nta muyoboro wa IPv4 wigenga uboneka kuri iyi mudasobwa.",
+    "LAN_IDENTITY_INCOMPLETE": "Icyemezo cy’umutekano cyangwa urufunguzo rw’ibanga ntibiruzuye. LAN ntiyafunguwe; subizaho ibyangombwa witonze.",
+    "LAN_IDENTITY_INVALID": "Icyemezo cy’umutekano cyangwa urufunguzo rw’ibanga ntibyemewe cyangwa byararangiye. LAN ntiyafunguwe.",
+    "LAN_ADDRESS_CHANGED": "Aderesi IP y’iyi mudasobwa yahindutse nyuma yo gukora icyemezo. LAN ntiyafunguwe kuri aderesi nshya; saba ushinzwe urusobe agenzure ibyangombwa.",
+    "LAN_PORT_BUSY": "Umuyoboro wa HTTPS LAN urakoreshwa ahandi; serivisi ntiyafunguwe.",
+    "LAN_START_FAILED": "Serivisi ya HTTPS LAN ntiyashoboye gufunguka. Reba inyandiko za serivisi na firewall.",
+    "LAN_HOST_ONLY": "Uw’injiye mu gice cy’Urusobe kuri mudasobwa yakira serivisi gusa ni we wahindura LAN.",
+    "LAN_SETUP_LOCAL_ONLY": "Gushyiraho umuyobozi bwa mbere bikorwa kuri mudasobwa yakira serivisi, si kuri LAN.",
+    "LAN_TLS_REQUIRED": "Gukoresha serivisi uri kure nta HTTPS birangwa.",
+    "LAN_CONFIG_INVALID": "Imiterere ya LAN yabitswe yangiritse. Serivisi y’iyi mudasobwa iracyakora.",
+    "LAN_NOT_AVAILABLE": "LAN ntiboneka kuri iyi serivisi.",
+    "LAN_ALREADY_ATTACHED": "Serivisi ya LAN isanzwe ihujwe na iyi porogaramu.",
+    "LAN_PERSISTENT_DATABASE_REQUIRED": "LAN ikenera ububiko bw’amakuru buhoraho kuri mudasobwa yakira serivisi.",
+    "LAN_PRIVATE_ONLY": "Aderesi IP z’interineti rusange zirangwa; koresha urusobe rwigenga rwizewe."
   },
   "languages": {
     "en": "English",
@@ -1060,7 +1074,24 @@
     "snapshot_help": "Kora kopi ya SQLite yuzuye kandi yagenzuwe kuri iyi mudasobwa. Umuyobozi gusa ni we ushobora gukuraho cyangwa kugarura amakuru y’ikigo.",
     "create_snapshot": "Kora kopi yagenzuwe",
     "snapshot_done": "Kopi y’umutekano yagenzuwe yakozwe: {name}",
-    "lan_unavailable": "Gukoresha urusobe rwa LAN ntibirafungurwa muri iyi verisiyo. Ibyo ukoresha byose bikorera kuri serivisi y’iyi mudasobwa; ntugasangize izindi mudasobwa dosiye za database."
+    "lan_title": "Kwakira kuri LAN yigenga (HTTPS)",
+    "lan_intro": "Byabanje kuzimwa. Banza ushyireho umuyobozi kuri iyi mudasobwa. Fungura serivisi ku rusobe rwizewe gusa; abandi bafungure aderesi iri hasi muri mushakisha, binjire mu bubiko bw’amakuru bwo kuri iyi mudasobwa.",
+    "lan_status": "Serivisi ya LAN",
+    "lan_enabled": "Ifunguye kuri iyi mudasobwa",
+    "lan_disabled": "Ifunze — ikoreshwa hano gusa",
+    "lan_enable": "Fungura LAN ya HTTPS",
+    "lan_disable": "Funga LAN",
+    "lan_started": "LAN irafunguye. Genzura ikimenyetso cy’icyemezo cy’umutekano mbere yo guhuza abandi.",
+    "lan_stopped": "LAN irafunzwe. Serivisi y’iyi mudasobwa n’amakuru ntibyahindutse.",
+    "lan_fingerprint": "Ikimenyetso SHA-256 cy’icyemezo cy’umutekano",
+    "lan_expires": "Igihe icyemezo kirangirira",
+    "lan_urls": "Aderesi zifungurwa muri mushakisha z’abandi",
+    "lan_seller": "Umugurisha",
+    "lan_administrator": "Umuyobozi",
+    "lan_network": "Urusobe no kubungabunga",
+    "lan_warning": "Mbere yo kwemera umuburo w’icyemezo cy’umutekano muri mushakisha, gereranya ikimenyetso cyacyo SHA-256 n’icyerekanwa kuri mudasobwa yakira serivisi, ukoresheje ubundi buryo bwizewe. Ntukemere ko bitandukanye kandi ntufungurire interineti umuyoboro. Abandi bakoresha aderesi y’iyi mudasobwa, si kopi ya SQLite; firewall ishobora gusaba gufungura TCP 34671.",
+    "lan_only_host": "Guhindura LAN bikorerwa gusa mu gice cy’Urusobe no kubungabunga kuri mudasobwa yakira serivisi.",
+    "lan_error": "LAN ikeneye kwitabwaho"
   },
   "calculator": {
     "title": "Imashini ibara",
@@ -1156,7 +1187,8 @@
       "step1": "Injira ufite uruhare rw’Urusobe (cyangwa uri umuyobozi). Genzura imikorere urebe serivisi, ubuziranenge bwa SQLite n’uko amasano y’amakuru agenzurwa.",
       "step2": "Kora kopi yagenzuwe kugira ngo ubike kopi yuzuye ya SQLite mu bubiko bw’iyi mudasobwa. Andika izina ryayo; uyimure ahandi ukoresheje uburenganzira bwemewe bwa sisitemu.",
       "step3": "Umuyobozi gusa ni we ushobora gukuramo cyangwa kugarura kopi y’ikigo hano. Umukoresha w’Urusobe ntabona ibicuruzwa, abakiriya, konti cyangwa raporo z’imari.",
-      "step4": "Iyi verisiyo ntifungura serivisi kuri LAN. Ntugasangize cyangwa ngo uhuze dosiye za SQLite hagati ya mudasobwa; koresha serivisi y’iyi mudasobwa kugeza uburyo bwizewe bwo guhuza buje."
+      "step4": "LAN iba ifunze mbere. Nyuma yo gushyiraho umuyobozi kuri mudasobwa yakira serivisi, fungura HTTPS mu gice cy’Urusobe. Ha abandi aderesi ya mushakisha y’Umugurisha cyangwa Umuyobozi; bose bakoresha ububiko bumwe bw’iyi mudasobwa. Ntugasangize cyangwa ngo uhuze dosiye za SQLite ziri gukoreshwa.",
+      "step5": "Reba ikimenyetso SHA-256 cy’icyemezo cy’umutekano mu gice cy’Urusobe kuri mudasobwa yakira serivisi. Ku yindi mudasobwa, kigereranye ukoresheje ubundi buryo bwizewe mbere yo kwemera icyemezo; ntukemere ko bitandukanye. Mudasobwa yakira serivisi igume icanye kandi ifite kopi z’amakuru. Firewall ishobora gusaba TCP 34671 ku rusobe rwigenga gusa; interineti rusange ntiyemerewe."
     },
     "safety": {
       "title": "Amagambo banga n’umutekano",
@@ -1169,7 +1201,7 @@
       "title": "Ibitarakorwa",
       "intro": "JENESIS 0.1 ni verisiyo ya mbere itarashyirwaho umukono. Banza ugenzure ibisubizo mbere yo kubishingiraho.",
       "step1": "Amafaranga yemewe akoreshwa nk’ifaranga ry’ibanze ryihariye rya buri kigo, si uguhinduranya amafaranga byikora. Guhindura agaciro k’ivunjisha ryo mu bihe byashize ntibiragenzurwa.",
-      "step2": "Kwakira abandi kuri LAN, gukorera hamwe kure, kopi zihita zibikwa ahandi n’uburyo bwikora bwo kugarura amakuru ntibirimo. Ugomba kubika kopi hanze ubwawe.",
+      "step2": "Abandi bashobora gukoresha mushakisha kuri LAN yigenga binyuze muri HTTPS nyuma yo kuyifungurira kuri mudasobwa yakira serivisi. Nta porogaramu ya mudasobwa y’umukiriya iri kure, nta gukoresha interineti rusange, nta kopi zibikwa ahandi byikora cyangwa kugarura amakuru byikora. Ntukopore cyangwa ngo uhuze ububiko bukora ku yindi PC; jya ubika kopi ahandi ubwawe.",
       "step3": "Kugeragereza ishyirwamo kuri sisitemu ya Windows yo mu igerageza si icyemezo ko bikora kuri PC yawe, mu kuvugurura, kuri antivirusi cyangwa nta murongo wa interineti. Baza umubaruramari ibyerekeye imisoro.",
       "step4": "Kuri XAF, RWF na UGX, amafaranga afite ibice by’ifaranga arangwa aho guhishwa n’uko ecran yerekana imibare yuzuye. Kosora inyandiko wemeranyije n’umubaruramari; uburyo bwo kwegeranya amafaranga bwemewe n’amategeko y’aho ukorera ntiburagenzurwa."
     }

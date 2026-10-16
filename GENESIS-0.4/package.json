@@ -15,10 +15,11 @@
     "release:zip": "npm run build && node scripts/package-source.cjs",
     "test": "node tests/accounting-engine.test.js",
     "test:desktop": "node tests/desktop-backend.test.js",
-    "test:all": "npm test && npm run test:crud && npm run test:currencies && npm run test:modes && npm run test:snapshots && npm run test:ui && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:setup && npm run test:recovery && npm run test:errors && npm run test:payments && npm run test:i18n",
+    "test:all": "npm test && npm run test:crud && npm run test:currencies && npm run test:modes && npm run test:lan && npm run test:snapshots && npm run test:ui && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:setup && npm run test:recovery && npm run test:errors && npm run test:payments && npm run test:i18n",
     "test:crud": "node tests/crud-workflows.test.cjs",
     "test:currencies": "node tests/currency-posting.test.cjs",
     "test:modes": "node tests/app-modes.test.cjs",
+    "test:lan": "node tests/lan-host.test.cjs",
     "test:snapshots": "node tests/startup-snapshots.test.cjs",
     "test:ui": "vitest run tests/ui --maxWorkers=1 --minWorkers=1",
     "test:setup": "node tests/setup-state.test.cjs",
@@ -96,9 +97,11 @@
     }
   },
   "dependencies": {
+    "@peculiar/x509": "^2.2.0",
     "better-sqlite3": "^12.11.1",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@babel/parser": "^7.29.9",
