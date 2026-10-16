@@ -1,19 +1,23 @@
-# Disposable Windows smoke for an existing GENESIS ledger and the NEW separate
-# installation choice. Uses release/win-unpacked/JENESIS.exe, the same binary the
-# installer contains. Never point this script at a real Windows app-data folder.
+# Native first-launch choice on a DISPOSABLE, CLEAN Windows runner ONLY.
+# Electron's app.getPath('appData') uses the Windows roaming known folder (it
+# cannot reliably be redirected with an APPDATA environment override). Refuse
+# to start unless BOTH product directories are absent. All files this script
+# creates are marked and removed after the packaged app closes, so the next
+# clean-install smoke test starts from a genuinely empty runner profile.
 param(
   [Parameter(Mandatory = $true)] [string] $ExePath,
-  [int] $TimeoutSec = 120
+  [int] $TimeoutSec = 75
 )
 $ErrorActionPreference = 'Stop'
 $ExePath = (Resolve-Path $ExePath).Path
-$root = Join-Path $env:TEMP ('JenesisExistingChoiceSmoke-' + [guid]::NewGuid().ToString('N'))
-$appData = Join-Path $root 'AppData'
+$appData = [Environment]::GetFolderPath('ApplicationData')
 $legacyDir = Join-Path $appData 'GENESIS'
 $currentDir = Join-Path $appData 'JENESIS'
 $legacyDb = Join-Path $legacyDir 'genesis.db'
 $currentDb = Join-Path $currentDir 'genesis.db'
-$originalAppData = $env:APPDATA
+$marker = 'jenesis-ci-disposable-' + [guid]::NewGuid().ToString('N')
+$markerName = 'CI_TEST_OWNED_DO_NOT_USE_FOR_BUSINESS.txt'
+$createdFixture = $false
 
 function Assert([bool] $condition, [string] $message) {
   if (-not $condition) { throw $message }
@@ -38,10 +42,12 @@ function Invoke-NativeButton([string] $buttonName) {
   }
   $visible = @(Get-Process -Name JENESIS -ErrorAction SilentlyContinue |
     Where-Object { $_.MainWindowTitle } | ForEach-Object { $_.MainWindowTitle })
-  throw "Native button '$buttonName' did not appear. Visible windows: $($visible -join ', ')"
+  $logPaths = @((Join-Path $legacyDir 'logs\desktop.log'), (Join-Path $currentDir 'logs\desktop.log'))
+  $logs = @($logPaths | Where-Object { Test-Path $_ } | ForEach-Object { Get-Content $_ -Tail 4 })
+  throw "Native button '$buttonName' did not appear. Visible windows: $($visible -join ', '). Logs: $($logs -join ' | ')"
 }
 
-function Wait-ForIsolatedBackend {
+function Wait-ForNewBackend {
   $log = Join-Path $currentDir 'logs\desktop.log'
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
   while ((Get-Date) -lt $deadline) {
@@ -52,33 +58,39 @@ function Wait-ForIsolatedBackend {
         try {
           $health = Invoke-RestMethod -Uri "$url/api/health" -TimeoutSec 2
           if ($health.appId -eq 'jenesis-accounting') { return $url }
-        } catch { } # Backend may have stopped or restarted between log and request.
+        } catch { } # The backend may be restarting between the log and request.
       }
     }
     Start-Sleep -Milliseconds 500
   }
-  throw "The isolated JENESIS backend did not start. Check $log"
+  throw "The separate JENESIS backend did not start. See $log"
 }
 
+# SAFETY PRECONDITIONS: never run over an existing installation or other app.
+Assert (-not (Test-Path $legacyDir)) "Existing data at $legacyDir; refusing to run."
+Assert (-not (Test-Path $currentDir)) "Existing data at $currentDir; refusing to run."
+Assert (-not (Get-Process -Name JENESIS -ErrorAction SilentlyContinue)) 'JENESIS is already running.'
+Assert (Test-Path $ExePath) 'The unpacked Windows executable was not built.'
+
 try {
-  Assert (-not (Test-Path $appData)) 'The test app-data folder must not exist beforehand.'
-  New-Item -ItemType Directory -Path $legacyDir -Force | Out-Null
-  # Copy the archived historical database ONLY to this isolated temporary path.
-  # Its accounts and transactions must not enter the new installation.
+  New-Item -ItemType Directory -Path $legacyDir, $currentDir -Force | Out-Null
+  $createdFixture = $true
+  Set-Content -Path (Join-Path $legacyDir $markerName) -Value $marker -NoNewline
+  Set-Content -Path (Join-Path $currentDir $markerName) -Value $marker -NoNewline
+  # The archived source fixture is copied ONLY to the disposable runner path.
   node -e "require('./tests/fixture-db.cjs').writeLegacyFixture(process.argv[1])" $legacyDb
   Assert ($LASTEXITCODE -eq 0) 'Could not construct the disposable legacy fixture.'
   $before = (Get-FileHash $legacyDb -Algorithm SHA256).Hash
-  $env:APPDATA = $appData
-  Write-Host "==> Launching the packaged JENESIS binary with an isolated legacy database"
+  Write-Host "==> Launching the packaged JENESIS binary with a runner-only legacy database"
   Start-Process -FilePath $ExePath | Out-Null
   Add-Type -AssemblyName UIAutomationClient
   Add-Type -AssemblyName UIAutomationTypes
   Invoke-NativeButton 'Start separate JENESIS installation'
   Invoke-NativeButton 'Create separate empty installation'
-  $url = Wait-ForIsolatedBackend
+  $url = Wait-ForNewBackend
   $status = Invoke-RestMethod -Uri "$url/api/setup/status" -TimeoutSec 15
   Assert ($status.needsSetup -eq $true -and $status.hasAdministrator -eq $false) `
-    'A separately selected empty JENESIS database must offer first-run setup.'
+    'A separately selected empty database must offer first-run setup.'
   Assert (Test-Path $currentDb) 'The new installation did not create its own database.'
   $choice = Get-Content (Join-Path $currentDir 'installation-choice.json') -Raw | ConvertFrom-Json
   Assert ($choice.selected -eq 'current' -and $choice.currentInitialized -eq $true) `
@@ -90,8 +102,7 @@ try {
   Assert ($LASTEXITCODE -eq 0 -and [int]$newUsers -eq 0) 'The new installation imported existing accounts.'
   Write-Host '    PASS: native choice -> separate first-run setup; original ledger unchanged.' -ForegroundColor Green
 } finally {
-  $env:APPDATA = $originalAppData
-  # Close only the disposable unpacked executable, never any installed app.
+  # Gracefully close only the unpacked test binary, not another installed app.
   $deadline = (Get-Date).AddSeconds(30)
   do {
     $owned = @(Get-CimInstance Win32_Process -Filter "Name='JENESIS.exe'" -ErrorAction SilentlyContinue |
@@ -105,8 +116,18 @@ try {
     if ($owned.Count -gt 0) { Start-Sleep -Milliseconds 450 }
   } while ($owned.Count -gt 0 -and (Get-Date) -lt $deadline)
   if ($owned.Count -gt 0) {
-    # The isolated runner is disposable; stop only this unpacked test binary.
     $owned | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+    throw 'The disposable JENESIS binary did not shut down cleanly.'
   }
-  Write-Host "    Isolated test data: $root (runner-only; never a user's database)"
+  if ($createdFixture) {
+    # Delete ONLY the runner fixture we ourselves created; a mismatched marker
+    # means someone changed these folders, so leave them intact and fail.
+    foreach ($dir in @($legacyDir, $currentDir)) {
+      $tag = Join-Path $dir $markerName
+      Assert ((Test-Path $tag) -and (Get-Content $tag -Raw) -eq $marker) `
+        "Runner fixture ownership cannot be verified: $dir (not removing it)."
+    }
+    Remove-Item $legacyDir, $currentDir -Recurse -Force
+    Write-Host '    Removed only the two marked CI fixture folders; next installer test starts clean.'
+  }
 }
