@@ -152,7 +152,11 @@ Step 'Three independently launchable Start menu and desktop shortcuts use their 
     $icon = if ($mode -eq 'Network and Maintenance') { 'network' } else { $mode.ToLowerInvariant() }
     foreach ($linkFile in @($startLinks[0], $desktopLinks[0])) {
       $link = $wsh.CreateShortcut($linkFile.FullName)
-      Assert ($link.TargetPath -eq $ExePath) "Incorrect executable for ${file}: $($link.TargetPath)"
+      # WScript.Shell may resolve a short/long TEMP path differently than Join-Path.
+      # Compare the resolved file, not the raw shortcut spelling of the path.
+      $target = if (Test-Path $link.TargetPath) { (Get-Item $link.TargetPath).FullName } else { $link.TargetPath }
+      $expected = (Get-Item $ExePath).FullName
+      Assert ($target -eq $expected) "Incorrect executable for ${file}: target <$target>, expected <$expected>"
       if ($mode -ne 'Administrator') {
         Assert ($link.Arguments -eq "--jenesis-mode=$icon") "Incorrect launch mode for ${file}: $($link.Arguments)"
         Assert ($link.IconLocation -like "*j-$icon.ico*") "Incorrect icon for ${file}: $($link.IconLocation)"
