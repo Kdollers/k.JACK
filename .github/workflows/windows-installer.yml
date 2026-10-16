@@ -1,0 +1,57 @@
+name: Windows installer
+
+on:
+  push:
+    branches: ["arena/**"]
+    paths:
+      - "GENESIS-0.4/**"
+      - ".github/workflows/windows-installer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-2022
+    defaults:
+      run:
+        working-directory: GENESIS-0.4
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false" # unsigned CI installer; never publish automatically
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          $env:npm_config_python = Join-Path $env:pythonLocation 'python.exe'
+          npm ci --foreground-scripts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test accounting, authentication, recovery, localization and desktop lifecycle
+        run: npm run test:all
+      - name: Build unsigned Windows installer
+        shell: pwsh
+        run: |
+          npm run desktop:dist
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify package contents and native SQLite binary
+        run: node scripts/verify-package.cjs release/win-unpacked
+      - name: Test installation and startup on clean Windows runner
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem release -Filter 'GENESIS-Setup-*.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'Installer was not produced.' }
+          ./scripts/smoke-test-installed.ps1 -InstallerPath $installer.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload installer for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: GENESIS-Windows-installer
+          path: GENESIS-0.4/release/GENESIS-Setup-*.exe
+          if-no-files-found: error

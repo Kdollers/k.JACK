@@ -1,0 +1,12 @@
+node_modules/
+dist/
+release/
+build/
+backups/
+# The database in the source archive contains real/demo accounting records. Never commit
+# it (or a copy of an installed company's data) to the source tree.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.DS_Store

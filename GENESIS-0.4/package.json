@@ -1,0 +1,97 @@
+{
+  "name": "genesis-accounting",
+  "productName": "GENESIS",
+  "version": "1.0.0",
+  "description": "GENESIS - Professional Business Accounting & Management Software",
+  "author": "GENESIS",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev:server": "node server/index.js",
+    "build:client": "vite build",
+    "build": "vite build",
+    "test": "node tests/accounting-engine.test.js",
+    "test:desktop": "node tests/desktop-backend.test.js",
+    "test:all": "npm test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:setup && npm run test:recovery && npm run test:errors && npm run test:payments && npm run test:i18n",
+    "test:setup": "node tests/setup-state.test.cjs",
+    "test:recovery": "node tests/recovery.test.cjs",
+    "test:errors": "node tests/error-codes.test.cjs",
+    "test:payments": "node tests/payments-display.test.cjs",
+    "test:i18n": "node tests/i18n.test.cjs",
+    "desktop": "electron .",
+    "desktop:pack": "npm run build && electron-builder --win --dir",
+    "desktop:dist": "npm run build && electron-builder --win nsis",
+    "test:auth": "node tests/auth-security.test.js",
+    "test:security": "node tests/security-hardening.test.js",
+    "test:e2e": "python3 tests/e2e/auth_ui_test.py"
+  },
+  "build": {
+    "appId": "com.genesis.accounting",
+    "productName": "GENESIS",
+    "copyright": "Copyright (c) GENESIS",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "electron/**/*",
+      "server/**/*",
+      "dist/**/*",
+      "package.json",
+      "assets/icon.ico",
+      "!**/*.map",
+      "!**/tests/**"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "GENESIS-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GENESIS",
+      "uninstallDisplayName": "GENESIS",
+      "deleteAppDataOnUninstall": false,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    }
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@babel/parser": "^7.29.9",
+    "@vitejs/plugin-react": "^4.3.4",
+    "adm-zip": "^0.5.18",
+    "autoprefixer": "^10.4.20",
+    "clsx": "^2.1.1",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "lucide-react": "^0.475.0",
+    "postcss": "^8.5.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.1.0"
+  }
+}
