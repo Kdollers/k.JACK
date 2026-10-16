@@ -1,5 +1,5 @@
 {
-  "app_name": "GENESIS",
+  "app_name": "JENESIS",
   "app_tagline": "Gahunda y'Ubucuruzi n'Ibaruramari ry'Ubucuruzi Buto n'Uburinganiye",
   "nav": {
     "dashboard": "Imbonerahamwe y'Ibanze",
@@ -15,7 +15,8 @@
     "erp_1_0": "ERP 1.0",
     "enterprise_modules": "Ibice bya porogaramu",
     "secure_ledger": "Igitabo cy’ibaruramari kirinzwe",
-    "double_entry_accounting_standard": "Ibaruramari ry’impande ebyiri"
+    "double_entry_accounting_standard": "Ibaruramari ry’impande ebyiri",
+    "help": "Ikigo cy’ubufasha"
   },
   "common": {
     "save": "Bika",
@@ -117,7 +118,9 @@
     "records_count": {
       "one": "Inyandiko {count}",
       "other": "Inyandiko {count}"
-    }
+    },
+    "city": "Umujyi / agace",
+    "country": "Igihugu"
   },
   "dashboard": {
     "title": "Imbonerahamwe Nkuru y'Imari n'Ubucuruzi",
@@ -282,7 +285,8 @@
     },
     "category_general": "Rusange",
     "unit_pieces": "ibice",
-    "main_store": "Ububiko bukuru"
+    "main_store": "Ububiko bukuru",
+    "opening_stock_help": "Igicuruzwa gishya gitangirana ububiko bwa zeru. Andika ihinduka ry’ububiko cyangwa ibyo waguze kugira ngo ushyiremo ingano n’agaciro byabwo by’ibanze."
   },
   "sales": {
     "title": "Ubucuruzi n'Ibicuruzwa Byagurishijwe",
@@ -623,18 +627,23 @@
     "company_updated_notice": "Amakuru n’igenamiterere by’ikigo byabitswe.",
     "company_created_notice": "Ikigo {name} cyaremwe n’urutonde rwa konti zacyo.",
     "user_created_notice": "Umukoresha {name} yongeweho.",
-    "tax_created_notice": "Igipimo cy’umusoro cyabitswe."
+    "tax_created_notice": "Igipimo cy’umusoro cyabitswe.",
+    "choose_country": "Hitamo igihugu",
+    "base_currency_warning": "Hitamo ifaranga shingiro mbere yo kwandika ibikorwa by’imari. Kurihindura nyuma birabujijwe. Kuvunja amafaranga y’ibindi bihugu na FIFO ntibiraboneka; banza ugenzure ibipimo by’imisoro mbere yo gukora inyemezabuguzi.",
+    "fifo_unavailable": "FIFO (ntirakozwe — hakoreshwa ikigereranyo cy’ibiciro gusa)",
+    "country": "Igihugu",
+    "role_network": "Urusobe no kubungabunga"
   },
   "auth": {
     "app_tagline": "Imicungire n’ibaruramari ry’ubucuruzi",
     "language": "Ururimi",
     "login_title": "Injira",
-    "login_intro": "Andika izina ry’ukoresha n’ijambobanga rya GENESIS.",
+    "login_intro": "Andika izina ry’ukoresha n’ijambobanga rya JENESIS.",
     "username": "Izina ry’ukoresha",
     "password": "Ijambobanga",
     "sign_in": "Injira",
     "signing_in": "Kwinjira birakomeje…",
-    "setup_title": "Shyiraho GENESIS",
+    "setup_title": "Shyiraho JENESIS",
     "setup_intro": "Shyiraho ikigo n’konti ya mbere y’umuyobozi. Iyi ntambwe ikorwa rimwe gusa.",
     "company_name": "Izina ry’ikigo",
     "full_name": "Amazina yuzuye y’umuyobozi",
@@ -645,20 +654,20 @@
     "password_mismatch": "Amajambobanga ntahuye.",
     "password_hint": "Nibura inyuguti 10. Ntukoreshe izina ry’ukoresha.",
     "change_password_title": "Hindura ijambobanga ryawe",
-    "change_password_intro": "Ugomba guhindura ijambobanga mbere yo gukoresha GENESIS.",
+    "change_password_intro": "Ugomba guhindura ijambobanga mbere yo gukoresha JENESIS.",
     "current_password": "Ijambobanga rya none",
     "new_password": "Ijambobanga rishya",
     "change_password": "Hindura ijambobanga",
     "sign_out": "Sohoka",
     "account": "Konti",
-    "unavailable_title": "GENESIS ntiyashoboye kugera kuri serivisi yayo y’imbere",
-    "unavailable_intro": "Serivisi y’ibaruramari ntiyasubije. Funga GENESIS wongere uyitangire. Niba ikibazo gikomeje, reba dosiye y’amateka mu bubiko bwa GENESIS.",
+    "unavailable_title": "JENESIS ntiyashoboye kugera kuri serivisi yayo y’imbere",
+    "unavailable_intro": "Serivisi y’ibaruramari ntiyasubije. Funga JENESIS wongere uyitangire. Niba ikibazo gikomeje, reba dosiye y’amateka mu bubiko bwa JENESIS.",
     "retry": "Ongera ugerageze",
     "initializing": "Gutegura ububiko bw’ibaruramari…",
-    "recovery_link": "Ntushobora kwinjira muri GENESIS yari isanzwe ikoreshwa?",
-    "recovery_title": "Kugarura uburenganzira bwo gukoresha GENESIS yari isanzweho",
+    "recovery_link": "Ntushobora kwinjira muri JENESIS yari isanzwe ikoreshwa?",
+    "recovery_title": "Kugarura uburenganzira bwo gukoresha JENESIS yari isanzweho",
     "recovery_intro": "Ubu bubiko busanzwemo abakoresha cyangwa amakuru y’ubucuruzi. Kwandikisha umuyobozi wa mbere ntibyemewe kugira ngo ayo makuru arindwe.",
-    "recovery_backup": "Funga GENESIS ubanze ukore kopi y’ububiko bw’amakuru. Ntusibe ububiko cyangwa abakoresha basanzweho.",
+    "recovery_backup": "Funga JENESIS ubanze ukore kopi y’ububiko bw’amakuru. Ntusibe ububiko cyangwa abakoresha basanzweho.",
     "recovery_steps": "Niba hari umuyobozi ushobora kwinjira, yagukorera konti mu Igenamiterere. Bitabaye ibyo, saba umuyobozi wawe cyangwa umukozi ubifitiye uburenganzira gukurikiza uburyo bwo kugarura konti buri muri DESKTOP.md.",
     "recovery_warning": "Kongera gushyiraho porogaramu ntibisiba amakuru yawe cyangwa ngo byongere gufungura iyandikwa rya mbere. Ntugahe umuntu utizeye ijambobanga cyangwa ububiko bw’amakuru.",
     "recovery_sign_in": "Injira ukoresheje konti isanzweho",
@@ -686,7 +695,7 @@
     "LAST_ADMIN": "Hagomba gusigara nibura umuyobozi umwe ukora.",
     "ROLE_INVALID": "Inshingano yatoranyijwe ntiyemewe.",
     "RESET_DISABLED": "Gusubiza ububiko ku ntangiriro binyuze mu nteruro byahagaritswe. Koresha kopi y’ubwizigame no kuyisubiza.",
-    "NO_COMPANY": "Nta kigo kibaho. Ongera utangire GENESIS kugira ngo ububiko butangizwe.",
+    "NO_COMPANY": "Nta kigo kibaho. Ongera utangire JENESIS kugira ngo ububiko butangizwe.",
     "MISSING_FIELDS": "Uzuza imyanya yose isabwa.",
     "USER_CREATE_FAILED": "Umukoresha ntiyashoboye kuremwa.",
     "USER_UPDATE_FAILED": "Umukoresha ntiyashoboye guhindurwa.",
@@ -749,8 +758,8 @@
     "EMPTY_COUNT": "Ongeraho nibura igicuruzwa kimwe mu ibarura ry’ububiko.",
     "EMPTY_CREDIT_NOTE": "Ongeraho nibura umurongo umwe ku nyandiko yo kugabanya umwenda.",
     "EMPTY_RETURN": "Ongeraho nibura igicuruzwa kimwe mu bisubizwa.",
-    "BACKUP_INVALID": "Iyi dosiye si kopi y’amakuru ya GENESIS yemewe.",
-    "BACKUP_FORMAT_UNSUPPORTED": "Imiterere ya kera y’iyi kopi ntishobora kugarurwa neza. Kora indi kopi ukoresheje GENESIS igezweho.",
+    "BACKUP_INVALID": "Iyi dosiye si kopi y’amakuru ya JENESIS yemewe.",
+    "BACKUP_FORMAT_UNSUPPORTED": "Imiterere ya kera y’iyi kopi ntishobora kugarurwa neza. Kora indi kopi ukoresheje JENESIS igezweho.",
     "BACKUP_CHECKSUM_MISMATCH": "Kopi y’amakuru yarangiritse cyangwa yarahinduwe. Nta makuru yagaruwe.",
     "BACKUP_COMPANY_MISMATCH": "Iyi kopi ni iy’ikindi kigo.",
     "BACKUP_UNBALANCED": "Kopi irimo inyandiko y’ibaruramari itaringaniye. Nta cyagaruwe.",
@@ -761,7 +770,42 @@
     "RESTORE_FAILED": "Kugarura kopi y’amakuru ntibyakunze. Amakuru yawe ntiyahindutse.",
     "RATE_LIMITED": "Wagerageje inshuro nyinshi. Tegereza gato wongere ugerageze.",
     "INVALID_JSON": "Ibyoherejwe ntibishoboye gusomwa. Suzuma amakuru wohereje.",
-    "REQUEST_TOO_LARGE": "Ibyoherejwe ni byinshi cyane. Koresha dosiye ntoya."
+    "REQUEST_TOO_LARGE": "Ibyoherejwe ni byinshi cyane. Koresha dosiye ntoya.",
+    "FIELD_TOO_LONG": "Ibyanditswe ni birebire cyane.",
+    "FIELD_INVALID": "Genzura ibyo wanditse maze wongere ugerageze.",
+    "AMOUNT_INVALID": "Andika amafaranga yemewe atari munsi ya zeru.",
+    "ACTIVE_INVALID": "Hitamo uko inyandiko ikoreshwa mu buryo bwemewe.",
+    "CODE_INVALID": "Kode igomba kugira inyuguti, imibare, utudomo, udusuhuzo cyangwa uturongo two hasi gusa.",
+    "SEARCH_INVALID": "Ibyanditswe mu gushakisha ntibyemewe cyangwa ni birebire.",
+    "SERVICE_BUSY": "Ububiko bw’amakuru burimo gukoreshwa. Ongera ugerageze mu kanya.",
+    "COUNTRY_INVALID": "Hitamo igihugu cyemewe ku rutonde.",
+    "CURRENCY_UNSUPPORTED": "Hitamo XAF, RWF, USD, EUR cyangwa UGX.",
+    "CURRENCY_PRECISION_INVALID": "Aya mafaranga afite imibare myinshi nyuma y’akadomo kurusha iyemewe kuri iri faranga.",
+    "CURRENCY_CHANGE_REQUIRES_MIGRATION": "Guhindura ifaranga shingiro cyangwa imibare yaryo nyuma yo kwandika ibikorwa birabujijwe kugira ngo amafaranga yabitswe atangirika. Saba umuyobozi kwimura amakuru byagenzuwe.",
+    "LANGUAGE_INVALID": "Hitamo Icyongereza, Igifaransa cyangwa Ikinyarwanda.",
+    "FISCAL_DATE_INVALID": "Andika itariki y’umwaka w’imari mu buryo bwa MM-DD.",
+    "FIFO_NOT_IMPLEMENTED": "Uburyo bwa FIFO ntiburakozwe. Koresha ikigereranyo cy’ibiciro kugeza kwimura amakuru byapimwe kubonetse.",
+    "VALUATION_METHOD_INVALID": "Hitamo uburyo bwemewe bwo kubara agaciro k’ububiko.",
+    "VALUATION_CHANGE_REQUIRES_MIGRATION": "Nyuma y’ibikorwa by’ububiko, guhindura uburyo bwo kubara agaciro bisaba kwimura amakuru byagenzuwe.",
+    "CHART_INCOMPLETE": "Urutonde rwa konti z’iki kigo ntirufite konti zikenewe mu kurema ikigo cyangwa igicuruzwa.",
+    "CROSS_COMPANY_USER_UPDATE": "Amakuru y’uyu mukoresha ni ay’ikindi kigo. Yahindurire mu kigo cye cy’ibanze.",
+    "FOREIGN_CURRENCY_UNSUPPORTED": "Ibikorwa mu mafaranga y’ibindi bihugu ntibiraboneka. Koresha ifaranga shingiro ry’iki kigo.",
+    "CREDIT_LIMIT_INVALID": "Andika umupaka w’inguzanyo wemewe utari munsi ya zeru.",
+    "LEAD_TIME_INVALID": "Igihe cyo gutegereza kigomba kuba iminsi yose.",
+    "RATING_INVALID": "Amanota agomba kuba umubare wuzuye hagati ya 0 na 5.",
+    "SKU_REQUIRED": "Kode y’igicuruzwa yemewe irakenewe.",
+    "PRODUCT_NAME_REQUIRED": "Izina ry’igicuruzwa rirakenewe.",
+    "PRODUCT_TYPE_INVALID": "Hitamo ibicuruzwa cyangwa serivisi.",
+    "PRODUCT_TYPE_LOCKED": "Ubwoko bw’igicuruzwa ntibushobora guhindurwa nyuma y’ibikorwa by’ububiko.",
+    "STOCK_INVALID": "Andika ingano y’ububiko yemewe itari munsi ya zeru.",
+    "INITIAL_STOCK_REQUIRES_ADJUSTMENT": "Ububiko bw’ibanze ntibwandikwa mu ifishi y’igicuruzwa. Andika ihinduka ry’ububiko cyangwa ibyaguzwe.",
+    "UNIT_INVALID": "Andika igipimo cy’ibicuruzwa cyemewe.",
+    "PRICE_INVALID": "Andika igiciro cyemewe kitari munsi ya zeru.",
+    "COMPANY_INVALID": "Hitamo ikigo cyemewe.",
+    "APP_MODE_INVALID": "Fungura Umugurisha, Umuyobozi cyangwa Urusobe no kubungabunga ukoresheje aho buri imwe itangirira.",
+    "APP_MODE_FORBIDDEN": "Konti yawe ntiyemerewe gukoresha iyi porogaramu. Koresha iyo wemerewe.",
+    "BANK_TYPE_INVALID": "Hitamo ubwoko bwemewe bwa konti ya banki, amafaranga mu ntoki cyangwa amafaranga yo kuri telefoni.",
+    "OPENING_BALANCE_REQUIRES_JOURNAL": "Konti nshya ya banki cyangwa y’amafaranga mu ntoki igomba gutangira kuri zeru. Andika inyandiko y’itangiriro ifite impande zingana kugira ngo ushyireho amafaranga ya mbere."
   },
   "languages": {
     "en": "English",
@@ -964,5 +1008,170 @@
     "count_posted": "Ibarura ry’ibiri mu bubiko {number} ryanditswe; ikinyuranyo cy’ingano {quantity}, icy’agaciro {amount}",
     "other_event": "{action} muri {module} (inyandiko {record})",
     "original_description": "Ibisobanuro by’umwimerere by’igenzura"
+  },
+  "currencies": {
+    "XAF": "Ifaranga rya CFA ryo muri Afurika yo hagati",
+    "RWF": "Ifaranga ry’u Rwanda",
+    "USD": "Idolari rya Leta Zunze Ubumwe za Amerika",
+    "EUR": "Eworo",
+    "UGX": "Ishilingi ry’u Bugande"
+  },
+  "app_modes": {
+    "seller": "Umugurisha",
+    "administrator": "Umuyobozi",
+    "network": "Urusobe no kubungabunga",
+    "general": "Ubucuruzi"
+  },
+  "about": {
+    "developer": "Yakozwe na KAYIGANWA JACQUES",
+    "version": "Verisiyo {version}",
+    "partial": "Bimwe mu bikorwa biracyakorwa. Reba Ubufasha kugira ngo umenye ibyapimwe n’ibitararangira.",
+    "title": "Ibyerekeye JENESIS"
+  },
+  "seller": {
+    "title": "Ahakorerwa n’umugurisha",
+    "subtitle": "Kugurisha, abakiriya n’ibicuruzwa biboneka by’iki kigo. Nta biciro by’ibyaguzwe cyangwa igenamiterere ry’ibaruramari.",
+    "today_invoices": "Inyemezabuguzi z’uyu munsi",
+    "today_sales": "Ibyagurishijwe uyu munsi",
+    "active_customers": "Abakiriya bakora",
+    "low_stock": "Ibicuruzwa bisigaye bike",
+    "open_sales": "Jya ku byagurishijwe",
+    "open_customers": "Jya ku bakiriya",
+    "catalog_title": "Urutonde rw’ibicuruzwa",
+    "catalog_help": "Ibicuruzwa bihari n’ibiciro byo kugurisha. Ibiciro byo kubigura ntibigaragazwa hano."
+  },
+  "staff": {
+    "welcome": "Murakaza neza, {name}",
+    "company": "Ikigo: {name}",
+    "choose_module": "Hitamo igice wemerewe mu rutonde rw’ibumoso. Raporo z’imari ziboneka ku babifitiye uburenganzira gusa."
+  },
+  "network": {
+    "title": "Urusobe no kubungabunga",
+    "subtitle": "Kugenzura imikorere no gukora kopi z’amakuru zemejwe. Amakuru y’ubucuruzi aba mu bice by’umuyobozi n’umugurisha.",
+    "health_title": "Imikorere ya serivisi",
+    "service_status": "Serivisi",
+    "database_check": "Ubuzima bw’ububiko bw’amakuru",
+    "foreign_keys": "Isano y’amakuru iragenzurwa",
+    "unknown": "Ntibiragenzurwa",
+    "healthy": "Irakora",
+    "check_ok": "Byagenzuwe neza",
+    "refresh": "Genzura imikorere",
+    "safety_copies": "Kopi z’umutekano kuri mudasobwa yakira serivisi",
+    "snapshot_help": "Kora kopi ya SQLite yuzuye kandi yagenzuwe kuri iyi mudasobwa. Umuyobozi gusa ni we ushobora gukuraho cyangwa kugarura amakuru y’ikigo.",
+    "create_snapshot": "Kora kopi yagenzuwe",
+    "snapshot_done": "Kopi y’umutekano yagenzuwe yakozwe: {name}",
+    "lan_unavailable": "Gukoresha urusobe rwa LAN ntibirafungurwa muri iyi verisiyo. Ibyo ukoresha byose bikorera kuri serivisi y’iyi mudasobwa; ntugasangize izindi mudasobwa dosiye za database."
+  },
+  "calculator": {
+    "title": "Imashini ibara",
+    "expression": "Ibarwa",
+    "invalid": "Genzura ibyo wanditse cyangwa kugabanya na zeru.",
+    "no_posting": "Ikoreshwa mu kubara gusa; ntiyandika mu gitabo cy’ibaruramari."
+  },
+  "brand": {
+    "logo": "Ikirango J cya JENESIS"
+  },
+  "help": {
+    "title": "Ikigo cy’ubufasha",
+    "intro": "Uko wakoresha intambwe ku yindi ibice by’iyi porogaramu.",
+    "offline": "Biri muri JENESIS: bikora nta murongo wa interineti.",
+    "topics": "Ingingo z’ubufasha",
+    "open_module": "Fungura {module}",
+    "no_guarantees": "Ibi bisobanuro si inama y’ibaruramari, imisoro, amategeko cyangwa umutekano.",
+    "start": {
+      "title": "Gutangira",
+      "intro": "Hitamo aho porogaramu itangirira mbere yo kwinjira.",
+      "step1": "Fungura iy’Umugurisha (umutuku), iy’Umuyobozi (ubururu) cyangwa iy’Urusobe no kubungabunga (icyatsi). Uruhare rwawe rugomba kukwemerera gukoresha icyo gice.",
+      "step2": "Iyo ari ubwa mbere uyishyiramo, andika ikigo, igihugu, ifaranga ry’ibanze n’ijambobanga rikomeye ry’umuyobozi. Nta jambobanga rusange ryashyizwemo.",
+      "step3": "Injira ukoresheje izina ryawe bwite. Hitamo igice mu rutonde rw’ibumoso, uhindure ururimi hejuru. Sohoka mbere yo kuva kuri mudasobwa."
+    },
+    "company": {
+      "title": "Ibigo n’abakoresha",
+      "intro": "Amakuru y’ikigo arindwa hakurikijwe uburenganzira bw’umunyamuryango, si umutwe w’ubusabe waturutse ku mukiriya.",
+      "step1": "Muri Igenamiterere, hindura amakuru y’ikigo cyangwa ukore ikindi kigo niba wemerewe. Ikigo gishya kigira konti zacyo; ntikimurirwamo amafaranga y’ikindi kigo.",
+      "step2": "Mu kurema ikigo, hitamo igihugu n’ifaranga ry’ibanze. Amafaranga yemerewe: XAF, RWF, USD, EUR na UGX. Guhindura ifaranga ry’ibanze ry’ikigo gisanzwe birabujijwe kugira ngo amafaranga ya kera adahindurirwa igisobanuro.",
+      "step3": "Muri Igenamiterere → Abakoresha, ha buri muntu konti n’uruhare bye. Muhe uburenganzira ku kigo mu buryo bweruye; mbere yo kwandika amakuru genzura ikigo cyatoranyijwe hejuru."
+    },
+    "contacts": {
+      "title": "Abakiriya n’abagemura",
+      "intro": "Amakuru y’umuntu umwe aba ay’ikigo kimwe.",
+      "step1": "Fungura Abakiriya, ukande Ongeraho umukiriya. Andika izina n’andi makuru ufite. Fungura umurongo kugira ngo uhindure; soma ubutumwa niba kubika byanze.",
+      "step2": "Mu gice cy’Umuyobozi, jya ku Bagemura → Ongeraho ugemura kugira ngo wandike abo mugurira. Umugurisha ntiyemererwa kubona abagemura.",
+      "step3": "Guhagarika umuntu bimubuza gukoreshwa mu bikorwa bishya ariko inyemezabuguzi n’amateka bigasigara. Imyaka y’imyenda ibonwa n’abemerewe raporo."
+    },
+    "products": {
+      "title": "Ibicuruzwa n’ububiko",
+      "intro": "Igiciro cyo kugurisha n’ikiguzi cy’ububiko ni ibintu bitandukanye.",
+      "step1": "Mu muyobozi → Ububiko, andika igicuruzwa gifite kode yihariye, izina, igiciro cyo kugurisha n’ikiguzi. Gihindurire aho; kugura, kugurisha cyangwa gukosora byemewe byandika uko ububiko buhindutse.",
+      "step2": "Umugurisha → Ububiko herekana urutonde, umubare uhari n’ibiciro byo kugurisha, ntiherekana ikiguzi cyo kugura cyangwa agaciro k’ububiko. Imenyesha ry’ibisigaye bike rireba ikigo cyawe.",
+      "step3": "Reba amateka y’ububiko mbere yo gukosora umubare. Inyemezabuguzi yemejwe igira ingaruka ku bubiko no mu gitabo cy’ibaruramari; ntusibe ibyanditswe bya kera ngo uhindure umubare."
+    },
+    "sales": {
+      "title": "Uko kugurisha bikorwa",
+      "intro": "Inyemezabuguzi si kimwe no kwakira amafaranga.",
+      "step1": "Jya ku Byagurishijwe → Inyemezabuguzi, ukore inshya. Hitamo umukiriya, amatariki n’ibicuruzwa; genzura umubare, igiciro, igabanywa n’umusoro mbere yo kubika.",
+      "step2": "Kubyemeza ako kanya byandika mu ibaruramari no mu bubiko. Niba ubitse inyandiko itaremezwa, banza uyisuzume hanyuma uyemeze. Kuyemeza ubugira kabiri birangwa.",
+      "step3": "Koresha igikorwa cyo kwishyura wandike ubwishyu, harimo n’igice cy’ubwishyu. Capisha kopi nyuma yo kugenzura uko ihagaze n’imibare yose.",
+      "step4": "Ibyifuzo by’ibiciro n’amabwiriza yo kugura ni intambwe zitandukanye. Koresha inyandiko isubiza amafaranga mu gukosora cyangwa gusubiza ibicuruzwa byemewe; genzura niba bisubizwa mu bubiko."
+    },
+    "purchases": {
+      "title": "Uko kugura bikorwa",
+      "intro": "Byemerewe abafite uruhare rw’Umuyobozi gusa, si Umugurisha.",
+      "step1": "Banza wandike ugemura. Mu Byaguzwe → Inyemezabuguzi, hitamo ugemura, amatariki, nimero y’inyemezabuguzi ye n’ibicuruzwa bifite ikiguzi n’imisoro.",
+      "step2": "Genzura inyemezabuguzi mbere yo guhita uyemeza cyangwa wemeze inyandiko yari itarabyemezwa. Kwemeza byandika mu gitabo no mu bubiko aho bikenewe; kubisubiramo ntibikora indi nyandiko.",
+      "step3": "Andika ubwishyu ukwabwo. Reba amabwiriza n’ibyasubijwe mu bice byabyo; genzura imyenda y’abagemura mbere yo gusoza igihe."
+    },
+    "banking": {
+      "title": "Banki n’amafaranga mu ntoki",
+      "intro": "Ibikorwa bya banki n’amafaranga bireba ikigo kimwe.",
+      "step1": "Mu gice cya Banki, banza urebe konti n’amafaranga asigaye mbere yo kwandika ubwishyu cyangwa kwimura amafaranga. Hitamo ikigo n’inyandiko ngenderwaho nyayo.",
+      "step2": "Aho bishoboka, huza ubwishyu n’inyemezabuguzi yabwo. Genzura niba bwuzuye cyangwa ari igice, urebe amafaranga asigaye.",
+      "step3": "Gereranya ibyanditswe n’inyandiko ya banki ifatika; amafaranga yerekanwa kuri ecran si icyemezo ko banki yarangije kwimura amafaranga."
+    },
+    "accounting": {
+      "title": "Ibaruramari ry’impande ebyiri",
+      "intro": "Icyemejwe kigomba kugira imyenda n’inguzanyo bingana.",
+      "step1": "Mu Ibaruramari, fungura urutonde rwa konti, uhitemo iz’ikigo urimo. Izina rya konti ryahinduwe mu rurimi ntirirema indi konti.",
+      "step2": "Mu kwandika inyandiko y’ibaruramari, shyiramo itariki, ibisobanuro n’imirongo. Genzura ko imyenda n’inguzanyo bingana mbere yo kwemeza. Icyemejwe ntigihindurwa mu ibanga.",
+      "step3": "Kosora ukoresheje inyandiko isubiza iyabanje ifite ibisobanuro aho gusiba amateka. Ongera ugenzure ibipimo by’imibare n’amateka y’ibyakozwe."
+    },
+    "reports": {
+      "title": "Raporo no kugenzura",
+      "intro": "Raporo zerekana ibyemejwe mu kigo watoranyije.",
+      "step1": "Mu Raporo, reba ibipimo by’imibare cyangwa incamake y’imari. Gereranya igihe n’ifaranga n’inyandiko shingiro.",
+      "step2": "Niba imibare itari yo, genzura inyemezabuguzi zitaremezwa, ubwishyu butanditswe cyangwa niba wahinduye ikigo ukoreramo.",
+      "step3": "Ababifitiye uburenganzira gusa babona raporo zose z’imari n’imyaka y’imyenda. Imibare yoherejwe hanze igomba gusuzumwa n’umubaruramari."
+    },
+    "backup": {
+      "title": "Kopi z’amakuru no kuyagarura",
+      "intro": "Hari uburyo bubiri: kopi JSON y’ikigo kimwe na kopi yuzuye ya SQLite kuri mudasobwa yakira serivisi.",
+      "step1": "Mu Muyobozi → Igenamiterere → Kopi, kuramo kopi y’ikigo, ubike indi ahandi hatari kuri iyi mudasobwa. Reba izina n’itariki. Amagambo banga n’amasomo yo kwinjira ntibirimo.",
+      "step2": "Mbere yo kugarura, genzura ikigo na dosiye. Andika ijambobanga ry’umuyobozi na RESTORE uko ryanditse. Sisitemu ibanza kugenzura umukono w’amakuru, ikigo, amasano n’uko ibaruramari ringana mbere yo guhindura.",
+      "step3": "Serivisi ibanza gukora kopi yuzuye yagenzuwe; nyuma yo kugarura buri wese asohoka. Ongera winjire, urebe inyemezabuguzi, amafaranga n’ububiko.",
+      "step4": "Mu gihe habaye ikibazo gikomeye, banza ufunge porogaramu, usabe umutekinisiye wizewe kugarura kopi ya SQLite yagenzuwe. Ntukimure dosiye .db yonyine serivisi ikora."
+    },
+    "network": {
+      "title": "Imikorere no kubungabunga",
+      "intro": "Igice cy’icyatsi kigenzura serivisi y’iyi mudasobwa. Ntigiha abakozi ba tekiniki uburenganzira ku makuru y’ubucuruzi.",
+      "step1": "Injira ufite uruhare rw’Urusobe (cyangwa uri umuyobozi). Genzura imikorere urebe serivisi, ubuziranenge bwa SQLite n’uko amasano y’amakuru agenzurwa.",
+      "step2": "Kora kopi yagenzuwe kugira ngo ubike kopi yuzuye ya SQLite mu bubiko bw’iyi mudasobwa. Andika izina ryayo; uyimure ahandi ukoresheje uburenganzira bwemewe bwa sisitemu.",
+      "step3": "Umuyobozi gusa ni we ushobora gukuramo cyangwa kugarura kopi y’ikigo hano. Umukoresha w’Urusobe ntabona ibicuruzwa, abakiriya, konti cyangwa raporo z’imari.",
+      "step4": "Iyi verisiyo ntifungura serivisi kuri LAN. Ntugasangize cyangwa ngo uhuze dosiye za SQLite hagati ya mudasobwa; koresha serivisi y’iyi mudasobwa kugeza uburyo bwizewe bwo guhuza buje."
+    },
+    "safety": {
+      "title": "Amagambo banga n’umutekano",
+      "intro": "Bika amakuru yo kwinjira na kopi z’ububiko ahizewe, hatandukanye na mudasobwa ukoresha.",
+      "step1": "Ntugasangize abandi konti cyangwa ijambobanga. Iyo kunjira byanze kenshi, bishobora gufungwa by’igihe gito. Niba umuyobozi wenyine yibagiwe, koresha uburyo bwo kugarura bwemewe.",
+      "step2": "Mbere yo kuvugurura cyangwa gukuraho porogaramu, kora kopi, ugenzure ko amakuru asomwa. Amakuru ari mu bubiko bw’umukoresha, si mu bubiko bw’aho porogaramu yashyizwe.",
+      "step3": "Ibi bice bitatu bikoresha serivisi imwe. Ntugahindurire dosiye ya SQLite mu yindi porogaramu JENESIS igikora."
+    },
+    "limits": {
+      "title": "Ibitarakorwa",
+      "intro": "JENESIS 0.1 ni verisiyo ya mbere itarashyirwaho umukono. Banza ugenzure ibisubizo mbere yo kubishingiraho.",
+      "step1": "Amafaranga yemewe akoreshwa nk’ifaranga ry’ibanze ryihariye rya buri kigo, si uguhinduranya amafaranga byikora. Guhindura agaciro k’ivunjisha ryo mu bihe byashize ntibiragenzurwa.",
+      "step2": "Kwakira abandi kuri LAN, gukorera hamwe kure, kopi zihita zibikwa ahandi n’uburyo bwikora bwo kugarura amakuru ntibirimo. Ugomba kubika kopi hanze ubwawe.",
+      "step3": "Kugeragereza ishyirwamo kuri sisitemu ya Windows yo mu igerageza si icyemezo ko bikora kuri PC yawe, mu kuvugurura, kuri antivirusi cyangwa nta murongo wa interineti. Baza umubaruramari ibyerekeye imisoro.",
+      "step4": "Kuri XAF, RWF na UGX, amafaranga afite ibice by’ifaranga arangwa aho guhishwa n’uko ecran yerekana imibare yuzuye. Kosora inyandiko wemeranyije n’umubaruramari; uburyo bwo kwegeranya amafaranga bwemewe n’amategeko y’aho ukorera ntiburagenzurwa."
+    }
   }
 }

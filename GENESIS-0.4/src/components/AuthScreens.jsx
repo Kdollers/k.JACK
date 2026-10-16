@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { errorKey, useI18n } from '../i18n';
+import { CURRENCY_CHOICES, countryChoices } from '../config/companyOptions.mjs';
+import { appModeFromPath } from '../config/appMode.mjs';
+import BrandMark from './BrandMark';
 
 const inputClass =
   'w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white';
@@ -12,14 +15,15 @@ export function errorText(err, t) {
 
 function Shell({ title, intro, children }) {
   const { lang, setLang, t } = useI18n();
+  const mode = appModeFromPath(window.location.pathname);
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-slate-900 p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center space-x-3 mb-6 text-white">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center font-black text-2xl shadow-lg">G</div>
+          <BrandMark mode={mode} className="w-12 h-12" />
           <div>
-            <div className="text-sm font-bold tracking-wider">{t('app_name')}</div>
-            <div className="text-xs text-slate-400">{t('auth.app_tagline', 'Business accounting & management')}</div>
+            <div className="text-sm font-bold tracking-wider">{t('app_name')} · {t(`app_modes.${mode}`)}</div>
+            <div className="text-xs text-slate-400">{t('auth.app_tagline')}</div>
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-xl p-6 space-y-4">
@@ -89,7 +93,7 @@ export function LoginScreen() {
   };
 
   return (
-    <Shell title={t('auth.login_title', 'Sign in')} intro={t('auth.login_intro', 'Enter your GENESIS username and password.')}>
+    <Shell title={t('auth.login_title', 'Sign in')} intro={t('auth.login_intro', 'Enter your JENESIS username and password.')}>
       <form onSubmit={submit} className="space-y-3">
         <ErrorBox message={errorText(error || authError, t)} />
         <Field label={t('auth.username', 'Username')}>
@@ -111,8 +115,9 @@ export function LoginScreen() {
 
 export function SetupScreen() {
   const { completeSetup } = useApp();
-  const { t } = useI18n();
-  const [form, setForm] = useState({ company_name: '', full_name: '', email: '', username: '', password: '', confirm: '' });
+  const { t, lang } = useI18n();
+  const [form, setForm] = useState({ company_name: '', country_code: '', currency_code: 'USD',
+    full_name: '', email: '', username: '', password: '', confirm: '' });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -128,6 +133,8 @@ export function SetupScreen() {
     try {
       await completeSetup({
         company_name: form.company_name,
+        country_code: form.country_code,
+        currency_code: form.currency_code,
         full_name: form.full_name,
         email: form.email,
         username: form.username,
@@ -142,12 +149,28 @@ export function SetupScreen() {
   };
 
   return (
-    <Shell title={t('auth.setup_title', 'Set up GENESIS')} intro={t('auth.setup_intro', 'Create the company and the first administrator account. This step is available only once.')}>
+    <Shell title={t('auth.setup_title', 'Set up JENESIS')} intro={t('auth.setup_intro', 'Create the company and the first administrator account. This step is available only once.')}>
       <form onSubmit={submit} className="space-y-3">
         <ErrorBox message={errorText(error, t)} />
         <Field label={t('auth.company_name', 'Company name')}>
           <input className={inputClass} required value={form.company_name} onChange={set('company_name')} />
         </Field>
+        <Field label={t('settings.country')}>
+          <select className={inputClass} required value={form.country_code} onChange={set('country_code')}>
+            <option value="">{t('settings.choose_country')}</option>
+            {countryChoices(lang).map((choice) => (
+              <option key={choice.code} value={choice.code}>{choice.label}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label={t('settings.currency_code')}>
+          <select className={inputClass} value={form.currency_code} onChange={set('currency_code')}>
+            {CURRENCY_CHOICES.map((choice) => (
+              <option key={choice.code} value={choice.code}>{t(`currencies.${choice.code}`)} ({choice.code})</option>
+            ))}
+          </select>
+        </Field>
+        <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded">{t('settings.base_currency_warning')}</p>
         <Field label={t('auth.full_name', 'Administrator full name')}>
           <input className={inputClass} required value={form.full_name} onChange={set('full_name')} />
         </Field>
@@ -200,7 +223,7 @@ export function ChangePasswordScreen() {
   };
 
   return (
-    <Shell title={t('auth.change_password_title', 'Change your password')} intro={t('auth.change_password_intro', 'Your password must be changed before you can use GENESIS.')}>
+    <Shell title={t('auth.change_password_title', 'Change your password')} intro={t('auth.change_password_intro', 'Your password must be changed before you can use JENESIS.')}>
       <form onSubmit={submit} className="space-y-3">
         <ErrorBox message={errorText(error, t)} />
         <p className="text-xs text-slate-600">{currentUser?.full_name} (@{currentUser?.username})</p>
@@ -245,7 +268,7 @@ export function RecoveryScreen() {
 export function BackendUnavailable({ message }) {
   const { t } = useI18n();
   return (
-    <Shell title={t('auth.unavailable_title', 'GENESIS cannot reach its local service')} intro={t('auth.unavailable_intro', 'The accounting service did not respond. Close GENESIS and start it again. If the problem continues, check the log file in your GENESIS data folder.')}>
+    <Shell title={t('auth.unavailable_title', 'JENESIS cannot reach its local service')} intro={t('auth.unavailable_intro', 'The accounting service did not respond. Close JENESIS and start it again. If the problem continues, check the log file in your JENESIS data folder.')}>
       <ErrorBox message={errorText(message, t)} />
       <button type="button" onClick={() => window.location.reload()} className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold py-2 rounded-md flex items-center justify-center gap-2">
         <RefreshCw className="w-4 h-4" /> {t('auth.retry', 'Try again')}

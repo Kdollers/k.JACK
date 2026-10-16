@@ -91,11 +91,11 @@ export default function BankingView() {
     try {
       await apiRequest('/api/payments/bank-accounts', {
         method: 'POST',
-        body: JSON.stringify(bankForm)
+        body: JSON.stringify({ ...bankForm, currency: currentCompany?.currency_code })
       });
       showToast({ key: 'banking.account_created_notice' }, 'success');
       setShowAddBankModal(false);
-      setBankForm({ bank_name: '', account_number: '', account_type: 'BANK', currency: 'USD', opening_balance: 0 });
+      setBankForm({ bank_name: '', account_number: '', account_type: 'BANK', currency: currentCompany?.currency_code, opening_balance: 0 });
       fetchData();
     } catch (err) {
       showToast(err, 'error');
@@ -351,8 +351,8 @@ export default function BankingView() {
                   <label className="block text-slate-600 font-semibold mb-1">{t('common.currency')}</label>
                   <input
                     type="text"
-                    value={bankForm.currency}
-                    onChange={(e) => setBankForm({ ...bankForm, currency: e.target.value })}
+                    value={currentCompany?.currency_code || bankForm.currency}
+                    readOnly
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
                   />
                 </div>

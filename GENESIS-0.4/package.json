@@ -1,9 +1,9 @@
 {
-  "name": "genesis-accounting",
-  "productName": "GENESIS",
-  "version": "0.4.2",
-  "description": "GENESIS - Professional Business Accounting & Management Software",
-  "author": "GENESIS",
+  "name": "jenesis-accounting",
+  "productName": "JENESIS",
+  "version": "0.1.0",
+  "description": "JENESIS - business management and accounting by KAYIGANWA JACQUES",
+  "author": "KAYIGANWA JACQUES",
   "license": "UNLICENSED",
   "private": true,
   "main": "electron/main.cjs",
@@ -15,7 +15,12 @@
     "release:zip": "npm run build && node scripts/package-source.cjs",
     "test": "node tests/accounting-engine.test.js",
     "test:desktop": "node tests/desktop-backend.test.js",
-    "test:all": "npm test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:setup && npm run test:recovery && npm run test:errors && npm run test:payments && npm run test:i18n",
+    "test:all": "npm test && npm run test:crud && npm run test:currencies && npm run test:modes && npm run test:snapshots && npm run test:ui && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:setup && npm run test:recovery && npm run test:errors && npm run test:payments && npm run test:i18n",
+    "test:crud": "node tests/crud-workflows.test.cjs",
+    "test:currencies": "node tests/currency-posting.test.cjs",
+    "test:modes": "node tests/app-modes.test.cjs",
+    "test:snapshots": "node tests/startup-snapshots.test.cjs",
+    "test:ui": "vitest run tests/ui --maxWorkers=1 --minWorkers=1",
     "test:setup": "node tests/setup-state.test.cjs",
     "test:recovery": "node tests/recovery.test.cjs",
     "test:errors": "node tests/error-codes.test.cjs",
@@ -29,9 +34,9 @@
     "test:e2e": "python3 tests/e2e/auth_ui_test.py"
   },
   "build": {
-    "appId": "com.genesis.accounting",
-    "productName": "GENESIS",
-    "copyright": "Copyright (c) GENESIS",
+    "appId": "com.jenesis.accounting",
+    "productName": "JENESIS",
+    "copyright": "Copyright (c) 2026 KAYIGANWA JACQUES",
     "directories": {
       "output": "release",
       "buildResources": "assets"
@@ -39,14 +44,29 @@
     "files": [
       "electron/**/*",
       "server/**/*",
+      "shared/**/*",
       "dist/**/*",
       "package.json",
-      "assets/icon.ico",
       "!**/*.map",
-      "!**/tests/**"
+      "!**/tests/**",
+      "assets/j-*.ico"
     ],
     "asarUnpack": [
       "**/*.node"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/j-seller.ico",
+        "to": "icons/j-seller.ico"
+      },
+      {
+        "from": "assets/j-administrator.ico",
+        "to": "icons/j-administrator.ico"
+      },
+      {
+        "from": "assets/j-network.ico",
+        "to": "icons/j-network.ico"
+      }
     ],
     "win": {
       "target": [
@@ -57,8 +77,8 @@
           ]
         }
       ],
-      "icon": "assets/icon.ico",
-      "artifactName": "GENESIS-Setup-${version}.${ext}"
+      "icon": "assets/j-administrator.ico",
+      "artifactName": "JENESIS-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -67,11 +87,12 @@
       "allowElevation": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "GENESIS",
-      "uninstallDisplayName": "GENESIS",
+      "shortcutName": "JENESIS Administrator",
+      "uninstallDisplayName": "JENESIS",
       "deleteAppDataOnUninstall": false,
-      "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico"
+      "include": "installer/shortcuts.nsh",
+      "installerIcon": "assets/j-administrator.ico",
+      "uninstallerIcon": "assets/j-administrator.ico"
     }
   },
   "dependencies": {
@@ -81,18 +102,21 @@
   },
   "devDependencies": {
     "@babel/parser": "^7.29.9",
+    "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "adm-zip": "^0.5.18",
     "autoprefixer": "^10.4.20",
     "clsx": "^2.1.1",
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8",
+    "jsdom": "^25.0.1",
     "lucide-react": "^0.475.0",
     "postcss": "^8.5.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^3.4.17",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vitest": "^2.1.9"
   }
 }

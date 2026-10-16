@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function SuppliersView() {
-  const { currentCompany, formatCurrency, showToast, refreshKey } = useApp();
+  const { currentCompany, formatCurrency, showToast, refreshKey, hasPermission } = useApp();
   const { t, plural } = useI18n();
 
   const [suppliers, setSuppliers] = useState([]);
@@ -39,6 +39,8 @@ export default function SuppliersView() {
     email: '',
     phone: '',
     address: '',
+    city: '',
+    country: '',
     tax_id: '',
     payment_terms: 'NET_30'
   });
@@ -102,6 +104,8 @@ export default function SuppliersView() {
       email: '',
       phone: '',
       address: '',
+      city: '',
+      country: '',
       tax_id: '',
       payment_terms: 'NET_30'
     });
@@ -116,7 +120,10 @@ export default function SuppliersView() {
       email: supp.email || '',
       phone: supp.phone || '',
       address: supp.address || '',
+      city: supp.city || '',
+      country: supp.country || '',
       tax_id: supp.tax_id || '',
+      active: supp.active === 1,
       payment_terms: supp.payment_terms || 'NET_30'
     });
     setShowAddModal(true);
@@ -139,14 +146,14 @@ export default function SuppliersView() {
                 activeTab === 'list' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >{t("suppliers.all_suppliers")}</button>
-            <button
+            {hasPermission?.('reports:read') && <button
               onClick={() => setActiveTab('aging')}
               className={`px-3 py-1.5 rounded-md transition ${
                 activeTab === 'aging' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {t('suppliers.aging_title')}
-            </button>
+            </button>}
           </div>
 
           <button
@@ -341,13 +348,14 @@ export default function SuppliersView() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-3.5 text-xs">
+            <form onSubmit={handleSubmit} className="p-5 space-y-3.5 text-xs max-h-[78vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">
+                  <label htmlFor="supplier-form-name" className="block text-slate-600 font-semibold mb-1">
                     {t('suppliers.supplier_name')} *
                   </label>
                   <input
+                    id="supplier-form-name"
                     type="text"
                     required
                     value={formData.name}
@@ -435,6 +443,28 @@ export default function SuppliersView() {
                   <option value="NET_60">{t('customers.net_60')}</option>
                 </select>
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-slate-600 font-semibold">
+                  {t('common.city')}
+                  <input type="text" value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full mt-1 px-3 py-1.5 border border-slate-300 rounded-md" />
+                </label>
+                <label className="block text-slate-600 font-semibold">
+                  {t('settings.country')}
+                  <input type="text" value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    className="w-full mt-1 px-3 py-1.5 border border-slate-300 rounded-md" />
+                </label>
+              </div>
+              {editingSupplier && (
+                <label className="flex items-center gap-2 text-slate-700 font-semibold">
+                  <input type="checkbox" checked={formData.active}
+                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })} />
+                  {t('common.active')}
+                </label>
+              )}
 
               <div className="border-t border-slate-200 pt-3 flex justify-end space-x-2">
                 <button

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /** Offline, explicitly authorized recovery for an EXISTING installation.
- * Close GENESIS first. Never exposed over HTTP or included in the installer.
+ * Close JENESIS first. Never exposed over HTTP or included in the installer.
  * Preserves all business data and old users; optionally deactivates only the
  * six exact demo identities from the historical archived database.
  */
@@ -47,7 +47,7 @@ async function main() {
     const companies = db.prepare('SELECT id, name FROM companies ORDER BY created_at').all();
     if (!companies.length) throw new Error('No company exists; restore a verified database backup.');
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='installation_state'").get()) {
-      throw new Error('Start GENESIS once to apply migrations, then close it before recovery.');
+      throw new Error('Start JENESIS once to apply migrations, then close it before recovery.');
     }
     if (setupStatus(db).needsSetup) throw new Error('This installation is new. Use the first-run setup screen instead.');
     const users = db.prepare('SELECT id, username, role, active FROM users').all();
@@ -97,6 +97,8 @@ async function main() {
       db.prepare(`INSERT INTO users (id, username, password_hash, full_name, email, role, company_id, active, created_at, must_change_password)
         VALUES (?, ?, ?, ?, ?, 'admin', ?, 1, datetime('now'), 0)`)
         .run(id, person.username, passwordHash, person.full_name, person.email, company.id);
+      db.prepare('INSERT INTO company_memberships (user_id, company_id, role) VALUES (?, ?, ?)')
+        .run(id, company.id, 'admin');
       db.prepare('UPDATE installation_state SET completed_at = COALESCE(completed_at, ?) WHERE id = 1')
         .run(new Date().toISOString());
       if (disable) {

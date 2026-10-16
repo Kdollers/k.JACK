@@ -1,5 +1,5 @@
 {
-  "app_name": "GENESIS",
+  "app_name": "JENESIS",
   "app_tagline": "Comptabilité d'Entreprise et Gestion Commerciale",
   "nav": {
     "dashboard": "Tableau de bord",
@@ -15,7 +15,8 @@
     "erp_1_0": "ERP 1.0",
     "enterprise_modules": "Modules de gestion",
     "secure_ledger": "Grand livre sécurisé",
-    "double_entry_accounting_standard": "Comptabilité en partie double"
+    "double_entry_accounting_standard": "Comptabilité en partie double",
+    "help": "Centre d’aide"
   },
   "common": {
     "save": "Enregistrer",
@@ -117,7 +118,9 @@
     "records_count": {
       "one": "{count} enregistrement",
       "other": "{count} enregistrements"
-    }
+    },
+    "city": "Ville / commune",
+    "country": "Pays"
   },
   "dashboard": {
     "title": "Tableau de Bord Financier et Opérationnel",
@@ -282,7 +285,8 @@
     },
     "category_general": "Général",
     "unit_pieces": "pièces",
-    "main_store": "Magasin principal"
+    "main_store": "Magasin principal",
+    "opening_stock_help": "Un nouvel article commence avec un stock nul. Enregistrez un ajustement de stock ou un achat pour établir les quantités initiales et leur valeur comptable."
   },
   "sales": {
     "title": "Ventes et Facturation",
@@ -623,18 +627,23 @@
     "company_updated_notice": "Profil et paramètres de l’entreprise enregistrés.",
     "company_created_notice": "Entreprise {name} créée avec son plan comptable.",
     "user_created_notice": "Utilisateur {name} créé.",
-    "tax_created_notice": "Taux de taxe enregistré."
+    "tax_created_notice": "Taux de taxe enregistré.",
+    "choose_country": "Choisir un pays",
+    "base_currency_warning": "Choisissez la devise de base avant les écritures. La modifier ensuite est bloqué. La conversion des devises et le FIFO ne sont pas encore disponibles ; vérifiez les taux locaux avant de facturer.",
+    "fifo_unavailable": "FIFO (non implémenté — coût moyen uniquement)",
+    "country": "Pays",
+    "role_network": "Réseau et maintenance"
   },
   "auth": {
     "app_tagline": "Gestion et comptabilité d’entreprise",
     "language": "Langue",
     "login_title": "Connexion",
-    "login_intro": "Saisissez votre nom d’utilisateur et votre mot de passe GENESIS.",
+    "login_intro": "Saisissez votre nom d’utilisateur et votre mot de passe JENESIS.",
     "username": "Nom d’utilisateur",
     "password": "Mot de passe",
     "sign_in": "Se connecter",
     "signing_in": "Connexion en cours…",
-    "setup_title": "Configurer GENESIS",
+    "setup_title": "Configurer JENESIS",
     "setup_intro": "Créez l’entreprise et le premier compte administrateur. Cette étape n’est disponible qu’une seule fois.",
     "company_name": "Nom de l’entreprise",
     "full_name": "Nom complet de l’administrateur",
@@ -645,20 +654,20 @@
     "password_mismatch": "Les mots de passe ne correspondent pas.",
     "password_hint": "Au moins 10 caractères. N’utilisez pas votre nom d’utilisateur.",
     "change_password_title": "Changer votre mot de passe",
-    "change_password_intro": "Vous devez changer votre mot de passe avant d’utiliser GENESIS.",
+    "change_password_intro": "Vous devez changer votre mot de passe avant d’utiliser JENESIS.",
     "current_password": "Mot de passe actuel",
     "new_password": "Nouveau mot de passe",
     "change_password": "Changer le mot de passe",
     "sign_out": "Se déconnecter",
     "account": "Compte",
-    "unavailable_title": "GENESIS ne peut pas joindre son service local",
-    "unavailable_intro": "Le service comptable ne répond pas. Fermez GENESIS puis relancez-le. Si le problème persiste, consultez le fichier journal dans votre dossier de données GENESIS.",
+    "unavailable_title": "JENESIS ne peut pas joindre son service local",
+    "unavailable_intro": "Le service comptable ne répond pas. Fermez JENESIS puis relancez-le. Si le problème persiste, consultez le fichier journal dans votre dossier de données JENESIS.",
     "retry": "Réessayer",
     "initializing": "Préparation de la base comptable…",
     "recovery_link": "Impossible de vous connecter à une installation existante ?",
     "recovery_title": "Récupérer l’accès à une installation existante",
     "recovery_intro": "Cette base contient déjà des utilisateurs ou des données commerciales. La création publique du premier compte est désactivée afin de les protéger.",
-    "recovery_backup": "Fermez GENESIS et copiez votre dossier de données avant toute récupération. Ne supprimez ni la base ni les utilisateurs existants.",
+    "recovery_backup": "Fermez JENESIS et copiez votre dossier de données avant toute récupération. Ne supprimez ni la base ni les utilisateurs existants.",
     "recovery_steps": "Si un administrateur existant peut se connecter, il peut créer votre compte dans Paramètres. Sinon, demandez à votre administrateur ou à un technicien autorisé de suivre la procédure de récupération hors ligne dans DESKTOP.md.",
     "recovery_warning": "Une réinstallation ne supprime pas les données existantes et ne réactive pas la configuration initiale. Ne communiquez jamais vos mots de passe ni votre base à une personne non fiable.",
     "recovery_sign_in": "Se connecter avec un compte existant",
@@ -686,7 +695,7 @@
     "LAST_ADMIN": "Au moins un administrateur actif doit subsister.",
     "ROLE_INVALID": "Le rôle sélectionné n’est pas valide.",
     "RESET_DISABLED": "La réinitialisation de la base depuis l’interface est désactivée. Utilisez une sauvegarde et une restauration.",
-    "NO_COMPANY": "Aucune entreprise n’existe. Redémarrez GENESIS pour initialiser la base.",
+    "NO_COMPANY": "Aucune entreprise n’existe. Redémarrez JENESIS pour initialiser la base.",
     "MISSING_FIELDS": "Veuillez remplir tous les champs obligatoires.",
     "USER_CREATE_FAILED": "L’utilisateur n’a pas pu être créé.",
     "USER_UPDATE_FAILED": "L’utilisateur n’a pas pu être modifié.",
@@ -749,7 +758,7 @@
     "EMPTY_COUNT": "Ajoutez au moins un article à l’inventaire physique.",
     "EMPTY_CREDIT_NOTE": "Ajoutez au moins une ligne à l’avoir.",
     "EMPTY_RETURN": "Ajoutez au moins un article au retour.",
-    "BACKUP_INVALID": "Ce fichier n’est pas une sauvegarde GENESIS valide.",
+    "BACKUP_INVALID": "Ce fichier n’est pas une sauvegarde JENESIS valide.",
     "BACKUP_FORMAT_UNSUPPORTED": "L’ancien format de sauvegarde ne peut pas être restauré en toute sécurité. Exportez une nouvelle sauvegarde avec la version actuelle.",
     "BACKUP_CHECKSUM_MISMATCH": "La sauvegarde est endommagée ou a été modifiée. Aucune donnée n’a été restaurée.",
     "BACKUP_COMPANY_MISMATCH": "Cette sauvegarde appartient à une autre entreprise.",
@@ -761,7 +770,42 @@
     "RESTORE_FAILED": "La restauration a échoué. Vos données n’ont pas été modifiées.",
     "RATE_LIMITED": "Trop de tentatives. Patientez puis réessayez.",
     "INVALID_JSON": "La demande est illisible. Vérifiez les données saisies.",
-    "REQUEST_TOO_LARGE": "La demande est trop volumineuse. Utilisez un fichier plus petit."
+    "REQUEST_TOO_LARGE": "La demande est trop volumineuse. Utilisez un fichier plus petit.",
+    "FIELD_TOO_LONG": "Le texte saisi est trop long.",
+    "FIELD_INVALID": "Vérifiez le champ saisi et réessayez.",
+    "AMOUNT_INVALID": "Saisissez un montant valide et positif ou nul.",
+    "ACTIVE_INVALID": "Choisissez un état actif valide.",
+    "CODE_INVALID": "Le code ne peut contenir que des lettres, chiffres, points, tirets ou tirets bas.",
+    "SEARCH_INVALID": "Le texte de recherche est invalide ou trop long.",
+    "SERVICE_BUSY": "La base est occupée. Réessayez dans un instant.",
+    "COUNTRY_INVALID": "Choisissez un pays valide dans la liste.",
+    "CURRENCY_UNSUPPORTED": "Choisissez XAF, RWF, USD, EUR ou UGX.",
+    "CURRENCY_PRECISION_INVALID": "Le montant comporte trop de décimales pour cette devise.",
+    "CURRENCY_CHANGE_REQUIRES_MIGRATION": "Le changement de devise de base ou de précision est bloqué pour protéger les montants existants. Contactez l’administrateur pour une migration vérifiée.",
+    "LANGUAGE_INVALID": "Choisissez l’anglais, le français ou le kinyarwanda.",
+    "FISCAL_DATE_INVALID": "Saisissez une date fiscale valide au format MM-JJ.",
+    "FIFO_NOT_IMPLEMENTED": "Le calcul FIFO n’est pas implémenté. Utilisez le coût moyen jusqu’à la disponibilité d’une migration testée.",
+    "VALUATION_METHOD_INVALID": "Choisissez une méthode de valorisation des stocks valide.",
+    "VALUATION_CHANGE_REQUIRES_MIGRATION": "Après des mouvements de stock, une migration vérifiée est nécessaire pour changer la méthode de valorisation.",
+    "CHART_INCOMPLETE": "Il manque des comptes nécessaires dans le plan comptable pour créer une entreprise ou un article.",
+    "CROSS_COMPANY_USER_UPDATE": "Ce profil utilisateur appartient à une autre entreprise. Gérez-le depuis son entreprise d’origine.",
+    "FOREIGN_CURRENCY_UNSUPPORTED": "Les opérations en devises étrangères ne sont pas encore disponibles. Utilisez la devise de base de l’entreprise.",
+    "CREDIT_LIMIT_INVALID": "Saisissez une limite de crédit valide et positive ou nulle.",
+    "LEAD_TIME_INVALID": "Le délai doit être un nombre entier de jours.",
+    "RATING_INVALID": "La note doit être un entier compris entre 0 et 5.",
+    "SKU_REQUIRED": "Une référence article valide est obligatoire.",
+    "PRODUCT_NAME_REQUIRED": "Le nom de l’article est obligatoire.",
+    "PRODUCT_TYPE_INVALID": "Choisissez un bien ou un service.",
+    "PRODUCT_TYPE_LOCKED": "Le type d’article ne peut plus être modifié après des mouvements de stock.",
+    "STOCK_INVALID": "Saisissez une quantité de stock valide et positive ou nulle.",
+    "INITIAL_STOCK_REQUIRES_ADJUSTMENT": "Le stock initial ne se définit pas dans la fiche article. Enregistrez un ajustement de stock ou un achat.",
+    "UNIT_INVALID": "Saisissez une unité de mesure valide.",
+    "PRICE_INVALID": "Saisissez un prix valide et positif ou nul.",
+    "COMPANY_INVALID": "Choisissez une entreprise valide.",
+    "APP_MODE_INVALID": "Ouvrez Vendeur, Administrateur ou Réseau et maintenance depuis leur propre raccourci.",
+    "APP_MODE_FORBIDDEN": "Votre compte n’est pas autorisé pour cette application. Utilisez un accès autorisé.",
+    "BANK_TYPE_INVALID": "Choisissez un type de compte bancaire, de caisse ou de monnaie mobile valide.",
+    "OPENING_BALANCE_REQUIRES_JOURNAL": "Un nouveau compte bancaire ou de caisse doit commencer à zéro. Passez une écriture d’ouverture équilibrée pour établir son solde."
   },
   "languages": {
     "en": "English",
@@ -964,5 +1008,170 @@
     "count_posted": "Inventaire physique {number} comptabilisé ; écart de quantité {quantity}, écart de valeur {amount}",
     "other_event": "{action} dans {module} (enregistrement {record})",
     "original_description": "Description originale de l’audit"
+  },
+  "currencies": {
+    "XAF": "Franc CFA d’Afrique centrale",
+    "RWF": "Franc rwandais",
+    "USD": "Dollar américain",
+    "EUR": "Euro",
+    "UGX": "Shilling ougandais"
+  },
+  "app_modes": {
+    "seller": "Vendeur",
+    "administrator": "Administrateur",
+    "network": "Réseau et maintenance",
+    "general": "Entreprise"
+  },
+  "about": {
+    "developer": "Développé par KAYIGANWA JACQUES",
+    "version": "Version {version}",
+    "partial": "Certaines fonctions sont encore en développement. Consultez l’aide pour connaître les capacités testées et les limites.",
+    "title": "À propos de JENESIS"
+  },
+  "seller": {
+    "title": "Espace vendeur",
+    "subtitle": "Ventes, clients et articles disponibles pour votre entreprise. Sans coût d’achat ni réglages comptables.",
+    "today_invoices": "Factures du jour",
+    "today_sales": "Ventes du jour",
+    "active_customers": "Clients actifs",
+    "low_stock": "Articles en stock faible",
+    "open_sales": "Ouvrir les ventes",
+    "open_customers": "Ouvrir les clients",
+    "catalog_title": "Catalogue des articles",
+    "catalog_help": "Articles disponibles et prix de vente. Les coûts des stocks ne sont pas affichés ici."
+  },
+  "staff": {
+    "welcome": "Bienvenue, {name}",
+    "company": "Entreprise : {name}",
+    "choose_module": "Choisissez un module autorisé dans le menu. Les rapports financiers sont réservés aux rôles autorisés."
+  },
+  "network": {
+    "title": "Réseau et maintenance",
+    "subtitle": "Contrôles de santé et copies de sécurité vérifiées. Les dossiers commerciaux restent dans les espaces administrateur et vendeur.",
+    "health_title": "État du service",
+    "service_status": "Service",
+    "database_check": "Intégrité de la base",
+    "foreign_keys": "Références de la base contrôlées",
+    "unknown": "Non vérifié",
+    "healthy": "Opérationnel",
+    "check_ok": "Vérification réussie",
+    "refresh": "Vérifier l’état",
+    "safety_copies": "Copies de sécurité sur l’hôte",
+    "snapshot_help": "Crée une copie SQLite cohérente et vérifiée sur cet ordinateur. Seul un administrateur peut télécharger ou restaurer les données d’une entreprise.",
+    "create_snapshot": "Créer une copie vérifiée",
+    "snapshot_done": "Copie de sécurité vérifiée créée : {name}",
+    "lan_unavailable": "L’hébergement LAN n’est pas activé dans cette version. Toutes les connexions utilisent le service local ; ne partagez pas des fichiers de base entre ordinateurs."
+  },
+  "calculator": {
+    "title": "Calculatrice",
+    "expression": "Calcul",
+    "invalid": "Vérifiez l’expression ou la division par zéro.",
+    "no_posting": "Pour les calculs uniquement ; aucune écriture comptable."
+  },
+  "brand": {
+    "logo": "Logo J de JENESIS"
+  },
+  "help": {
+    "title": "Centre d’aide",
+    "intro": "Étapes pratiques pour les fonctions de votre application.",
+    "offline": "Intégré à JENESIS : fonctionne sans connexion Internet.",
+    "topics": "Rubriques d’aide",
+    "open_module": "Ouvrir {module}",
+    "no_guarantees": "Ces informations ne remplacent pas un conseil comptable, fiscal, juridique ou de sécurité.",
+    "start": {
+      "title": "Premiers pas",
+      "intro": "Choisissez le bon raccourci avant de vous connecter.",
+      "step1": "Ouvrez Vendeur (rouge), Administrateur (bleu) ou Réseau et maintenance (vert). Votre rôle doit autoriser l’application choisie.",
+      "step2": "Lors d’une nouvelle installation, renseignez l’entreprise, le pays, la devise de base et un mot de passe administrateur robuste. Aucun mot de passe par défaut n’est fourni.",
+      "step3": "Connectez-vous avec votre propre identifiant. Ouvrez un module dans le menu de gauche et choisissez la langue en haut de l’écran. Déconnectez-vous avant de quitter le poste."
+    },
+    "company": {
+      "title": "Entreprises et utilisateurs",
+      "intro": "Les données sont isolées par appartenance à l’entreprise, pas par un en-tête envoyé par le client.",
+      "step1": "Dans Paramètres, modifiez les informations de l’entreprise ou créez-en une autre si votre rôle le permet. Son plan comptable est indépendant ; les soldes ne sont pas copiés.",
+      "step2": "Choisissez le pays et la devise de base à la création. Devises possibles : XAF, RWF, USD, EUR et UGX. Changer la devise de base d’une entreprise existante est bloqué pour ne pas réinterpréter ses anciens montants.",
+      "step3": "Dans Paramètres → Utilisateurs, créez un compte et un rôle distincts par personne. Accordez explicitement l’accès à l’entreprise ; vérifiez le sélecteur d’entreprise en haut avant toute saisie."
+    },
+    "contacts": {
+      "title": "Clients et fournisseurs",
+      "intro": "Les fiches appartiennent à une seule entreprise.",
+      "step1": "Ouvrez Clients, puis Ajouter un client. Indiquez le nom et les coordonnées disponibles. Ouvrez une ligne pour la modifier ; lisez le message si l’enregistrement est refusé.",
+      "step2": "Dans l’application Administrateur, utilisez Fournisseurs → Ajouter un fournisseur pour les partenaires d’achat. Le vendeur n’a pas accès aux fournisseurs.",
+      "step3": "La désactivation empêche de nouvelles opérations sans supprimer factures et historique. L’ancienneté des soldes exige l’autorisation de consulter les rapports."
+    },
+    "products": {
+      "title": "Articles et stock",
+      "intro": "Le prix de vente et le coût du stock sont deux valeurs différentes.",
+      "step1": "Dans Administrateur → Stock, ajoutez un article avec référence unique, nom, prix de vente et coût. Modifiez-le ici ; ventes, achats ou ajustements autorisés enregistrent les mouvements de stock.",
+      "step2": "Vendeur → Stock affiche le catalogue, les quantités disponibles et les prix de vente, sans coût d’achat ni valorisation. Les alertes de stock concernent votre entreprise.",
+      "step3": "Consultez les mouvements avant un ajustement. Une facture de vente comptabilisée affecte le stock et le grand livre ; ne supprimez pas les écritures historiques pour changer les quantités."
+    },
+    "sales": {
+      "title": "Cycle de vente",
+      "intro": "Une facture n’est pas un encaissement.",
+      "step1": "Ouvrez Ventes → Factures et créez une facture. Choisissez client, dates et lignes d’articles ; vérifiez quantité, prix, remise et taxe avant de l’enregistrer.",
+      "step2": "La comptabilisation automatique crée les écritures et mouvements de stock associés. Si vous enregistrez un brouillon, vérifiez-le puis comptabilisez-le volontairement. Une seconde comptabilisation est refusée.",
+      "step3": "Utilisez l’action de paiement pour enregistrer le règlement, y compris partiel. Imprimez un exemplaire après avoir vérifié statut et totaux.",
+      "step4": "Devis et commandes sont des étapes distinctes. Utilisez un avoir pour un retour ou une correction autorisés ; confirmez la remise en stock éventuelle."
+    },
+    "purchases": {
+      "title": "Cycle d’achat",
+      "intro": "Réservé aux rôles Administrateur autorisés, pas au Vendeur.",
+      "step1": "Créez d’abord le fournisseur. Dans Achats → Factures, choisissez fournisseur, dates, référence du fournisseur et lignes d’articles avec coûts et taxes.",
+      "step2": "Vérifiez la facture avant comptabilisation automatique ou comptabilisez un brouillon. La comptabilisation actualise le grand livre et, s’il y a lieu, le stock ; une répétition ne la duplique pas.",
+      "step3": "Enregistrez les paiements séparément. Consultez commandes et retours dans leurs onglets et vérifiez les soldes fournisseurs avant clôture."
+    },
+    "banking": {
+      "title": "Banque et caisse",
+      "intro": "Les opérations de banque et de caisse sont propres à chaque entreprise.",
+      "step1": "Dans Banque, examinez les comptes et leur solde avant un paiement ou un virement. Vérifiez entreprise et référence.",
+      "step2": "Rattachez si possible le paiement à sa facture. Vérifiez s’il est partiel ou total, puis le solde obtenu.",
+      "step3": "Rapprochez les opérations avec un relevé bancaire externe ; le solde à l’écran ne prouve pas qu’un virement a été exécuté par la banque."
+    },
+    "accounting": {
+      "title": "Comptabilité en partie double",
+      "intro": "Une écriture comptabilisée doit équilibrer débits et crédits.",
+      "step1": "Dans Comptabilité, ouvrez le plan comptable et choisissez les comptes de l’entreprise active. La traduction affichée d’un nom de compte ne crée pas de nouveau compte.",
+      "step2": "Pour une écriture manuelle, indiquez date, libellé et lignes. Assurez-vous que débits et crédits s’équilibrent avant de comptabiliser. Une écriture comptabilisée ne se modifie pas silencieusement.",
+      "step3": "Corrigez une écriture par une contrepassation documentée plutôt que de supprimer des preuves. Revérifiez la balance et la piste d’audit."
+    },
+    "reports": {
+      "title": "Rapports et contrôles",
+      "intro": "Les rapports reflètent les données comptabilisées de l’entreprise sélectionnée.",
+      "step1": "Dans Rapports, consultez la balance ou la synthèse financière. Comparez période et devise avec vos pièces justificatives.",
+      "step2": "Si un total semble incorrect, cherchez les factures restées en brouillon, les paiements manquants ou un changement de l’entreprise active.",
+      "step3": "Seuls les rôles autorisés voient les rapports financiers complets et l’ancienneté des créances et dettes. Un comptable doit aussi vérifier les exports."
+    },
+    "backup": {
+      "title": "Sauvegarder et restaurer",
+      "intro": "Deux protections distinctes : export JSON d’une entreprise et copie SQLite complète sur l’hôte.",
+      "step1": "Dans Administrateur → Paramètres → Sauvegarde, téléchargez l’export de l’entreprise et conservez une seconde copie hors du PC. Vérifiez nom et date. Les mots de passe et sessions ne sont pas exportés.",
+      "step2": "Avant restauration, vérifiez l’entreprise et le fichier. Saisissez le mot de passe administrateur et tapez exactement RESTORE. Le système vérifie somme de contrôle, appartenance, références et écritures équilibrées avant toute modification.",
+      "step3": "Le service crée une copie complète et vérifiée avant l’écriture ; une restauration réussie déconnecte tout le monde. Reconnectez-vous et vérifiez factures, soldes et stock.",
+      "step4": "En cas de sinistre, fermez l’application et demandez à un technicien de restaurer une copie SQLite vérifiée. Ne déplacez pas uniquement le fichier .db lorsque le service fonctionne."
+    },
+    "network": {
+      "title": "Santé et maintenance",
+      "intro": "L’application verte contrôle le service local. Elle ne donne pas accès à la comptabilité du personnel de maintenance.",
+      "step1": "Connectez-vous comme utilisateur Réseau (ou administrateur). Vérifier l’état affiche le service, l’intégrité SQLite et la vérification des clés étrangères.",
+      "step2": "Créer une copie vérifiée produit une copie SQLite cohérente dans le dossier de sauvegardes de l’hôte. Notez le nom ; copiez-la sur un autre support par un accès autorisé au système.",
+      "step3": "Seul un administrateur peut télécharger un export d’entreprise ou en restaurer un ici. Un utilisateur Réseau ne voit ni articles, ni clients, ni comptes, ni rapports financiers.",
+      "step4": "Cette version ne propose pas d’hôte LAN. Ne partagez ni ne synchronisez les fichiers SQLite entre ordinateurs ; utilisez le service local en attendant une fonction hôte/client sécurisée."
+    },
+    "safety": {
+      "title": "Mots de passe et précautions",
+      "intro": "Gardez identifiants et sauvegardes à l’abri, séparément du poste de travail.",
+      "step1": "Ne partagez ni comptes ni mots de passe. Après plusieurs échecs de connexion, l’accès peut être temporairement bloqué. Si le seul administrateur perd l’accès, suivez la procédure de récupération autorisée.",
+      "step2": "Avant une mise à jour ou une désinstallation, créez une sauvegarde et vérifiez que la base se lit. Les données installées sont dans le dossier utilisateur, pas dans celui du programme.",
+      "step3": "Les trois applications utilisent le même service. Ne modifiez jamais le fichier SQLite actif dans un autre programme pendant que JENESIS fonctionne."
+    },
+    "limits": {
+      "title": "Limites actuelles",
+      "intro": "JENESIS 0.1 est une version précoce et non signée. Vérifiez les résultats avant de vous y fier.",
+      "step1": "Les devises prises en charge sont des devises de base indépendantes par entreprise, pas une conversion automatique. La réévaluation ou conversion historique des changes n’est pas validée.",
+      "step2": "L’hôte/client LAN, l’accès distant partagé, les copies automatiques hors site et la reprise après sinistre sans intervention ne sont pas disponibles. Vous devez conserver vos copies externes.",
+      "step3": "Un test d’installateur sur un runner Windows ne constitue pas une certification sur PC réel, pour les mises à jour, les antivirus ou l’installation hors ligne. Consultez un comptable pour vos obligations fiscales.",
+      "step4": "Pour XAF, RWF et UGX, les montants fractionnaires sont refusés plutôt que masqués par un affichage sans décimales. Corrigez la pièce avec l’accord du comptable ; aucune règle d’arrondi locale n’a été certifiée."
+    }
   }
 }

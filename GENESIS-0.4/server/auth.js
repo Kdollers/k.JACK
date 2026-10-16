@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Authentication and authorization for the GENESIS API.
+ * Authentication and authorization for the JENESIS API.
  *
  *  - Passwords: scrypt with a random per-user salt (legacy SHA-256 hashes are
  *    accepted once, then upgraded on successful login).
@@ -27,10 +27,12 @@ const MAX_PASSWORD_LENGTH = 200;
 // ---------------------------------------------------------------------------
 const PERMISSIONS = [
   'dashboard:read', 'reports:read', 'audit:read',
-  'contacts:read', 'contacts:write',
+  'customers:read', 'customers:write', 'suppliers:read', 'suppliers:write',
+  'taxes:read',
+  'network:read', 'network:manage',
   'sales:read', 'sales:write', 'sales:post',
   'purchases:read', 'purchases:write', 'purchases:post',
-  'inventory:read', 'inventory:write', 'inventory:adjust',
+  'inventory:read', 'inventory:valuation:read', 'inventory:write', 'inventory:adjust',
   'banking:read', 'banking:write',
   'accounting:read', 'accounting:write', 'journal:post', 'journal:reverse',
   'fx:read', 'fx:write', 'fx:revalue',
@@ -43,36 +45,59 @@ const ROLE_PERMISSIONS = {
   admin: PERMISSIONS,
   accountant: [
     'dashboard:read', 'reports:read', 'audit:read',
-    'contacts:read', 'sales:read', 'purchases:read', 'inventory:read',
+    'customers:read', 'suppliers:read', 'taxes:read', 'sales:read', 'purchases:read', 'inventory:read', 'inventory:valuation:read',
     'banking:read', 'banking:write',
     'accounting:read', 'accounting:write', 'journal:post', 'journal:reverse',
     'fx:read', 'fx:write', 'fx:revalue'
   ],
   sales: [
     'dashboard:read',
-    'contacts:read', 'contacts:write',
+    'customers:read', 'customers:write', 'taxes:read',
     'sales:read', 'sales:write', 'sales:post',
     'inventory:read'
   ],
   purchases: [
     'dashboard:read',
-    'contacts:read', 'contacts:write',
+    'suppliers:read', 'suppliers:write', 'taxes:read',
     'purchases:read', 'purchases:write', 'purchases:post',
-    'inventory:read'
+    'inventory:read', 'inventory:valuation:read'
   ],
   inventory: [
     'dashboard:read',
-    'inventory:read', 'inventory:write', 'inventory:adjust',
-    'sales:read', 'purchases:read', 'contacts:read'
+    'inventory:read', 'inventory:valuation:read', 'inventory:write', 'inventory:adjust',
+    'sales:read', 'purchases:read', 'customers:read', 'suppliers:read'
   ],
+  network: ['network:read', 'network:manage', 'dashboard:read'],
   // Managers have full visibility but cannot change or post anything.
   manager: [...READ_ALL]
 };
 
 const ROLES = Object.keys(ROLE_PERMISSIONS);
 
-function permissionsFor(role) {
-  return new Set(ROLE_PERMISSIONS[role] || []);
+// An entry point can only REDUCE an authenticated company's permissions.
+// A user may request a different app mode, but cannot acquire a permission
+// that their verified per-company membership does not already grant.
+const MODE_ROLES = {
+  general: ROLES, // Existing sessions and tests retain their legacy behavior.
+  seller: ['sales', 'admin'],
+  administrator: ['admin', 'accountant', 'purchases', 'inventory', 'manager'],
+  network: ['network', 'admin']
+};
+const MODE_PERMISSIONS = {
+  seller: new Set(['dashboard:read', 'customers:read', 'customers:write', 'taxes:read',
+    'sales:read', 'sales:write', 'sales:post', 'inventory:read']),
+  administrator: new Set(PERMISSIONS.filter((p) => !p.startsWith('network:'))),
+  network: new Set(['network:read', 'network:manage', 'dashboard:read',
+    'backup:export', 'backup:restore'])
+};
+function modeSupportsRole(mode, role) {
+  return Object.hasOwn(MODE_ROLES, mode) && MODE_ROLES[mode].includes(role);
+}
+function permissionsFor(role, mode = 'general') {
+  const rolePermissions = ROLE_PERMISSIONS[role] || [];
+  if (mode === 'general') return new Set(rolePermissions);
+  const allowed = MODE_PERMISSIONS[mode];
+  return new Set(rolePermissions.filter((p) => allowed?.has(p)));
 }
 
 // Actions a user may perform while their password must still be changed.
@@ -113,15 +138,16 @@ function addMinutes(date, minutes) {
   return new Date(date.getTime() + minutes * 60000).toISOString();
 }
 
-function createSession({ userId, companyId, ip = null, userAgent = null }) {
+function createSession({ userId, companyId, mode = 'general', ip = null, userAgent = null }) {
+  if (!Object.hasOwn(MODE_ROLES, mode)) throw new Error('Invalid application mode');
   const db = getDb();
   const token = crypto.randomBytes(32).toString('base64url');
   const created = new Date();
   db.prepare(`
-    INSERT INTO sessions (id, user_id, company_id, created_at, last_seen_at, idle_expires_at, absolute_expires_at, ip, user_agent)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO sessions (id, user_id, company_id, app_mode, created_at, last_seen_at, idle_expires_at, absolute_expires_at, ip, user_agent)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    digest(token), userId, companyId, created.toISOString(), created.toISOString(),
+    digest(token), userId, companyId, mode, created.toISOString(), created.toISOString(),
     addMinutes(created, SESSION_IDLE_MINUTES),
     new Date(created.getTime() + SESSION_ABSOLUTE_HOURS * 3600000).toISOString(),
     ip, userAgent
@@ -166,7 +192,13 @@ function resolveSession(token) {
     SELECT id, username, full_name, email, role, company_id, active, must_change_password
     FROM users WHERE id = ?
   `).get(session.user_id);
-  if (!user || !user.active || user.company_id !== session.company_id) return null;
+  if (!user || !user.active) return null;
+  const membership = db.prepare(`SELECT role FROM company_memberships
+    WHERE user_id = ? AND company_id = ?`).get(user.id, session.company_id);
+  if (!membership || !modeSupportsRole(session.app_mode || 'general', membership.role)) return null;
+  // The company role comes from the server-side membership, NEVER a request
+  // header. The user's original company_id remains intact for legacy login.
+  user.role = membership.role;
 
   // Sliding idle timeout, refreshed at most once a minute to limit writes.
   if (now - new Date(session.last_seen_at) > 60000) {
@@ -183,7 +215,7 @@ function resolveSession(token) {
  * Attempts a login. Returns { ok:true, user, token, mustChangePassword }
  * or { ok:false, code, error, status }.
  */
-function login({ username, password, ip, userAgent }) {
+function login({ username, password, mode = 'general', ip, userAgent }) {
   const db = getDb();
   const name = typeof username === 'string' ? username.trim() : '';
   if (!name || typeof password !== 'string' || !password) {
@@ -228,11 +260,16 @@ function login({ username, password, ip, userAgent }) {
 
   // Never attach a legacy user with a missing company to somebody else's data.
   const company = db.prepare('SELECT id FROM companies WHERE id = ?').get(user.company_id);
-  if (!company) return { ok: false, status: 403, code: 'ACCOUNT_NO_COMPANY', error: 'This account has no valid company. Contact an administrator.' };
+  const membership = company && db.prepare('SELECT role FROM company_memberships WHERE user_id = ? AND company_id = ?')
+    .get(user.id, company.id);
+  if (!membership) return { ok: false, status: 403, code: 'ACCOUNT_NO_COMPANY', error: 'This account has no valid company. Contact an administrator.' };
+  if (!Object.hasOwn(MODE_ROLES, mode)) return { ok: false, status: 400, code: 'APP_MODE_INVALID' };
+  if (!modeSupportsRole(mode, membership.role)) return { ok: false, status: 403, code: 'APP_MODE_FORBIDDEN' };
   const companyId = company.id;
-  const token = createSession({ userId: user.id, companyId, ip, userAgent });
+  const token = createSession({ userId: user.id, companyId, mode, ip, userAgent });
   const fresh = db.prepare('SELECT must_change_password FROM users WHERE id = ?').get(user.id);
-  return { ok: true, user, token, companyId, mustChangePassword: !!fresh.must_change_password };
+  return { ok: true, user: { ...user, role: membership.role }, token, companyId, mode,
+    mustChangePassword: !!fresh.must_change_password };
 }
 
 // ---------------------------------------------------------------------------
@@ -263,7 +300,8 @@ function authenticate(req, res, next) {
     user,
     session,
     companyId: session.company_id,
-    permissions: permissionsFor(user.role)
+    mode: session.app_mode || 'general',
+    permissions: permissionsFor(user.role, session.app_mode || 'general')
   };
 
   if (user.must_change_password) {
@@ -295,6 +333,8 @@ module.exports = {
   PERMISSIONS,
   ROLES,
   ROLE_PERMISSIONS,
+  MODE_ROLES,
+  modeSupportsRole,
   MIN_PASSWORD_LENGTH,
   SESSION_IDLE_MINUTES,
   SESSION_ABSOLUTE_HOURS,

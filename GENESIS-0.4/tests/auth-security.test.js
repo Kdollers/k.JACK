@@ -95,6 +95,9 @@ function insertUser(id, username, role, password = 'Test-Password-2026') {
   const companyId = db.prepare('SELECT id FROM companies ORDER BY created_at LIMIT 1').get().id;
   db.prepare(`INSERT INTO users (id, username, password_hash, full_name, email, role, company_id, active, created_at, must_change_password)
     VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), 0)`).run(id, username, hashPassword(password), username, null, role, companyId);
+  // Direct fixture inserts must maintain the explicit authorization relation.
+  db.prepare('INSERT INTO company_memberships (user_id, company_id, role) VALUES (?, ?, ?)')
+    .run(id, companyId, role);
   return password;
 }
 

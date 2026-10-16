@@ -91,6 +91,8 @@ async function main() {
     before.prepare(`INSERT INTO users
       (id, username, password_hash, full_name, role, company_id, active)
       VALUES ('usr-other-test', 'real.staff', 'test-hash', 'Real Staff', 'manager', 'comp-genesis-01', 1)`).run();
+    before.prepare(`INSERT INTO company_memberships (user_id, company_id, role)
+      VALUES ('usr-other-test', 'comp-genesis-01', 'manager')`).run();
     before.prepare(`INSERT INTO sessions
       (id, user_id, company_id, created_at, last_seen_at, idle_expires_at, absolute_expires_at)
       VALUES (?, 'usr-admin', 'comp-genesis-01', datetime('now'), datetime('now'), datetime('now', '+1 hour'), datetime('now', '+1 hour'))`)

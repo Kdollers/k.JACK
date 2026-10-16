@@ -50,7 +50,10 @@ export async function apiRequest(url, options = {}) {
 
   if (!response.ok) {
     const code = data && typeof data === 'object' ? data.code : undefined;
-    if ((code === 'AUTH_REQUIRED' || code === 'PASSWORD_CHANGE_REQUIRED') && unauthorizedHandler && url !== '/api/auth/login') {
+    if ((code === 'AUTH_REQUIRED' || code === 'PASSWORD_CHANGE_REQUIRED') && unauthorizedHandler &&
+        url !== '/api/auth/login' && token === getSessionToken()) {
+      // A company switch replaces the token. Late failures from the old token
+      // must not sign out the new company session.
       unauthorizedHandler({ status: response.status, code });
     }
     // Backend sends a stable code, never an untranslated English exception.

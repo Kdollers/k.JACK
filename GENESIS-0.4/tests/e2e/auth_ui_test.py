@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Interactive test of the GENESIS sign-in screens in a real browser (Playwright + Chromium).
+Interactive test of the JENESIS sign-in screens in a real browser (Playwright + Chromium).
 
 Covers: first-run setup, sign-in, wrong password, sign-out, forced password change,
 and that the Content-Security-Policy does not block the application (no CSP errors).
@@ -50,7 +50,7 @@ def wait_health(proc, timeout=60):
             raise RuntimeError('backend exited early')
         try:
             with urllib.request.urlopen(f'{BASE}/api/health', timeout=2) as r:
-                if json.loads(r.read()).get('appId') == 'genesis-accounting':
+                if json.loads(r.read()).get('appId') == 'jenesis-accounting':
                     return
         except Exception:
             time.sleep(0.3)
@@ -104,7 +104,7 @@ def run_browser():
 
         # 1. First-run setup
         page.goto(BASE + '/')
-        expect(page.get_by_text('Set up GENESIS', exact=False).first).to_be_visible(timeout=30000)
+        expect(page.get_by_text('Set up JENESIS', exact=False).first).to_be_visible(timeout=30000)
         check('first run shows the setup screen', True)
         page.get_by_label('Company name').fill(ADMIN['company'])
         page.get_by_label('Administrator full name').fill(ADMIN['full_name'])

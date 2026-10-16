@@ -7,6 +7,9 @@ const { createLimiter, clientIp, MINUTE } = require('../rateLimit');
 const { hashPassword, verifyPassword } = require('../passwords');
 const { setupStatus } = require('../setup-state');
 const { normalizeUser, userConflict } = require('../user-validation');
+const { ValidationError, requiredText, optionalText, nonnegative, activeFlag,
+  entityCode, validateEmail, nextEntityCode, searchPattern, sendWriteError } = require('../crud-validation');
+const { newCompanyConfig, updatedCompanyConfig } = require('../company-config');
 const {
   authenticate,
   requirePermission,
@@ -17,10 +20,13 @@ const {
   revokeAllSessions,
   login,
   bearerToken,
+  modeSupportsRole,
+  MODE_ROLES,
   ROLES
 } = require('../auth');
 const {
   roundTo,
+  assertMoneyPrecision,
   generateId,
   nextSequenceNumber,
   logAudit,
@@ -68,6 +74,21 @@ function getSessionContext(req) {
   return { companyId: req.auth.companyId, user: req.auth.user };
 }
 
+// XAF/RWF/UGX have no minor monetary unit. Until jurisdiction-specific
+// fractional-tax rounding is implemented, refuse a draft whose totals would be
+// rounded away when displayed. USD/EUR keep the existing two-decimal behavior.
+function assertLineMoney(db, companyId, qty, unitPrice, discountPercent, taxRate) {
+  assertMoneyPrecision(db, companyId, unitPrice);
+  if (db.prepare('SELECT currency_decimals FROM companies WHERE id = ?').get(companyId)?.currency_decimals === 0) {
+    const gross = qty * unitPrice;
+    const discount = gross * discountPercent / 100;
+    const net = gross - discount;
+    for (const value of [discount, net, net * taxRate / 100]) {
+      assertMoneyPrecision(db, companyId, value);
+    }
+  }
+}
+
 // --------------------------------------------------------------------------
 // 1. AUTH, SESSIONS & USERS
 // --------------------------------------------------------------------------
@@ -87,8 +108,8 @@ function publicUser(u) {
 }
 
 router.post('/auth/login', loginIpLimiter.middleware, loginLimiter.middleware, (req, res) => {
-  const { username, password } = req.body || {};
-  const result = login({ username, password, ...clientInfo(req) });
+  const { username, password, mode } = req.body || {};
+  const result = login({ username, password, mode, ...clientInfo(req) });
   if (!result.ok) {
     return res.status(result.status).json({ error: result.error, code: result.code });
   }
@@ -98,6 +119,7 @@ router.post('/auth/login', loginIpLimiter.middleware, loginLimiter.middleware, (
     token: result.token,
     user: publicUser({ ...result.user, must_change_password: result.mustChangePassword }),
     company,
+    mode: result.mode,
     mustChangePassword: result.mustChangePassword
   });
 });
@@ -106,7 +128,44 @@ router.get('/auth/me', (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const fresh = getDb().prepare('SELECT * FROM users WHERE id = ?').get(user.id);
   const company = getDb().prepare('SELECT * FROM companies WHERE id = ?').get(companyId);
-  res.json({ user: publicUser(fresh), company, permissions: [...req.auth.permissions].sort() });
+  const allowedRoles = MODE_ROLES[req.auth.mode];
+  const companies = getDb().prepare(`SELECT c.* FROM company_memberships m
+    JOIN companies c ON c.id = m.company_id WHERE m.user_id = ?
+      AND m.role IN (${allowedRoles.map(() => '?').join(',')}) ORDER BY c.name`).all(user.id, ...allowedRoles);
+  res.json({ user: publicUser({ ...fresh, role: user.role }), company, companies,
+    mode: req.auth.mode, permissions: [...req.auth.permissions].sort() });
+});
+
+// Switch by exchanging the current token for a new server-bound session.
+// A company header or a client-side dropdown can NEVER grant access by itself.
+router.post('/auth/switch-company', requirePermission('dashboard:read'), (req, res) => {
+  const targetId = req.body?.company_id;
+  if (typeof targetId !== 'string' || targetId.length > 120) return res.status(400).json({ code: 'COMPANY_INVALID' });
+  const { user, companyId } = getSessionContext(req);
+  const db = getDb();
+  try {
+    const switchSession = db.transaction(() => {
+      const member = db.prepare(`SELECT m.role, c.* FROM company_memberships m
+        JOIN companies c ON c.id = m.company_id
+        JOIN users u ON u.id = m.user_id
+        WHERE m.user_id = ? AND m.company_id = ? AND u.active = 1`).get(user.id, targetId);
+      if (!member) return { code: 'COMPANY_FORBIDDEN' };
+      if (!modeSupportsRole(req.auth.mode, member.role)) return { code: 'APP_MODE_FORBIDDEN' };
+      const { role, ...company } = member;
+      if (targetId === companyId) return { token: bearerToken(req), company };
+      const token = createSession({ userId: user.id, companyId: targetId,
+        mode: req.auth.mode, ...clientInfo(req) });
+      revokeSession(bearerToken(req));
+      logAudit(targetId, user.id, user.full_name, 'AUTH', 'SWITCH', user.id,
+        `User ${user.username} switched company`);
+      return { token, company };
+    });
+    const result = switchSession.immediate();
+    return result.code ? res.status(403).json(result) : res.json(result);
+  } catch (err) {
+    console.error('Company switch failed:', err.code);
+    return res.status(500).json({ code: 'GENERIC' });
+  }
 });
 
 router.post('/auth/logout', (req, res) => {
@@ -148,6 +207,10 @@ router.post('/setup/initialize', setupLimiter.middleware, (req, res) => {
   const companyName = typeof company_name === 'string' ? company_name.trim() : '';
   if (!companyName) return res.status(400).json({ code: 'COMPANY_NAME_REQUIRED' });
   if (companyName.length > 120) return res.status(400).json({ code: 'COMPANY_NAME_INVALID' });
+  let companyConfig;
+  try {
+    companyConfig = newCompanyConfig({ ...req.body, name: companyName }, { allowUnspecifiedCountry: true });
+  } catch (err) { return sendWriteError(res, err); }
   const user = normalizeUser(req.body);
   if (user.code) return res.status(400).json({ code: user.code });
   const policy = checkPasswordPolicy(password, user.username);
@@ -167,12 +230,25 @@ router.post('/setup/initialize', setupLimiter.middleware, (req, res) => {
       if (duplicate) return { code: duplicate };
       const company = db.prepare('SELECT id FROM companies ORDER BY created_at ASC LIMIT 1').get();
       if (!company) return { code: 'NO_COMPANY' };
-      db.prepare('UPDATE companies SET name = ?, legal_name = ?, updated_at = datetime(\'now\') WHERE id = ?')
-        .run(companyName, companyName, company.id);
+      if (db.prepare('SELECT 1 FROM bank_accounts WHERE company_id = ? AND current_balance <> 0 LIMIT 1').get(company.id)) {
+        return { code: 'CURRENCY_CHANGE_REQUIRES_MIGRATION' };
+      }
+      db.prepare(`UPDATE companies SET name = ?, legal_name = ?, country_code = ?,
+        currency_code = ?, currency_symbol = ?, currency_decimals = ?,
+        default_language = ?, updated_at = datetime('now') WHERE id = ?`)
+        .run(companyConfig.name, companyConfig.legal_name, companyConfig.country_code,
+          companyConfig.currency_code, companyConfig.currency_symbol, companyConfig.currency_decimals,
+          companyConfig.default_language, company.id);
+      // The three freshly seeded cash/bank placeholders still have zero balances.
+      // They must use the currency selected on first run, not a stale USD label.
+      db.prepare('UPDATE bank_accounts SET currency = ? WHERE company_id = ? AND current_balance = 0')
+        .run(companyConfig.currency_code, company.id);
       db.prepare(`INSERT INTO users
         (id, username, password_hash, full_name, email, role, company_id, active, created_at, must_change_password)
         VALUES (?, ?, ?, ?, ?, 'admin', ?, 1, datetime('now'), 0)`)
         .run(id, user.username, passwordHash, user.full_name, user.email, company.id);
+      db.prepare('INSERT INTO company_memberships (user_id, company_id, role) VALUES (?, ?, ?)')
+        .run(id, company.id, 'admin');
       db.prepare('UPDATE installation_state SET completed_at = ? WHERE id = 1')
         .run(new Date().toISOString());
       logAudit(company.id, id, user.full_name, 'AUTH', 'SETUP', id, `Initial administrator ${user.username} created`);
@@ -193,8 +269,10 @@ router.post('/setup/initialize', setupLimiter.middleware, (req, res) => {
 router.get('/auth/users', requirePermission('users:manage'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const users = getDb().prepare(`
-    SELECT id, username, full_name, email, role, active, must_change_password, last_login_at, created_at
-    FROM users WHERE company_id = ? ORDER BY full_name ASC
+    SELECT u.id, u.username, u.full_name, u.email, m.role, u.active,
+           u.must_change_password, u.last_login_at, u.created_at
+    FROM company_memberships m JOIN users u ON u.id = m.user_id
+    WHERE m.company_id = ? ORDER BY u.full_name ASC
   `).all(companyId);
   res.json(users);
 });
@@ -220,6 +298,8 @@ router.post('/auth/users', requirePermission('users:manage'), (req, res) => {
         (id, username, password_hash, full_name, email, role, company_id, active, created_at, must_change_password)
         VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), 1)`)
         .run(id, person.username, passwordHash, person.full_name, person.email, role, companyId);
+      db.prepare('INSERT INTO company_memberships (user_id, company_id, role) VALUES (?, ?, ?)')
+        .run(id, companyId, role);
       logAudit(companyId, currentUser.id, currentUser.full_name, 'USERS', 'CREATE', id,
         `Created user ${person.username} (${role})`);
       return { id, ...person, role, active: 1, must_change_password: 1 };
@@ -236,12 +316,17 @@ router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
   const { companyId, user: currentUser } = getSessionContext(req);
   const { full_name, email, role, active, password } = req.body || {};
   const db = getDb();
-  const target = db.prepare('SELECT * FROM users WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
+  const target = db.prepare(`SELECT u.*, m.role AS membership_role FROM users u
+    JOIN company_memberships m ON m.user_id = u.id
+    WHERE u.id = ? AND m.company_id = ?`).get(req.params.id, companyId);
   if (!target) return res.status(404).json({ code: 'NOT_FOUND' });
+  // A shared user profile is global. Editing it from a secondary company
+  // could deactivate or reset that account in the user's original company.
+  if (target.company_id !== companyId) return res.status(403).json({ code: 'CROSS_COMPANY_USER_UPDATE' });
   if (role !== undefined && !ROLES.includes(role)) return res.status(400).json({ code: 'ROLE_INVALID' });
   const person = normalizeUser({ username: target.username, full_name: full_name ?? target.full_name, email: email ?? target.email });
   if (person.code) return res.status(400).json({ code: person.code });
-  const newRole = role !== undefined ? role : target.role;
+  const newRole = role !== undefined ? role : target.membership_role;
   const newActive = active !== undefined ? (active ? 1 : 0) : target.active;
   if (password) {
     const policy = checkPasswordPolicy(password, target.username);
@@ -250,11 +335,15 @@ router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
   const newHash = password ? hashPassword(password) : null;
   try {
     const update = db.transaction(() => {
-      const fresh = db.prepare('SELECT role, active FROM users WHERE id = ? AND company_id = ?').get(target.id, companyId);
+      const fresh = db.prepare(`SELECT m.role, u.active FROM users u
+        JOIN company_memberships m ON m.user_id = u.id
+        WHERE u.id = ? AND m.company_id = ? AND u.company_id = ?`).get(target.id, companyId, companyId);
       if (!fresh) return { code: 'NOT_FOUND' };
       if (target.id === currentUser.id && (newRole !== 'admin' || newActive === 0)) return { code: 'SELF_LOCKOUT' };
       if (fresh.role === 'admin' && fresh.active && (newRole !== 'admin' || newActive === 0)) {
-        const others = db.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id = ? AND role = 'admin' AND active = 1 AND id <> ?")
+        const others = db.prepare(`SELECT COUNT(*) AS n FROM company_memberships m
+          JOIN users u ON u.id = m.user_id WHERE m.company_id = ?
+          AND m.role = 'admin' AND u.active = 1 AND u.id <> ?`)
           .get(companyId, target.id).n;
         if (!others) return { code: 'LAST_ADMIN' };
       }
@@ -262,6 +351,8 @@ router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
       if (conflict) return { code: conflict };
       db.prepare('UPDATE users SET full_name = ?, email = ?, role = ?, active = ? WHERE id = ?')
         .run(person.full_name, person.email, newRole, newActive, target.id);
+      db.prepare('UPDATE company_memberships SET role = ? WHERE user_id = ? AND company_id = ?')
+        .run(newRole, target.id, companyId);
       if (newHash) {
         db.prepare('UPDATE users SET password_hash = ?, must_change_password = 1, failed_login_count = 0, locked_until = NULL WHERE id = ?')
           .run(newHash, target.id);
@@ -272,7 +363,7 @@ router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
     });
     const result = update.immediate();
     if (result.code) return res.status(result.code === 'NOT_FOUND' ? 404 : 400).json(result);
-    if (newHash || newActive === 0 || newRole !== target.role) revokeUserSessions(target.id);
+    if (newHash || newActive === 0 || newRole !== target.membership_role) revokeUserSessions(target.id);
     return res.json(result);
   } catch (err) {
     console.error('User update failed:', err.code);
@@ -283,10 +374,14 @@ router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
 // --------------------------------------------------------------------------
 // 2. COMPANIES
 // --------------------------------------------------------------------------
-// Users can only see the company bound to their session.
+// List only companies with an explicit server-side membership for this user.
 router.get('/companies', (req, res) => {
-  const { companyId } = getSessionContext(req);
-  const list = getDb().prepare('SELECT * FROM companies WHERE id = ?').all(companyId);
+  const { user } = getSessionContext(req);
+  const allowedRoles = MODE_ROLES[req.auth.mode];
+  const list = getDb().prepare(`SELECT c.* FROM company_memberships m
+    JOIN companies c ON c.id = m.company_id WHERE m.user_id = ?
+      AND m.role IN (${allowedRoles.map(() => '?').join(',')})
+    ORDER BY c.name ASC`).all(user.id, ...allowedRoles);
   res.json(list);
 });
 
@@ -300,95 +395,82 @@ router.get('/companies/current', (req, res) => {
 router.put('/companies/current', requirePermission('company:manage'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const db = getDb();
-  const {
-    name, legal_name, address, phone, email, tax_id,
-    currency_code, currency_symbol, currency_decimals,
-    fiscal_year_start, fiscal_year_end, default_language, tax_inclusive_pricing, inventory_valuation_method
-  } = req.body;
-
   try {
-    db.prepare(`
-      UPDATE companies
-      SET name = ?, legal_name = ?, address = ?, phone = ?, email = ?, tax_id = ?,
-          currency_code = ?, currency_symbol = ?, currency_decimals = ?,
-          fiscal_year_start = ?, fiscal_year_end = ?, default_language = ?,
-          tax_inclusive_pricing = ?, inventory_valuation_method = ?, updated_at = datetime('now')
-      WHERE id = ?
-    `).run(
-      name, legal_name, address, phone, email, tax_id,
-      currency_code, currency_symbol, currency_decimals,
-      fiscal_year_start, fiscal_year_end, default_language,
-      tax_inclusive_pricing ? 1 : 0, inventory_valuation_method || 'WEIGHTED_AVERAGE',
-      companyId
-    );
-
-    logAudit(companyId, user.id, user.full_name, 'COMPANY', 'UPDATE', companyId, `Updated company profile ${name}`);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const update = db.transaction(() => {
+      const current = db.prepare('SELECT * FROM companies WHERE id = ?').get(companyId);
+      if (!current) throw new ValidationError('NOT_FOUND', 404);
+      const hasInventoryMovements = !!db.prepare('SELECT 1 FROM inventory_movements WHERE company_id = ? LIMIT 1').get(companyId);
+      const form = updatedCompanyConfig(req.body || {}, current, hasInventoryMovements);
+      db.prepare(`UPDATE companies
+        SET name = ?, legal_name = ?, address = ?, phone = ?, email = ?, tax_id = ?,
+            country_code = ?, currency_code = ?, currency_symbol = ?, currency_decimals = ?,
+            fiscal_year_start = ?, fiscal_year_end = ?, default_language = ?,
+            tax_inclusive_pricing = ?, inventory_valuation_method = ?, updated_at = datetime('now')
+        WHERE id = ?`).run(form.name, form.legal_name, form.address, form.phone,
+        form.email, form.tax_id, form.country_code, form.currency_code, form.currency_symbol,
+        form.currency_decimals, form.fiscal_year_start, form.fiscal_year_end,
+        form.default_language, form.tax_inclusive_pricing, form.inventory_valuation_method, companyId);
+      logAudit(companyId, user.id, user.full_name, 'COMPANY', 'UPDATE', companyId,
+        `Updated company profile ${form.name}`);
+      return form;
+    });
+    return res.json({ success: true, company: update.immediate() });
+  } catch (err) { return sendWriteError(res, err); }
 });
 
 router.post('/companies', requirePermission('company:manage'), (req, res) => {
-  const { user } = getSessionContext(req);
+  const { user, companyId } = getSessionContext(req);
   const db = getDb();
-  const {
-    name, legal_name, address, phone, email, tax_id,
-    currency_code = 'USD', currency_symbol = '$', currency_decimals = 2,
-    default_language = 'en'
-  } = req.body;
-
-  if (!name) return res.status(400).json({ error: 'Company name is required' });
-
-  const id = generateId('comp');
-  const code = 'GEN-' + Math.floor(100 + Math.random() * 900);
-
   try {
-    db.transaction(() => {
-      db.prepare(`
-        INSERT INTO companies (
-          id, code, name, legal_name, address, phone, email, tax_id,
-          currency_code, currency_symbol, currency_decimals, default_language, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-      `).run(
-        id, code, name, legal_name || name, address, phone, email, tax_id,
-        currency_code, currency_symbol, currency_decimals, default_language
-      );
-
-      // Clone Chart of Accounts from first company
-      const templateAccounts = db.prepare('SELECT * FROM accounts WHERE company_id = ?').all('comp-genesis-01');
-      const insertAcc = db.prepare(`
-        INSERT INTO accounts (id, company_id, code, name, type, subtype, normal_balance, is_system, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
-      `);
-      for (const a of templateAccounts) {
-        insertAcc.run(generateId('acc'), id, a.code, a.name, a.type, a.subtype, a.normal_balance, a.is_system);
+    const form = newCompanyConfig(req.body || {});
+    const create = db.transaction(() => {
+      const original = db.prepare('SELECT code, name, type, subtype, normal_balance, parent_id, is_system, active, notes FROM accounts WHERE company_id = ? ORDER BY code')
+        .all(companyId);
+      const required = ['1010', '1020', '1030', '1100', '1150', '1200', '2010', '2110', '4010', '5010'];
+      if (required.some((code) => !original.some((a) => a.code === code))) {
+        throw new ValidationError('CHART_INCOMPLETE', 409);
       }
+      const id = generateId('comp');
+      const code = 'JEN-' + require('node:crypto').randomBytes(6).toString('hex').toUpperCase();
+      db.prepare(`INSERT INTO companies
+        (id, code, name, legal_name, address, phone, email, tax_id, country_code,
+         currency_code, currency_symbol, currency_decimals, fiscal_year_start, fiscal_year_end,
+         default_language, tax_inclusive_pricing, inventory_valuation_method, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'WEIGHTED_AVERAGE', datetime('now'), datetime('now'))`)
+        .run(id, code, form.name, form.legal_name, form.address, form.phone, form.email,
+          form.tax_id, form.country_code, form.currency_code, form.currency_symbol,
+          form.currency_decimals, form.fiscal_year_start, form.fiscal_year_end, form.default_language);
 
-      // Default Bank Account
-      const mainAcc = db.prepare('SELECT id FROM accounts WHERE company_id = ? AND code = ?').get(id, '1020');
-      if (mainAcc) {
-        db.prepare(`
-          INSERT INTO bank_accounts (id, company_id, account_id, bank_name, account_number, account_type, currency, current_balance, active)
-          VALUES (?, ?, ?, ?, ?, 'BANK', ?, 0, 1)
-        `).run(generateId('bank'), id, mainAcc.id, 'Main Bank Account', 'BANK-UNCONFIGURED', currency_code);
+      // Clone definitions only. No account balances, tax rates, bank credentials,
+      // users or business transactions are copied into a different company.
+      const idByCode = new Map();
+      const insert = db.prepare(`INSERT INTO accounts
+        (id, company_id, code, name, type, subtype, normal_balance, parent_id, is_system, active, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`);
+      for (const account of original) {
+        const accountId = generateId('acc');
+        idByCode.set(account.code, accountId);
+        insert.run(accountId, id, account.code, account.name, account.type,
+          account.subtype, account.normal_balance, account.is_system, account.active, account.notes);
       }
-
-      // Default Tax Rate
-      const salesTaxAcc = db.prepare('SELECT id FROM accounts WHERE company_id = ? AND code = ?').get(id, '2110');
-      const purchTaxAcc = db.prepare('SELECT id FROM accounts WHERE company_id = ? AND code = ?').get(id, '1150');
-      db.prepare(`
-        INSERT INTO tax_rates (id, company_id, code, name, rate, sales_tax_account_id, purchase_tax_account_id, active)
-        VALUES (?, ?, 'VAT18', 'Standard VAT 18%', 18.0, ?, ?, 1)
-      `).run(generateId('tax'), id, salesTaxAcc?.id || null, purchTaxAcc?.id || null);
-
-      logAudit(id, user.id, user.full_name, 'COMPANY', 'CREATE', id, `Created new company ${name} (${code})`);
-    })();
-
-    res.json({ id, code, name });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+      // Keep parent/child chart relationships within the cloned company.
+      for (const account of original) {
+        if (!account.parent_id) continue;
+        const sourceParent = db.prepare('SELECT code FROM accounts WHERE id = ? AND company_id = ?')
+          .get(account.parent_id, companyId);
+        if (!sourceParent || !idByCode.has(sourceParent.code)) throw new ValidationError('CHART_INCOMPLETE', 409);
+        db.prepare('UPDATE accounts SET parent_id = ? WHERE id = ?')
+          .run(idByCode.get(sourceParent.code), idByCode.get(account.code));
+      }
+      // Only the authorized creator receives access to the new company.
+      db.prepare('INSERT INTO company_memberships (user_id, company_id, role) VALUES (?, ?, ?)')
+        .run(user.id, id, 'admin');
+      logAudit(id, user.id, user.full_name, 'COMPANY', 'CREATE', id,
+        `Created new company ${form.name} (${code})`);
+      return { id, code, ...form };
+    });
+    return res.json(create.immediate());
+  } catch (err) { return sendWriteError(res, err); }
 });
 
 // --------------------------------------------------------------------------
@@ -463,64 +545,101 @@ router.put('/accounts/:id', requirePermission('accounting:write'), (req, res) =>
 // --------------------------------------------------------------------------
 // 4. CUSTOMERS
 // --------------------------------------------------------------------------
-router.get('/customers', requirePermission('contacts:read'), (req, res) => {
+function contactFields(body, previous, kind, companyCurrency, companyDecimals) {
+  const read = (key) => body[key] === undefined ? previous?.[key] : body[key];
+  const currency = read('default_currency') || companyCurrency;
+  const creditLimit = nonnegative(read('credit_limit'), 'CREDIT_LIMIT_INVALID');
+  if (kind === 'customer' && (!previous || creditLimit !== previous.credit_limit)) {
+    nonnegative(creditLimit, 'CURRENCY_PRECISION_INVALID', { decimals: companyDecimals ?? 2 });
+  }
+  if (currency !== companyCurrency && currency !== previous?.default_currency) {
+    throw new ValidationError('FOREIGN_CURRENCY_UNSUPPORTED', 409);
+  }
+  return {
+    name: requiredText(read('name'), kind === 'customer' ? 'CUSTOMER_NAME_REQUIRED' : 'SUPPLIER_NAME_REQUIRED'),
+    contact_person: optionalText(read('contact_person'), 120),
+    email: validateEmail(read('email')),
+    phone: optionalText(read('phone'), 60), address: optionalText(read('address'), 300),
+    city: optionalText(read('city'), 100), country: optionalText(read('country'), 100),
+    tax_id: optionalText(read('tax_id'), 100),
+    payment_terms: optionalText(read('payment_terms'), 40) || 'NET_30',
+    default_currency: currency,
+    active: activeFlag(body.active, previous?.active ?? 1),
+    ...(kind === 'customer' ? {
+      credit_limit: creditLimit
+    } : {
+      lead_time_days: nonnegative(read('lead_time_days'), 'LEAD_TIME_INVALID', { decimals: 0, maximum: 3650 }),
+      rating: nonnegative(read('rating'), 'RATING_INVALID', { decimals: 0, maximum: 5 })
+    })
+  };
+}
+function uniqueContactCode(db, table, companyId, code, id = null) {
+  if (db.prepare(`SELECT 1 FROM ${table} WHERE company_id = ? AND code = ? COLLATE NOCASE AND id != ?`)
+    .get(companyId, code, id || '')) throw new ValidationError('DUPLICATE_RECORD', 409);
+}
+router.get('/customers', requirePermission('customers:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
-  const db = getDb();
-  const search = req.query.search ? `%${req.query.search}%` : null;
-  let sql = 'SELECT * FROM customers WHERE company_id = ?';
-  const params = [companyId];
-  if (search) {
-    sql += ' AND (name LIKE ? OR code LIKE ? OR phone LIKE ? OR email LIKE ?)';
-    params.push(search, search, search, search);
-  }
-  sql += ' ORDER BY name ASC';
-  res.json(db.prepare(sql).all(...params));
-});
-
-router.post('/customers', requirePermission('contacts:write'), (req, res) => {
-  const { companyId, user } = getSessionContext(req);
-  const { name, contact_person, email, phone, address, tax_id, credit_limit = 0, payment_terms = 'NET_30' } = req.body;
-  if (!name) return res.status(400).json({ error: 'Customer name is required' });
-
-  const db = getDb();
-  const id = generateId('cust');
-  const count = db.prepare('SELECT count(*) as c FROM customers WHERE company_id = ?').get(companyId).c;
-  const code = req.body.code || `CUST-${String(count + 1).padStart(3, '0')}`;
-
   try {
-    db.prepare(`
-      INSERT INTO customers (id, company_id, code, name, contact_person, email, phone, address, tax_id, credit_limit, payment_terms, opening_balance, current_balance, active, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 1, datetime('now'))
-    `).run(id, companyId, code, name, contact_person, email, phone, address, tax_id, Number(credit_limit) || 0, payment_terms);
-
-    logAudit(companyId, user.id, user.full_name, 'CUSTOMERS', 'CREATE', id, `Created customer ${code} - ${name}`);
-    res.json({ id, code, name, current_balance: 0 });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const search = searchPattern(req.query.search);
+    let sql = 'SELECT * FROM customers WHERE company_id = ?';
+    const params = [companyId];
+    if (search) {
+      sql += " AND (name LIKE ? ESCAPE '!' OR code LIKE ? ESCAPE '!' OR phone LIKE ? ESCAPE '!' OR email LIKE ? ESCAPE '!')";
+      params.push(search, search, search, search);
+    }
+    return res.json(getDb().prepare(sql + ' ORDER BY name ASC').all(...params));
+  } catch (err) { return sendWriteError(res, err); }
 });
 
-router.put('/customers/:id', requirePermission('contacts:write'), (req, res) => {
+router.post('/customers', requirePermission('customers:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
-  const { name, contact_person, email, phone, address, tax_id, credit_limit, payment_terms, active } = req.body;
   const db = getDb();
-
   try {
-    db.prepare(`
-      UPDATE customers
-      SET name = ?, contact_person = ?, email = ?, phone = ?, address = ?, tax_id = ?,
-          credit_limit = ?, payment_terms = ?, active = ?
-      WHERE id = ? AND company_id = ?
-    `).run(name, contact_person, email, phone, address, tax_id, credit_limit, payment_terms, active ? 1 : 0, req.params.id, companyId);
-
-    logAudit(companyId, user.id, user.full_name, 'CUSTOMERS', 'UPDATE', req.params.id, `Updated customer ${name}`);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const create = db.transaction(() => {
+      const body = req.body || {};
+      const company = db.prepare('SELECT currency_code, currency_decimals FROM companies WHERE id = ?').get(companyId);
+      const form = contactFields(body, null, 'customer', company.currency_code, company.currency_decimals);
+      const id = generateId('cust');
+      const code = body.code ? entityCode(body.code, 'CODE_INVALID') :
+        nextEntityCode(db, 'customers', companyId, 'CUST');
+      uniqueContactCode(db, 'customers', companyId, code);
+      db.prepare(`INSERT INTO customers (id, company_id, code, name, contact_person, email, phone, address, city, country, tax_id, default_currency, payment_terms, active, credit_limit, opening_balance, current_balance, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, datetime('now'))`)
+        .run(id, companyId, code, form.name, form.contact_person, form.email, form.phone, form.address, form.city, form.country, form.tax_id, form.default_currency, form.payment_terms, form.active, form.credit_limit);
+      logAudit(companyId, user.id, user.full_name, 'CUSTOMERS', 'CREATE', id,
+        `Created customer ${code} - ${form.name}`);
+      return db.prepare('SELECT * FROM customers WHERE id = ? AND company_id = ?').get(id, companyId);
+    });
+    return res.json(create.immediate());
+  } catch (err) { return sendWriteError(res, err); }
 });
 
-router.get('/customers/:id/statement', requirePermission('contacts:read'), (req, res) => {
+router.put('/customers/:id', requirePermission('customers:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const db = getDb();
+  try {
+    const update = db.transaction(() => {
+      const previous = db.prepare('SELECT * FROM customers WHERE id = ? AND company_id = ?')
+        .get(req.params.id, companyId);
+      if (!previous) throw new ValidationError('NOT_FOUND', 404);
+      const body = req.body || {};
+      const company = db.prepare('SELECT currency_code, currency_decimals FROM companies WHERE id = ?').get(companyId);
+      const form = contactFields(body, previous, 'customer', company.currency_code, company.currency_decimals);
+      const code = body.code === undefined ? previous.code : entityCode(body.code, 'CODE_INVALID');
+      uniqueContactCode(db, 'customers', companyId, code, previous.id);
+      db.prepare(`UPDATE customers SET code = ?, name = ?, contact_person = ?, email = ?, phone = ?, address = ?,
+          city = ?, country = ?, tax_id = ?, default_currency = ?, payment_terms = ?, active = ?, credit_limit = ?
+        WHERE id = ? AND company_id = ?`)
+        .run(code, form.name, form.contact_person, form.email, form.phone, form.address, form.city, form.country, form.tax_id, form.default_currency, form.payment_terms, form.active, form.credit_limit, previous.id, companyId);
+      logAudit(companyId, user.id, user.full_name, 'CUSTOMERS', 'UPDATE', previous.id,
+        `Updated customer ${code} - ${form.name}`);
+      return db.prepare('SELECT * FROM customers WHERE id = ? AND company_id = ?').get(previous.id, companyId);
+    });
+    return res.json({ success: true, customer: update.immediate() });
+  } catch (err) { return sendWriteError(res, err); }
+});
+
+router.get('/customers/:id/statement', requirePermission('customers:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -534,64 +653,69 @@ router.get('/customers/:id/statement', requirePermission('contacts:read'), (req,
 // --------------------------------------------------------------------------
 // 5. SUPPLIERS
 // --------------------------------------------------------------------------
-router.get('/suppliers', requirePermission('contacts:read'), (req, res) => {
+router.get('/suppliers', requirePermission('suppliers:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
-  const db = getDb();
-  const search = req.query.search ? `%${req.query.search}%` : null;
-  let sql = 'SELECT * FROM suppliers WHERE company_id = ?';
-  const params = [companyId];
-  if (search) {
-    sql += ' AND (name LIKE ? OR code LIKE ? OR phone LIKE ? OR email LIKE ?)';
-    params.push(search, search, search, search);
-  }
-  sql += ' ORDER BY name ASC';
-  res.json(db.prepare(sql).all(...params));
-});
-
-router.post('/suppliers', requirePermission('contacts:write'), (req, res) => {
-  const { companyId, user } = getSessionContext(req);
-  const { name, contact_person, email, phone, address, tax_id, payment_terms = 'NET_30' } = req.body;
-  if (!name) return res.status(400).json({ error: 'Supplier name is required' });
-
-  const db = getDb();
-  const id = generateId('supp');
-  const count = db.prepare('SELECT count(*) as c FROM suppliers WHERE company_id = ?').get(companyId).c;
-  const code = req.body.code || `SUPP-${String(count + 1).padStart(3, '0')}`;
-
   try {
-    db.prepare(`
-      INSERT INTO suppliers (id, company_id, code, name, contact_person, email, phone, address, tax_id, payment_terms, opening_balance, current_balance, active, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 1, datetime('now'))
-    `).run(id, companyId, code, name, contact_person, email, phone, address, tax_id, payment_terms);
-
-    logAudit(companyId, user.id, user.full_name, 'SUPPLIERS', 'CREATE', id, `Created supplier ${code} - ${name}`);
-    res.json({ id, code, name, current_balance: 0 });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const search = searchPattern(req.query.search);
+    let sql = 'SELECT * FROM suppliers WHERE company_id = ?';
+    const params = [companyId];
+    if (search) {
+      sql += " AND (name LIKE ? ESCAPE '!' OR code LIKE ? ESCAPE '!' OR phone LIKE ? ESCAPE '!' OR email LIKE ? ESCAPE '!')";
+      params.push(search, search, search, search);
+    }
+    return res.json(getDb().prepare(sql + ' ORDER BY name ASC').all(...params));
+  } catch (err) { return sendWriteError(res, err); }
 });
 
-router.put('/suppliers/:id', requirePermission('contacts:write'), (req, res) => {
+router.post('/suppliers', requirePermission('suppliers:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
-  const { name, contact_person, email, phone, address, tax_id, payment_terms, active } = req.body;
   const db = getDb();
-
   try {
-    db.prepare(`
-      UPDATE suppliers
-      SET name = ?, contact_person = ?, email = ?, phone = ?, address = ?, tax_id = ?,
-          payment_terms = ?, active = ?
-      WHERE id = ? AND company_id = ?
-    `).run(name, contact_person, email, phone, address, tax_id, payment_terms, active ? 1 : 0, req.params.id, companyId);
-
-    logAudit(companyId, user.id, user.full_name, 'SUPPLIERS', 'UPDATE', req.params.id, `Updated supplier ${name}`);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const create = db.transaction(() => {
+      const body = req.body || {};
+      const company = db.prepare('SELECT currency_code, currency_decimals FROM companies WHERE id = ?').get(companyId);
+      const form = contactFields(body, null, 'supplier', company.currency_code, company.currency_decimals);
+      const id = generateId('supp');
+      const code = body.code ? entityCode(body.code, 'CODE_INVALID') :
+        nextEntityCode(db, 'suppliers', companyId, 'SUPP');
+      uniqueContactCode(db, 'suppliers', companyId, code);
+      db.prepare(`INSERT INTO suppliers (id, company_id, code, name, contact_person, email, phone, address, city, country, tax_id, default_currency, payment_terms, active, lead_time_days, rating, opening_balance, current_balance, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, datetime('now'))`)
+        .run(id, companyId, code, form.name, form.contact_person, form.email, form.phone, form.address, form.city, form.country, form.tax_id, form.default_currency, form.payment_terms, form.active, form.lead_time_days, form.rating);
+      logAudit(companyId, user.id, user.full_name, 'SUPPLIERS', 'CREATE', id,
+        `Created supplier ${code} - ${form.name}`);
+      return db.prepare('SELECT * FROM suppliers WHERE id = ? AND company_id = ?').get(id, companyId);
+    });
+    return res.json(create.immediate());
+  } catch (err) { return sendWriteError(res, err); }
 });
 
-router.get('/suppliers/:id/statement', requirePermission('contacts:read'), (req, res) => {
+router.put('/suppliers/:id', requirePermission('suppliers:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const db = getDb();
+  try {
+    const update = db.transaction(() => {
+      const previous = db.prepare('SELECT * FROM suppliers WHERE id = ? AND company_id = ?')
+        .get(req.params.id, companyId);
+      if (!previous) throw new ValidationError('NOT_FOUND', 404);
+      const body = req.body || {};
+      const company = db.prepare('SELECT currency_code, currency_decimals FROM companies WHERE id = ?').get(companyId);
+      const form = contactFields(body, previous, 'supplier', company.currency_code, company.currency_decimals);
+      const code = body.code === undefined ? previous.code : entityCode(body.code, 'CODE_INVALID');
+      uniqueContactCode(db, 'suppliers', companyId, code, previous.id);
+      db.prepare(`UPDATE suppliers SET code = ?, name = ?, contact_person = ?, email = ?, phone = ?, address = ?,
+          city = ?, country = ?, tax_id = ?, default_currency = ?, payment_terms = ?, active = ?, lead_time_days = ?, rating = ?
+        WHERE id = ? AND company_id = ?`)
+        .run(code, form.name, form.contact_person, form.email, form.phone, form.address, form.city, form.country, form.tax_id, form.default_currency, form.payment_terms, form.active, form.lead_time_days, form.rating, previous.id, companyId);
+      logAudit(companyId, user.id, user.full_name, 'SUPPLIERS', 'UPDATE', previous.id,
+        `Updated supplier ${code} - ${form.name}`);
+      return db.prepare('SELECT * FROM suppliers WHERE id = ? AND company_id = ?').get(previous.id, companyId);
+    });
+    return res.json({ success: true, supplier: update.immediate() });
+  } catch (err) { return sendWriteError(res, err); }
+});
+
+router.get('/suppliers/:id/statement', requirePermission('suppliers:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -605,87 +729,135 @@ router.get('/suppliers/:id/statement', requirePermission('contacts:read'), (req,
 // --------------------------------------------------------------------------
 // 6. PRODUCTS & INVENTORY
 // --------------------------------------------------------------------------
+function productFields(db, companyId, body, previous) {
+  const read = (key) => body[key] === undefined ? previous?.[key] : body[key];
+  const sku = entityCode(read('sku'), 'SKU_REQUIRED', 50);
+  const name = requiredText(read('name'), 'PRODUCT_NAME_REQUIRED');
+  const decimals = db.prepare('SELECT currency_decimals FROM companies WHERE id = ?')
+    .get(companyId)?.currency_decimals ?? 2;
+  const price = (key) => {
+    const amount = nonnegative(read(key), 'PRICE_INVALID');
+    if (!previous || amount !== previous[key]) {
+      nonnegative(amount, 'CURRENCY_PRECISION_INVALID', { decimals });
+    }
+    return amount;
+  };
+  const type = read('type') || 'GOODS';
+  if (!['GOODS', 'SERVICE'].includes(type)) throw new ValidationError('PRODUCT_TYPE_INVALID');
+  const stock = nonnegative(read('current_stock'), 'STOCK_INVALID', { decimals: 3, maximum: 1e9 });
+  if (previous ? (body.current_stock !== undefined && stock !== previous.current_stock) : stock !== 0) {
+    throw new ValidationError('INITIAL_STOCK_REQUIRES_ADJUSTMENT', 409);
+  }
+  if (type === 'SERVICE' && stock !== 0) throw new ValidationError('STOCK_INVALID');
+  if (previous && previous.type !== type && db.prepare('SELECT 1 FROM inventory_movements WHERE product_id = ? LIMIT 1').get(previous.id)) {
+    throw new ValidationError('PRODUCT_TYPE_LOCKED', 409);
+  }
+  const taxRateId = body.tax_rate_id === undefined ? (previous?.tax_rate_id ?? null) : (body.tax_rate_id || null);
+  if (taxRateId && !db.prepare('SELECT 1 FROM tax_rates WHERE id = ? AND company_id = ? AND active = 1').get(taxRateId, companyId)) {
+    throw new ValidationError('INVALID_REFERENCE');
+  }
+  const accounts = {};
+  for (const [field, code, typeRequired] of [
+    ['sales_account_id', '4010', 'REVENUE'], ['cogs_account_id', '5010', 'COGS'],
+    ['inventory_account_id', '1200', 'ASSET']
+  ]) {
+    const explicit = body[field];
+    const candidate = explicit !== undefined ? explicit : previous?.[field];
+    let account = candidate && db.prepare('SELECT id, type, active FROM accounts WHERE id = ? AND company_id = ?')
+      .get(candidate, companyId);
+    if (explicit !== undefined && !account) throw new ValidationError('INVALID_REFERENCE');
+    if (!account) account = db.prepare('SELECT id, type, active FROM accounts WHERE company_id = ? AND code = ?').get(companyId, code);
+    if (!account || !account.active || account.type !== typeRequired) throw new ValidationError('CHART_INCOMPLETE', 409);
+    accounts[field] = account.id;
+  }
+  return {
+    sku, name, type,
+    barcode: optionalText(read('barcode'), 80) || `BAR-${sku}`,
+    description: optionalText(read('description'), 500) || name,
+    category: optionalText(read('category'), 100) || 'General',
+    unit: requiredText(read('unit') || 'pcs', 'UNIT_INVALID', 30),
+    cost_price: price('cost_price'),
+    selling_price: price('selling_price'),
+    min_stock_level: nonnegative(read('min_stock_level'), 'STOCK_INVALID', { decimals: 3, maximum: 1e9 }),
+    current_stock: stock, tax_rate_id: taxRateId,
+    warehouse_location: optionalText(read('warehouse_location'), 100) || 'Main Store',
+    active: activeFlag(body.active, previous?.active ?? 1),
+    ...accounts
+  };
+}
 router.get('/products', requirePermission('inventory:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
-  const db = getDb();
-  const search = req.query.search ? `%${req.query.search}%` : null;
-  let sql = 'SELECT * FROM products WHERE company_id = ?';
-  const params = [companyId];
-  if (search) {
-    sql += ' AND (name LIKE ? OR sku LIKE ? OR category LIKE ?)';
-    params.push(search, search, search);
-  }
-  sql += ' ORDER BY category ASC, name ASC';
-  res.json(db.prepare(sql).all(...params));
+  try {
+    const search = searchPattern(req.query.search);
+    let sql = 'SELECT * FROM products WHERE company_id = ?';
+    const params = [companyId];
+    if (search) {
+      sql += " AND (name LIKE ? ESCAPE '!' OR sku LIKE ? ESCAPE '!' OR category LIKE ? ESCAPE '!')";
+      params.push(search, search, search);
+    }
+    const rows = getDb().prepare(sql + ' ORDER BY category ASC, name ASC').all(...params);
+    if (!req.auth.permissions.has('inventory:valuation:read')) {
+      return res.json(rows.map(({ cost_price, sales_account_id, cogs_account_id,
+        inventory_account_id, ...product }) => product));
+    }
+    return res.json(rows);
+  } catch (err) { return sendWriteError(res, err); }
 });
 
 router.post('/products', requirePermission('inventory:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
-  const {
-    sku, barcode, name, description, category = 'General', type = 'GOODS',
-    unit = 'pcs', cost_price = 0, selling_price = 0, tax_rate_id,
-    min_stock_level = 0, current_stock = 0, warehouse_location = 'Main Store'
-  } = req.body;
-
-  if (!sku || !name) return res.status(400).json({ error: 'SKU and Product Name are required' });
-
   const db = getDb();
-  const id = generateId('prod');
-
   try {
-    db.prepare(`
-      INSERT INTO products (
-        id, company_id, sku, barcode, name, description, category, type, unit,
-        cost_price, selling_price, tax_rate_id, min_stock_level, current_stock,
-        warehouse_location, sales_account_id, cogs_account_id, inventory_account_id, active, created_at
-      ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
-        ?, 'acc-4010', 'acc-5010', 'acc-1200', 1, datetime('now')
-      )
-    `).run(
-      id, companyId, sku, barcode || 'BAR-' + sku, name, description || name, category, type, unit,
-      Number(cost_price) || 0, Number(selling_price) || 0, tax_rate_id || 'tax-vat-18',
-      Number(min_stock_level) || 0, Number(current_stock) || 0, warehouse_location
-    );
-
-    logAudit(companyId, user.id, user.full_name, 'PRODUCTS', 'CREATE', id, `Created product ${sku} - ${name}`);
-    res.json({ id, sku, name });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const create = db.transaction(() => {
+      const form = productFields(db, companyId, req.body || {}, null);
+      if (db.prepare('SELECT 1 FROM products WHERE company_id = ? AND sku = ? COLLATE NOCASE')
+        .get(companyId, form.sku)) throw new ValidationError('DUPLICATE_RECORD', 409);
+      const id = generateId('prod');
+      db.prepare(`INSERT INTO products
+        (id, company_id, sku, barcode, name, description, category, type, unit,
+         cost_price, selling_price, tax_rate_id, min_stock_level, current_stock, warehouse_location,
+         sales_account_id, cogs_account_id, inventory_account_id, active, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, datetime('now'))`)
+        .run(id, companyId, form.sku, form.barcode, form.name, form.description,
+          form.category, form.type, form.unit, form.cost_price, form.selling_price,
+          form.tax_rate_id, form.min_stock_level, form.warehouse_location,
+          form.sales_account_id, form.cogs_account_id, form.inventory_account_id, form.active);
+      logAudit(companyId, user.id, user.full_name, 'PRODUCTS', 'CREATE', id,
+        `Created product ${form.sku} - ${form.name}`);
+      return db.prepare('SELECT * FROM products WHERE id = ? AND company_id = ?').get(id, companyId);
+    });
+    return res.json(create.immediate());
+  } catch (err) { return sendWriteError(res, err); }
 });
 
 router.put('/products/:id', requirePermission('inventory:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
-  const {
-    sku, barcode, name, description, category, type, unit,
-    cost_price, selling_price, tax_rate_id, min_stock_level,
-    warehouse_location, active
-  } = req.body;
-
   const db = getDb();
   try {
-    db.prepare(`
-      UPDATE products
-      SET sku = ?, barcode = ?, name = ?, description = ?, category = ?, type = ?, unit = ?,
-          cost_price = ?, selling_price = ?, tax_rate_id = ?, min_stock_level = ?,
-          warehouse_location = ?, active = ?
-      WHERE id = ? AND company_id = ?
-    `).run(
-      sku, barcode, name, description, category, type, unit,
-      cost_price, selling_price, tax_rate_id, min_stock_level,
-      warehouse_location, active ? 1 : 0, req.params.id, companyId
-    );
-
-    logAudit(companyId, user.id, user.full_name, 'PRODUCTS', 'UPDATE', req.params.id, `Updated product ${name}`);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const update = db.transaction(() => {
+      const previous = db.prepare('SELECT * FROM products WHERE id = ? AND company_id = ?')
+        .get(req.params.id, companyId);
+      if (!previous) throw new ValidationError('NOT_FOUND', 404);
+      const form = productFields(db, companyId, req.body || {}, previous);
+      if (db.prepare('SELECT 1 FROM products WHERE company_id = ? AND sku = ? COLLATE NOCASE AND id != ?')
+        .get(companyId, form.sku, previous.id)) throw new ValidationError('DUPLICATE_RECORD', 409);
+      db.prepare(`UPDATE products SET sku = ?, barcode = ?, name = ?, description = ?, category = ?,
+        type = ?, unit = ?, cost_price = ?, selling_price = ?, tax_rate_id = ?, min_stock_level = ?,
+        warehouse_location = ?, sales_account_id = ?, cogs_account_id = ?, inventory_account_id = ?, active = ?
+        WHERE id = ? AND company_id = ?`)
+        .run(form.sku, form.barcode, form.name, form.description, form.category, form.type, form.unit,
+          form.cost_price, form.selling_price, form.tax_rate_id, form.min_stock_level,
+          form.warehouse_location, form.sales_account_id, form.cogs_account_id,
+          form.inventory_account_id, form.active, previous.id, companyId);
+      logAudit(companyId, user.id, user.full_name, 'PRODUCTS', 'UPDATE', previous.id,
+        `Updated product ${form.sku} - ${form.name}`);
+      return db.prepare('SELECT * FROM products WHERE id = ? AND company_id = ?').get(previous.id, companyId);
+    });
+    return res.json({ success: true, product: update.immediate() });
+  } catch (err) { return sendWriteError(res, err); }
 });
 
-router.get('/inventory/movements', requirePermission('inventory:read'), (req, res) => {
+router.get('/inventory/movements', requirePermission('inventory:valuation:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const productId = req.query.productId;
@@ -704,7 +876,7 @@ router.get('/inventory/movements', requirePermission('inventory:read'), (req, re
   res.json(db.prepare(sql).all(...params));
 });
 
-router.get('/inventory/valuation', requirePermission('inventory:read'), (req, res) => {
+router.get('/inventory/valuation', requirePermission('inventory:valuation:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   try {
     res.json(reports.getInventoryValuation(companyId));
@@ -713,7 +885,7 @@ router.get('/inventory/valuation', requirePermission('inventory:read'), (req, re
   }
 });
 
-router.get('/inventory/adjustments', requirePermission('inventory:read'), (req, res) => {
+router.get('/inventory/adjustments', requirePermission('inventory:valuation:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const adjs = db.prepare(`SELECT * FROM stock_adjustments WHERE company_id = ? ORDER BY date DESC, created_at DESC`).all(companyId);
@@ -730,7 +902,7 @@ router.post('/inventory/adjustments', requirePermission('inventory:adjust'), (re
   }
 });
 
-router.get('/inventory/counts', requirePermission('inventory:read'), (req, res) => {
+router.get('/inventory/counts', requirePermission('inventory:valuation:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const counts = db.prepare(`SELECT * FROM physical_inventory_counts WHERE company_id = ? ORDER BY date DESC, created_at DESC`).all(companyId);
@@ -778,11 +950,13 @@ router.post('/sales/quotes', requirePermission('sales:write'), (req, res) => {
   let taxTotal = 0;
   let discountTotal = 0;
 
+  try {
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const price = Number(l.unit_price) || 0;
     const disc = Number(l.discount_percent) || 0;
     const taxRate = Number(l.tax_rate) || 0;
+    assertLineMoney(db, companyId, qty, price, disc, taxRate);
     const lineSub = roundTo(qty * price * (1 - disc / 100), 2);
     const lineTax = roundTo(lineSub * (taxRate / 100), 2);
     const lineTot = roundTo(lineSub + lineTax, 2);
@@ -806,7 +980,6 @@ router.post('/sales/quotes', requirePermission('sales:write'), (req, res) => {
 
   const total = roundTo(subtotal + taxTotal, 2);
 
-  try {
     db.transaction(() => {
       db.prepare(`
         INSERT INTO sales_quotes (id, company_id, quote_number, date, valid_until, customer_id, subtotal, tax_total, discount_total, total, status, notes, created_by, created_at)
@@ -827,6 +1000,7 @@ router.post('/sales/quotes', requirePermission('sales:write'), (req, res) => {
 
     res.json({ id: quoteId, quoteNumber, total });
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -903,7 +1077,9 @@ router.get('/sales/invoices/:id', requirePermission('sales:read'), (req, res) =>
 
   const payments = db.prepare(`SELECT * FROM payments WHERE sales_invoice_id = ? ORDER BY date DESC`).all(invoice.id);
 
-  res.json({ ...invoice, lines, payments });
+  const visibleLines = req.auth.permissions.has('inventory:valuation:read') ? lines :
+    lines.map(({ unit_cost, ...line }) => line);
+  res.json({ ...invoice, lines: visibleLines, payments });
 });
 
 router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
@@ -921,11 +1097,13 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
   let taxTotal = 0;
   let discountTotal = 0;
 
+  try {
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const price = Number(l.unit_price) || 0;
     const disc = Number(l.discount_percent) || 0;
     const taxRate = Number(l.tax_rate) || 0;
+    assertLineMoney(db, companyId, qty, price, disc, taxRate);
     const lineSub = roundTo(qty * price * (1 - disc / 100), 2);
     const lineTax = roundTo(lineSub * (taxRate / 100), 2);
     const lineTot = roundTo(lineSub + lineTax, 2);
@@ -956,7 +1134,6 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
 
   const total = roundTo(subtotal + taxTotal, 2);
 
-  try {
     db.transaction(() => {
       db.prepare(`
         INSERT INTO sales_invoices (id, company_id, invoice_number, date, due_date, customer_id, subtotal, tax_total, discount_total, total, amount_paid, balance_due, status, notes, created_by, created_at)
@@ -973,14 +1150,12 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
       }
 
       logAudit(companyId, user.id, user.full_name, 'SALES', 'CREATE', invId, `Created sales invoice draft ${invNumber} ($${total})`);
+      if (autoPost) postSalesInvoice(companyId, invId, user);
     })();
-
-    if (autoPost) {
-      postSalesInvoice(companyId, invId, user);
-    }
 
     res.json({ id: invId, invoiceNumber: invNumber, total });
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1048,10 +1223,12 @@ router.post('/purchases/orders', requirePermission('purchases:write'), (req, res
   let subtotal = 0;
   let taxTotal = 0;
 
+  try {
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const cost = Number(l.unit_cost) || 0;
     const taxRate = Number(l.tax_rate) || 0;
+    assertLineMoney(db, companyId, qty, cost, 0, taxRate);
     const lineSub = roundTo(qty * cost, 2);
     const lineTax = roundTo(lineSub * (taxRate / 100), 2);
     const lineTot = roundTo(lineSub + lineTax, 2);
@@ -1073,7 +1250,6 @@ router.post('/purchases/orders', requirePermission('purchases:write'), (req, res
 
   const total = roundTo(subtotal + taxTotal, 2);
 
-  try {
     db.transaction(() => {
       db.prepare(`
         INSERT INTO purchase_orders (id, company_id, po_number, date, expected_date, supplier_id, subtotal, tax_total, total, status, notes, created_by, created_at)
@@ -1094,6 +1270,7 @@ router.post('/purchases/orders', requirePermission('purchases:write'), (req, res
 
     res.json({ id: poId, poNumber, total });
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1153,10 +1330,12 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
   let subtotal = 0;
   let taxTotal = 0;
 
+  try {
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const cost = Number(l.unit_cost) || 0;
     const taxRate = Number(l.tax_rate) || 0;
+    assertLineMoney(db, companyId, qty, cost, 0, taxRate);
     const lineSub = roundTo(qty * cost, 2);
     const lineTax = roundTo(lineSub * (taxRate / 100), 2);
     const lineTot = roundTo(lineSub + lineTax, 2);
@@ -1178,7 +1357,6 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
 
   const total = roundTo(subtotal + taxTotal, 2);
 
-  try {
     db.transaction(() => {
       db.prepare(`
         INSERT INTO purchase_invoices (id, company_id, bill_number, vendor_invoice_number, date, due_date, supplier_id, subtotal, tax_total, total, amount_paid, balance_due, status, notes, created_by, created_at)
@@ -1195,14 +1373,12 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
       }
 
       logAudit(companyId, user.id, user.full_name, 'PURCHASES', 'CREATE', billId, `Created purchase bill draft ${billNumber} ($${total})`);
+      if (autoPost) postPurchaseInvoice(companyId, billId, user);
     })();
-
-    if (autoPost) {
-      postPurchaseInvoice(companyId, billId, user);
-    }
 
     res.json({ id: billId, billNumber, total });
   } catch (err) {
+    if (err instanceof ValidationError) return sendWriteError(res, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -1258,31 +1434,36 @@ router.get('/payments/bank-accounts', requirePermission('banking:read'), (req, r
 
 router.post('/payments/bank-accounts', requirePermission('banking:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
-  const { bank_name, account_number, account_type = 'BANK', currency = 'USD', opening_balance = 0, gl_code } = req.body;
+  const { bank_name, account_number, account_type = 'BANK', currency, opening_balance = 0, gl_code } = req.body || {};
   if (!bank_name || !account_number) {
-    return res.status(400).json({ error: 'Bank Name and Account Number are required' });
+    return res.status(400).json({ code: 'BANK_FIELDS_REQUIRED' });
   }
-
   const db = getDb();
-  const id = generateId('bank');
-
   try {
-    // Find or create GL account
-    let glAccount = db.prepare('SELECT id FROM accounts WHERE company_id = ? AND code = ?').get(companyId, gl_code || '1020');
-    if (!glAccount) {
-      glAccount = db.prepare('SELECT id FROM accounts WHERE company_id = ? AND subtype = ?').get(companyId, account_type);
+    const company = db.prepare('SELECT currency_code FROM companies WHERE id = ?').get(companyId);
+    if (!['BANK', 'CASH', 'MOBILE_MONEY'].includes(account_type)) throw new ValidationError('BANK_TYPE_INVALID');
+    // There is no exchange-rate ledger in this release. A USD bank in an XAF
+    // company would silently book USD as XAF; refuse it rather than guessing.
+    const baseCurrency = company.currency_code;
+    if (currency && currency !== baseCurrency) throw new ValidationError('FOREIGN_CURRENCY_UNSUPPORTED', 409);
+    // A nonzero balance with no matching journal creates an unbalanced ledger.
+    if (Number(opening_balance) !== 0 || !Number.isFinite(Number(opening_balance))) {
+      throw new ValidationError('OPENING_BALANCE_REQUIRES_JOURNAL', 409);
     }
-
-    db.prepare(`
-      INSERT INTO bank_accounts (id, company_id, account_id, bank_name, account_number, account_type, currency, current_balance, active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
-    `).run(id, companyId, glAccount.id, bank_name, account_number, account_type, currency, Number(opening_balance) || 0);
-
-    logAudit(companyId, user.id, user.full_name, 'BANKING', 'CREATE', id, `Added ${account_type} account ${bank_name}`);
-    res.json({ id, bank_name, account_number });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const result = db.transaction(() => {
+      const glAccount = db.prepare('SELECT id FROM accounts WHERE company_id = ? AND code = ?')
+        .get(companyId, gl_code || ({ CASH: '1010', BANK: '1020', MOBILE_MONEY: '1030' })[account_type]);
+      if (!glAccount) throw new ValidationError('ACCOUNT_NOT_FOUND');
+      const id = generateId('bank');
+      db.prepare(`INSERT INTO bank_accounts
+        (id, company_id, account_id, bank_name, account_number, account_type, currency, current_balance, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)`)
+        .run(id, companyId, glAccount.id, bank_name, account_number, account_type, baseCurrency);
+      logAudit(companyId, user.id, user.full_name, 'BANKING', 'CREATE', id, `Added ${account_type} account ${bank_name}`);
+      return { id, bank_name, account_number, currency: baseCurrency };
+    })();
+    res.json(result);
+  } catch (err) { sendWriteError(res, err); }
 });
 
 router.get('/payments', requirePermission('banking:read'), (req, res) => {
@@ -1383,9 +1564,49 @@ router.post('/journal-entries/:id/reverse', requirePermission('journal:reverse')
 });
 
 // --------------------------------------------------------------------------
-// 11. FINANCIAL REPORTS
+// 11. APP-SPECIFIC OVERVIEWS AND FINANCIAL REPORTS
 // --------------------------------------------------------------------------
-router.get('/reports/dashboard', requirePermission('dashboard:read'), (req, res) => {
+// Seller overview contains no costs, journals, supplier records or profit.
+router.get('/seller/overview', requirePermission('sales:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const db = getDb();
+  const today = new Date().toISOString().slice(0, 10);
+  const sales = db.prepare(`SELECT COUNT(*) AS invoices, COALESCE(SUM(total), 0) AS sales_total
+    FROM sales_invoices WHERE company_id = ? AND date = ? AND status IN ('POSTED', 'PARTIALLY_PAID', 'PAID')`)
+    .get(companyId, today);
+  const customers = db.prepare('SELECT COUNT(*) AS count FROM customers WHERE company_id = ? AND active = 1').get(companyId);
+  const lowStock = db.prepare(`SELECT COUNT(*) AS count FROM products WHERE company_id = ?
+    AND active = 1 AND type = 'GOODS' AND current_stock <= min_stock_level`).get(companyId);
+  res.json({ date: today, currency_code: db.prepare('SELECT currency_code FROM companies WHERE id = ?').get(companyId).currency_code,
+    invoices: sales.invoices, sales_total: sales.sales_total,
+    customers: customers.count, low_stock: lowStock.count });
+});
+
+// Health is company-independent and discloses no business amounts or identities.
+router.get('/network/health', requirePermission('network:read'), (req, res) => {
+  const db = getDb();
+  res.json({ status: 'healthy', database: db.pragma('quick_check', { simple: true }),
+    foreign_keys: db.pragma('foreign_keys', { simple: true }) === 1,
+    version: require('../../package.json').version, timestamp: new Date().toISOString() });
+});
+
+// Maintenance can create an integrity-checked SQLite snapshot on the host.
+// The response contains only metadata; only an administrator can download a
+// company's business export or restore it with password reauthentication.
+router.post('/network/snapshot', requirePermission('network:manage'), async (req, res) => {
+  const db = getDb();
+  try {
+    const target = await verifiedCopy(db, DB_PATH, path.join(path.dirname(DB_PATH), 'backups'), 'jenesis-snapshot');
+    logAudit(req.auth.companyId, req.auth.user.id, req.auth.user.full_name, 'NETWORK', 'BACKUP',
+      req.auth.companyId, 'Verified SQLite snapshot created on the host');
+    res.json({ success: true, name: path.basename(target), bytes: require('node:fs').statSync(target).size });
+  } catch (err) {
+    console.error('Snapshot failed:', err.code || err.name);
+    res.status(500).json({ code: 'SAFETY_COPY_FAILED' });
+  }
+});
+
+router.get('/reports/dashboard', requirePermission('reports:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -1475,7 +1696,7 @@ router.get('/reports/tax-report', requirePermission('reports:read'), (req, res) 
 // --------------------------------------------------------------------------
 // 12. TAX RATES
 // --------------------------------------------------------------------------
-router.get('/taxes', requirePermission('accounting:read'), (req, res) => {
+router.get('/taxes', requirePermission('taxes:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   res.json(db.prepare('SELECT * FROM tax_rates WHERE company_id = ? ORDER BY rate DESC').all(companyId));
@@ -1526,10 +1747,10 @@ router.get('/audit-trail', requirePermission('audit:read'), (req, res) => {
 router.get('/backup/export', requirePermission('backup:export'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
-    const backup = buildBackup(getDb(), companyId, { genesisVersion: APP_VERSION });
+    const backup = buildBackup(getDb(), companyId, { jenesisVersion: APP_VERSION });
     logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'BACKUP', companyId, `Exported company backup (${backup.rowCounts.journal_entries} journal entries)`);
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="genesis-backup-${Date.now()}.json"`);
+    res.setHeader('Content-Disposition', `attachment; filename="jenesis-backup-${Date.now()}.json"`);
     res.send(JSON.stringify(backup, null, 2));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1538,7 +1759,7 @@ router.get('/backup/export', requirePermission('backup:export'), (req, res) => {
 
 // Restore: step-up authentication (current password) and typed confirmation are required.
 // Body: { backup: <export document>, password: "<current password>", confirm: "RESTORE" }
-router.post('/backup/import', requirePermission('backup:restore'), restoreLimiter.middleware, (req, res) => {
+router.post('/backup/import', requirePermission('backup:restore'), restoreLimiter.middleware, async (req, res) => {
   const { companyId, user } = getSessionContext(req);
   const { backup, password, confirm } = req.body || {};
   const db = getDb();
@@ -1551,14 +1772,14 @@ router.post('/backup/import', requirePermission('backup:restore'), restoreLimite
     logAudit(companyId, user.id, user.full_name, 'AUTH', 'RESTORE_DENIED', companyId, 'Restore refused: password re-entry failed');
     return res.status(403).json({ error: 'Your password is required to restore a backup.', code: 'REAUTH_FAILED' });
   }
-  const check = validateBackup(backup, companyId);
+  const check = validateBackup(backup, companyId, db);
   if (!check.ok) {
     return res.status(400).json({ error: check.error, code: check.code });
   }
 
   let safetyCopy;
   try {
-    safetyCopy = verifiedCopy(db, DB_PATH, path.join(path.dirname(DB_PATH), 'backups'), 'pre-restore');
+    safetyCopy = await verifiedCopy(db, DB_PATH, path.join(path.dirname(DB_PATH), 'backups'), 'pre-restore');
   } catch (err) {
     return res.status(500).json({ error: err.message, code: 'SAFETY_COPY_FAILED' });
   }

@@ -1,9 +1,9 @@
-# Builds the GENESIS Windows installer from source on a Windows 10/11 x64 machine.
+# Builds the JENESIS Windows installer from source on a Windows 10/11 x64 machine.
 # Requires Node.js 22 LTS installed on the BUILD machine only (end users never need it).
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\build-windows.ps1
 #
-# Output: release\GENESIS-Setup-<version>.exe
+# Output: release\JENESIS-Setup-<version>.exe
 $ErrorActionPreference = 'Stop'
 Set-Location (Join-Path $PSScriptRoot '..')
 
@@ -20,7 +20,7 @@ Run 'npm run test:all'
 Run 'npm run desktop:dist'
 Run 'node scripts\verify-package.cjs release\win-unpacked'
 
-$installer = Get-ChildItem release -Filter 'GENESIS-Setup-*.exe' | Select-Object -First 1
+$installer = Get-ChildItem release -Filter 'JENESIS-Setup-*.exe' | Select-Object -First 1
 if (-not $installer) { throw 'Installer was not produced.' }
 Write-Host "Installer ready: $($installer.FullName)" -ForegroundColor Green
 Write-Host 'Next: powershell -ExecutionPolicy Bypass -File scripts\smoke-test-installed.ps1 -InstallerPath <installer>'

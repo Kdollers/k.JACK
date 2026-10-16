@@ -7,8 +7,8 @@ const messages = {
     undo: 'Undo', redo: 'Redo', cut: 'Cut', copy: 'Copy', paste: 'Paste', selectAll: 'Select all',
     reload: 'Reload', fullscreen: 'Toggle full screen', devTools: 'Developer tools',
     minimize: 'Minimize', close: 'Close',
-    backendStopped: 'The GENESIS accounting service stopped unexpectedly. Close and restart GENESIS.',
-    startupFailed: 'GENESIS could not start its local accounting service. Close the application and check the backup and log before trying again.',
+    backendStopped: 'The JENESIS accounting service stopped unexpectedly. Close and restart JENESIS.',
+    startupFailed: 'JENESIS could not start its local accounting service. Close the application and check the backup and log before trying again.',
     logFile: 'Diagnostic log:'
   },
   fr: {
@@ -16,8 +16,8 @@ const messages = {
     undo: 'Annuler', redo: 'Rétablir', cut: 'Couper', copy: 'Copier', paste: 'Coller', selectAll: 'Tout sélectionner',
     reload: 'Recharger', fullscreen: 'Basculer en plein écran', devTools: 'Outils de développement',
     minimize: 'Réduire', close: 'Fermer',
-    backendStopped: 'Le service comptable GENESIS s’est arrêté de façon inattendue. Fermez et redémarrez GENESIS.',
-    startupFailed: 'GENESIS n’a pas pu démarrer son service comptable local. Fermez l’application, vérifiez la sauvegarde et le journal avant de réessayer.',
+    backendStopped: 'Le service comptable JENESIS s’est arrêté de façon inattendue. Fermez et redémarrez JENESIS.',
+    startupFailed: 'JENESIS n’a pas pu démarrer son service comptable local. Fermez l’application, vérifiez la sauvegarde et le journal avant de réessayer.',
     logFile: 'Journal de diagnostic :'
   },
   rw: {
@@ -25,8 +25,8 @@ const messages = {
     undo: 'Subiza inyuma', redo: 'Subiramo', cut: 'Kata', copy: 'Koporora', paste: 'Omekaho', selectAll: 'Hitamo byose',
     reload: 'Ongera ufungure', fullscreen: 'Hindura uko ecran yerekana', devTools: 'Ibikoresho by’abakora porogaramu',
     minimize: 'Gabanya idirishya', close: 'Funga',
-    backendStopped: 'Serivisi y’ibaruramari ya GENESIS yahagaze bitunguranye. Funga GENESIS wongere uyitangire.',
-    startupFailed: 'GENESIS ntiyashoboye gutangiza serivisi yayo y’ibaruramari. Funga porogaramu, usuzume kopi y’ububiko bw’amakuru n’amateka y’ikibazo mbere yo kongera kugerageza.',
+    backendStopped: 'Serivisi y’ibaruramari ya JENESIS yahagaze bitunguranye. Funga JENESIS wongere uyitangire.',
+    startupFailed: 'JENESIS ntiyashoboye gutangiza serivisi yayo y’ibaruramari. Funga porogaramu, usuzume kopi y’ububiko bw’amakuru n’amateka y’ikibazo mbere yo kongera kugerageza.',
     logFile: 'Dosiye y’amateka y’ikibazo:'
   }
 };

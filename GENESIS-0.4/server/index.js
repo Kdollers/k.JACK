@@ -18,7 +18,7 @@ const { errorPayload } = require('./error-codes');
 const { createLimiter, clientIp, MINUTE } = require('./rateLimit');
 const apiLimiter = createLimiter({ name: 'api', windowMs: MINUTE, max: 1200, keyFn: (req) => clientIp(req) });
 
-const APP_NAME = 'GENESIS Business Management & Accounting Software';
+const APP_NAME = 'JENESIS Business Management & Accounting Software';
 const APP_VERSION = require('../package.json').version;
 
 /**
@@ -50,7 +50,7 @@ function createApp(options = {}) {
     res.json({
       status: 'healthy',
       application: APP_NAME,
-      appId: 'genesis-accounting',
+      appId: 'jenesis-accounting',
       version: APP_VERSION,
       timestamp: new Date().toISOString()
     });
@@ -76,9 +76,9 @@ function createApp(options = {}) {
     res.sendFile(path.join(distPath, 'index.html'), (err) => {
       if (err) {
         res.status(503).type('html').send(
-          '<!DOCTYPE html><html><head><meta charset="utf-8"><title>GENESIS</title></head>' +
+          '<!DOCTYPE html><html><head><meta charset="utf-8"><title>JENESIS</title></head>' +
           '<body style="font-family:sans-serif;padding:40px">' +
-          '<h2>GENESIS interface not built</h2>' +
+          '<h2>JENESIS interface not built</h2>' +
           '<p>Run <code>npm run build</code> to create the frontend bundle.</p></body></html>'
         );
       }
@@ -142,7 +142,7 @@ if (require.main === module) {
   startServer()
     .then(({ host, port, close }) => {
       childLog(`listening on http://${host}:${port}`);
-      console.log(`GENESIS server running at http://${host}:${port}`);
+      console.log(`JENESIS server running at http://${host}:${port}`);
       const shutdown = () => {
         close().then(() => process.exit(0));
       };
@@ -153,7 +153,7 @@ if (require.main === module) {
     })
     .catch((err) => {
       childLog(`startup failed: ${err && err.stack ? err.stack : err}`);
-      console.error('GENESIS server failed to start:', err.message);
+      console.error('JENESIS server failed to start:', err.message);
       process.exit(1);
     });
 }

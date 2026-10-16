@@ -1,31 +1,32 @@
-# GENESIS installed-application smoke test (Windows 10/11).
+# JENESIS installed-application smoke test (Windows 10/11).
 #
-# Installs the NSIS installer silently, launches GENESIS.exe the way a user would,
+# Installs the NSIS installer silently, launches JENESIS.exe the way a user would,
 # and checks the complete lifecycle through the application's own local API:
 #   install -> launch -> backend ready -> no external browser -> first-run setup ->
 #   login -> accounting transaction -> backup export -> graceful close ->
 #   relaunch -> data still present -> silent uninstall -> user data kept.
 #
-# Safety: the script refuses to run when GENESIS user data already exists, so it can never
+# Safety: the script refuses to run when JENESIS user data already exists, so it can never
 # touch a real business database. Run it on a clean test machine or a CI runner.
 #
 # Usage (PowerShell 5.1+ or PowerShell 7):
-#   .\scripts\smoke-test-installed.ps1 -InstallerPath .\release\GENESIS-Setup-0.4.2.exe
+#   .\scripts\smoke-test-installed.ps1 -InstallerPath .\release\JENESIS-Setup-0.1.0.exe
 #
 # Exit code 0 = all checks passed. Any failure stops the run and reports the step.
 
 param(
   [Parameter(Mandatory = $true)] [string] $InstallerPath,
-  [string] $InstallDir = (Join-Path $env:TEMP 'GenesisSmokeTest\GENESIS'),
+  [string] $InstallDir = (Join-Path $env:TEMP 'JenesisSmokeTest\JENESIS'),
   [int] $StartupTimeoutSec = 120,
   [switch] $KeepInstalled
 )
 
 $ErrorActionPreference = 'Stop'
 $script:Results = @()
-$DataDir = Join-Path $env:APPDATA 'GENESIS'
+$DataDir = Join-Path $env:APPDATA 'JENESIS'
+$LegacyDataDir = Join-Path $env:APPDATA 'GENESIS'
 $LogFile = Join-Path $DataDir 'logs\desktop.log'
-$ExePath = Join-Path $InstallDir 'GENESIS.exe'
+$ExePath = Join-Path $InstallDir 'JENESIS.exe'
 
 function Step([string] $Name, [scriptblock] $Body) {
   Write-Host "==> $Name" -ForegroundColor Cyan
@@ -71,7 +72,7 @@ function Wait-ForBackend([int] $AfterLines) {
         if ($url) {
           try {
             $h = Invoke-RestMethod -Uri "$url/api/health" -TimeoutSec 3
-            if ($h.appId -eq 'genesis-accounting') { return $url }
+            if ($h.appId -eq 'jenesis-accounting') { return $url }
           } catch { }
         }
       }
@@ -81,24 +82,29 @@ function Wait-ForBackend([int] $AfterLines) {
   throw "The backend did not become ready within $StartupTimeoutSec seconds. See $LogFile"
 }
 
-function Get-GenesisProcesses {
-  Get-Process -Name 'GENESIS' -ErrorAction SilentlyContinue
+function Get-JenesisProcesses {
+  Get-Process -Name 'JENESIS' -ErrorAction SilentlyContinue
 }
 
-function Close-GenesisGracefully {
-  $windows = Get-GenesisProcesses | Where-Object { $_.MainWindowHandle -ne 0 }
-  Assert ($windows.Count -gt 0) 'No GENESIS window found to close.'
-  foreach ($w in $windows) { [void]$w.CloseMainWindow() }
+function Close-JenesisGracefully {
+  $windows = @(Get-JenesisProcesses | Where-Object { $_.MainWindowHandle -ne 0 })
+  Assert ($windows.Count -gt 0) 'No JENESIS window found to close.'
   $deadline = (Get-Date).AddSeconds(60)
-  while ((Get-Date) -lt $deadline -and (Get-GenesisProcesses)) { Start-Sleep -Milliseconds 300 }
-  $left = Get-GenesisProcesses
+  # Multiple BrowserWindows share one Electron process. Its MainWindowHandle may
+  # advance to the next window only AFTER the previous one is closed.
+  while ((Get-Date) -lt $deadline -and (Get-JenesisProcesses)) {
+    $windows = @(Get-JenesisProcesses | Where-Object { $_.MainWindowHandle -ne 0 })
+    foreach ($w in $windows) { [void]$w.CloseMainWindow() }
+    Start-Sleep -Milliseconds 350
+  }
+  $left = Get-JenesisProcesses
   if ($left) {
     # Diagnostics for the log: which processes remain, when they started, and their command lines.
     $left | ForEach-Object {
       $cim = Get-CimInstance Win32_Process -Filter "ProcessId=$($_.Id)" -ErrorAction SilentlyContinue
       Write-Host "    leftover pid $($_.Id) started $($_.StartTime) window=$($_.MainWindowHandle) cmd=$($cim.CommandLine)"
     }
-    throw "GENESIS processes still running after the window was closed: $($left.Id -join ', ')"
+    throw "JENESIS processes still running after the window was closed: $($left.Id -join ', ')"
   }
 }
 
@@ -111,13 +117,14 @@ function Invoke-Api([string] $Base, [string] $Method, [string] $Route, $Body = $
 }
 
 # ---------------------------------------------------------------------------
-Write-Host 'GENESIS installed-application smoke test' -ForegroundColor Yellow
+Write-Host 'JENESIS installed-application smoke test' -ForegroundColor Yellow
 Write-Host "Installer: $InstallerPath"
 Write-Host "Install folder: $InstallDir"
 
-Step 'Preconditions: no existing GENESIS user data or running instance' {
-  Assert (-not (Test-Path $DataDir)) "GENESIS user data already exists at $DataDir. Run this test on a clean machine or remove that folder yourself after backing it up."
-  Assert (-not (Get-GenesisProcesses)) 'GENESIS is already running.'
+Step 'Preconditions: no existing JENESIS user data or running instance' {
+  Assert (-not (Test-Path $DataDir)) "JENESIS user data already exists at $DataDir. Run only on a clean disposable machine."
+  Assert (-not (Test-Path $LegacyDataDir)) "Legacy user data exists at $LegacyDataDir. Never use this test on a real installation."
+  Assert (-not (Get-JenesisProcesses)) 'JENESIS is already running.'
   Assert (Test-Path $InstallerPath) "Installer not found: $InstallerPath"
 }
 
@@ -125,17 +132,29 @@ Step 'Silent install into a normal application folder' {
   $full = (Resolve-Path $InstallerPath).Path
   $p = Start-Process -FilePath $full -ArgumentList @('/S', "/D=$InstallDir") -PassThru -Wait
   Assert ($p.ExitCode -eq 0) "Installer exited with code $($p.ExitCode)"
-  Assert (Test-Path $ExePath) "GENESIS.exe not found at $ExePath"
+  Assert (Test-Path $ExePath) "JENESIS.exe not found at $ExePath"
 }
 
-Step 'Desktop and Start menu shortcuts were created' {
+Step 'Three independently launchable Start menu and desktop shortcuts use their own icons' {
   $desktop = [Environment]::GetFolderPath('Desktop')
   $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
-  $shortcuts = @(
-    (Get-ChildItem -Path $desktop -Filter 'GENESIS*.lnk' -ErrorAction SilentlyContinue),
-    (Get-ChildItem -Path $startMenu -Recurse -Filter 'GENESIS*.lnk' -ErrorAction SilentlyContinue)
-  ) | ForEach-Object { $_ }
-  Assert ($shortcuts.Count -ge 1) 'No GENESIS shortcut was found on the desktop or in the Start menu.'
+  $wsh = New-Object -ComObject WScript.Shell
+  foreach ($mode in @('Seller', 'Administrator', 'Network and Maintenance')) {
+    $file = "JENESIS $mode.lnk"
+    $startLinks = @(Get-ChildItem -Path $startMenu -Recurse -Filter $file -ErrorAction SilentlyContinue)
+    $desktopLinks = @(Get-ChildItem -Path $desktop -Filter $file -ErrorAction SilentlyContinue)
+    Assert ($startLinks.Count -ge 1) "$file missing from Start menu."
+    Assert ($desktopLinks.Count -ge 1) "$file missing from Desktop."
+    $icon = if ($mode -eq 'Network and Maintenance') { 'network' } else { $mode.ToLowerInvariant() }
+    foreach ($linkFile in @($startLinks[0], $desktopLinks[0])) {
+      $link = $wsh.CreateShortcut($linkFile.FullName)
+      Assert ($link.TargetPath -eq $ExePath) "Incorrect executable for $file: $($link.TargetPath)"
+      if ($mode -ne 'Administrator') {
+        Assert ($link.Arguments -eq "--jenesis-mode=$icon") "Incorrect launch mode for $file: $($link.Arguments)"
+        Assert ($link.IconLocation -like "*j-$icon.ico*") "Incorrect icon for $file: $($link.IconLocation)"
+      }
+    }
+  }
 }
 
 $baseUrl = $null
@@ -156,11 +175,11 @@ Step 'Backend listens on loopback only (not reachable on a LAN address)' {
   }
 }
 
-Step 'No external browser window was opened for GENESIS' {
+Step 'No external browser window was opened for JENESIS' {
   $browsers = Get-CimInstance Win32_Process -Filter "Name='msedge.exe' OR Name='chrome.exe' OR Name='firefox.exe'" -ErrorAction SilentlyContinue
   $port = ([uri]$baseUrl).Port
   $hit = $browsers | Where-Object { $_.CommandLine -and $_.CommandLine -match [regex]::Escape("127.0.0.1:$port") }
-  Assert (-not $hit) 'An external browser was opened on the GENESIS backend address.'
+  Assert (-not $hit) 'An external browser was opened on the JENESIS backend address.'
 }
 
 Step 'Unauthenticated API requests are refused' {
@@ -191,6 +210,26 @@ Step 'Sign in and reach the application (no forced password change)' {
   Assert ($me.user.role -eq 'admin') 'Signed-in user is not the administrator.'
 }
 
+Step 'Seller and Network entry points open separate windows on one backend' {
+  Start-Process -FilePath $ExePath -ArgumentList '--jenesis-mode=seller' | Out-Null
+  Start-Process -FilePath $ExePath -ArgumentList '--jenesis-mode=network' | Out-Null
+  Start-Sleep -Seconds 3
+  # Get-Process exposes only one MainWindowTitle per Electron process, even when
+  # that process owns three separate BrowserWindows. Validate each window in
+  # fresh single-mode launches below; here test the shared backend and sessions.
+  Assert ((Get-JenesisProcesses).Count -gt 0) 'The shared desktop process exited.'
+  $health = Invoke-Api $baseUrl 'GET' '/health'
+  Assert ($health.appId -eq 'jenesis-accounting') 'Second entry point replaced the backend.'
+  $seller = Invoke-Api $baseUrl 'POST' '/auth/login' @{ username = 'smoke.admin'; password = $script:Password; mode = 'seller' }
+  $network = Invoke-Api $baseUrl 'POST' '/auth/login' @{ username = 'smoke.admin'; password = $script:Password; mode = 'network' }
+  Assert ([bool]$seller.token -and [bool]$network.token) 'Second entry-point login failed.'
+  $sellerMe = Invoke-Api $baseUrl 'GET' '/auth/me' $null $seller.token
+  $networkMe = Invoke-Api $baseUrl 'GET' '/auth/me' $null $network.token
+  Assert ($sellerMe.mode -eq 'seller' -and $networkMe.mode -eq 'network') 'Sessions were not mode-bound.'
+  Assert (-not ($sellerMe.permissions -contains 'accounting:read')) 'Seller acquired accounting rights.'
+  Assert (-not ($networkMe.permissions -contains 'sales:read')) 'Network acquired sales rights.'
+}
+
 Step 'Accounting transaction: balanced journal entry is posted' {
   $entry = Invoke-Api $baseUrl 'POST' '/journal-entries' @{
     date = (Get-Date -Format 'yyyy-MM-dd'); reference = 'SMOKE-1'; description = 'Smoke test capital injection'
@@ -208,7 +247,7 @@ Step 'Trial balance is balanced' {
   Assert ([math]::Abs([double]$tb.grandDebit - [double]$tb.grandCredit) -lt 0.005) 'Trial balance totals differ.'
 }
 
-$script:BackupFile = Join-Path $env:TEMP 'genesis-smoke-backup.json'
+$script:BackupFile = Join-Path $env:TEMP 'jenesis-smoke-backup.json'
 Step 'Full backup export is produced and contains the transaction' {
   $headers = @{ Authorization = "Bearer $script:Token" }
   Invoke-WebRequest -Uri "$baseUrl/api/backup/export" -Headers $headers -OutFile $script:BackupFile -UseBasicParsing -TimeoutSec 30
@@ -218,7 +257,7 @@ Step 'Full backup export is produced and contains the transaction' {
 }
 
 Step 'Graceful shutdown: window closes and all processes exit' {
-  Close-GenesisGracefully
+  Close-JenesisGracefully
   $stillAnswering = $true
   try { Invoke-RestMethod -Uri "$baseUrl/api/health" -TimeoutSec 2 | Out-Null } catch { $stillAnswering = $false }
   Assert (-not $stillAnswering) 'The backend still answers after the application closed.'
@@ -254,16 +293,36 @@ Step 'Backup restore protection: a restore first keeps a copy of the database' {
 }
 
 Step 'Close again and confirm clean shutdown' {
-  Close-GenesisGracefully
+  Close-JenesisGracefully
+}
+
+foreach ($mode in @('seller', 'network')) {
+  Step "Independent $mode shortcut launches the correct window with existing data" {
+    $before = (Get-Content $LogFile).Count
+    Start-Process -FilePath $ExePath -ArgumentList "--jenesis-mode=$mode" | Out-Null
+    $modeUrl = Wait-ForBackend -AfterLines $before
+    $deadline = (Get-Date).AddSeconds(35)
+    do {
+      Start-Sleep -Milliseconds 400
+      $titles = @(Get-JenesisProcesses | Where-Object { $_.MainWindowHandle -ne 0 } |
+        ForEach-Object { $_.MainWindowTitle })
+      $expected = if ($mode -eq 'seller') { 'Seller' } else { 'Network & Maintenance' }
+    } until ((@($titles | Where-Object { $_ -like "*$expected*" }).Count -gt 0) -or (Get-Date) -gt $deadline)
+    Assert (@($titles | Where-Object { $_ -like "*$expected*" }).Count -gt 0) "No $expected window: $($titles -join '; ')"
+    $again = Invoke-Api $modeUrl 'POST' '/auth/login' @{ username = 'smoke.admin'; password = $script:Password; mode = $mode }
+    Assert ([bool]$again.token) "Administrator cannot sign in via $mode entry point."
+    Assert (Test-Path (Join-Path $DataDir 'genesis.db')) 'Installed ledger was replaced by a blank database.'
+    Close-JenesisGracefully
+  }
 }
 
 Step 'Silent uninstall removes the program but keeps business data' {
-  $uninstaller = Join-Path $InstallDir 'Uninstall GENESIS.exe'
+  $uninstaller = Join-Path $InstallDir 'Uninstall JENESIS.exe'
   Assert (Test-Path $uninstaller) 'Uninstaller not found.'
   $p = Start-Process -FilePath $uninstaller -ArgumentList '/S' -PassThru -Wait
   Assert ($p.ExitCode -eq 0) "Uninstaller exited with code $($p.ExitCode)"
   Start-Sleep -Seconds 2
-  Assert (-not (Test-Path $ExePath)) 'GENESIS.exe still exists after uninstall.'
+  Assert (-not (Test-Path $ExePath)) 'JENESIS.exe still exists after uninstall.'
   Assert (Test-Path (Join-Path $DataDir 'genesis.db')) 'The business database was removed by uninstall.'
 }
 

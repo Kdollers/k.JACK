@@ -4,6 +4,7 @@ import { useI18n } from '../i18n';
 import { labelFor, moduleLabel, taxLabel } from '../i18n/labels.mjs';
 import { auditDescription } from '../i18n/audit-text.mjs';
 import { apiRequest, downloadAuthenticated } from '../services/api';
+import { CURRENCY_CHOICES, countryChoices } from '../config/companyOptions.mjs';
 import {
   Settings,
   Building,
@@ -37,6 +38,7 @@ export default function SettingsView() {
     phone: '',
     email: '',
     tax_id: '',
+    country_code: '',
     currency_code: 'USD',
     currency_symbol: '$',
     currency_decimals: 2,
@@ -56,8 +58,10 @@ export default function SettingsView() {
     phone: '',
     email: '',
     tax_id: '',
+    country_code: '',
     currency_code: 'USD',
-    currency_symbol: '$'
+    currency_symbol: '$',
+    currency_decimals: 2
   });
 
   // User Modal
@@ -87,6 +91,7 @@ export default function SettingsView() {
         phone: currentCompany.phone || '',
         email: currentCompany.email || '',
         tax_id: currentCompany.tax_id || '',
+        country_code: currentCompany.country_code || '',
         currency_code: currentCompany.currency_code || 'USD',
         currency_symbol: currentCompany.currency_symbol || '$',
         currency_decimals: currentCompany.currency_decimals ?? 2,
@@ -185,7 +190,7 @@ export default function SettingsView() {
 
   const handleDownloadBackup = async () => {
     try {
-      await downloadAuthenticated('/api/backup/export', `genesis-backup-${Date.now()}.json`);
+      await downloadAuthenticated('/api/backup/export', `jenesis-backup-${Date.now()}.json`);
     } catch (err) {
       showToast(err, 'error');
     }
@@ -368,14 +373,24 @@ export default function SettingsView() {
               />
             </div>
 
+            <div>
+              <label className="block text-slate-600 font-semibold mb-1">{t('settings.country')}</label>
+              <select value={companyForm.country_code}
+                onChange={(e) => setCompanyForm({ ...companyForm, country_code: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md bg-white">
+                <option value="">{t('settings.choose_country')}</option>
+                {countryChoices(lang).map((choice) => <option key={choice.code} value={choice.code}>{choice.label}</option>)}
+              </select>
+            </div>
             <div className="grid grid-cols-3 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
               <div>
                 <label className="block text-slate-600 font-semibold mb-1">{t("settings.currency_code")}</label>
                 <input
                   type="text"
                   value={companyForm.currency_code}
-                  onChange={(e) => setCompanyForm({ ...companyForm, currency_code: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                  readOnly
+                  title={t('settings.base_currency_warning')}
+                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md bg-slate-100 text-slate-700 font-mono"
                   placeholder={t("settings.currency_code_examples")}
                 />
               </div>
@@ -396,11 +411,16 @@ export default function SettingsView() {
                   min="0"
                   max="4"
                   value={companyForm.currency_decimals}
-                  onChange={(e) => setCompanyForm({ ...companyForm, currency_decimals: Number(e.target.value) })}
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                  readOnly
+                  title={t('settings.base_currency_warning')}
+                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md bg-slate-100 text-slate-700 font-mono"
                 />
               </div>
             </div>
+
+            <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded border border-amber-200">
+              {t('settings.base_currency_warning')}
+            </p>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -413,7 +433,9 @@ export default function SettingsView() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
                 >
                   <option value="WEIGHTED_AVERAGE">{t('settings.weighted_average')}</option>
-                  <option value="FIFO">{t('settings.fifo')}</option>
+                  <option value="FIFO" disabled={companyForm.inventory_valuation_method !== 'FIFO'}>
+                    {t('settings.fifo_unavailable')}
+                  </option>
                 </select>
               </div>
 
@@ -681,6 +703,16 @@ export default function SettingsView() {
               </div>
 
               <div>
+                <label htmlFor="new-company-country" className="block text-slate-600 font-semibold mb-1">{t('settings.country')} *</label>
+                <select id="new-company-country" required value={newCompanyForm.country_code}
+                  onChange={(e) => setNewCompanyForm({ ...newCompanyForm, country_code: e.target.value })}
+                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md bg-white">
+                  <option value="">{t('settings.choose_country')}</option>
+                  {countryChoices(lang).map((choice) => <option key={choice.code} value={choice.code}>{choice.label}</option>)}
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-slate-600 font-semibold mb-1">{t("common.tax_id")}</label>
                 <input
                   type="text"
@@ -692,13 +724,18 @@ export default function SettingsView() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">{t("settings.currency_code")}</label>
-                  <input
-                    type="text"
-                    value={newCompanyForm.currency_code}
-                    onChange={(e) => setNewCompanyForm({ ...newCompanyForm, currency_code: e.target.value })}
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                  />
+                  <label htmlFor="new-company-currency" className="block text-slate-600 font-semibold mb-1">{t("settings.currency_code")}</label>
+                  <select id="new-company-currency" value={newCompanyForm.currency_code}
+                    onChange={(e) => {
+                      const choice = CURRENCY_CHOICES.find((item) => item.code === e.target.value);
+                      setNewCompanyForm({ ...newCompanyForm, currency_code: choice.code,
+                        currency_symbol: choice.symbol, currency_decimals: choice.decimals });
+                    }}
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md bg-white">
+                    {CURRENCY_CHOICES.map((choice) => (
+                      <option key={choice.code} value={choice.code}>{choice.code}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t("settings.currency_symbol")}</label>
@@ -711,6 +748,9 @@ export default function SettingsView() {
                 </div>
               </div>
 
+              <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded">
+                {t('settings.base_currency_warning')}
+              </p>
               <div className="border-t border-slate-200 pt-3 flex justify-end space-x-2">
                 <button
                   type="button"
@@ -791,6 +831,7 @@ export default function SettingsView() {
                     <option value="sales">{t('settings.role_sales')}</option>
                     <option value="purchases">{t('settings.role_purchases')}</option>
                     <option value="inventory">{t('settings.role_inventory')}</option>
+                    <option value="network">{t('settings.role_network')}</option>
                     <option value="manager">{t('settings.role_manager')}</option>
                   </select>
                 </div>

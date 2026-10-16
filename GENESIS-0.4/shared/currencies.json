@@ -1,0 +1,7 @@
+{
+  "XAF": { "symbol": "FCFA", "decimals": 0 },
+  "RWF": { "symbol": "RWF", "decimals": 0 },
+  "USD": { "symbol": "$", "decimals": 2 },
+  "EUR": { "symbol": "€", "decimals": 2 },
+  "UGX": { "symbol": "UGX", "decimals": 0 }
+}

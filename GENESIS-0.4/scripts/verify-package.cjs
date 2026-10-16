@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * Verifies a packaged GENESIS build before it is released.
+ * Verifies a packaged JENESIS build before it is released.
  *
  * Usage: node scripts/verify-package.cjs <path-to-win-unpacked-folder>
  *
@@ -56,8 +56,12 @@ function run(unpackedDir) {
   const ok = [];
   const need = (cond, msg) => (cond ? ok.push(msg) : problems.push(msg));
 
-  const exe = path.join(unpackedDir, 'GENESIS.exe');
-  need(fs.existsSync(exe), 'GENESIS.exe present');
+  const exe = path.join(unpackedDir, 'JENESIS.exe');
+  need(fs.existsSync(exe), 'JENESIS.exe present');
+  for (const mode of ['seller', 'administrator', 'network']) {
+    const icon = path.join(unpackedDir, 'resources', 'icons', `j-${mode}.ico`);
+    need(fs.existsSync(icon) && fs.statSync(icon).size > 0, `JENESIS ${mode} icon packaged for shortcut`);
+  }
 
   const asar = path.join(unpackedDir, 'resources', 'app.asar');
   need(fs.existsSync(asar), 'resources/app.asar present');
@@ -89,7 +93,10 @@ function run(unpackedDir) {
       'electron/backend-manager.cjs',
       'electron/data-location.cjs',
       'electron/desktop-i18n.cjs',
-      'assets/icon.ico',
+      'electron/entry-points.cjs',
+      'assets/j-seller.ico',
+      'assets/j-administrator.ico',
+      'assets/j-network.ico',
       'server/index.js',
       'server/db.js',
       'server/auth.js',

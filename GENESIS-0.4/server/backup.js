@@ -23,6 +23,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const Database = require('better-sqlite3');
 
 const FORMAT_VERSION = 2;
 
@@ -88,7 +89,7 @@ function selectRows(db, table, companyId) {
 }
 
 /** Builds the backup document for one company. Pure read; does not modify the database. */
-function buildBackup(db, companyId, { genesisVersion, exportedAt = new Date().toISOString() } = {}) {
+function buildBackup(db, companyId, { jenesisVersion, exportedAt = new Date().toISOString() } = {}) {
   const company = db.prepare('SELECT * FROM companies WHERE id = ?').get(companyId);
   if (!company) throw new Error('Company not found');
   const tables = {};
@@ -96,7 +97,7 @@ function buildBackup(db, companyId, { genesisVersion, exportedAt = new Date().to
   const data = { company, tables };
   return {
     formatVersion: FORMAT_VERSION,
-    genesisVersion,
+    jenesisVersion,
     exportedAt,
     companyId,
     rowCounts: Object.fromEntries(TABLES.map((t) => [t.name, tables[t.name].length])),
@@ -109,13 +110,13 @@ function buildBackup(db, companyId, { genesisVersion, exportedAt = new Date().to
  * Validates a backup document. Returns { ok:true } or { ok:false, code, error }.
  * Pure: never touches the database except through the optional `expectedCompanyId`.
  */
-function validateBackup(doc, expectedCompanyId) {
+function validateBackup(doc, expectedCompanyId, db = null) {
   const fail = (code, error) => ({ ok: false, code, error });
-  if (!doc || typeof doc !== 'object') return fail('BACKUP_INVALID', 'The backup file is not a valid GENESIS backup.');
+  if (!doc || typeof doc !== 'object') return fail('BACKUP_INVALID', 'The backup file is not a valid JENESIS backup.');
   if (doc.formatVersion !== FORMAT_VERSION) {
     return fail(
       'BACKUP_FORMAT_UNSUPPORTED',
-      'This backup was made by an earlier version of GENESIS and cannot be restored safely, because it does not contain every table. Export a new backup from the current version.'
+      'This backup was made by an earlier version of JENESIS and cannot be restored safely, because it does not contain every table. Export a new backup from the current version.'
     );
   }
   if (!doc.data || typeof doc.data !== 'object' || !doc.data.tables || typeof doc.data.tables !== 'object' || !doc.data.company) {
@@ -148,6 +149,32 @@ function validateBackup(doc, expectedCompanyId) {
   for (const [entryId, s] of sums) {
     if (Math.abs(s.d - s.c) > BALANCE_TOLERANCE) {
       return fail('BACKUP_UNBALANCED', `Journal entry ${entryId} is not balanced in the backup. Nothing was restored.`);
+    }
+  }
+  // SQLite foreign keys do not enforce company ownership: a referenced row
+  // can belong to another company and still satisfy its FK. Refuse forged or
+  // contaminated archives BEFORE taking a safety copy or deleting any rows.
+  const ids = Object.fromEntries(TABLES.map((t) => [t.name, new Set(doc.data.tables[t.name].map((r) => r.id))]));
+  for (const table of TABLES) {
+    for (const row of doc.data.tables[table.name]) {
+      if (table.parent === null && row.company_id !== expectedCompanyId) {
+        return fail('BACKUP_COMPANY_MISMATCH', 'A backup row belongs to a different company. Nothing was restored.');
+      }
+      if (table.parent && !ids[table.parent.table].has(row[table.parent.key])) {
+        return fail('BACKUP_FK_FAILED', 'A backup row has a missing or foreign-company parent. Nothing was restored.');
+      }
+      if (db) {
+        for (const fk of db.pragma(`foreign_key_list(${table.name})`)) {
+          const value = row[fk.from];
+          if (value === null || value === undefined) continue;
+          if (fk.table === 'companies' && value !== expectedCompanyId) {
+            return fail('BACKUP_COMPANY_MISMATCH', 'A backup row belongs to a different company. Nothing was restored.');
+          }
+          if (ids[fk.table] && !ids[fk.table].has(value)) {
+            return fail('BACKUP_FK_FAILED', 'A backup reference is missing or belongs to a different company. Nothing was restored.');
+          }
+        }
+      }
     }
   }
   return { ok: true };
@@ -213,18 +240,29 @@ function restoreBackup(db, companyId, doc) {
   return restored;
 }
 
-/** Writes a verified copy of the database file and returns its path. Throws if it cannot. */
-function verifiedCopy(db, sourcePath, backupDir, label) {
+/**
+ * SQLite Online Backup API creates a transactionally consistent, standalone
+ * snapshot even in WAL mode. A raw file copy after a checkpoint can race with
+ * another process writing to the WAL. Verify the copy before reporting success.
+ */
+async function verifiedCopy(db, sourcePath, backupDir, label) {
+  if (!fs.existsSync(sourcePath)) throw new Error('The source database is missing.');
   fs.mkdirSync(backupDir, { recursive: true });
-  db.pragma('wal_checkpoint(TRUNCATE)');
-  const target = path.join(backupDir, `${label}-${new Date().toISOString().replace(/[:.]/g, '-')}.db`);
-  fs.copyFileSync(sourcePath, target, fs.constants.COPYFILE_EXCL);
-  const src = fs.statSync(sourcePath).size;
-  const dst = fs.statSync(target).size;
-  if (dst === 0 || dst !== src) {
-    throw new Error('The safety copy could not be verified. Nothing was restored.');
+  const name = `${label}-${new Date().toISOString().replace(/[:.]/g, '-')}-${process.pid}-${crypto.randomBytes(4).toString('hex')}.db`;
+  const target = path.join(backupDir, name);
+  try {
+    await db.backup(target);
+    const copy = new Database(target, { readonly: true, fileMustExist: true });
+    try {
+      if (copy.pragma('integrity_check', { simple: true }) !== 'ok' || fs.statSync(target).size === 0) {
+        throw new Error('The SQLite safety copy failed verification.');
+      }
+    } finally { copy.close(); }
+    return target;
+  } catch (err) {
+    try { fs.unlinkSync(target); } catch (_) { /* no incomplete copy to retain */ }
+    throw err;
   }
-  return target;
 }
 
 module.exports = {

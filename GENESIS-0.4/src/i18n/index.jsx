@@ -13,7 +13,7 @@ const warned = new Set();
 export function translate(key, lang = 'en', variables = {}) {
   if (import.meta.env.DEV && !lookup(translations[lang], key) && !warned.has(`${lang}:${key}`)) {
     warned.add(`${lang}:${key}`);
-    console.warn(`Missing GENESIS translation: ${lang}:${key}`);
+    console.warn(`Missing JENESIS translation: ${lang}:${key}`);
   }
   // Never display raw key paths. The checker makes all missing keys a test
   // failure; English is only an emergency fallback for a damaged installation.

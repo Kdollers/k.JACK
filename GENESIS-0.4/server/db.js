@@ -7,10 +7,13 @@ const { runMigrations } = require('./migrations');
 // Source archives may contain historical databases. Never silently open one on a
 // fresh install. Electron passes its own per-user path explicitly; npm start uses
 // the same kind of persistent per-user location unless GENESIS_DB_PATH is set.
-const USER_DATA_DIR = process.platform === 'win32'
-  ? path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'GENESIS')
-  : path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'GENESIS');
-const DB_PATH = process.env.GENESIS_DB_PATH || path.join(USER_DATA_DIR, 'genesis.db');
+const APP_DATA_ROOT = process.platform === 'win32'
+  ? process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
+  : process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share');
+// A source-run service follows the same old-vs-new selection as the desktop.
+// An explicit test/restore path wins and never inspects the user's data folder.
+const DB_PATH = process.env.GENESIS_DB_PATH || path.join(
+  require('../electron/data-location.cjs').chooseDataDirectory(APP_DATA_ROOT), 'genesis.db');
 
 let db = null;
 
@@ -24,38 +27,60 @@ function getDb() {
   if (!db) {
     trace(`mkdir ${path.dirname(DB_PATH)}`);
     if (DB_PATH !== ':memory:') fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-    // Schema creation itself can write to an old installation. Make a raw,
-    // WAL-inclusive backup BEFORE opening or changing its schema. Electron also
-    // makes a pre-launch backup; this protects people running npm start directly.
-    if (DB_PATH !== ':memory:' && fs.existsSync(DB_PATH)) {
-      const dir = path.join(path.dirname(DB_PATH), 'backups');
-      fs.mkdirSync(dir, { recursive: true });
-      const target = path.join(dir, `pre-start-${new Date().toISOString().replace(/[:.]/g, '-')}-${process.pid}.db`);
-      fs.copyFileSync(DB_PATH, target, fs.constants.COPYFILE_EXCL);
-      for (const suffix of ['-wal', '-shm']) {
-        if (fs.existsSync(DB_PATH + suffix)) fs.copyFileSync(DB_PATH + suffix, target + suffix, fs.constants.COPYFILE_EXCL);
-      }
-    }
+    const wasPresent = DB_PATH !== ':memory:' && fs.existsSync(DB_PATH);
     trace(`open ${DB_PATH}`);
     db = new Database(DB_PATH);
-    trace('opened; setting journal_mode');
-    db.pragma('journal_mode = WAL');
-    trace('journal_mode set; setting foreign_keys');
-    db.pragma('foreign_keys = ON');
-    trace('initSchema');
-    initSchema(db);
-    trace('backupBeforeMigrations');
-    backupBeforeMigrations(db);
-    trace('runMigrations');
-    runMigrations(db);
-    trace('seedDefaultData');
-    seedDefaultData(db);
-    trace('database ready');
+    try {
+      // SQLite itself takes a consistent snapshot including committed WAL pages.
+      // Fail CLOSED if the source or the copy is unreadable: no schema or business
+      // data is changed until this verified pre-start snapshot has succeeded.
+      if (wasPresent) verifiedDatabaseCopy(db, 'pre-start');
+      trace('opened; setting journal_mode');
+      db.pragma('journal_mode = WAL');
+      trace('journal_mode set; setting foreign_keys');
+      db.pragma('foreign_keys = ON');
+      trace('initSchema');
+      initSchema(db);
+      trace('backupBeforeMigrations');
+      backupBeforeMigrations(db);
+      trace('runMigrations');
+      runMigrations(db);
+      trace('seedDefaultData');
+      seedDefaultData(db);
+      trace('database ready');
+    } catch (err) {
+      db.close(); db = null;
+      throw err;
+    }
   }
   return db;
 }
 
-/** Takes a file copy of the database before pending migrations change it. */
+/** Take a complete SQLite-consistent, integrity-checked snapshot. VACUUM INTO is
+ * synchronous (getDb must finish before it serves any requests) and reads committed
+ * WAL transactions as a single snapshot, even when another connection writes.
+ * Never overwrite an existing backup; on verification failure keep the live DB. */
+function verifiedDatabaseCopy(database, label) {
+  if (DB_PATH === ':memory:' || !fs.existsSync(DB_PATH)) return null;
+  const dir = path.join(path.dirname(DB_PATH), 'backups');
+  fs.mkdirSync(dir, { recursive: true });
+  const target = path.join(dir, `${label}-${new Date().toISOString().replace(/[:.]/g, '-')}-${process.pid}-${require('crypto').randomBytes(4).toString('hex')}.db`);
+  try {
+    database.prepare('VACUUM INTO ?').run(target);
+    const backup = new Database(target, { readonly: true, fileMustExist: true });
+    try {
+      if (!fs.statSync(target).size || backup.pragma('integrity_check', { simple: true }) !== 'ok') {
+        throw new Error('SQLite safety copy failed integrity verification.');
+      }
+    } finally { backup.close(); }
+    return target;
+  } catch (err) {
+    try { fs.unlinkSync(target); } catch (_) { /* no incomplete copy is usable */ }
+    throw err;
+  }
+}
+
+/** Take an additional verified snapshot before each pending schema migration. */
 function backupBeforeMigrations(database) {
   const { MIGRATIONS } = require('./migrations');
   if (DB_PATH === ':memory:' || !fs.existsSync(DB_PATH)) return null;
@@ -65,24 +90,12 @@ function backupBeforeMigrations(database) {
       : []
   );
   const pending = MIGRATIONS.filter((m) => !applied.has(m.version));
-  if (pending.length === 0) return null;
-  const dir = path.join(path.dirname(DB_PATH), 'backups');
-  fs.mkdirSync(dir, { recursive: true });
-  const target = path.join(dir, `pre-migration-v${pending[0].version}-${new Date().toISOString().replace(/[:.]/g, '-')}.db`);
-  database.pragma('wal_checkpoint(TRUNCATE)');
-  fs.copyFileSync(DB_PATH, target, fs.constants.COPYFILE_EXCL);
-  return target;
+  return pending.length ? verifiedDatabaseCopy(database, `pre-migration-v${pending[0].version}`) : null;
 }
 
-/** Copies the live database file (after a WAL checkpoint) to backups/ with a label. */
+// Preserve the legacy helper's signature for explicit full-database backup callers.
 function backupDatabaseFile(label) {
-  if (DB_PATH === ':memory:' || !fs.existsSync(DB_PATH) || !db) return null;
-  const dir = path.join(path.dirname(DB_PATH), 'backups');
-  fs.mkdirSync(dir, { recursive: true });
-  db.pragma('wal_checkpoint(TRUNCATE)');
-  const target = path.join(dir, `${label}-${new Date().toISOString().replace(/[:.]/g, '-')}.db`);
-  fs.copyFileSync(DB_PATH, target, fs.constants.COPYFILE_EXCL);
-  return target;
+  return db ? verifiedDatabaseCopy(db, label) : null;
 }
 
 function closeDb() {
@@ -105,6 +118,7 @@ function initSchema(database) {
       phone TEXT,
       email TEXT,
       tax_id TEXT,
+      country_code TEXT,
       currency_code TEXT DEFAULT 'USD',
       currency_symbol TEXT DEFAULT '$',
       currency_decimals INTEGER DEFAULT 2,
@@ -184,6 +198,9 @@ function initSchema(database) {
       email TEXT,
       phone TEXT,
       address TEXT,
+      city TEXT,
+      country TEXT,
+      default_currency TEXT,
       tax_id TEXT,
       credit_limit REAL DEFAULT 0,
       payment_terms TEXT DEFAULT 'NET_30',
@@ -204,7 +221,12 @@ function initSchema(database) {
       email TEXT,
       phone TEXT,
       address TEXT,
+      city TEXT,
+      country TEXT,
+      default_currency TEXT,
       tax_id TEXT,
+      lead_time_days INTEGER DEFAULT 0,
+      rating INTEGER DEFAULT 0,
       payment_terms TEXT DEFAULT 'NET_30',
       opening_balance REAL DEFAULT 0,
       current_balance REAL DEFAULT 0,

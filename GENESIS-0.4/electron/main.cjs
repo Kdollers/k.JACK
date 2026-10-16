@@ -1,27 +1,34 @@
 'use strict';
 /**
- * GENESIS Windows desktop shell (Electron main process).
+ * JENESIS Windows desktop shell (Electron main process).
  *
  * Responsibilities:
  *   - enforce a single running instance,
  *   - prepare the per-user database location (never overwriting data),
  *   - start the local Express backend on a loopback port and wait for it,
- *   - open the GENESIS window with a locked-down renderer,
+ *   - open mode-specific JENESIS windows with a locked-down renderer,
  *   - stop the backend cleanly when the application exits.
  */
 const { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { BackendProcess, findFreePort, LOOPBACK } = require('./backend-manager.cjs');
-const { prepareDataDirectory } = require('./data-location.cjs');
+const { prepareDataDirectory, chooseDataDirectory } = require('./data-location.cjs');
+const { modeFromArgs, modeUrl } = require('./entry-points.cjs');
 const { messages, VALID_LANGUAGES, languageFor } = require('./desktop-i18n.cjs');
 
-const APP_TITLE = 'GENESIS';
+const APP_TITLE = 'JENESIS';
+// Select the old directory when an existing GENESIS ledger is present. Session
+// files must follow that directory, so do this before Electron is ready.
+let dataDirectoryError = null;
+try { app.setPath('userData', chooseDataDirectory(app.getPath('appData'))); }
+catch (err) { dataDirectoryError = err; }
 const WINDOW_MIN_WIDTH = 1024;
 const WINDOW_MIN_HEIGHT = 640;
 const MAX_START_ATTEMPTS = 3;
 
-let mainWindow = null;
+const windows = new Set();
+const launchQueue = [modeFromArgs(process.argv)];
 let backend = null;
 let backendUrl = null;
 let logStream = null;
@@ -104,7 +111,10 @@ async function startBackend() {
   const userData = app.getPath('userData');
   const prepared = prepareDataDirectory({
     dataDir: userData,
-    seedPath: seedDatabasePath()
+    seedPath: seedDatabasePath(),
+    // The backend snapshots its opened DB with SQLite VACUUM INTO before any
+    // schema changes. Do not perform a racing raw copy of a WAL-mode database.
+    backupExisting: false
   });
   writeLog(`Data directory: ${userData}`);
   if (prepared.seeded) writeLog('Created the database from the bundled starter copy.');
@@ -147,7 +157,7 @@ async function startBackend() {
       await proc.stop(1000).catch(() => {});
     }
   }
-  throw lastError || new Error('The GENESIS backend could not be started.');
+  throw lastError || new Error('The JENESIS backend could not be started.');
 }
 
 function stopBackend() {
@@ -171,9 +181,9 @@ function stopBackend() {
 // ---------------------------------------------------------------------------
 // Window
 // ---------------------------------------------------------------------------
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    title: APP_TITLE,
+function createWindow(mode = 'administrator') {
+  const win = new BrowserWindow({
+    title: `${APP_TITLE} — ${mode === 'seller' ? 'Seller' : mode === 'network' ? 'Network & Maintenance' : 'Administrator'}`,
     width: 1366,
     height: 860,
     minWidth: WINDOW_MIN_WIDTH,
@@ -181,7 +191,9 @@ function createWindow() {
     show: false,
     backgroundColor: '#f8fafc',
     autoHideMenuBar: true,
-    icon: path.join(appRoot(), 'assets', 'icon.ico'),
+    icon: app.isPackaged
+      ? path.join(process.resourcesPath, 'icons', `j-${mode}.ico`)
+      : path.join(appRoot(), 'assets', `j-${mode}.ico`),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -194,23 +206,24 @@ function createWindow() {
     }
   });
 
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  windows.add(win);
+  win.once('ready-to-show', () => win.show());
 
-  // Only the GENESIS backend origin may be displayed inside the window.
+  // Only the JENESIS backend origin may be displayed inside the window.
   const allowedOrigin = new URL(backendUrl).origin;
-  mainWindow.webContents.on('will-navigate', (event, url) => {
+  win.webContents.on('will-navigate', (event, url) => {
     if (new URL(url).origin !== allowedOrigin) {
       event.preventDefault();
       if (/^https?:/.test(url)) shell.openExternal(url);
     }
   });
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+  win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
 
-  mainWindow.on('closed', () => { mainWindow = null; });
-  return mainWindow.loadURL(backendUrl);
+  win.on('closed', () => { windows.delete(win); });
+  return win.loadURL(modeUrl(backendUrl, mode));
 }
 
 function showStartupError(err) {
@@ -229,16 +242,17 @@ const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
+  app.on('second-instance', (event, commandLine) => {
+    try {
+      const mode = modeFromArgs(commandLine);
+      if (backendUrl) createWindow(mode).catch(showStartupError);
+      else launchQueue.push(mode);
+    } catch (err) { showStartupError(err); }
   });
 
-  // Only the GENESIS renderer may read desktop metadata or set one of three
+  // Only a JENESIS renderer may read desktop metadata or set one of three
   // language codes. The bridge offers no filesystem, shell or arbitrary IPC.
-  const fromOwnWindow = (event) => event.sender === mainWindow?.webContents &&
+  const fromOwnWindow = (event) => [...windows].some((win) => event.sender === win.webContents) &&
     !!backendUrl && event.senderFrame?.url?.startsWith(backendUrl);
   ipcMain.handle('genesis:get-app-info', (event) => {
     if (!fromOwnWindow(event)) throw new Error('Unauthorized desktop request');
@@ -268,8 +282,9 @@ if (!gotLock) {
     updateNativeMenu();
 
     try {
+      if (dataDirectoryError) throw dataDirectoryError;
       await startBackend();
-      await createWindow();
+      for (const mode of launchQueue.splice(0)) await createWindow(mode);
     } catch (err) {
       showStartupError(err);
       quitting = true;
@@ -292,6 +307,6 @@ if (!gotLock) {
   });
 
   app.on('activate', () => {
-    if (!mainWindow && backendUrl) createWindow();
+    if (windows.size === 0 && backendUrl) createWindow('administrator');
   });
 }

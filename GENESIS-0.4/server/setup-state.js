@@ -26,7 +26,8 @@ function setupStatus(db) {
   // A missing state row must fail closed; it must never make public setup available.
   const completed = !state || !!state.completed_at;
   const users = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
-  const activeAdmins = db.prepare("SELECT COUNT(*) AS n FROM users WHERE active = 1 AND role = 'admin'").get().n;
+  const activeAdmins = db.prepare(`SELECT COUNT(*) AS n FROM company_memberships m
+    JOIN users u ON u.id = m.user_id WHERE u.active = 1 AND m.role = 'admin'`).get().n;
   const clean = users === 0 && !hasBusinessData(db);
   return {
     needsSetup: !completed && clean,

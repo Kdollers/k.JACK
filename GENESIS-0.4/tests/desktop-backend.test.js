@@ -15,7 +15,8 @@ const path = require('path');
 const Database = require('better-sqlite3');
 
 const { BackendProcess, findFreePort, waitForHealth } = require('../electron/backend-manager.cjs');
-const { prepareDataDirectory, backupDatabase } = require('../electron/data-location.cjs');
+const { prepareDataDirectory, backupDatabase, chooseDataDirectory } = require('../electron/data-location.cjs');
+const { modeFromArgs, modeUrl } = require('../electron/entry-points.cjs');
 
 const ROOT = path.join(__dirname, '..');
 const SOURCE_DB = require('./fixture-db.cjs').legacyFixturePath();
@@ -70,6 +71,31 @@ function getJson(url) {
 }
 
 // ---------------------------------------------------------------------------
+test('mode shortcuts select isolated URLs and reject unknown modes', () => {
+  assert.equal(modeFromArgs(['JENESIS.exe']), 'administrator');
+  for (const mode of ['seller', 'administrator', 'network']) {
+    assert.equal(modeFromArgs(['JENESIS.exe', `--jenesis-mode=${mode}`]), mode);
+    assert.equal(modeUrl('http://127.0.0.1:3456/', mode), `http://127.0.0.1:3456/${mode}`);
+  }
+  assert.throws(() => modeFromArgs(['--jenesis-mode=unsafe']), /Unknown/);
+  assert.throws(() => modeUrl('http://127.0.0.1', 'unsafe'), /Unknown/);
+});
+
+test('legacy data location is retained; conflicting directories are refused', () => {
+  const root = tmpDir('choose');
+  const legacy = path.join(root, 'GENESIS');
+  const current = path.join(root, 'JENESIS');
+  assert.equal(chooseDataDirectory(root), current);
+  fs.mkdirSync(legacy);
+  fs.writeFileSync(path.join(legacy, 'genesis.db'), 'legacy untouched');
+  assert.equal(chooseDataDirectory(root), legacy);
+  fs.mkdirSync(current);
+  fs.writeFileSync(path.join(current, 'genesis.db'), 'new untouched');
+  assert.throws(() => chooseDataDirectory(root), /Both GENESIS and JENESIS/);
+  assert.equal(fs.readFileSync(path.join(legacy, 'genesis.db'), 'utf8'), 'legacy untouched');
+  assert.equal(fs.readFileSync(path.join(current, 'genesis.db'), 'utf8'), 'new untouched');
+});
+
 test('backend starts on loopback, identifies itself, serves UI and stops cleanly', async () => {
   const dir = tmpDir('start');
   const dbPath = copyDb(dir);
@@ -79,7 +105,7 @@ test('backend starts on loopback, identifies itself, serves UI and stops cleanly
     const health = await getJson(`http://127.0.0.1:${port}/api/health`);
     assert.strictEqual(health.status, 200);
     const body = JSON.parse(health.text);
-    assert.strictEqual(body.appId, 'genesis-accounting');
+    assert.strictEqual(body.appId, 'jenesis-accounting');
     assert.strictEqual(body.status, 'healthy');
 
     // Unknown API paths are answered only after authentication, so anonymous callers

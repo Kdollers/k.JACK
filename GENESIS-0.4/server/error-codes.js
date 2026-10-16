@@ -36,6 +36,8 @@ const exact = {
   'Cannot post an empty purchase invoice': 'EMPTY_BILL',
   'Accounts Payable account (subtype ACCOUNTS_PAYABLE) not configured': 'AP_NOT_CONFIGURED',
   'Payment amount must be greater than zero': 'PAYMENT_AMOUNT_INVALID',
+  'Foreign-currency bank payments require an exchange-rate ledger': 'FOREIGN_CURRENCY_UNSUPPORTED',
+  'CURRENCY_PRECISION_INVALID': 'CURRENCY_PRECISION_INVALID',
   'Bank/Cash account not found': 'BANK_NOT_FOUND',
   'Customer is required for customer receipt': 'CUSTOMER_REQUIRED',
   'Supplier is required for supplier payment': 'SUPPLIER_REQUIRED',

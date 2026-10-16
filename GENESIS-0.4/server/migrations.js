@@ -15,7 +15,7 @@ function addUniqueIndexUnlessLegacyDuplicates(db, name, expression, predicate) {
     // Do not delete or rewrite historical user data to satisfy a new constraint.
     // The API rejects any further duplicates; an administrator can reconcile the
     // existing accounts before the index is created on a later startup.
-    console.warn(`[GENESIS] Legacy duplicate user identifiers prevent index ${name}; reconcile them in User Management.`);
+    console.warn(`[JENESIS] Legacy duplicate user identifiers prevent index ${name}; reconcile them in User Management.`);
     return;
   }
   db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS ${name} ON users(${expression}) WHERE ${predicate}`);
@@ -76,6 +76,43 @@ const MIGRATIONS = [
         .some((table) => !!db.prepare(`SELECT 1 FROM ${table} LIMIT 1`).get());
       db.prepare('INSERT INTO installation_state (id, completed_at) VALUES (1, ?)')
         .run(preExisting || hasBusinessData(db) ? new Date().toISOString() : null);
+    }
+  },
+  {
+    version: 3,
+    name: 'country metadata and per-company authorization without changing existing users',
+    up(db) {
+      addColumn(db, 'companies', 'country_code', 'TEXT');
+      for (const table of ['customers', 'suppliers']) {
+        addColumn(db, table, 'city', 'TEXT');
+        addColumn(db, table, 'country', 'TEXT');
+        addColumn(db, table, 'default_currency', 'TEXT');
+      }
+      addColumn(db, 'suppliers', 'lead_time_days', 'INTEGER DEFAULT 0');
+      addColumn(db, 'suppliers', 'rating', 'INTEGER DEFAULT 0');
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS company_memberships (
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          company_id TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+          role TEXT NOT NULL,
+          granted_at TEXT NOT NULL DEFAULT (datetime('now')),
+          PRIMARY KEY (user_id, company_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_company_memberships_company ON company_memberships(company_id);
+      `);
+      // Preserve each historical user's original company and role. Never infer
+      // access to a different company's accounting records from a client header.
+      db.exec(`INSERT OR IGNORE INTO company_memberships (user_id, company_id, role)
+        SELECT u.id, u.company_id, u.role FROM users u
+        JOIN companies c ON c.id = u.company_id
+        WHERE u.company_id IS NOT NULL`);
+    }
+  },
+  {
+    version: 4,
+    name: 'bind app entry point to sessions without altering existing tokens',
+    up(db) {
+      addColumn(db, 'sessions', 'app_mode', "TEXT NOT NULL DEFAULT 'general'");
     }
   }
 ];

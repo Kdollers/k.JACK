@@ -11,14 +11,15 @@ const assert = require('node:assert/strict');
 const AdmZip = require('adm-zip');
 const ROOT = path.resolve(__dirname, '..');
 const PACKAGE = require(path.join(ROOT, 'package.json'));
-const PREFIX = 'GENESIS-0.4/';
-const OUTPUT = path.resolve(ROOT, '..', `GEN ${PACKAGE.version}.zip`);
+const PREFIX = 'JENESIS-0.1/';
+const OUTPUT = path.resolve(ROOT, '..', 'JEN 0.1.zip');
+assert.equal(PACKAGE.version, '0.1.0', 'update the source-archive name if the application version changes');
 const TOP_FILES = ['.gitignore', 'README.md', 'DESKTOP.md', 'index.html',
   'package.json', 'package-lock.json', 'postcss.config.js',
   'tailwind.config.js', 'vite.config.js'];
-const DIRS = ['assets', 'electron', 'server', 'src', 'scripts', 'tests', 'dist'];
+const DIRS = ['assets', 'electron', 'installer', 'public', 'server', 'shared', 'src', 'scripts', 'tests', 'dist'];
 const ALLOWED_EXTENSIONS = new Set(['.js', '.cjs', '.mjs', '.jsx', '.json',
-  '.css', '.html', '.md', '.ps1', '.py', '.png', '.ico']);
+  '.css', '.html', '.md', '.nsh', '.ps1', '.py', '.png', '.svg', '.ico']);
 const BLOCKED_NAMES = new Set(['node_modules', 'backups', 'release', 'build',
   'coverage', '__pycache__', '.git', '.env', '.env.local', 'genesis.db']);
 
@@ -57,7 +58,9 @@ function verify(zip) {
     assert.ok(!name.includes('node_modules/') && !name.includes('backups/'), `private data in ZIP: ${name}`);
   }
   for (const required of ['package.json', 'package-lock.json', 'README.md', 'DESKTOP.md',
-    'assets/icon.ico', 'electron/main.cjs', 'server/index.js', 'scripts/recover-administrator.cjs',
+    'assets/j-seller.ico', 'assets/j-administrator.ico', 'assets/j-network.ico',
+    'public/favicon.svg', 'installer/shortcuts.nsh', 'electron/entry-points.cjs', 'electron/main.cjs',
+    'server/index.js', 'scripts/recover-administrator.cjs',
     'src/i18n/en.json', 'src/i18n/fr.json', 'src/i18n/rw.json', 'dist/index.html']) {
     assert.ok(names.includes(PREFIX + required), `missing ${required} in ZIP`);
   }

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { apiRequest, setSessionToken, getSessionToken, setUnauthorizedHandler } from '../services/api';
 import { useI18n } from '../i18n';
 import { formatMoney, formatDate as localizedDate, formatDateTime as localizedDateTime, formatNumber as localizedNumber, formatPercent as localizedPercent } from '../i18n/format.mjs';
+import { appModeFromPath } from '../config/appMode.mjs';
+const requestedMode = appModeFromPath(window.location.pathname);
 
 const AppContext = createContext();
 
@@ -25,6 +27,7 @@ export function AppProvider({ children }) {
   const [permissions, setPermissions] = useState([]);
   const [users, setUsers] = useState([]);
   const [activeView, setActiveView] = useState('dashboard');
+  const [appMode, setAppMode] = useState(requestedMode);
   const [toast, setToast] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -42,9 +45,15 @@ export function AppProvider({ children }) {
   const hasPermission = useCallback((perm) => permissions.includes(perm), [permissions]);
 
   const applySignedIn = (me) => {
+    if (requestedMode !== 'general' && me.mode !== requestedMode) {
+      setSessionToken(null);
+      setAuthState('login');
+      return;
+    }
+    setAppMode(me.mode || requestedMode);
     setCurrentUser(me.user);
     setCurrentCompany(me.company || null);
-    setCompanies(me.company ? [me.company] : []);
+    setCompanies(me.companies || (me.company ? [me.company] : []));
     setPermissions(me.permissions || []);
     setAuthState(me.user.must_change_password ? 'change-password' : 'ready');
   };
@@ -121,7 +130,7 @@ export function AppProvider({ children }) {
         const me = await apiRequest('/api/auth/me');
         if (!cancelled) {
           setCurrentCompany(me.company || null);
-          setCompanies(me.company ? [me.company] : []);
+          setCompanies(me.companies || (me.company ? [me.company] : []));
           setPermissions(me.permissions || []);
         }
         if ((me.permissions || []).includes('users:manage')) {
@@ -141,7 +150,7 @@ export function AppProvider({ children }) {
     setAuthError(null);
     const res = await apiRequest('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password, mode: requestedMode })
     });
     setSessionToken(res.token);
     const me = await apiRequest('/api/auth/me');
@@ -170,9 +179,15 @@ export function AppProvider({ children }) {
     applySignedIn(me);
   };
 
-  const switchCompany = (comp) => {
-    setCurrentCompany(comp);
-    triggerRefresh();
+  const switchCompany = async (comp) => {
+    if (!comp?.id || comp.id === currentCompany?.id) return;
+    const result = await apiRequest('/api/auth/switch-company', {
+      method: 'POST', body: JSON.stringify({ company_id: comp.id })
+    });
+    setSessionToken(result.token);
+    // A full renderer reload clears pending queries and cached data from the
+    // previous company. Merely replacing the name in a dropdown is not safe.
+    window.location.reload();
   };
 
   const formatCurrency = (val) => formatMoney(val, currentCompany, lang);
@@ -194,6 +209,7 @@ export function AppProvider({ children }) {
         changePassword,
         hasPermission,
         permissions,
+        appMode,
         currentCompany,
         setCurrentCompany,
         companies,

@@ -46,6 +46,7 @@ export const ENUM_KEYS = {
   admin: 'settings.role_admin', accountant: 'settings.role_accountant',
   sales: 'settings.role_sales', purchases: 'settings.role_purchases',
   inventory: 'settings.role_inventory', manager: 'settings.role_manager',
+  network: 'settings.role_network',
   AUTH: 'enums.module_auth', USERS: 'settings.tab_users', COMPANY: 'settings.tab_company',
   CUSTOMERS: 'nav.customers', SUPPLIERS: 'nav.suppliers', PRODUCTS: 'nav.inventory',
   SALES: 'nav.sales', PURCHASES: 'nav.purchases', BANKING: 'nav.banking',

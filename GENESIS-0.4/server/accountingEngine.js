@@ -1,4 +1,5 @@
 const { getDb } = require('./db');
+const { ValidationError } = require('./crud-validation');
 const crypto = require('crypto');
 
 function generateId(prefix = 'id') {
@@ -8,6 +9,20 @@ function generateId(prefix = 'id') {
 function roundTo(num, decimals = 2) {
   const factor = Math.pow(10, decimals);
   return Math.round((Number(num) + Number.EPSILON) * factor) / factor;
+}
+
+// Never silently record fractional money that the company's configured base
+// currency cannot display. Until a full country-specific tax rounding policy is
+// implemented, refuse such postings rather than hiding cents in XAF/RWF/UGX.
+function assertMoneyPrecision(db, companyId, value) {
+  const decimals = db.prepare('SELECT currency_decimals FROM companies WHERE id = ?').get(companyId)?.currency_decimals;
+  if (decimals !== 0 && decimals !== 2) throw new ValidationError('CURRENCY_PRECISION_INVALID', 409);
+  const scaled = Number(value) * (10 ** decimals);
+  if (!Number.isFinite(scaled) || !Number.isSafeInteger(Math.round(scaled)) ||
+      Math.abs(scaled - Math.round(scaled)) > 1e-6) {
+    throw new ValidationError('CURRENCY_PRECISION_INVALID', 409);
+  }
+  return Number(value);
 }
 
 function nextSequenceNumber(companyId, type, prefix) {
@@ -86,6 +101,8 @@ function createJournalEntry({ companyId, date, reference, description, sourceTyp
   let totalCredit = 0;
 
   for (const line of lines) {
+    assertMoneyPrecision(db, companyId, Number(line.debit) || 0);
+    assertMoneyPrecision(db, companyId, Number(line.credit) || 0);
     const debit = roundTo(Number(line.debit) || 0, 2);
     const credit = roundTo(Number(line.credit) || 0, 2);
     if (debit < 0 || credit < 0) {
@@ -515,11 +532,16 @@ function recordPayment(companyId, paymentData, user) {
       notes = ''
     } = paymentData;
 
+    assertMoneyPrecision(db, companyId, Number(amount));
     const payAmount = roundTo(Number(amount), 2);
     if (payAmount <= 0) throw new Error('Payment amount must be greater than zero');
 
     const bankAcc = db.prepare(`SELECT * FROM bank_accounts WHERE id = ? AND company_id = ?`).get(bankAccountId, companyId);
     if (!bankAcc) throw new Error('Bank/Cash account not found');
+    const companyCurrency = db.prepare('SELECT currency_code FROM companies WHERE id = ?').get(companyId)?.currency_code;
+    if (bankAcc.currency !== companyCurrency) {
+      throw new Error('Foreign-currency bank payments require an exchange-rate ledger');
+    }
 
     const paymentNumber = nextSequenceNumber(companyId, 'PAYMENT', 'PAY');
     const paymentId = generateId('pay');
@@ -655,6 +677,9 @@ function recordPayment(companyId, paymentData, user) {
     } else if (paymentType === 'TRANSFER') {
       const toBank = db.prepare(`SELECT * FROM bank_accounts WHERE id = ? AND company_id = ?`).get(toBankAccountId, companyId);
       if (!toBank) throw new Error('Destination bank account is required for transfer');
+      if (toBank.currency !== companyCurrency) {
+        throw new Error('Foreign-currency bank payments require an exchange-rate ledger');
+      }
       if (toBank.id === bankAcc.id) throw new Error('Source and destination accounts must be different');
 
       desc = `Bank Transfer ${paymentNumber} from ${bankAcc.bank_name} to ${toBank.bank_name}`;
@@ -1347,6 +1372,7 @@ function postPurchaseReturn(companyId, returnData, user) {
 
 module.exports = {
   roundTo,
+  assertMoneyPrecision,
   generateId,
   nextSequenceNumber,
   logAudit,

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import { labelFor } from '../i18n/labels.mjs';
+import BrandMark from './BrandMark';
 import {
   Building2,
   Globe2,
@@ -11,11 +12,13 @@ import {
   Calendar,
   Check,
   ShieldCheck,
-  Layers
+  Layers,
+  HelpCircle
 } from 'lucide-react';
 
 export default function Navbar() {
-  const { currentCompany, companies, switchCompany, currentUser, logout, setActiveView, formatDate } = useApp();
+  const { currentCompany, companies, switchCompany, currentUser, logout, setActiveView,
+    formatDate, showToast, hasPermission, appMode } = useApp();
   const { lang, setLang, t } = useI18n();
 
   const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
@@ -36,6 +39,7 @@ export default function Navbar() {
     sales: 'bg-blue-900/60 text-blue-200 border-blue-700',
     purchases: 'bg-amber-900/60 text-amber-200 border-amber-700',
     inventory: 'bg-purple-900/60 text-purple-200 border-purple-700',
+    network: 'bg-green-900/60 text-green-200 border-green-700',
     manager: 'bg-indigo-900/60 text-indigo-200 border-indigo-700'
   };
 
@@ -44,14 +48,15 @@ export default function Navbar() {
       {/* Brand & Active Company */}
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center font-black text-white text-lg tracking-wider shadow">
-            G
-          </div>
-          <div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-extrabold text-base tracking-wide text-white">GENESIS</span>
-              <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">{t("nav.erp_1_0")}</span>
-            </div>
+          <BrandMark mode={appMode} className="w-8 h-8" />
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-base tracking-wide text-white">{t('app_name')}</span>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+              appMode === 'seller' ? 'bg-red-500/20 text-red-300 border-red-500/30' :
+              appMode === 'network' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
+              'bg-blue-500/20 text-blue-300 border-blue-500/30'}`}>
+              {t(`app_modes.${appMode || 'administrator'}`)}
+            </span>
           </div>
         </div>
 
@@ -80,9 +85,9 @@ export default function Navbar() {
               {companies.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => {
-                    switchCompany(c);
+                  onClick={async () => {
                     setCompanyMenuOpen(false);
+                    try { await switchCompany(c); } catch (err) { showToast(err, 'error'); }
                   }}
                   className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-700 transition ${
                     c.id === currentCompany?.id ? 'text-blue-400 font-semibold bg-slate-750' : 'text-slate-200'
@@ -92,18 +97,15 @@ export default function Navbar() {
                   {c.id === currentCompany?.id && <Check className="w-3.5 h-3.5 text-blue-400" />}
                 </button>
               ))}
-              <div className="border-t border-slate-700/60 pt-1 mt-1">
-                <button
-                  onClick={() => {
-                    setActiveView('settings');
-                    setCompanyMenuOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-1.5 text-blue-400 hover:bg-slate-700 flex items-center space-x-1.5"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>{t('settings.tab_company')}</span>
-                </button>
-              </div>
+              {hasPermission('company:manage') && (
+                <div className="border-t border-slate-700/60 pt-1 mt-1">
+                  <button onClick={() => { setActiveView('settings'); setCompanyMenuOpen(false); }}
+                    className="w-full text-left px-3 py-1.5 text-blue-400 hover:bg-slate-700 flex items-center space-x-1.5">
+                    <PlusCircle className="w-3.5 h-3.5" />
+                    <span>{t('settings.tab_company')}</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -116,6 +118,12 @@ export default function Navbar() {
           <Calendar className="w-3.5 h-3.5 text-slate-400" />
           <span>{formatDate(new Date())}</span>
         </div>
+
+        <button type="button" onClick={() => setActiveView('help')}
+          title={t('nav.help')} aria-label={t('nav.help')}
+          className="text-slate-200 hover:text-white rounded-md p-2 hover:bg-slate-800">
+          <HelpCircle size={18} />
+        </button>
 
         {/* Language Switcher */}
         <div className="relative">

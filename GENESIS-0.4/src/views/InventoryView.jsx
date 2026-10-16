@@ -46,7 +46,8 @@ export default function InventoryView() {
     selling_price: 0,
     min_stock_level: 5,
     current_stock: 0,
-    warehouse_location: 'Main Store'
+    warehouse_location: 'Main Store',
+    active: true
   });
 
   // Stock Adjustment Form
@@ -211,9 +212,10 @@ export default function InventoryView() {
       unit: prod.unit || 'pcs',
       cost_price: prod.cost_price || 0,
       selling_price: prod.selling_price || 0,
-      min_stock_level: prod.min_stock_level || 5,
+      min_stock_level: prod.min_stock_level ?? 5,
       current_stock: prod.current_stock || 0,
-      warehouse_location: prod.warehouse_location || 'Main Store'
+      warehouse_location: prod.warehouse_location || 'Main Store',
+      active: prod.active === 1
     });
     setShowAddProductModal(true);
   };
@@ -284,7 +286,8 @@ export default function InventoryView() {
                 selling_price: 0,
                 min_stock_level: 5,
                 current_stock: 0,
-                warehouse_location: 'Main Store'
+                warehouse_location: 'Main Store',
+                active: true
               });
               setShowAddProductModal(true);
             }}
@@ -715,7 +718,7 @@ export default function InventoryView() {
               </button>
             </div>
 
-            <form onSubmit={handleProductSubmit} className="p-5 space-y-3.5 text-xs">
+            <form onSubmit={handleProductSubmit} className="p-5 space-y-3.5 text-xs max-h-[78vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t('inventory.sku')} *</label>
@@ -740,8 +743,9 @@ export default function InventoryView() {
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">{t('inventory.product_name')} *</label>
+                <label htmlFor="product-form-name" className="block text-slate-600 font-semibold mb-1">{t('inventory.product_name')} *</label>
                 <input
+                  id="product-form-name"
                   type="text"
                   required
                   value={productForm.name}
@@ -788,7 +792,7 @@ export default function InventoryView() {
                   <label className="block text-slate-600 font-semibold mb-1">{t('inventory.cost_price')} *</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step={currentCompany?.currency_decimals === 0 ? "1" : "0.01"}
                     required
                     value={productForm.cost_price}
                     onChange={(e) => setProductForm({ ...productForm, cost_price: Number(e.target.value) })}
@@ -796,10 +800,11 @@ export default function InventoryView() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">{t('inventory.selling_price')} *</label>
+                  <label htmlFor="product-form-price" className="block text-slate-600 font-semibold mb-1">{t('inventory.selling_price')} *</label>
                   <input
+                    id="product-form-price"
                     type="number"
-                    step="0.01"
+                    step={currentCompany?.currency_decimals === 0 ? "1" : "0.01"}
                     required
                     value={productForm.selling_price}
                     onChange={(e) => setProductForm({ ...productForm, selling_price: Number(e.target.value) })}
@@ -830,6 +835,15 @@ export default function InventoryView() {
                   />
                 </div>
               </div>
+
+              {editingProduct && (
+                <label className="flex items-center gap-2 text-slate-700 font-semibold">
+                  <input type="checkbox" checked={productForm.active}
+                    onChange={(e) => setProductForm({ ...productForm, active: e.target.checked })} />
+                  {t('common.active')}
+                </label>
+              )}
+              <p className="text-[11px] text-slate-500">{t('inventory.opening_stock_help')}</p>
 
               <div className="border-t border-slate-200 pt-3 flex justify-end space-x-2">
                 <button

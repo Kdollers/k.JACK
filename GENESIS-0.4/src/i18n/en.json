@@ -1,5 +1,5 @@
 {
-  "app_name": "GENESIS",
+  "app_name": "JENESIS",
   "app_tagline": "Professional Business Accounting & ERP",
   "nav": {
     "dashboard": "Dashboard",
@@ -15,7 +15,8 @@
     "erp_1_0": "ERP 1.0",
     "enterprise_modules": "Enterprise Modules",
     "secure_ledger": "Secure Ledger",
-    "double_entry_accounting_standard": "Double-Entry Accounting Standard"
+    "double_entry_accounting_standard": "Double-Entry Accounting Standard",
+    "help": "Help Center"
   },
   "common": {
     "save": "Save",
@@ -117,7 +118,9 @@
     "records_count": {
       "one": "{count} record",
       "other": "{count} records"
-    }
+    },
+    "city": "City / town",
+    "country": "Country"
   },
   "dashboard": {
     "title": "Executive Financial Dashboard",
@@ -282,7 +285,8 @@
     },
     "category_general": "General",
     "unit_pieces": "pieces",
-    "main_store": "Main store"
+    "main_store": "Main store",
+    "opening_stock_help": "New items start with zero stock. Use a posted stock adjustment or purchase to establish opening quantities and their ledger values."
   },
   "sales": {
     "title": "Sales & Billing",
@@ -623,18 +627,23 @@
     "company_updated_notice": "Company profile and settings saved.",
     "company_created_notice": "Company {name} created with its chart of accounts.",
     "user_created_notice": "User {name} created.",
-    "tax_created_notice": "Tax rate saved."
+    "tax_created_notice": "Tax rate saved.",
+    "choose_country": "Select a country",
+    "base_currency_warning": "Choose the base currency before posting transactions. Changing it later is blocked. Currency conversion and FIFO are not yet available; verify local tax rates before invoicing.",
+    "fifo_unavailable": "FIFO (not implemented — weighted average only)",
+    "country": "Country",
+    "role_network": "Network & Maintenance"
   },
   "auth": {
     "app_tagline": "Business accounting & management",
     "language": "Language",
     "login_title": "Sign in",
-    "login_intro": "Enter your GENESIS username and password.",
+    "login_intro": "Enter your JENESIS username and password.",
     "username": "Username",
     "password": "Password",
     "sign_in": "Sign in",
     "signing_in": "Signing in…",
-    "setup_title": "Set up GENESIS",
+    "setup_title": "Set up JENESIS",
     "setup_intro": "Create the company and the first administrator account. This step is available only once.",
     "company_name": "Company name",
     "full_name": "Administrator full name",
@@ -645,20 +654,20 @@
     "password_mismatch": "The passwords do not match.",
     "password_hint": "At least 10 characters. Do not use your username.",
     "change_password_title": "Change your password",
-    "change_password_intro": "Your password must be changed before you can use GENESIS.",
+    "change_password_intro": "Your password must be changed before you can use JENESIS.",
     "current_password": "Current password",
     "new_password": "New password",
     "change_password": "Change password",
     "sign_out": "Sign out",
     "account": "Account",
-    "unavailable_title": "GENESIS cannot reach its local service",
-    "unavailable_intro": "The accounting service did not respond. Close GENESIS and start it again. If the problem continues, check the log file in your GENESIS data folder.",
+    "unavailable_title": "JENESIS cannot reach its local service",
+    "unavailable_intro": "The accounting service did not respond. Close JENESIS and start it again. If the problem continues, check the log file in your JENESIS data folder.",
     "retry": "Try again",
     "initializing": "Preparing the accounting database…",
     "recovery_link": "Can’t sign in to an existing installation?",
     "recovery_title": "Recover access to an existing installation",
     "recovery_intro": "This database already contains users or business records. Public first-time registration is disabled to protect them.",
-    "recovery_backup": "Close GENESIS and make a copy of your data folder before attempting recovery. Do not remove the database or existing users.",
+    "recovery_backup": "Close JENESIS and make a copy of your data folder before attempting recovery. Do not remove the database or existing users.",
     "recovery_steps": "If an existing administrator can sign in, they can create your account in Settings. Otherwise, ask your authorised administrator or support technician to follow the offline recovery procedure in DESKTOP.md.",
     "recovery_warning": "Reinstalling does not erase your existing data or reopen first-time setup. Never share passwords or send your database to an untrusted person.",
     "recovery_sign_in": "Sign in with an existing account",
@@ -686,7 +695,7 @@
     "LAST_ADMIN": "At least one active administrator must remain.",
     "ROLE_INVALID": "The selected role is not valid.",
     "RESET_DISABLED": "Resetting the database from the interface is disabled. Use a backup and restore instead.",
-    "NO_COMPANY": "No company record exists. Restart GENESIS to initialise the database.",
+    "NO_COMPANY": "No company record exists. Restart JENESIS to initialise the database.",
     "MISSING_FIELDS": "Please fill in all required fields.",
     "USER_CREATE_FAILED": "The user could not be created.",
     "USER_UPDATE_FAILED": "The user could not be updated.",
@@ -749,7 +758,7 @@
     "EMPTY_COUNT": "Add at least one item to the physical count.",
     "EMPTY_CREDIT_NOTE": "Add at least one line to the credit note.",
     "EMPTY_RETURN": "Add at least one item to the return.",
-    "BACKUP_INVALID": "This is not a valid GENESIS backup.",
+    "BACKUP_INVALID": "This is not a valid JENESIS backup.",
     "BACKUP_FORMAT_UNSUPPORTED": "This older backup format cannot be restored safely. Export a new backup with the current version.",
     "BACKUP_CHECKSUM_MISMATCH": "The backup is damaged or has been changed. No data was restored.",
     "BACKUP_COMPANY_MISMATCH": "This backup belongs to another company.",
@@ -761,7 +770,42 @@
     "RESTORE_FAILED": "The backup could not be restored. Your data remains unchanged.",
     "RATE_LIMITED": "Too many attempts. Wait a moment and try again.",
     "INVALID_JSON": "The request could not be read. Please check the submitted data.",
-    "REQUEST_TOO_LARGE": "The request is too large. Please use a smaller file."
+    "REQUEST_TOO_LARGE": "The request is too large. Please use a smaller file.",
+    "FIELD_TOO_LONG": "The entered text is too long.",
+    "FIELD_INVALID": "Check the entered field and try again.",
+    "AMOUNT_INVALID": "Enter a valid nonnegative amount.",
+    "ACTIVE_INVALID": "Choose a valid active status.",
+    "CODE_INVALID": "Use only letters, numbers, periods, hyphens or underscores in the code.",
+    "SEARCH_INVALID": "The search text is invalid or too long.",
+    "SERVICE_BUSY": "The database is busy. Try again shortly.",
+    "COUNTRY_INVALID": "Choose a valid country from the list.",
+    "CURRENCY_UNSUPPORTED": "Choose XAF, RWF, USD, EUR or UGX.",
+    "CURRENCY_PRECISION_INVALID": "The amount has more decimal places than this currency supports.",
+    "CURRENCY_CHANGE_REQUIRES_MIGRATION": "Changing the base currency or its precision is blocked to protect existing amounts. Contact the administrator for a verified migration.",
+    "LANGUAGE_INVALID": "Choose English, French or Kinyarwanda.",
+    "FISCAL_DATE_INVALID": "Enter a valid fiscal date in MM-DD format.",
+    "FIFO_NOT_IMPLEMENTED": "FIFO costing is not implemented. Use weighted average until a tested migration is available.",
+    "VALUATION_METHOD_INVALID": "Choose a valid inventory valuation method.",
+    "VALUATION_CHANGE_REQUIRES_MIGRATION": "The valuation method cannot be changed after inventory movements without a verified migration.",
+    "CHART_INCOMPLETE": "The current company chart lacks accounts required to create a new company or product.",
+    "CROSS_COMPANY_USER_UPDATE": "This user profile belongs to another company. Manage it from the user’s home company.",
+    "FOREIGN_CURRENCY_UNSUPPORTED": "Foreign-currency transactions are not available yet. Use the company base currency.",
+    "CREDIT_LIMIT_INVALID": "Enter a valid nonnegative credit limit.",
+    "LEAD_TIME_INVALID": "Lead time must be a whole number of days.",
+    "RATING_INVALID": "Rating must be a whole number from 0 to 5.",
+    "SKU_REQUIRED": "A valid product code is required.",
+    "PRODUCT_NAME_REQUIRED": "A product name is required.",
+    "PRODUCT_TYPE_INVALID": "Choose goods or services.",
+    "PRODUCT_TYPE_LOCKED": "The item type cannot be changed after inventory movements.",
+    "STOCK_INVALID": "Enter a valid nonnegative stock quantity.",
+    "INITIAL_STOCK_REQUIRES_ADJUSTMENT": "Opening stock cannot be set on a product form. Post a stock adjustment or purchase instead.",
+    "UNIT_INVALID": "Enter a valid unit of measure.",
+    "PRICE_INVALID": "Enter a valid nonnegative price.",
+    "COMPANY_INVALID": "Select a valid company.",
+    "APP_MODE_INVALID": "Open Seller, Administrator or Network & Maintenance from its own entry point.",
+    "APP_MODE_FORBIDDEN": "Your account is not authorized for this application. Use a permitted entry point.",
+    "BANK_TYPE_INVALID": "Choose a valid bank, cash or mobile-money account type.",
+    "OPENING_BALANCE_REQUIRES_JOURNAL": "A new bank or cash account must start at zero. Post a balanced opening journal to establish its balance."
   },
   "languages": {
     "en": "English",
@@ -964,5 +1008,170 @@
     "count_posted": "Physical count {number} posted; quantity variance {quantity}, value variance {amount}",
     "other_event": "{action} in {module} (record {record})",
     "original_description": "Original audit description"
+  },
+  "currencies": {
+    "XAF": "Central African CFA franc",
+    "RWF": "Rwandan franc",
+    "USD": "US dollar",
+    "EUR": "Euro",
+    "UGX": "Ugandan shilling"
+  },
+  "app_modes": {
+    "seller": "Seller",
+    "administrator": "Administrator",
+    "network": "Network & Maintenance",
+    "general": "Business"
+  },
+  "about": {
+    "developer": "Developed by KAYIGANWA JACQUES",
+    "version": "Version {version}",
+    "partial": "Some features are still under development. See Help for verified capabilities and limitations.",
+    "title": "About JENESIS"
+  },
+  "seller": {
+    "title": "Seller workspace",
+    "subtitle": "Sales, customers and available products for your company. No purchasing costs or accounting controls.",
+    "today_invoices": "Invoices today",
+    "today_sales": "Sales today",
+    "active_customers": "Active customers",
+    "low_stock": "Low-stock products",
+    "open_sales": "Open sales",
+    "open_customers": "Open customers",
+    "catalog_title": "Product catalog",
+    "catalog_help": "Available products and selling prices. Inventory costs are not shown here."
+  },
+  "staff": {
+    "welcome": "Welcome, {name}",
+    "company": "Company: {name}",
+    "choose_module": "Choose an authorized module from the left menu. Financial reports are restricted to authorized roles."
+  },
+  "network": {
+    "title": "Network & Maintenance",
+    "subtitle": "Health checks and verified safety copies. Business records remain in the administrator and seller workspaces.",
+    "health_title": "Service health",
+    "service_status": "Service",
+    "database_check": "Database integrity",
+    "foreign_keys": "Database references enforced",
+    "unknown": "Not checked",
+    "healthy": "Healthy",
+    "check_ok": "Passed",
+    "refresh": "Run health check",
+    "safety_copies": "Host safety copies",
+    "snapshot_help": "Creates a verified, consistent SQLite snapshot on this host. Only an administrator can download company data or restore a company backup.",
+    "create_snapshot": "Create verified snapshot",
+    "snapshot_done": "Verified safety copy created: {name}",
+    "lan_unavailable": "LAN hosting is not enabled in this build. All connections currently use the local service; do not share database files across computers."
+  },
+  "calculator": {
+    "title": "Calculator",
+    "expression": "Calculation",
+    "invalid": "Check the expression or division by zero.",
+    "no_posting": "For calculations only; never posts to the ledger."
+  },
+  "brand": {
+    "logo": "JENESIS J logo"
+  },
+  "help": {
+    "title": "Help Center",
+    "intro": "Step-by-step guidance for features available in your application.",
+    "offline": "Built into JENESIS: works without an internet connection.",
+    "topics": "Help topics",
+    "open_module": "Open {module}",
+    "no_guarantees": "This guidance is not accounting, tax, security or legal advice.",
+    "start": {
+      "title": "First steps",
+      "intro": "Choose the right entry point before you sign in.",
+      "step1": "Open the Seller (red), Administrator (blue) or Network & Maintenance (green) shortcut. A user must have the appropriate role for that application.",
+      "step2": "On a new installation, complete the setup screen: enter your company, country, base currency and a strong administrator password. There is no supplied default password.",
+      "step3": "Sign in with your own username. Use the left menu to open a module; switch languages from the top bar. Sign out when leaving the computer."
+    },
+    "company": {
+      "title": "Companies and people",
+      "intro": "Company data is separated by membership, not by trusting a request header.",
+      "step1": "In Settings, edit the company details, or create another company if your role allows it. A new company gets its own chart of accounts, not another company’s balances.",
+      "step2": "Choose the country and base currency when creating the company. Supported base currencies are XAF, RWF, USD, EUR and UGX; changing the existing base currency is blocked to avoid reinterpreting old amounts.",
+      "step3": "In Settings → Users, create a separate account and role for each person. Assign company access explicitly; switch companies with the top-bar selector to confirm you are in the right ledger."
+    },
+    "contacts": {
+      "title": "Customers and suppliers",
+      "intro": "Contact records belong to one company.",
+      "step1": "Open Customers, then use Add customer. Enter a name and any available contact details. Open a row to edit; check the message if a save is refused.",
+      "step2": "In the Administrator application, use Suppliers → Add supplier for purchase partners. Seller accounts do not receive supplier data.",
+      "step3": "Deactivation hides a contact from new activity but keeps its existing invoices and history. Aging tabs require report permission."
+    },
+    "products": {
+      "title": "Products and stock",
+      "intro": "Selling price and inventory cost are different fields.",
+      "step1": "In Administrator → Inventory, add a product with a unique SKU, name, selling price and cost price. Edit it there; stock changes are recorded through purchases, sales or authorized adjustments.",
+      "step2": "Seller → Inventory shows a catalog with available quantity and selling price, not purchase cost or inventory valuation. Low-stock warnings come from your company’s inventory.",
+      "step3": "Check the stock movements before an adjustment. A posted sales invoice affects inventory and the ledger; do not delete historical postings to change quantities."
+    },
+    "sales": {
+      "title": "Sales workflow",
+      "intro": "An invoice is not the same thing as a cash receipt.",
+      "step1": "Open Sales → Invoices and create an invoice. Select the customer, dates and product lines; review quantity, selling price, discount and tax before saving.",
+      "step2": "Auto-post creates the associated accounting and stock movements. If you save as a draft, review it and post deliberately. A second post is refused.",
+      "step3": "Use the payment action to record settlement; partial payment is tracked. Print a copy for the customer after checking its status and totals.",
+      "step4": "Quotes and orders are separate stages. Use a credit note for an approved return or correction; confirm whether to put items back into stock."
+    },
+    "purchases": {
+      "title": "Purchasing workflow",
+      "intro": "Available to authorized Administrator roles, not Seller.",
+      "step1": "Create the supplier first. In Purchases → Bills, select the supplier, dates, vendor reference and product lines with costs and tax.",
+      "step2": "Review the bill before auto-posting or manually post a saved draft. Posting updates the ledger and applicable stock; repeating the same post does not duplicate it.",
+      "step3": "Record payments separately. Review purchase orders and returns in their tabs and check supplier balances before closing a period."
+    },
+    "banking": {
+      "title": "Bank and cash",
+      "intro": "Cash and bank records are company-specific.",
+      "step1": "In Banking, review accounts and the current balance before entering a payment or transfer. Choose the correct company and reference.",
+      "step2": "Match the payment to its invoice or bill where possible. Check whether it is partial or complete and verify the resulting balance.",
+      "step3": "Reconcile against an external bank statement outside the app; do not treat the screen balance as proof the bank has settled a transfer."
+    },
+    "accounting": {
+      "title": "Double-entry accounting",
+      "intro": "A posted journal must have equal debits and credits.",
+      "step1": "In Accounting, open the chart of accounts and choose accounts that belong to the current company. Never treat a display-only translation of an account name as a new account.",
+      "step2": "For a manual journal, supply the date, description and lines. Verify debits equal credits before posting. Posted entries cannot be silently edited.",
+      "step3": "Correct a posting with a documented reversal rather than deleting evidence. Recheck the trial balance and audit trail after the correction."
+    },
+    "reports": {
+      "title": "Reports and checks",
+      "intro": "Reports reflect data posted in the selected company.",
+      "step1": "Open Reports to view a trial balance or financial summary. Compare the reporting period and currency against your source documents.",
+      "step2": "If totals look wrong, check whether invoices or bills remain drafts, whether payments were recorded and whether a company switch changed the active ledger.",
+      "step3": "Only authorized roles can see full financial reports and contact aging. Exported numbers still require review by an accountant."
+    },
+    "backup": {
+      "title": "Backup and restore",
+      "intro": "There are two different safeguards: a company JSON export and a full host SQLite safety copy.",
+      "step1": "In Administrator → Settings → Backup, download the company export and store a second copy outside the computer. Check the filename and date. This export excludes passwords and sessions.",
+      "step2": "Before a restore, check the chosen company and file. Enter your administrator password and type RESTORE exactly. Validation checks checksum, company ownership, references and balanced journals before the transaction runs.",
+      "step3": "The service creates a verified full-database safety copy before writing; a successful company restore signs everyone out. Sign in again and verify invoices, balances and stock.",
+      "step4": "For a full-database disaster recovery, close the application first and get a trusted technician to restore a verified SQLite snapshot. Do not move only the .db file while the service is running."
+    },
+    "network": {
+      "title": "Health and maintenance",
+      "intro": "The green application checks the local service. It does not provide a business ledger to maintenance staff.",
+      "step1": "Sign in with a Network role (or as administrator). Use Run health check to inspect service status, SQLite integrity and foreign-key enforcement.",
+      "step2": "Use Create verified snapshot to make a consistent full SQLite copy in the host’s backups folder. Record the name; copy it to separate storage using authorized operating-system access.",
+      "step3": "Only an administrator can download a company export or restore one here. A Network user cannot see products, customers, accounts or financial reports.",
+      "step4": "This version does not enable LAN hosting. Do not share or synchronize SQLite files between computers; use the local service until a secure host/client feature is released."
+    },
+    "safety": {
+      "title": "Passwords and safe operation",
+      "intro": "Keep a secure copy of credentials and backups separate from the workstation.",
+      "step1": "Do not share accounts or passwords. After failed sign-ins, access may be temporarily locked. Use the authorized recovery procedure if the only administrator loses access.",
+      "step2": "Before updating or uninstalling, make a backup and verify that the current database can be read. Installed data is in the user data folder, not the program folder.",
+      "step3": "Use the same application backend for all three modes. Never open the live SQLite file in another program to edit it while JENESIS is running."
+    },
+    "limits": {
+      "title": "Current limitations",
+      "intro": "JENESIS 0.1 is an early, unsigned release. Verify results before relying on them.",
+      "step1": "Supported currencies are separate company base currencies, not automatic exchange conversion. There is no proven historical FX revaluation or conversion in this release.",
+      "step2": "LAN host/client, shared remote access, automatic off-site backups and unattended disaster recovery are not enabled. Manual external copies remain your responsibility.",
+      "step3": "An installer test on a Windows CI runner is not a physical-PC, upgrade, antivirus or offline-installation certification. Consult an accountant for legal tax and reporting obligations.",
+      "step4": "For XAF, RWF and UGX, fractional monetary amounts are refused instead of being hidden by a zero-decimal display. Adjust the source transaction with accounting approval; no country-specific rounding policy has been certified."
+    }
   }
 }

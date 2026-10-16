@@ -1,141 +1,39 @@
-# GENESIS — Professional Business Accounting & Management Software
+# JENESIS 0.1
 
-**GENESIS** is a Windows desktop accounting and business-management application for small and medium-sized businesses. It contains a double-entry accounting engine, sales and purchasing workflows, inventory, reports, bank/cash records, and server-enforced roles. The interface has English, French, and Kinyarwanda dictionaries. This source checkout was extracted from `GEN 0.4.zip`; the archive's historical database is **not** a starter database and must not be used for a new installation. See [DESKTOP.md](DESKTOP.md) for deployment and limitations.
+**Business management & accounting software by KAYIGANWA JACQUES.** This is an early Windows desktop release based on the existing GENESIS project, **not a clean-slate rewrite**. Its historical source database is confidential project data, not a starter database: never ship it, reset it, or run tests against it. Normal users install an application; Node.js and developer tools are only needed to build or troubleshoot from source.
 
----
+## Three independently launchable applications
 
-## 🚀 Key Functional Modules
+| Shortcut / color | What it does | Who may sign in |
+| --- | --- | --- |
+| **JENESIS Seller** · red `#DC2626` | Customers, product catalog **without purchase costs**, sales and invoices, display-only calculator. | Sales, administrator |
+| **JENESIS Administrator** · blue `#2563EB` | Company settings, authorized sales/purchasing, inventory, accounting, banking, reports and backup; display-only calculator. | Administrator, accountant, purchaser, inventory staff, read-only manager (modules still require role permissions) |
+| **JENESIS Network and Maintenance** · green `#16A34A` | Local service/database health and verified, full-database SQLite snapshots; administrators can additionally export/restore a company. **No calculator or business module.** | Network staff, administrator |
 
-### 1. Double-Entry Accounting Core
-- **Mathematical Balance Enforcement**: Every posted journal entry strictly verifies `Total Debits = Total Credits` down to the exact penny before committing. Unbalanced transactions are rejected.
-- **Chart of Accounts**: Full hierarchical management across Assets, Liabilities, Equity, Revenue, Cost of Goods Sold (COGS), and Operating Expenses.
-- **Automated Posting**:
-  - **Sales Invoice Posting**: Debits Accounts Receivable / Cash, Credits Sales Revenue & Output VAT, Debits Cost of Goods Sold (COGS), Credits Merchandise Inventory, decrements warehouse stock, and logs inventory movement.
-  - **Purchase Bill Posting**: Debits Merchandise Inventory & Input VAT, Credits Accounts Payable, increments warehouse stock, recalculates weighted-average unit cost, and updates supplier balance.
-  - **Payments & Receipts**: Automatic debit/credit linking customer receipts, vendor disbursements, operating expenses, and bank transfers.
-- **Audit-Proof Reversals**: Posted journal entries cannot be silently destroyed; a proper `REVERSAL` transaction swaps debits and credits while referencing the original voucher.
+Each Windows shortcut opens its own mode-specific window. All three share **one local backend and one live SQLite database**, not synchronized database copies. The server binds the session to its entry-point mode and checks permissions and company membership on **every** request. A browser-side menu is not a security boundary. The administrator shortcut is the default when running `JENESIS.exe` without arguments; shortcuts for Seller and Network pass validated mode flags.
 
-### 2. Trilingual Localization
-1. **English (UK / US)**
-2. **Français**
-3. **Ikinyarwanda**
+## Existing accounting functionality
 
-Switch languages in the top navigation bar or Settings. All three dictionaries share the same keys; `npm run test:i18n` checks key/placeholder parity and translated UI text. Formatting changes only presentation—not stored transaction values or currency configuration. User-entered names and memos remain verbatim. Recognized generated ledger and audit descriptions are translated only when displayed; the original audit wording is still available. Legal/accounting terminology, especially Kinyarwanda, should be reviewed by a qualified local accountant before regulated use.
+- Customers, suppliers, products and companies have tested create/edit/search, validation, error reporting, restart persistence and company isolation. Creating another company gives it its **own** account definitions, with no copied balances/transactions. Existing-company base currency cannot be changed through the settings API.
+- Sales invoices, credit notes, purchasing bills and returns, payments, stock movements/adjustments, journals and financial reports remain in the existing stack. Posting workflows are transactionally scoped and tested for balanced journals and idempotence; use a documented reversal rather than deleting posted history. Do not use this software as sole proof of legal/tax compliance.
+- Per-company base currencies: **XAF** (Central African CFA franc), RWF, USD, EUR and UGX. A company maintains amounts in the chosen base currency. **No automatic FX conversion, historical-rate engine or certified FIFO costing.** Zero-decimal companies refuse invoices/payments/journals with fractional monetary values rather than silently hiding them; tax/discount amounts must resolve to whole currency units until a jurisdiction-specific rounding policy is established. Existing stored currency amounts are not reinterpreted during upgrade. More countries can be selected by ISO country code; a country selection does not implement its tax law automatically.
+- English, French and Kinyarwanda interface catalogs, formatted dates/numbers, translated native menus, and a **bundled offline Help Center** with role-specific tutorials and an honest About/limitations section. External review of legal/accounting terminology, especially Kinyarwanda, is still required.
 
-### 3. Executive Financial Dashboard
-- **Real-time KPI Metrics**: Total Sales, Total Purchases, Liquidity Balances (Cash on Hand, Commercial Bank, Mobile Money), Accounts Receivable, Accounts Payable, Stock Asset Value, Gross Margin, and Net Profit.
-- **Date Period Filter**: Today, This Week, This Month, This Quarter, This Year, or Custom Ranges.
-- **Low Stock Warnings**: Proactive alerts highlighting products reaching or falling below minimum reorder levels.
-- **Recent Transactions & Top Debtors / Creditors**.
+## Installing and preserving data
 
-### 4. Products & Stock Management
-- Complete item catalog supporting physical merchandise and services.
-- Real-time stock tracking with storage bay / warehouse location assignment.
-- **Stock Adjustments**: Formal loss, damage, expiration, and surplus adjustment vouchers with balanced GL postings.
-- **Physical Inventory Count Wizard**: Side-by-side reconciliation of theoretical system quantity vs. actual counted quantity with automated variance valuation and adjustment posting.
-- **Inventory Movements Ledger**: Full chronological audit trail of all warehouse ins and outs.
-- **Stock Valuation**: Real-time asset cost valuation, retail valuation, and projected margins.
+An unsigned Windows NSIS installer is built and installed/tested on a **hosted Windows runner**, not a physical Windows 10/11 PC. The installer does not ship a sample database, historical users or a default password. On a fresh installation it creates `%APPDATA%\JENESIS\genesis.db` and prompts once for an administrator and company. On upgrade, if `%APPDATA%\GENESIS\genesis.db` already exists, JENESIS keeps using that location instead; it does **not** silently start a blank second ledger. If *both* directories contain databases, startup refuses to choose one. The installed data directory is retained on uninstall; make and verify an external backup before any update/uninstall anyway. See [DESKTOP.md](DESKTOP.md) for the exact recovery process and verified snapshot/export distinction.
 
-### 5. Sales & Invoicing
-- **Quotations / Estimates**: Pro-forma estimates with one-click conversion to Sales Invoices.
-- **Sales Invoices**: Line-item computation with discounts, configurable VAT tax rates, subtotal, and balance due tracking.
-- **Printable invoice**: Displays the available company/client information and itemized totals; it does not invent missing contact details or payment instructions. Review legally required invoice fields locally before use.
-- **Credit Notes**: Sales returns and refunds with optional automatic stock restoration.
+**Current limits:** LAN host/client and remote access are **not enabled** in JENESIS 0.1; the backend is loopback-only. Never share, sync or merge live SQLite files over a network. Off-site backups are manual. No physical-PC upgrade, antivirus/SmartScreen or offline installer certification has been completed. This release is unsigned and is not a regulatory certification.
 
-### 6. Purchases & Vendor Bills
-- Purchase Orders and Vendor Bills.
-- Direct inventory increments and automatic unit cost recalculation.
-- Accounts Payable tracking with supplier balance summaries.
+## Development and tests
 
-### 7. Banking & Liquidity Management
-- Management of Cash registers, Commercial Bank accounts, and Mobile Money merchant accounts (e.g. MTN MoMo, Airtel Money).
-- Inter-account fund transfers.
-- Direct expense payments (Rent, Utilities, Salaries) and non-operating revenue receipts.
-
-### 8. Audited Financial Reports
-- **Trial Balance**: Instant verification of debit-credit equality.
-- **Profit & Loss (Income Statement)**: Operating Revenue, COGS, Gross Profit, Operating Expenses, and Net Profit.
-- **Balance Sheet**: Assets = Liabilities + Equity balance verification.
-- **Cash Flow Statement**: Inflows, outflows, and net change in liquid funds.
-- **A/R Aging & A/P Aging Reports**: 1–30, 31–60, 61–90, and >90 day aging brackets.
-- **Customer & Supplier Statements**: Running balance transaction statements.
-- **Tax Report (VAT)**: Output tax collected vs. Input tax deductible = Net VAT payable.
-- **Export & Print**: One-click CSV export and browser-native printing.
-
-### 9. Security Administration
-- Server-side company scoping for the signed-in user. Creating more companies does **not** automatically grant existing users access to them; cross-company workflows have not been qualified.
-- Granular Role-Based Access Control (RBAC):
-  - **Administrator**
-  - **Accountant**
-  - **Sales**
-  - **Purchases**
-  - **Inventory**
-  - **Manager**
-- Comprehensive **Audit Trail Log** capturing timestamps, users, actions, and details.
-- Full system JSON **Backup Export & Restoration** with verification.
-- Public first-run setup is disabled after the first administrator is created; there is no demo-account reset endpoint.
-
----
-
-## 🛠️ Technology Stack
-
-- **Backend**: Node.js & Express
-- **Database Engine**: SQLite with WAL (Write-Ahead Logging) mode and ACID transaction guarantees via `better-sqlite3`
-- **Frontend**: React 18, Vite, Tailwind CSS, Lucide Icons
-- **Architecture**: Modular REST API + Embedded Single Page Application (SPA)
-
----
-
-## 🚀 Running the Application
-
-### 1. Install Dependencies
 ```bash
-npm install
-```
-
-### 2. Run Tests and Localization Audit
-```bash
+npm ci
 npm run test:all
-node scripts/check-i18n.cjs
-```
-The suite uses isolated temporary databases, including a copy of the legacy database extracted from the original zip; it never modifies the extracted `genesis.db`.
-
-### 3. Build Client & Start the Local Server
-```bash
 npm run build
-npm start
+npm run desktop            # requires Electron available on the development machine
 ```
-The server binds to `127.0.0.1:3000` by default. The database lives in per-user storage, **not** in this source directory: on Windows `%APPDATA%\GENESIS\genesis.db` (or the explicit `GENESIS_DB_PATH` for an authorized test/restore). For desktop installation and backups see [DESKTOP.md](DESKTOP.md).
 
-### Versioned source file
-From this source checkout, `npm run release:zip` builds the UI and saves `../GEN 0.4.2.zip`.
-The archive contains the application, built UI, tests and documentation—but **no**
-`genesis.db`, demo accounts, business records, backups, `node_modules` or installer.
-On another machine, unzip it and run `npm ci`; a fresh launch creates a new database
-and shows the one-time administrator setup. Legacy-database tests additionally need the
-original `GEN 0.4.zip` beside the extracted project; it is intentionally not shipped
-inside the new archive.
+`npm run test:all` exercises the accounting engine, CRUD and React forms, mode/session isolation, WAL snapshots, authentication, recovery, security, translations, desktop lifecycle and more, using disposable databases. `npm run desktop:dist` builds `release/JENESIS-Setup-0.1.0.exe` on Windows; the Windows workflow verifies package contents and installs/smoke-tests it in an isolated VM. `npm run release:zip` creates **`../JEN 0.1.zip`** containing source, built UI, help, tests and installer configuration; **no business database, backups, dependencies or installer binary**. This archive is not a substitute for the Windows installer.
 
----
-
-## 👥 First Start, Sign-in and Accounts
-
-- **New installation:** GENESIS opens a one-time setup screen. Enter the company name and create the first
-  administrator. There are no default accounts and no default passwords.
-- **Existing database:** sign in with your existing username. Accounts that still use an old password format
-  are asked to choose a new password at first sign-in.
-- **Roles:** Administrator, Accountant, Sales, Purchases, Inventory, Manager. Each role has a fixed permission
-  set enforced by the server (see `server/auth.js`). The manager role is read-only.
-- **Sessions:** sign-in tokens expire after 30 minutes of inactivity and after 12 hours in total.
-  Five consecutive wrong passwords lock the account for 15 minutes.
-- **Existing installation with no active administrator:** setup remains locked to protect business data. Close
-  GENESIS, make a safe backup, and have the authorized owner use the offline recovery procedure in
-  [DESKTOP.md](DESKTOP.md). The historical archive includes sample users; they are **never automatically
-  deleted or deactivated** by upgrading. The optional recovery action to deactivate six exact historical demo
-  identities requires explicit confirmation. There are no shipped default credentials or demo-seeding switch.
-
-
----
-
-## Limitations and validation
-The source license field is `UNLICENSED`; this README does not grant commercial rights or certify accounting/tax compliance. FIFO is shown as a selectable setting, but the current postings use weighted-average costing; do not rely on FIFO behavior without separate implementation and verification. An unsigned installer and local tests alone do not establish suitability for production or regulatory filings. Have a qualified accountant and native Kinyarwanda reviewer validate workflows and terminology before rollout.
+The source-run backend listens on `127.0.0.1:3000` by default. For controlled tests, `GENESIS_DB_PATH`/`GENESIS_DIST_DIR` environment variables retain their old names for compatibility. Never set the database path to a real business database when running tests or experimenting. Source tests needing a historical fixture extract a **temporary copy** from the separate original GEN 0.4 archive. See [DESKTOP.md](DESKTOP.md) for security, backups, Windows smoke tests and documented limitations.
