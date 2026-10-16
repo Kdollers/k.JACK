@@ -47,8 +47,16 @@ jobs:
         run: |
           $installer = Get-ChildItem release -Filter 'JENESIS-Setup-*.exe' | Select-Object -First 1
           if (-not $installer) { throw 'Installer was not produced.' }
-          ./scripts/smoke-test-installed.ps1 -InstallerPath $installer.FullName
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Run in a child shell so even an early 'exit' or a parser error is
+          # captured and reported as a GitHub check annotation (not only a log).
+          $smokeOutput = @()
+          & pwsh -NoProfile -File ./scripts/smoke-test-installed.ps1 -InstallerPath $installer.FullName 2>&1 | Tee-Object -Variable smokeOutput
+          if ($LASTEXITCODE -ne 0) {
+            $tail = ($smokeOutput | Select-Object -Last 16 | Out-String).Trim()
+            $tail = $tail -replace '%', '%25' -replace "`r", '%0D' -replace "`n", '%0A'
+            Write-Output "::error title=JENESIS installed smoke failure::$tail"
+            exit 1
+          }
       - name: Upload installer for testing
         uses: actions/upload-artifact@v4
         with:
