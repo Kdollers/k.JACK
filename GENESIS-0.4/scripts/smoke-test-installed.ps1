@@ -152,10 +152,10 @@ Step 'Three independently launchable Start menu and desktop shortcuts use their 
     $icon = if ($mode -eq 'Network and Maintenance') { 'network' } else { $mode.ToLowerInvariant() }
     foreach ($linkFile in @($startLinks[0], $desktopLinks[0])) {
       $link = $wsh.CreateShortcut($linkFile.FullName)
-      Assert ($link.TargetPath -eq $ExePath) "Incorrect executable for $file: $($link.TargetPath)"
+      Assert ($link.TargetPath -eq $ExePath) "Incorrect executable for ${file}: $($link.TargetPath)"
       if ($mode -ne 'Administrator') {
-        Assert ($link.Arguments -eq "--jenesis-mode=$icon") "Incorrect launch mode for $file: $($link.Arguments)"
-        Assert ($link.IconLocation -like "*j-$icon.ico*") "Incorrect icon for $file: $($link.IconLocation)"
+        Assert ($link.Arguments -eq "--jenesis-mode=$icon") "Incorrect launch mode for ${file}: $($link.Arguments)"
+        Assert ($link.IconLocation -like "*j-$icon.ico*") "Incorrect icon for ${file}: $($link.IconLocation)"
       }
     }
   }
