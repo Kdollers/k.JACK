@@ -96,11 +96,28 @@ try {
   Assert ($choice.selected -eq 'current' -and $choice.currentInitialized -eq $true) `
     'The explicit choice was not persisted and marked initialized.'
   Assert ((Get-FileHash $legacyDb -Algorithm SHA256).Hash -eq $before) 'The older GENESIS database changed.'
-  $archived = node -e "const D=require('better-sqlite3');const db=new D(process.argv[1],{readonly:true,fileMustExist:true});console.log(db.prepare('SELECT COUNT(*) AS n FROM users').get().n);db.close()" $legacyDb
-  Assert ($LASTEXITCODE -eq 0 -and [int]$archived -ge 1) 'The original user accounts were lost.'
-  $newUsers = node -e "const D=require('better-sqlite3');const db=new D(process.argv[1],{readonly:true,fileMustExist:true});console.log(db.prepare('SELECT COUNT(*) AS n FROM users').get().n);db.close()" $currentDb
-  Assert ($LASTEXITCODE -eq 0 -and [int]$newUsers -eq 0) 'The new installation imported existing accounts.'
-  Write-Host '    PASS: native choice -> separate first-run setup; original ledger unchanged.' -ForegroundColor Green
+  # needsSetup=true is the server's transactionally checked evidence that the
+  # new database contains no users/business data. The original file hash proves
+  # the archived accounts and transactions were not touched. Do not open the DB
+  # using the build machine's Node addon: electron-builder rebuilt it for Electron.
+  $password = -join ((48..57 + 65..90 + 97..122) | Get-Random -Count 20 | ForEach-Object { [char]$_ }) + 'Aa1!'
+  $setup = @{
+    company_name = 'Windows Choice Test'; full_name = 'Temporary Choice Owner'
+    username = 'choice.owner'; password = $password; confirm_password = $password
+  } | ConvertTo-Json
+  Invoke-RestMethod -Uri "$url/api/setup/initialize" -Method Post -ContentType 'application/json' -Body $setup -TimeoutSec 15 | Out-Null
+  $after = Invoke-RestMethod -Uri "$url/api/setup/status" -TimeoutSec 15
+  Assert ($after.needsSetup -eq $false -and $after.hasAdministrator -eq $true) 'Setup did not create an administrator.'
+  $loginBody = @{ username = 'choice.owner'; password = $password } | ConvertTo-Json
+  $login = Invoke-RestMethod -Uri "$url/api/auth/login" -Method Post -ContentType 'application/json' -Body $loginBody -TimeoutSec 15
+  Assert ([bool]$login.token) 'The newly created administrator cannot sign in.'
+  $duplicateRefused = $false
+  try {
+    Invoke-RestMethod -Uri "$url/api/setup/initialize" -Method Post -ContentType 'application/json' -Body $setup -TimeoutSec 15 | Out-Null
+  } catch { $duplicateRefused = $_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 409 }
+  Assert $duplicateRefused 'Another unauthenticated first administrator was accepted.'
+  Assert ((Get-FileHash $legacyDb -Algorithm SHA256).Hash -eq $before) 'Existing records changed during setup.'
+  Write-Host '    PASS: native choice -> separate admin setup/login; original ledger unchanged.' -ForegroundColor Green
 } finally {
   # Gracefully close only the unpacked test binary, not another installed app.
   $deadline = (Get-Date).AddSeconds(30)
