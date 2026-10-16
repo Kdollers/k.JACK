@@ -18,7 +18,7 @@ itself healthy, and then opens the GENESIS window. The browser is not needed.
 | Locale, setup/recovery, coded-error and payment tests | `npm run test:i18n`, `npm run test:setup`, `npm run test:recovery`, `npm run test:errors`, `npm run test:payments` |
 | Run the desktop app from source | `npm run build` then `npm run desktop` |
 | Unpacked Windows build (test folder) | `npm run desktop:pack` → `release/win-unpacked/GENESIS.exe` |
-| Windows installer (NSIS) | `npm run desktop:dist` → `release/GENESIS-Setup-1.0.0.exe` |
+| Windows installer (NSIS) | `npm run desktop:dist` → `release/GENESIS-Setup-0.4.2.exe` |
 
 Run the Windows packaging commands on Windows 10/11 (x64) with Node.js 20 or newer.
 
@@ -113,13 +113,12 @@ Windows installer, verifies the unpacked package, then uses
 `scripts/smoke-test-installed.ps1` to install, launch, test first setup/login/accounting,
 close, reopen, restore and uninstall without using any existing customer database. The
 installer is uploaded as a testing artifact; no release is published automatically.
-**Current result:** [Windows installer run 38831290302](https://github.com/Kdollers/k.JACK/actions/runs/38831290302)
-passed on 2026-10-16 for commit `82bc661`: tests, NSIS installer creation, package verification
-(including the unpacked SQLite native binary and absence of a database), installed-app
-smoke test and artifact upload all succeeded. The `GENESIS-Windows-installer` artifact is
-available from that run (~85 MB). This verifies the CI runner, **not** a physical Windows PC.
-A previous successful run (38092287331) belonged to a *different* branch and is not the
-basis for this revision's result.
+**Version 0.4.2:** [Check the latest Windows installer run for this branch](https://github.com/Kdollers/k.JACK/actions?query=branch%3Aarena%2F0c8d3a58-k-jack)
+before distributing. A successful run uploads a `GENESIS-Windows-installer` artifact
+containing `GENESIS-Setup-0.4.2.exe` and checks installation on the CI runner.
+The earlier [run 38831577866](https://github.com/Kdollers/k.JACK/actions/runs/38831577866)
+passed for the prior 1.0.0 filename; it does **not** verify the 0.4.2 installer.
+CI is on a hosted Windows VM, **not** a physical Windows 10/11 PC.
 
 On a separate, clean Windows 10/11 x64 test machine (with Node.js 22 and Python 3.11
 on the **build machine** only), run:

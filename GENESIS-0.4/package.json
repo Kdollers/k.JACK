@@ -1,7 +1,7 @@
 {
   "name": "genesis-accounting",
   "productName": "GENESIS",
-  "version": "1.0.0",
+  "version": "0.4.2",
   "description": "GENESIS - Professional Business Accounting & Management Software",
   "author": "GENESIS",
   "license": "UNLICENSED",
@@ -12,6 +12,7 @@
     "dev:server": "node server/index.js",
     "build:client": "vite build",
     "build": "vite build",
+    "release:zip": "npm run build && node scripts/package-source.cjs",
     "test": "node tests/accounting-engine.test.js",
     "test:desktop": "node tests/desktop-backend.test.js",
     "test:all": "npm test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:setup && npm run test:recovery && npm run test:errors && npm run test:payments && npm run test:i18n",

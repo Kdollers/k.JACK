@@ -107,6 +107,15 @@ npm start
 ```
 The server binds to `127.0.0.1:3000` by default. The database lives in per-user storage, **not** in this source directory: on Windows `%APPDATA%\GENESIS\genesis.db` (or the explicit `GENESIS_DB_PATH` for an authorized test/restore). For desktop installation and backups see [DESKTOP.md](DESKTOP.md).
 
+### Versioned source file
+From this source checkout, `npm run release:zip` builds the UI and saves `../GEN 0.4.2.zip`.
+The archive contains the application, built UI, tests and documentation—but **no**
+`genesis.db`, demo accounts, business records, backups, `node_modules` or installer.
+On another machine, unzip it and run `npm ci`; a fresh launch creates a new database
+and shows the one-time administrator setup. Legacy-database tests additionally need the
+original `GEN 0.4.zip` beside the extracted project; it is intentionally not shipped
+inside the new archive.
+
 ---
 
 ## 👥 First Start, Sign-in and Accounts

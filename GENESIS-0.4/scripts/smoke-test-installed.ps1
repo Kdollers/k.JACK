@@ -10,7 +10,7 @@
 # touch a real business database. Run it on a clean test machine or a CI runner.
 #
 # Usage (PowerShell 5.1+ or PowerShell 7):
-#   .\scripts\smoke-test-installed.ps1 -InstallerPath .\release\GENESIS-Setup-1.0.0.exe
+#   .\scripts\smoke-test-installed.ps1 -InstallerPath .\release\GENESIS-Setup-0.4.2.exe
 #
 # Exit code 0 = all checks passed. Any failure stops the run and reports the step.
 
