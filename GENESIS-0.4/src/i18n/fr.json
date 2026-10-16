@@ -671,7 +671,15 @@
     "recovery_steps": "Si un administrateur existant peut se connecter, il peut créer votre compte dans Paramètres. Sinon, demandez à votre administrateur ou à un technicien autorisé de suivre la procédure de récupération hors ligne dans DESKTOP.md.",
     "recovery_warning": "Une réinstallation ne supprime pas les données existantes et ne réactive pas la configuration initiale. Ne communiquez jamais vos mots de passe ni votre base à une personne non fiable.",
     "recovery_sign_in": "Se connecter avec un compte existant",
-    "setup_complete_notice": "Compte administrateur créé. Connectez-vous avec les identifiants que vous avez choisis."
+    "setup_complete_notice": "Compte administrateur créé. Connectez-vous avec les identifiants que vous avez choisis.",
+    "existing_admin_notice": "Cette base possède déjà un administrateur actif. La création du premier compte est désactivée. Connectez-vous avec un compte existant ; si ce n’est pas votre installation, choisissez une installation distincte ci-dessous.",
+    "new_installation_explanation": "Aucun compte pour ces anciennes données ? Démarrez une base JENESIS distincte et VIDE pour votre entreprise. Les données, utilisateurs et sauvegardes GENESIS resteront inchangés et ne seront PAS importés.",
+    "switch_current_explanation": "Une base JENESIS distincte existe déjà. Ouvrez-la avec ses propres comptes ; aucune donnée ne sera fusionnée ni réinitialisée.",
+    "switch_legacy_explanation": "L’ancienne base GENESIS est toujours disponible. Ouvrez-la avec ses propres comptes ; aucune donnée ne sera fusionnée ni réinitialisée.",
+    "start_new_installation": "Démarrer une nouvelle installation distincte",
+    "switch_current": "Ouvrir l’installation JENESIS",
+    "switch_legacy": "Ouvrir l’installation GENESIS",
+    "installation_switch_error": "Impossible de changer d’installation. Fermez les autres fenêtres JENESIS et réessayez. Si le problème persiste, demandez l’aide d’un administrateur autorisé."
   },
   "errors": {
     "GENERIC": "Une erreur est survenue. Veuillez réessayer.",

@@ -31,7 +31,10 @@ function setupStatus(db) {
   const clean = users === 0 && !hasBusinessData(db);
   return {
     needsSetup: !completed && clean,
-    recoveryRequired: (!clean && activeAdmins === 0) || (completed && users === 0)
+    recoveryRequired: (!clean && activeAdmins === 0) || (completed && users === 0),
+    // Public status exposes no account names, counts, or data. It lets the local
+    // sign-in screen explain why a previous installation is NOT first-run setup.
+    hasAdministrator: activeAdmins > 0
   };
 }
 

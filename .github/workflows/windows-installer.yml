@@ -42,6 +42,17 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify package contents and native SQLite binary
         run: node scripts/verify-package.cjs release/win-unpacked
+      - name: Test native existing-data choice without touching the original ledger
+        shell: pwsh
+        run: |
+          $testOutput = @()
+          & pwsh -NoProfile -File ./scripts/smoke-test-existing-choice.ps1 -ExePath ./release/win-unpacked/JENESIS.exe 2>&1 | Tee-Object -Variable testOutput
+          if ($LASTEXITCODE -ne 0) {
+            $tail = ($testOutput | Select-Object -Last 16 | Out-String).Trim()
+            $tail = $tail -replace '%', '%25' -replace "`r", '%0D' -replace "`n", '%0A'
+            Write-Output "::error title=JENESIS existing-data smoke failure::$tail"
+            exit 1
+          }
       - name: Test installation and startup on clean Windows runner
         shell: pwsh
         run: |

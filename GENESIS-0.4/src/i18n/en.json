@@ -671,7 +671,15 @@
     "recovery_steps": "If an existing administrator can sign in, they can create your account in Settings. Otherwise, ask your authorised administrator or support technician to follow the offline recovery procedure in DESKTOP.md.",
     "recovery_warning": "Reinstalling does not erase your existing data or reopen first-time setup. Never share passwords or send your database to an untrusted person.",
     "recovery_sign_in": "Sign in with an existing account",
-    "setup_complete_notice": "Administrator created. Sign in with the account you chose."
+    "setup_complete_notice": "Administrator created. Sign in with the account you chose.",
+    "existing_admin_notice": "This database already has an active administrator. First-time registration is disabled. Sign in with an existing account; if this is not your installation, choose a separate installation below.",
+    "new_installation_explanation": "No account for these older records? Start a separate, EMPTY JENESIS database for your business. Existing GENESIS data, users and backups stay unchanged and will NOT be imported.",
+    "switch_current_explanation": "An existing separate JENESIS database is available. Switch to it with its own accounts; no records will be merged or reset.",
+    "switch_legacy_explanation": "The older GENESIS database is still available. Switch back to sign in with its own accounts; no records will be merged or reset.",
+    "start_new_installation": "Start a new, separate installation",
+    "switch_current": "Switch to the JENESIS installation",
+    "switch_legacy": "Switch to the GENESIS installation",
+    "installation_switch_error": "Could not change installations. Close other JENESIS windows and try again. If the problem persists, ask an authorized administrator for help."
   },
   "errors": {
     "GENERIC": "Something went wrong. Please try again.",

@@ -671,7 +671,15 @@
     "recovery_steps": "Niba hari umuyobozi ushobora kwinjira, yagukorera konti mu Igenamiterere. Bitabaye ibyo, saba umuyobozi wawe cyangwa umukozi ubifitiye uburenganzira gukurikiza uburyo bwo kugarura konti buri muri DESKTOP.md.",
     "recovery_warning": "Kongera gushyiraho porogaramu ntibisiba amakuru yawe cyangwa ngo byongere gufungura iyandikwa rya mbere. Ntugahe umuntu utizeye ijambobanga cyangwa ububiko bw’amakuru.",
     "recovery_sign_in": "Injira ukoresheje konti isanzweho",
-    "setup_complete_notice": "Konti y’umuyobozi yakozwe. Injira ukoresheje izina n’ijambobanga wahisemo."
+    "setup_complete_notice": "Konti y’umuyobozi yakozwe. Injira ukoresheje izina n’ijambobanga wahisemo.",
+    "existing_admin_notice": "Ubu bubiko busangwemo umuyobozi ukora. Kwandikisha umuyobozi wa mbere ntibyemewe. Injira ukoresheje konti isanzwe; niba ubu bubiko atari ubwawe, hitamo ubundi bushya butandukanye hepfo.",
+    "new_installation_explanation": "Nta konti ufite muri aya makuru ya kera? Tangiza ububiko bwa JENESIS BUSHYA kandi butarimo amakuru ku kigo cyawe. Amakuru, abakoresha na kopi za GENESIS biguma uko biri kandi NTAZIMURWA.",
+    "switch_current_explanation": "Hari ubundi bubiko bwa JENESIS busanzweho. Bufungure ukoresheje konti zabwo; nta makuru azahuzwa cyangwa azasubizwa uko yari ameze.",
+    "switch_legacy_explanation": "Ububiko bwa GENESIS bwo hambere buracyahari. Subira kubukoresha ukoresheje konti zabwo; nta makuru azahuzwa cyangwa azasubizwa uko yari ameze.",
+    "start_new_installation": "Tangira JENESIS nshya itandukanye",
+    "switch_current": "Fungura ububiko bwa JENESIS",
+    "switch_legacy": "Fungura ububiko bwa GENESIS",
+    "installation_switch_error": "Ntibishobotse guhindura ububiko ukoresha. Funga andi madirishya ya JENESIS wongere ugerageze. Nibikomeza, saba ubufasha umuyobozi ubifitiye uburenganzira."
   },
   "errors": {
     "GENERIC": "Habaye ikibazo. Ongera ugerageze.",

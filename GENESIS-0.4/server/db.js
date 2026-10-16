@@ -784,5 +784,6 @@ module.exports = {
   getDb,
   closeDb,
   backupDatabaseFile,
-  DB_PATH
+  DB_PATH,
+  APP_DATA_ROOT
 };

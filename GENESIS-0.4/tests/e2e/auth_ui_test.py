@@ -107,6 +107,7 @@ def run_browser():
         expect(page.get_by_text('Set up JENESIS', exact=False).first).to_be_visible(timeout=30000)
         check('first run shows the setup screen', True)
         page.get_by_label('Company name').fill(ADMIN['company'])
+        page.get_by_label('Country').select_option('RW')
         page.get_by_label('Administrator full name').fill(ADMIN['full_name'])
         page.get_by_label('Username', exact=True).fill(ADMIN['username'])
         page.locator('input[type=password]').nth(0).fill(ADMIN['password'])
@@ -117,6 +118,11 @@ def run_browser():
         # 2. Sign-in screen after setup
         expect(page.get_by_role('button', name='Sign in')).to_be_visible(timeout=30000)
         check('after setup the sign-in screen is shown', True)
+        expect(page.get_by_text('already has an active administrator', exact=False).first).to_be_visible()
+        page.reload()
+        expect(page.get_by_role('button', name='Sign in')).to_be_visible(timeout=30000)
+        check('restart with an existing admin shows sign-in, never the public setup form',
+              page.get_by_role('button', name='Create administrator and continue').count() == 0)
 
         # 3. Wrong password is refused with a message, not a crash
         page.get_by_label('Username', exact=True).fill(ADMIN['username'])

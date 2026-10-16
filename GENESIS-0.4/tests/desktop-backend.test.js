@@ -12,10 +12,15 @@ const fs = require('fs');
 const http = require('http');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const Database = require('better-sqlite3');
 
 const { BackendProcess, findFreePort, waitForHealth } = require('../electron/backend-manager.cjs');
-const { prepareDataDirectory, backupDatabase, chooseDataDirectory } = require('../electron/data-location.cjs');
+const {
+  prepareDataDirectory, backupDatabase, chooseDataDirectory, shouldOfferInstallationChoice,
+  alternativeInstallation, readInstallationChoice, readInstallationRecord,
+  saveInstallationChoice, markInstallationInitialized, dataDirectories, CHOICE_FILE_NAME
+} = require('../electron/data-location.cjs');
 const { modeFromArgs, modeUrl } = require('../electron/entry-points.cjs');
 
 const ROOT = path.join(__dirname, '..');
@@ -94,6 +99,128 @@ test('legacy data location is retained; conflicting directories are refused', ()
   assert.throws(() => chooseDataDirectory(root), /Both GENESIS and JENESIS/);
   assert.equal(fs.readFileSync(path.join(legacy, 'genesis.db'), 'utf8'), 'legacy untouched');
   assert.equal(fs.readFileSync(path.join(current, 'genesis.db'), 'utf8'), 'new untouched');
+});
+
+test('an existing GENESIS ledger prompts once and selecting it never opens a blank DB', () => {
+  const root = tmpDir('existing-choice');
+  try {
+    const { legacy, current } = dataDirectories(root);
+    fs.mkdirSync(legacy);
+    const oldDb = copyDb(legacy);
+    const before = crypto.createHash('sha256').update(fs.readFileSync(oldDb)).digest('hex');
+    assert.strictEqual(shouldOfferInstallationChoice(root), true);
+    assert.strictEqual(readInstallationChoice(root), null);
+    saveInstallationChoice(root, 'legacy');
+    assert.strictEqual(readInstallationChoice(root), 'legacy');
+    assert.strictEqual(shouldOfferInstallationChoice(root), false);
+    assert.strictEqual(chooseDataDirectory(root), legacy);
+    assert.strictEqual(fs.existsSync(path.join(current, 'genesis.db')), false);
+    assert.strictEqual(crypto.createHash('sha256').update(fs.readFileSync(oldDb)).digest('hex'), before);
+    assert.deepStrictEqual(alternativeInstallation(root, legacy), { target: 'current', newDatabase: true });
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('explicit separate installation has no users; legacy records and backup files stay untouched', async () => {
+  const root = tmpDir('separate-choice');
+  try {
+    const { legacy, current } = dataDirectories(root);
+    fs.mkdirSync(legacy);
+    const oldDb = copyDb(legacy);
+    const backup = path.join(legacy, 'owner-backup.db');
+    fs.copyFileSync(oldDb, backup);
+    const before = crypto.createHash('sha256').update(fs.readFileSync(oldDb)).digest('hex');
+    assert.strictEqual(shouldOfferInstallationChoice(root), true);
+    saveInstallationChoice(root, 'current');
+    assert.strictEqual(chooseDataDirectory(root), current);
+    const result = prepareDataDirectory({ dataDir: chooseDataDirectory(root), backupExisting: false });
+    assert.strictEqual(result.seeded, false);
+    assert.strictEqual(fs.existsSync(result.dbPath), false, 'no archived users are imported');
+    const port = await findFreePort();
+    const proc = await startBackend(result.dbPath, port);
+    try {
+      const status = JSON.parse((await getJson(`http://127.0.0.1:${port}/api/setup/status`)).text);
+      assert.deepStrictEqual(status, { needsSetup: true, recoveryRequired: false, hasAdministrator: false });
+    } finally { await proc.stop(5000); }
+    markInstallationInitialized(root, current);
+    assert.strictEqual(readInstallationRecord(root).currentInitialized, true);
+    assert.strictEqual(crypto.createHash('sha256').update(fs.readFileSync(oldDb)).digest('hex'), before);
+    assert.strictEqual(crypto.createHash('sha256').update(fs.readFileSync(backup)).digest('hex'), before);
+    assert.strictEqual(companyCount(oldDb), companyCount(SOURCE_DB));
+    assert.deepStrictEqual(alternativeInstallation(root, current), { target: 'legacy', newDatabase: false });
+    // Switching back is an explicit selection. Neither DB file is touched.
+    const modernHash = crypto.createHash('sha256').update(fs.readFileSync(result.dbPath)).digest('hex');
+    saveInstallationChoice(root, 'legacy');
+    assert.strictEqual(chooseDataDirectory(root), legacy);
+    assert.strictEqual(crypto.createHash('sha256').update(fs.readFileSync(result.dbPath)).digest('hex'), modernHash);
+    saveInstallationChoice(root, 'current');
+    assert.strictEqual(chooseDataDirectory(root), current);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('two independent backend processes racing first-run registration can create only one admin', async () => {
+  const dir = tmpDir('setup-race');
+  const dbPath = path.join(dir, 'genesis.db');
+  const firstPort = await findFreePort();
+  const first = await startBackend(dbPath, firstPort);
+  let second = null;
+  try {
+    const secondPort = await findFreePort();
+    second = await startBackend(dbPath, secondPort);
+    const body = {
+      company_name: 'Concurrency Test', full_name: 'First Owner', username: 'first.owner',
+      password: 'Private-Concurrent-Passw0rd', confirm_password: 'Private-Concurrent-Passw0rd'
+    };
+    const submit = async (port) => {
+      const res = await fetch(`http://127.0.0.1:${port}/api/setup/initialize`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
+      });
+      return { status: res.status, json: await res.json() };
+    };
+    const replies = await Promise.all([submit(firstPort), submit(secondPort)]);
+    assert.deepStrictEqual(replies.map((r) => r.status).sort(), [200, 409]);
+    const status = JSON.parse((await getJson(`http://127.0.0.1:${firstPort}/api/setup/status`)).text);
+    assert.deepStrictEqual(status, { needsSetup: false, recoveryRequired: false, hasAdministrator: true });
+    const db = new Database(dbPath, { readonly: true });
+    try {
+      assert.strictEqual(db.prepare('SELECT COUNT(*) AS n FROM users').get().n, 1);
+      assert.strictEqual(db.prepare("SELECT COUNT(*) AS n FROM company_memberships WHERE role = 'admin'").get().n, 1);
+    } finally { db.close(); }
+  } finally {
+    if (second) await second.stop(5000);
+    await first.stop(5000);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a corrupt choice, lost selected DB or ambiguous pair fails closed, never creates an empty replacement', () => {
+  const root = tmpDir('invalid-choice');
+  try {
+    const { legacy, current } = dataDirectories(root);
+    fs.mkdirSync(legacy);
+    fs.mkdirSync(current);
+    fs.writeFileSync(path.join(legacy, 'genesis.db'), 'legacy');
+    fs.writeFileSync(path.join(current, 'genesis.db'), 'modern');
+    assert.throws(() => chooseDataDirectory(root), /Both GENESIS and JENESIS/);
+    assert.throws(() => saveInstallationChoice(root, 'current'), /Installation choice changed/);
+    fs.writeFileSync(path.join(current, CHOICE_FILE_NAME), '{bad json');
+    assert.throws(() => chooseDataDirectory(root), /cannot be read/);
+    fs.writeFileSync(path.join(current, CHOICE_FILE_NAME), '{"version":1,"selected":"../../bad","currentInitialized":false}');
+    assert.throws(() => chooseDataDirectory(root), /invalid/);
+    fs.unlinkSync(path.join(current, 'genesis.db'));
+    fs.unlinkSync(path.join(current, CHOICE_FILE_NAME));
+    saveInstallationChoice(root, 'legacy');
+    fs.unlinkSync(path.join(legacy, 'genesis.db'));
+    assert.throws(() => chooseDataDirectory(root), /selected GENESIS database is missing/);
+    assert.strictEqual(fs.existsSync(path.join(legacy, 'genesis.db')), false);
+    assert.strictEqual(fs.existsSync(path.join(current, 'genesis.db')), false);
+    fs.writeFileSync(path.join(legacy, 'genesis.db'), 'legacy');
+    fs.writeFileSync(path.join(current, 'genesis.db'), 'modern');
+    saveInstallationChoice(root, 'current');
+    fs.unlinkSync(path.join(current, 'genesis.db'));
+    assert.throws(() => chooseDataDirectory(root), /selected JENESIS database is missing/);
+    assert.strictEqual(alternativeInstallation(root, legacy), null, 'cannot claim a lost modern ledger as a fresh one');
+    assert.strictEqual(fs.readFileSync(path.join(legacy, 'genesis.db'), 'utf8'), 'legacy');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
 
 test('backend starts on loopback, identifies itself, serves UI and stops cleanly', async () => {

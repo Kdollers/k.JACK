@@ -46,6 +46,10 @@ async function main() {
     assert.equal(languageFor('unknown-LATN'), 'en');
     assert.notEqual(messages.fr.backendStopped, messages.en.backendStopped);
     assert.notEqual(messages.rw.backendStopped, messages.en.backendStopped);
+    for (const lang of ['fr', 'rw']) {
+      assert.notEqual(messages[lang].existingDetail, messages.en.existingDetail);
+      assert.notEqual(messages[lang].confirmDetail, messages.en.confirmDetail);
+    }
   });
 
   check('all three dictionaries have identical, nonempty keys and placeholders', () => {

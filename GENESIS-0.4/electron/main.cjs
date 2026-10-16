@@ -13,7 +13,10 @@ const { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } = require('e
 const fs = require('fs');
 const path = require('path');
 const { BackendProcess, findFreePort, LOOPBACK } = require('./backend-manager.cjs');
-const { prepareDataDirectory, chooseDataDirectory } = require('./data-location.cjs');
+const {
+  prepareDataDirectory, chooseDataDirectory, shouldOfferInstallationChoice,
+  alternativeInstallation, saveInstallationChoice, markInstallationInitialized
+} = require('./data-location.cjs');
 const { modeFromArgs, modeUrl } = require('./entry-points.cjs');
 const { messages, VALID_LANGUAGES, languageFor } = require('./desktop-i18n.cjs');
 
@@ -235,6 +238,40 @@ function showStartupError(err) {
   dialog.showErrorBox(APP_TITLE, `${text.startupFailed}\n\n${text.logFile} ${logFilePath()}`);
 }
 
+function confirmInstallationChange(newDatabase) {
+  const text = messages[desktopLanguage];
+  return dialog.showMessageBoxSync({
+    type: 'warning', title: newDatabase ? text.confirmTitle : text.switchTitle,
+    message: newDatabase ? text.confirmMessage : text.switchMessage,
+    detail: newDatabase ? text.confirmDetail : text.switchDetail,
+    buttons: [text.cancel, newDatabase ? text.confirmNew : text.switchButton],
+    defaultId: 0, cancelId: 0, noLink: true
+  }) === 1;
+}
+
+/** An old database must not be mistaken for a fresh JENESIS installation.
+ * Ask once, before opening any database or session. Re-launch if choosing a
+ * different userData directory so the single-instance lock follows that path. */
+function chooseInstallationOnFirstLaunch() {
+  const root = app.getPath('appData');
+  if (!shouldOfferInstallationChoice(root)) return true;
+  const text = messages[desktopLanguage];
+  const response = dialog.showMessageBoxSync({
+    type: 'question', title: text.existingTitle,
+    message: text.existingMessage, detail: text.existingDetail,
+    buttons: [text.useExisting, text.startSeparate, text.cancel],
+    defaultId: 0, cancelId: 2, noLink: true
+  });
+  if (response === 2) return false;
+  if (response === 1 && !confirmInstallationChange(true)) return false;
+  saveInstallationChoice(root, response === 1 ? 'current' : 'legacy');
+  if (response === 1) {
+    app.relaunch();
+    return false;
+  }
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // Application lifecycle
 // ---------------------------------------------------------------------------
@@ -250,16 +287,39 @@ if (!gotLock) {
     } catch (err) { showStartupError(err); }
   });
 
-  // Only a JENESIS renderer may read desktop metadata or set one of three
-  // language codes. The bridge offers no filesystem, shell or arbitrary IPC.
+  // Only a JENESIS renderer may read desktop metadata or request a native
+  // installation switch. The bridge offers no filesystem or arbitrary IPC.
   const fromOwnWindow = (event) => [...windows].some((win) => event.sender === win.webContents) &&
     !!backendUrl && event.senderFrame?.url?.startsWith(backendUrl);
   ipcMain.handle('genesis:get-app-info', (event) => {
     if (!fromOwnWindow(event)) throw new Error('Unauthorized desktop request');
     return {
       name: APP_TITLE, version: app.getVersion(), platform: process.platform,
-      dataDirectory: app.getPath('userData'), packaged: app.isPackaged
+      dataDirectory: app.getPath('userData'), packaged: app.isPackaged,
+      alternativeInstallation: alternativeInstallation(app.getPath('appData'), app.getPath('userData'))
     };
+  });
+  ipcMain.handle('genesis:choose-installation', async (event, target) => {
+    if (!fromOwnWindow(event) || windows.size !== 1 || quitting) {
+      throw new Error('Close other JENESIS windows before changing installations.');
+    }
+    const root = app.getPath('appData');
+    const available = alternativeInstallation(root, app.getPath('userData'));
+    if (!available || target !== available.target) throw new Error('Installation choice is unavailable.');
+    if (!confirmInstallationChange(available.newDatabase)) return false;
+    // Do not silently open a different database if a file appeared or was removed
+    // while the native confirmation was displayed.
+    const stillAvailable = alternativeInstallation(root, app.getPath('userData'));
+    if (!stillAvailable || stillAvailable.target !== target ||
+        stillAvailable.newDatabase !== available.newDatabase) {
+      throw new Error('Installation changed while confirming. No database was modified.');
+    }
+    saveInstallationChoice(root, target);
+    quitting = true;
+    await stopBackend();
+    app.relaunch();
+    app.quit();
+    return true;
   });
   ipcMain.handle('genesis:set-language', (event, lang) => {
     if (!fromOwnWindow(event) || !VALID_LANGUAGES.includes(lang)) {
@@ -273,17 +333,18 @@ if (!gotLock) {
   });
 
   app.whenReady().then(async () => {
-    // Deny every browser permission request (camera, geolocation, notifications, ...).
-    session.defaultSession.setPermissionRequestHandler((wc, permission, cb) => cb(false));
-    session.defaultSession.setPermissionCheckHandler(() => false);
-
     // Use the last selected language even if the backend fails before React loads.
+    // Offer the legacy-versus-fresh choice BEFORE opening a SQLite database.
     desktopLanguage = readDesktopLanguage();
-    updateNativeMenu();
-
     try {
       if (dataDirectoryError) throw dataDirectoryError;
+      if (!chooseInstallationOnFirstLaunch()) { app.quit(); return; }
+      // Deny every browser permission request (camera, geolocation, notifications, ...).
+      session.defaultSession.setPermissionRequestHandler((wc, permission, cb) => cb(false));
+      session.defaultSession.setPermissionCheckHandler(() => false);
+      updateNativeMenu();
       await startBackend();
+      markInstallationInitialized(app.getPath('appData'), app.getPath('userData'));
       for (const mode of launchQueue.splice(0)) await createWindow(mode);
     } catch (err) {
       showStartupError(err);

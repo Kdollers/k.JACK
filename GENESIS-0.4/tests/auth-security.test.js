@@ -113,6 +113,7 @@ if (scenario === 'fresh') {
   check('fresh database reports setup required and creates no demo accounts', async () => {
     const s = await api('GET', '/setup/status');
     assert.strictEqual(s.json.needsSetup, true);
+    assert.strictEqual(s.json.hasAdministrator, false);
     const count = getDb().prepare('SELECT COUNT(*) AS n FROM users').get().n;
     assert.strictEqual(count, 0, 'no users exist before setup');
     const demo = await login('admin', TEST_LEGACY_PASSWORD);
@@ -166,6 +167,7 @@ if (scenario === 'fresh') {
     const again = await api('POST', '/setup/initialize', { body: { company_name: 'Evil', full_name: 'Evil', username: 'evil.user', password: 'Another-Password-1' } });
     assert.strictEqual(again.status, 409);
     assert.strictEqual(getDb().prepare('SELECT COUNT(*) AS n FROM users').get().n, 1);
+    assert.strictEqual((await api('GET', '/setup/status')).json.hasAdministrator, true);
   });
 
   check('wrong passwords are rejected generically and lock the account after repeated failures', async () => {
@@ -361,6 +363,34 @@ if (scenario === 'fresh') {
     assert.strictEqual((await api('GET', '/auth/me', { token: r.json.token })).status, 200);
   });
 
+  check('first administrator can add a separate company and permission-scoped users', async () => {
+    const created = await api('POST', '/companies', { token: adminToken, body: {
+      name: 'Second Business', country_code: 'CM', currency_code: 'XAF'
+    } });
+    assert.strictEqual(created.status, 200, created.text);
+    const otherId = created.json.id;
+    assert.ok(otherId);
+    const user = await api('POST', '/auth/users', { token: adminToken, body: {
+      username: 'isolated.sale', full_name: 'Isolated Seller', role: 'sales', password: 'Seller-Private-Passw0rd'
+    } });
+    assert.strictEqual(user.status, 200, user.text);
+    const seller = await login('isolated.sale', 'Seller-Private-Passw0rd');
+    assert.strictEqual(seller.status, 200);
+    assert.strictEqual((await api('POST', '/auth/change-password', { token: seller.json.token,
+      body: { current_password: 'Seller-Private-Passw0rd', new_password: 'Seller-New-Private-Passw0rd' }
+    })).status, 200);
+    const companies = await api('GET', '/companies', { token: seller.json.token });
+    assert.strictEqual(companies.status, 200);
+    assert.strictEqual(companies.json.length, 1, 'new company is not automatically exposed to staff');
+    assert.ok(companies.json.every((company) => company.id !== otherId));
+    assert.strictEqual((await api('GET', '/auth/users', { token: seller.json.token })).status, 403);
+    assert.strictEqual((await api('POST', '/companies', { token: seller.json.token,
+      body: { name: 'Unauthorized', country_code: 'RW', currency_code: 'RWF' }
+    })).status, 403);
+    assert.strictEqual((await api('GET', '/companies', { token: adminToken })).json.length, 2);
+    assert.strictEqual(getDb().prepare('SELECT COUNT(*) AS n FROM journal_entries WHERE company_id = ?').get(otherId).n, 0);
+  });
+
   check('demo reset endpoint is disabled and cannot drop data', async () => {
     const before = getDb().prepare('SELECT COUNT(*) AS n FROM users').get().n;
     const r = await api('POST', '/backup/reset-demo', { token: adminToken });
@@ -452,7 +482,10 @@ if (scenario === 'legacy') {
   });
 
   check('setup is not offered on an existing installation', async () => {
-    assert.strictEqual((await api('GET', '/setup/status')).json.needsSetup, false);
+    const state = (await api('GET', '/setup/status')).json;
+    assert.strictEqual(state.needsSetup, false);
+    assert.strictEqual(state.hasAdministrator, true);
+    assert.strictEqual(state.recoveryRequired, false);
     const r = await api('POST', '/setup/initialize', { body: { company_name: 'X', full_name: 'X', username: 'xxxx', password: 'Another-Password-1' } });
     assert.strictEqual(r.status, 409);
   });

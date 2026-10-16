@@ -202,11 +202,17 @@ Step 'Unauthenticated API requests are refused' {
 $script:Password = -join ((48..57 + 65..90 + 97..122) | Get-Random -Count 20 | ForEach-Object { [char]$_ }) + 'Aa1!'
 $script:Token = $null
 Step 'First-run setup creates the company and administrator' {
+  $choiceFile = Join-Path $DataDir 'installation-choice.json'
+  Assert (Test-Path $choiceFile) 'The first installation was not marked in app data.'
+  $choice = Get-Content $choiceFile -Raw | ConvertFrom-Json
+  Assert ($choice.selected -eq 'current' -and $choice.currentInitialized -eq $true) 'New database not pinned against later silent recreation.'
   $status = Invoke-Api $baseUrl 'GET' '/setup/status'
-  Assert ($status.needsSetup -eq $true) 'A fresh installation should require setup.'
+  Assert ($status.needsSetup -eq $true -and $status.hasAdministrator -eq $false) 'A fresh installation should require setup without any administrator.'
   Invoke-Api $baseUrl 'POST' '/setup/initialize' @{
     company_name = 'Smoke Test Company'; full_name = 'Smoke Admin'; username = 'smoke.admin'; password = $script:Password; confirm_password = $script:Password
   } | Out-Null
+  $status = Invoke-Api $baseUrl 'GET' '/setup/status'
+  Assert ($status.needsSetup -eq $false -and $status.hasAdministrator -eq $true) 'After setup, public registration must close and an administrator must exist.'
 }
 
 Step 'Sign in and reach the application (no forced password change)' {

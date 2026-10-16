@@ -10,7 +10,7 @@ const path = require('path');
 trace('loading routes');
 const apiRoutes = require('./routes/api');
 trace('loading db module (better-sqlite3)');
-const { getDb, closeDb, DB_PATH } = require('./db');
+const { getDb, closeDb, DB_PATH, APP_DATA_ROOT } = require('./db');
 trace('modules loaded');
 
 const { securityHeaders } = require('./security');
@@ -111,7 +111,19 @@ async function startServer(options = {}) {
 
   // Ensure the database is opened, backed up and migrated before any request.
   trace('opening database');
-  getDb();
+  try {
+    getDb();
+    // Source-run installations also record that a JENESIS DB was initialized;
+    // losing it later must not silently reopen setup. Electron passes an
+    // explicit DB path and records this choice before displaying its window.
+    // Isolated tests/recovery use explicit paths and never write this marker.
+    if (!process.env.GENESIS_DB_PATH) {
+      require('../electron/data-location.cjs').markInstallationInitialized(APP_DATA_ROOT, path.dirname(DB_PATH));
+    }
+  } catch (err) {
+    closeDb();
+    throw err;
+  }
   trace('database ready');
   const app = createApp(options);
   lanHost.attach(app, DB_PATH, { lanPort: options.lanPort });

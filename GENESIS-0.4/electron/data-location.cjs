@@ -12,24 +12,138 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const DB_FILE_NAME = 'genesis.db';
 const BACKUP_DIR_NAME = 'backups';
 const MAX_BACKUPS = 20;
 
-/** Preserve an existing GENESIS installation without silently starting a second,
- * empty JENESIS ledger. New installs use a separate JENESIS directory. If both
- * paths already contain different DBs, fail closed and ask the owner to inspect. */
-function chooseDataDirectory(appDataRoot) {
+/** The choice contains NO secrets and lives outside the legacy database directory.
+ * It is written only after local, explicit confirmation in the desktop app. */
+const CHOICE_FILE_NAME = 'installation-choice.json';
+
+function dataDirectories(appDataRoot) {
   if (!appDataRoot) throw new Error('App data directory is required.');
-  const legacyDir = path.join(appDataRoot, 'GENESIS');
-  const jenesisDir = path.join(appDataRoot, 'JENESIS');
-  const legacy = fs.existsSync(path.join(legacyDir, DB_FILE_NAME));
-  const modern = fs.existsSync(path.join(jenesisDir, DB_FILE_NAME));
-  if (legacy && modern) {
+  return {
+    legacy: path.join(appDataRoot, 'GENESIS'),
+    current: path.join(appDataRoot, 'JENESIS')
+  };
+}
+
+function readInstallationRecord(appDataRoot) {
+  const choiceFile = path.join(dataDirectories(appDataRoot).current, CHOICE_FILE_NAME);
+  if (!fs.existsSync(choiceFile)) return null;
+  let saved;
+  try {
+    saved = JSON.parse(fs.readFileSync(choiceFile, 'utf8'));
+  } catch {
+    throw new Error('JENESIS installation choice cannot be read. No database was selected; inspect installation-choice.json.');
+  }
+  if (saved?.version !== 1 || !['legacy', 'current'].includes(saved.selected) ||
+      typeof saved.currentInitialized !== 'boolean') {
+    throw new Error('JENESIS installation choice is invalid. No database was selected; inspect installation-choice.json.');
+  }
+  return saved;
+}
+
+function readInstallationChoice(appDataRoot) {
+  return readInstallationRecord(appDataRoot)?.selected ?? null;
+}
+
+function writeInstallationRecord(appDataRoot, record) {
+  const choiceFile = path.join(dataDirectories(appDataRoot).current, CHOICE_FILE_NAME);
+  fs.mkdirSync(path.dirname(choiceFile), { recursive: true });
+  const temporary = `${choiceFile}.${crypto.randomBytes(8).toString('hex')}.tmp`;
+  try {
+    fs.writeFileSync(temporary, JSON.stringify(record) + '\n', { flag: 'wx', mode: 0o600 });
+    fs.renameSync(temporary, choiceFile);
+  } finally {
+    if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+  }
+}
+
+/** Never infer a preference when both databases exist. A previously recorded
+ * choice is explicit, and does not copy or merge either database. */
+function chooseDataDirectory(appDataRoot) {
+  const { legacy, current } = dataDirectories(appDataRoot);
+  const record = readInstallationRecord(appDataRoot);
+  const selected = record?.selected;
+  const hasLegacy = fs.existsSync(path.join(legacy, DB_FILE_NAME));
+  const hasCurrent = fs.existsSync(path.join(current, DB_FILE_NAME));
+  if (selected === 'legacy') {
+    // A missing selected ledger is an error, not a reason to create a new one.
+    if (!hasLegacy) throw new Error('The selected GENESIS database is missing. No new database was created; restore it from a verified backup.');
+    return legacy;
+  }
+  if (selected === 'current') {
+    if (record.currentInitialized && !hasCurrent) {
+      throw new Error('The selected JENESIS database is missing. No new database was created; restore it from a verified backup.');
+    }
+    return current;
+  }
+  if (hasLegacy && hasCurrent) {
     throw new Error('Both GENESIS and JENESIS data directories contain a database. No database was selected or changed.');
   }
-  return legacy ? legacyDir : jenesisDir;
+  return hasLegacy ? legacy : current;
+}
+
+function shouldOfferInstallationChoice(appDataRoot) {
+  const { legacy, current } = dataDirectories(appDataRoot);
+  return readInstallationChoice(appDataRoot) === null &&
+    fs.existsSync(path.join(legacy, DB_FILE_NAME)) &&
+    !fs.existsSync(path.join(current, DB_FILE_NAME));
+}
+
+function alternativeInstallation(appDataRoot, activeDirectory) {
+  const { legacy, current } = dataDirectories(appDataRoot);
+  if (!fs.existsSync(path.join(legacy, DB_FILE_NAME))) return null;
+  if (path.resolve(activeDirectory) === path.resolve(legacy)) {
+    const hasCurrent = fs.existsSync(path.join(current, DB_FILE_NAME));
+    if (!hasCurrent && readInstallationRecord(appDataRoot)?.currentInitialized) return null;
+    return { target: 'current', newDatabase: !hasCurrent };
+  }
+  if (path.resolve(activeDirectory) === path.resolve(current)) {
+    return { target: 'legacy', newDatabase: false };
+  }
+  return null;
+}
+
+/** Atomic preference save. This never opens, deletes, or overwrites a database.
+ * If two databases already exist, only a previously recorded choice may be
+ * changed; we cannot guess which existing ledger belongs to the owner. */
+function saveInstallationChoice(appDataRoot, selected) {
+  if (!['legacy', 'current'].includes(selected)) throw new Error('Invalid installation choice');
+  const { legacy, current } = dataDirectories(appDataRoot);
+  const hasLegacy = fs.existsSync(path.join(legacy, DB_FILE_NAME));
+  const hasCurrent = fs.existsSync(path.join(current, DB_FILE_NAME));
+  const previous = readInstallationRecord(appDataRoot);
+  if ((selected === 'legacy' && !hasLegacy) ||
+      (selected === 'current' && !hasLegacy && !hasCurrent) ||
+      (selected === 'current' && !hasCurrent && previous?.currentInitialized) ||
+      (hasLegacy && hasCurrent && !previous)) {
+    throw new Error('Installation choice changed while confirming. No database was modified.');
+  }
+  writeInstallationRecord(appDataRoot, {
+    version: 1, selected, currentInitialized: Boolean(previous?.currentInitialized || hasCurrent)
+  });
+  return selected;
+}
+
+/** Call only after the backend has successfully opened the selected database,
+ * before showing its UI. A missing DB on any later start must fail closed. */
+function markInstallationInitialized(appDataRoot, activeDirectory) {
+  const { legacy, current } = dataDirectories(appDataRoot);
+  const record = readInstallationRecord(appDataRoot);
+  if (path.resolve(activeDirectory) !== path.resolve(current)) return;
+  if (!fs.existsSync(path.join(current, DB_FILE_NAME))) {
+    throw new Error('Cannot record an installation without an initialized database.');
+  }
+  if (record?.selected === 'legacy') throw new Error('Installation changed while starting.');
+  if (record?.currentInitialized) return;
+  if (!record && fs.existsSync(path.join(legacy, DB_FILE_NAME))) {
+    throw new Error('Both databases exist without an explicit installation choice.');
+  }
+  writeInstallationRecord(appDataRoot, { version: 1, selected: 'current', currentInitialized: true });
 }
 
 function timestamp(date = new Date()) {
@@ -92,4 +206,9 @@ function backupDatabase(dbPath, backupDir, now = new Date()) {
   return target;
 }
 
-module.exports = { prepareDataDirectory, backupDatabase, chooseDataDirectory, DB_FILE_NAME, BACKUP_DIR_NAME, MAX_BACKUPS };
+module.exports = {
+  prepareDataDirectory, backupDatabase, chooseDataDirectory, readInstallationChoice,
+  readInstallationRecord, shouldOfferInstallationChoice, alternativeInstallation,
+  saveInstallationChoice, markInstallationInitialized,
+  dataDirectories, DB_FILE_NAME, CHOICE_FILE_NAME, BACKUP_DIR_NAME, MAX_BACKUPS
+};

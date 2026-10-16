@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { errorKey, useI18n } from '../i18n';
@@ -70,8 +70,51 @@ function Field({ label, children }) {
   );
 }
 
+/** Desktop only: a native confirmation chooses another database, never an
+ * unauthenticated endpoint that could take over the existing ledger. */
+function InstallationSwitch() {
+  const { t } = useI18n();
+  const [alternative, setAlternative] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const info = window.genesisDesktop?.getAppInfo?.();
+    info?.then((result) => { if (!cancelled) setAlternative(result.alternativeInstallation || null); })
+      .catch(() => { /* No desktop bridge (or the local service is shutting down). */ });
+    return () => { cancelled = true; };
+  }, []);
+  if (!alternative) return null;
+  const isNew = alternative.target === 'current' && alternative.newDatabase;
+  const message = isNew ? 'new_installation_explanation'
+    : alternative.target === 'legacy' ? 'switch_legacy_explanation' : 'switch_current_explanation';
+  const label = isNew ? 'start_new_installation'
+    : alternative.target === 'legacy' ? 'switch_legacy' : 'switch_current';
+  const choose = async () => {
+    setBusy(true);
+    setError(false);
+    try {
+      await window.genesisDesktop.chooseInstallation(alternative.target);
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="border-t border-slate-200 pt-3 space-y-2">
+      <p className="text-xs text-slate-600">{t(`auth.${message}`)}</p>
+      {error && <ErrorBox message={t('auth.installation_switch_error')} />}
+      <button type="button" disabled={busy} onClick={choose}
+        className="w-full border border-slate-300 rounded py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+        {t(`auth.${label}`)}
+      </button>
+    </div>
+  );
+}
+
 export function LoginScreen() {
-  const { login, authError, showRecovery } = useApp();
+  const { login, authError, showRecovery, hasAdministrator } = useApp();
   const { t } = useI18n();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -96,6 +139,7 @@ export function LoginScreen() {
     <Shell title={t('auth.login_title', 'Sign in')} intro={t('auth.login_intro', 'Enter your JENESIS username and password.')}>
       <form onSubmit={submit} className="space-y-3">
         <ErrorBox message={errorText(error || authError, t)} />
+        {hasAdministrator && <p className="text-xs text-slate-600 bg-slate-50 rounded p-2">{t('auth.existing_admin_notice')}</p>}
         <Field label={t('auth.username', 'Username')}>
           <input className={inputClass} autoFocus autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required />
         </Field>
@@ -109,6 +153,7 @@ export function LoginScreen() {
           {t('auth.recovery_link')}
         </button>
       </form>
+      <InstallationSwitch />
     </Shell>
   );
 }
@@ -192,6 +237,7 @@ export function SetupScreen() {
           {busy ? t('auth.creating', 'Creating…') : t('auth.create_admin', 'Create administrator and continue')}
         </button>
       </form>
+      <InstallationSwitch />
     </Shell>
   );
 }
@@ -261,6 +307,7 @@ export function RecoveryScreen() {
           {t('auth.recovery_sign_in')}
         </button>
       </div>
+      <InstallationSwitch />
     </Shell>
   );
 }

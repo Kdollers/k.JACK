@@ -31,7 +31,7 @@ try {
   db.exec('DROP TABLE installation_state; DELETE FROM schema_migrations WHERE version = 2');
   db.close();
   const after = child("const {getDb,closeDb}=require('./server/db');const {setupStatus}=require('./server/setup-state');console.log(JSON.stringify(setupStatus(getDb())));closeDb()");
-  assert.deepEqual(JSON.parse(after), { needsSetup: false, recoveryRequired: true });
+  assert.deepEqual(JSON.parse(after), { needsSetup: false, recoveryRequired: true, hasAdministrator: false });
   const db2 = new Database(dbPath, { readonly: true });
   try {
     assert.deepEqual(db2.prepare('SELECT code, name FROM accounts ORDER BY code').all(), accountsBefore);

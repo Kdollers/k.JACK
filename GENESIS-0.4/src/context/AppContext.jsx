@@ -21,6 +21,7 @@ export function AppProvider({ children }) {
   const { lang } = useI18n();
   const [authState, setAuthState] = useState('checking');
   const [authError, setAuthError] = useState(null);
+  const [hasAdministrator, setHasAdministrator] = useState(false);
   const [currentCompany, setCurrentCompany] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
@@ -89,6 +90,7 @@ export function AppProvider({ children }) {
       try {
         const status = await apiRequest('/api/setup/status');
         if (cancelled) return;
+        setHasAdministrator(status.hasAdministrator === true);
         if (status.needsSetup) {
           setSessionToken(null);
           setAuthState('setup');
@@ -167,6 +169,7 @@ export function AppProvider({ children }) {
   const completeSetup = async (form) => {
     setAuthError(null);
     await apiRequest('/api/setup/initialize', { method: 'POST', body: JSON.stringify(form) });
+    setHasAdministrator(true);
     setAuthState('login');
   };
 
@@ -201,6 +204,7 @@ export function AppProvider({ children }) {
       value={{
         authState,
         authError,
+        hasAdministrator,
         showRecovery: () => setAuthState('recovery'),
         showLogin: () => setAuthState('login'),
         login,
