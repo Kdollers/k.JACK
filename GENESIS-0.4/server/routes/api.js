@@ -25,13 +25,26 @@ const {
   createJournalEntry,
   reverseJournalEntry,
   postSalesInvoice,
+  postWalkInSale,
   postPurchaseInvoice,
   recordPayment,
+  reversePayment,
   postStockAdjustment,
   postPhysicalCount,
+  createCountDraft,
+  updateCountDraft,
+  submitCountForReview,
+  approveCount,
+  rejectCount,
+  postApprovedCount,
   postCreditNote,
   postPurchaseReturn
 } = require('../accountingEngine');
+const stores = require('../inventoryStores');
+const goodsReceipts = require('../goodsReceipts');
+const cashManagement = require('../cashManagement');
+const fx = require('../fx');
+const stockLedger = require('../stockLedger');
 const reports = require('../reports');
 
 const APP_VERSION = require('../../package.json').version;
@@ -450,6 +463,8 @@ router.get('/customers', requirePermission('contacts:read'), (req, res) => {
   const search = req.query.search ? `%${req.query.search}%` : null;
   let sql = 'SELECT * FROM customers WHERE company_id = ?';
   const params = [companyId];
+  // The anonymous walk-in customer is hidden from pickers/lists by default.
+  if (req.query.include_walk_in !== '1') sql += ' AND is_walk_in = 0';
   if (search) {
     sql += ' AND (name LIKE ? OR code LIKE ? OR phone LIKE ? OR email LIKE ?)';
     params.push(search, search, search, search);
@@ -593,8 +608,8 @@ router.get('/products', requirePermission('inventory:read'), (req, res) => {
   let sql = 'SELECT * FROM products WHERE company_id = ?';
   const params = [companyId];
   if (search) {
-    sql += ' AND (name LIKE ? OR sku LIKE ? OR category LIKE ?)';
-    params.push(search, search, search);
+    sql += ' AND (name LIKE ? OR sku LIKE ? OR category LIKE ? OR barcode LIKE ?)';
+    params.push(search, search, search, search);
   }
   sql += ' ORDER BY category ASC, name ASC';
   res.json(db.prepare(sql).all(...params));
@@ -718,11 +733,179 @@ router.get('/inventory/counts', requirePermission('inventory:read'), (req, res) 
   res.json(counts);
 });
 
-router.post('/inventory/counts', requirePermission('inventory:adjust'), (req, res) => {
+// Direct one-shot posting stays available for approvers (admin/accountant).
+// Inventory Officers use the draft → submit → approve → post workflow below.
+router.post('/inventory/counts', requirePermission('inventory:approve'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
     const result = postPhysicalCount(companyId, req.body, user);
     res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/inventory/counts/:id', requirePermission('inventory:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const db = getDb();
+  const count = db.prepare(`
+    SELECT pic.*, w.name AS warehouse_name, w.code AS warehouse_code,
+      uc.full_name AS created_by_name, us.full_name AS submitted_by_name,
+      ur.full_name AS reviewed_by_name, ua.full_name AS approved_by_name
+    FROM physical_inventory_counts pic
+    LEFT JOIN warehouses w ON w.id = pic.warehouse_id
+    LEFT JOIN users uc ON uc.id = pic.created_by
+    LEFT JOIN users us ON us.id = pic.submitted_by
+    LEFT JOIN users ur ON ur.id = pic.reviewed_by
+    LEFT JOIN users ua ON ua.id = pic.approved_by
+    WHERE pic.id = ? AND pic.company_id = ?
+  `).get(req.params.id, companyId);
+  if (!count) return res.status(404).json({ error: 'Physical count not found' });
+  const lines = db.prepare(`
+    SELECT l.*, p.sku, p.name AS product_name, p.unit
+    FROM physical_inventory_lines l JOIN products p ON p.id = l.product_id
+    WHERE l.count_id = ?
+  `).all(count.id);
+  res.json({ ...count, lines });
+});
+
+// --- Physical count workflow (Inventory Officer) ---
+router.post('/inventory/counts/draft', requirePermission('inventory:adjust'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(createCountDraft(companyId, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.put('/inventory/counts/:id', requirePermission('inventory:adjust'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(updateCountDraft(companyId, req.params.id, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/inventory/counts/:id/submit', requirePermission('inventory:adjust'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(submitCountForReview(companyId, req.params.id, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/inventory/counts/:id/approve', requirePermission('inventory:approve'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(approveCount(companyId, req.params.id, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/inventory/counts/:id/reject', requirePermission('inventory:approve'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(rejectCount(companyId, req.params.id, req.body?.reason, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/inventory/counts/:id/post', requirePermission('inventory:approve'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(postApprovedCount(companyId, req.params.id, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --- Multiple stores (warehouses) ---
+router.get('/inventory/warehouses', requirePermission('inventory:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  res.json(stores.listWarehouses(companyId, { includeInactive: req.query.include_inactive === '1' }));
+});
+
+router.post('/inventory/warehouses', requirePermission('stores:manage'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(stores.createWarehouse(companyId, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.put('/inventory/warehouses/:id', requirePermission('stores:manage'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(stores.updateWarehouse(companyId, req.params.id, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/inventory/stock-levels', requirePermission('inventory:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const db = getDb();
+  if (req.query.product_id) {
+    try {
+      res.json(stores.productStockByStore(companyId, req.query.product_id));
+    } catch (err) {
+      res.status(404).json({ error: err.message });
+    }
+    return;
+  }
+  res.json(stockLedger.stockByWarehouse(db, companyId));
+});
+
+// --- Inter-store stock transfers ---
+router.get('/inventory/transfers', requirePermission('inventory:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  res.json(stores.listTransfers(companyId, { status: req.query.status || null }));
+});
+
+router.get('/inventory/transfers/:id', requirePermission('inventory:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const t = stores.getTransfer(companyId, req.params.id);
+  if (!t) return res.status(404).json({ error: 'Transfer not found' });
+  res.json(t);
+});
+
+router.post('/inventory/transfers', requirePermission('inventory:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(stores.createTransfer(companyId, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/inventory/transfers/:id/dispatch', requirePermission('inventory:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(stores.dispatchTransfer(companyId, req.params.id, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/inventory/transfers/:id/receive', requirePermission('inventory:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(stores.receiveTransfer(companyId, req.params.id, req.body?.lines || null, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/inventory/transfers/:id/cancel', requirePermission('inventory:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(stores.cancelTransfer(companyId, req.params.id, user));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -853,23 +1036,37 @@ router.post('/sales/quotes/:id/convert-to-invoice', requirePermission('sales:wri
 router.get('/sales/invoices', requirePermission('sales:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
-  const invoices = db.prepare(`
-    SELECT i.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone
+  // Searchable sales history: free-text (number / customer), status, customer,
+  // walk-in flag and date-range filters.
+  const { q = '', status = '', customer_id = '', walk_in = '', from = '', to = '' } = req.query;
+  const params = [companyId];
+  let sql = `
+    SELECT i.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone, c.is_walk_in as customer_is_walk_in
     FROM sales_invoices i
-    JOIN customers c ON i.customer_id = c.id
-    WHERE i.company_id = ?
-    ORDER BY i.date DESC, i.created_at DESC
-  `).all(companyId);
-  res.json(invoices);
+    LEFT JOIN customers c ON i.customer_id = c.id
+    WHERE i.company_id = ?`;
+  if (q) {
+    sql += ` AND (i.invoice_number LIKE ? OR c.name LIKE ? OR i.notes LIKE ?)`;
+    const like = `%${q}%`;
+    params.push(like, like, like);
+  }
+  if (status) { sql += ` AND i.status = ?`; params.push(status); }
+  if (customer_id) { sql += ` AND i.customer_id = ?`; params.push(customer_id); }
+  if (walk_in === '1' || walk_in === 'true') sql += ` AND i.walk_in = 1`;
+  if (walk_in === '0' || walk_in === 'false') sql += ` AND i.walk_in = 0`;
+  if (from) { sql += ` AND i.date >= ?`; params.push(from); }
+  if (to) { sql += ` AND i.date <= ?`; params.push(to); }
+  sql += ` ORDER BY i.date DESC, i.created_at DESC LIMIT 1000`;
+  res.json(db.prepare(sql).all(...params));
 });
 
 router.get('/sales/invoices/:id', requirePermission('sales:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const invoice = db.prepare(`
-    SELECT i.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone, c.address as customer_address, c.tax_id as customer_tax_id
+    SELECT i.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone, c.address as customer_address, c.tax_id as customer_tax_id, c.is_walk_in as customer_is_walk_in
     FROM sales_invoices i
-    JOIN customers c ON i.customer_id = c.id
+    LEFT JOIN customers c ON i.customer_id = c.id
     WHERE i.id = ? AND i.company_id = ?
   `).get(req.params.id, companyId);
 
@@ -889,31 +1086,66 @@ router.get('/sales/invoices/:id', requirePermission('sales:read'), (req, res) =>
 
 router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
-  const { date = new Date().toISOString().split('T')[0], due_date, customer_id, notes, lines, autoPost = false } = req.body;
-  if (!customer_id || !lines || lines.length === 0) {
-    return res.status(400).json({ error: 'Customer and at least one line item are required' });
+  const {
+    date = new Date().toISOString().split('T')[0], due_date, customer_id, notes, lines, autoPost = false,
+    walk_in = false, warehouse_id = null, currency_code = null, exchange_rate = null,
+    bank_account_id = null, payment_method = 'CASH'
+  } = req.body;
+  if (!lines || lines.length === 0) {
+    return res.status(400).json({ error: 'At least one line item is required' });
   }
 
   const db = getDb();
+
+  // --- Customer resolution -------------------------------------------------
+  // Walk-in (anonymous) sales use the system walk-in customer; ordinary sales
+  // require a named customer (credit sales must always have one).
+  const isWalkIn = !!walk_in;
+  let customerId = customer_id || null;
+  if (isWalkIn) {
+    const wi = db.prepare(`SELECT id FROM customers WHERE company_id = ? AND is_walk_in = 1 ORDER BY created_at ASC LIMIT 1`).get(companyId);
+    if (!wi) return res.status(400).json({ error: 'Walk-in customer is not configured for this company.' });
+    customerId = wi.id;
+  } else if (customerId) {
+    const c = db.prepare(`SELECT id, is_walk_in FROM customers WHERE id = ? AND company_id = ?`).get(customerId, companyId);
+    if (!c) return res.status(400).json({ error: 'Customer not found' });
+    if (c.is_walk_in) return res.status(400).json({ error: 'The walk-in customer can only be used through walk-in sales.' });
+  }
+  if (!customerId) {
+    return res.status(400).json({ error: 'Customer is required. For an anonymous cash sale, enable walk-in mode.' });
+  }
+
+  // --- Currency handling ----------------------------------------------------
+  // Line amounts are entered in the transaction currency; ledger columns store
+  // base-currency amounts, with the rate and foreign total preserved.
+  const company = db.prepare(`SELECT currency_code FROM companies WHERE id = ?`).get(companyId);
+  const baseCode = company?.currency_code || 'USD';
+  const txCurrency = String(currency_code || baseCode).toUpperCase();
+  const curInfo = fx.currencyInfo(db, companyId, txCurrency);
+  if (currency_code && !curInfo) {
+    return res.status(400).json({ error: `Currency ${txCurrency} is not configured. Add it in Settings → Currencies.` });
+  }
+  const fDec = curInfo ? curInfo.decimals : 2;
+
   const invNumber = nextSequenceNumber(companyId, 'INVOICE', 'INV');
   const invId = generateId('inv');
 
-  let subtotal = 0;
-  let taxTotal = 0;
-  let discountTotal = 0;
+  let subtotalF = 0;
+  let taxTotalF = 0;
+  let discountTotalF = 0;
 
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const price = Number(l.unit_price) || 0;
     const disc = Number(l.discount_percent) || 0;
     const taxRate = Number(l.tax_rate) || 0;
-    const lineSub = roundTo(qty * price * (1 - disc / 100), 2);
-    const lineTax = roundTo(lineSub * (taxRate / 100), 2);
-    const lineTot = roundTo(lineSub + lineTax, 2);
+    const lineSub = roundTo(qty * price * (1 - disc / 100), fDec);
+    const lineTax = roundTo(lineSub * (taxRate / 100), fDec);
+    const lineTot = roundTo(lineSub + lineTax, fDec);
 
-    subtotal = roundTo(subtotal + lineSub, 2);
-    taxTotal = roundTo(taxTotal + lineTax, 2);
-    discountTotal = roundTo(discountTotal + (qty * price * (disc / 100)), 2);
+    subtotalF = roundTo(subtotalF + lineSub, fDec);
+    taxTotalF = roundTo(taxTotalF + lineTax, fDec);
+    discountTotalF = roundTo(discountTotalF + (qty * price * (disc / 100)), fDec);
 
     let unitCost = 0;
     if (l.product_id) {
@@ -935,14 +1167,35 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
     };
   });
 
+  let rate = 1;
+  let subtotal = subtotalF;
+  let taxTotal = taxTotalF;
+  let discountTotal = discountTotalF;
+  let foreignTotal = null;
+  try {
+    if (txCurrency !== baseCode) {
+      rate = exchange_rate != null && Number(exchange_rate) > 0
+        ? Number(exchange_rate)
+        : fx.getRate(companyId, txCurrency, baseCode, date);
+      subtotal = roundTo(subtotalF * rate, 2);
+      taxTotal = roundTo(taxTotalF * rate, 2);
+      discountTotal = roundTo(discountTotalF * rate, 2);
+      foreignTotal = roundTo(subtotalF + taxTotalF, fDec);
+    }
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
   const total = roundTo(subtotal + taxTotal, 2);
+
+  const whId = warehouse_id || stockLedger.defaultWarehouseId(db, companyId);
 
   try {
     db.transaction(() => {
       db.prepare(`
-        INSERT INTO sales_invoices (id, company_id, invoice_number, date, due_date, customer_id, subtotal, tax_total, discount_total, total, amount_paid, balance_due, status, notes, created_by, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'DRAFT', ?, ?, datetime('now'))
-      `).run(invId, companyId, invNumber, date, due_date || date, customer_id, subtotal, taxTotal, discountTotal, total, total, notes || null, user.id);
+        INSERT INTO sales_invoices (id, company_id, invoice_number, date, due_date, customer_id, subtotal, tax_total, discount_total, total, amount_paid, balance_due, status, notes, created_by, created_at, walk_in, warehouse_id, currency_code, exchange_rate, foreign_total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'DRAFT', ?, ?, datetime('now'), ?, ?, ?, ?, ?)
+      `).run(invId, companyId, invNumber, date, due_date || date, customerId, subtotal, taxTotal, discountTotal, total, total, notes || null, user.id,
+        isWalkIn ? 1 : 0, whId, txCurrency, rate, foreignTotal);
 
       const insertLine = db.prepare(`
         INSERT INTO sales_invoice_lines (id, invoice_id, product_id, description, quantity, unit_price, unit_cost, discount_percent, tax_rate_id, tax_rate, tax_amount, line_total)
@@ -953,14 +1206,20 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
         insertLine.run(generateId('inl'), invId, ld.productId, ld.description, ld.quantity, ld.unitPrice, ld.unitCost, ld.discountPercent, ld.taxRateId, ld.taxRate, ld.taxAmount, ld.lineTotal);
       }
 
-      logAudit(companyId, user.id, user.full_name, 'SALES', 'CREATE', invId, `Created sales invoice draft ${invNumber} ($${total})`);
+      logAudit(companyId, user.id, user.full_name, 'SALES', 'CREATE', invId,
+        `Created sales invoice draft ${invNumber}${isWalkIn ? ' (walk-in)' : ''} (${foreignTotal != null ? `${foreignTotal} ${txCurrency} = ` : ''}${total} base)`);
     })();
 
     if (autoPost) {
-      postSalesInvoice(companyId, invId, user);
+      if (isWalkIn) {
+        // Walk-in sales settle immediately in ONE transaction.
+        postWalkInSale(companyId, invId, { bankAccountId: bank_account_id, paymentMethod: payment_method, date }, user);
+      } else {
+        postSalesInvoice(companyId, invId, user);
+      }
     }
 
-    res.json({ id: invId, invoiceNumber: invNumber, total });
+    res.json({ id: invId, invoiceNumber: invNumber, total, walkIn: isWalkIn, currencyCode: txCurrency, exchangeRate: rate, foreignTotal });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -969,7 +1228,15 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
 router.post('/sales/invoices/:id/post', requirePermission('sales:post'), (req, res) => {
   const { companyId, user } = getSessionContext(req);
   try {
-    const result = postSalesInvoice(companyId, req.params.id, user);
+    const inv = getDb().prepare(`SELECT walk_in FROM sales_invoices WHERE id = ? AND company_id = ?`).get(req.params.id, companyId);
+    if (!inv) return res.status(404).json({ error: 'Invoice not found' });
+    // Walk-in invoices settle immediately (post + full payment in one transaction).
+    const result = inv.walk_in
+      ? postWalkInSale(companyId, req.params.id, {
+        bankAccountId: req.body?.bank_account_id || null,
+        paymentMethod: req.body?.payment_method || 'CASH'
+      }, user)
+      : postSalesInvoice(companyId, req.params.id, user);
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -1120,7 +1387,8 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
   const { companyId, user } = getSessionContext(req);
   const {
     vendor_invoice_number, date = new Date().toISOString().split('T')[0],
-    due_date, supplier_id, notes, lines, autoPost = false
+    due_date, supplier_id, notes, lines, autoPost = false,
+    goods_receipt_id = null, currency_code = null, exchange_rate = null
   } = req.body;
 
   if (!supplier_id || !lines || lines.length === 0) {
@@ -1128,22 +1396,43 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
   }
 
   const db = getDb();
+
+  // Optional goods-receipt linkage: when the goods were already received on a
+  // posted GRN, posting this bill clears GRNI instead of adding stock again.
+  if (goods_receipt_id) {
+    const gr = db.prepare(`SELECT * FROM goods_receipts WHERE id = ? AND company_id = ?`).get(goods_receipt_id, companyId);
+    if (!gr) return res.status(400).json({ error: 'Linked goods receipt not found' });
+    if (gr.status !== 'POSTED') return res.status(400).json({ error: 'Linked goods receipt is not posted' });
+    if (gr.supplier_id !== supplier_id) return res.status(400).json({ error: 'The goods receipt belongs to a different supplier' });
+  }
+
+  // Currency handling (same rules as sales invoices): ledger columns store
+  // base-currency amounts; rate + foreign total are preserved for history.
+  const company = db.prepare(`SELECT currency_code FROM companies WHERE id = ?`).get(companyId);
+  const baseCode = company?.currency_code || 'USD';
+  const txCurrency = String(currency_code || baseCode).toUpperCase();
+  const curInfo = fx.currencyInfo(db, companyId, txCurrency);
+  if (currency_code && !curInfo) {
+    return res.status(400).json({ error: `Currency ${txCurrency} is not configured. Add it in Settings → Currencies.` });
+  }
+  const fDec = curInfo ? curInfo.decimals : 2;
+
   const billNumber = nextSequenceNumber(companyId, 'BILL', 'BILL');
   const billId = generateId('bill');
 
-  let subtotal = 0;
-  let taxTotal = 0;
+  let subtotalF = 0;
+  let taxTotalF = 0;
 
   const lineData = lines.map(l => {
     const qty = Number(l.quantity) || 1;
     const cost = Number(l.unit_cost) || 0;
     const taxRate = Number(l.tax_rate) || 0;
-    const lineSub = roundTo(qty * cost, 2);
-    const lineTax = roundTo(lineSub * (taxRate / 100), 2);
-    const lineTot = roundTo(lineSub + lineTax, 2);
+    const lineSub = roundTo(qty * cost, fDec);
+    const lineTax = roundTo(lineSub * (taxRate / 100), fDec);
+    const lineTot = roundTo(lineSub + lineTax, fDec);
 
-    subtotal = roundTo(subtotal + lineSub, 2);
-    taxTotal = roundTo(taxTotal + lineTax, 2);
+    subtotalF = roundTo(subtotalF + lineSub, fDec);
+    taxTotalF = roundTo(taxTotalF + lineTax, fDec);
 
     return {
       productId: l.product_id || null,
@@ -1157,14 +1446,31 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
     };
   });
 
+  let rate = 1;
+  let subtotal = subtotalF;
+  let taxTotal = taxTotalF;
+  let foreignTotal = null;
+  try {
+    if (txCurrency !== baseCode) {
+      rate = exchange_rate != null && Number(exchange_rate) > 0
+        ? Number(exchange_rate)
+        : fx.getRate(companyId, txCurrency, baseCode, date);
+      subtotal = roundTo(subtotalF * rate, 2);
+      taxTotal = roundTo(taxTotalF * rate, 2);
+      foreignTotal = roundTo(subtotalF + taxTotalF, fDec);
+    }
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
   const total = roundTo(subtotal + taxTotal, 2);
 
   try {
     db.transaction(() => {
       db.prepare(`
-        INSERT INTO purchase_invoices (id, company_id, bill_number, vendor_invoice_number, date, due_date, supplier_id, subtotal, tax_total, total, amount_paid, balance_due, status, notes, created_by, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'DRAFT', ?, ?, datetime('now'))
-      `).run(billId, companyId, billNumber, vendor_invoice_number || null, date, due_date || date, supplier_id, subtotal, taxTotal, total, total, notes || null, user.id);
+        INSERT INTO purchase_invoices (id, company_id, bill_number, vendor_invoice_number, date, due_date, supplier_id, subtotal, tax_total, total, amount_paid, balance_due, status, notes, created_by, created_at, goods_receipt_id, currency_code, exchange_rate, foreign_total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'DRAFT', ?, ?, datetime('now'), ?, ?, ?, ?)
+      `).run(billId, companyId, billNumber, vendor_invoice_number || null, date, due_date || date, supplier_id, subtotal, taxTotal, total, total, notes || null, user.id,
+        goods_receipt_id || null, txCurrency, rate, foreignTotal);
 
       const insertLine = db.prepare(`
         INSERT INTO purchase_invoice_lines (id, bill_id, product_id, description, quantity, unit_cost, tax_rate_id, tax_rate, tax_amount, line_total)
@@ -1216,6 +1522,59 @@ router.post('/purchases/returns', requirePermission('purchases:post'), (req, res
   try {
     const result = postPurchaseReturn(companyId, req.body, user);
     res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --- Purchase order detail (needed by the goods-receipt screen) ---
+router.get('/purchases/orders/:id', requirePermission('purchases:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const db = getDb();
+  const po = db.prepare(`
+    SELECT po.*, s.name AS supplier_name
+    FROM purchase_orders po JOIN suppliers s ON s.id = po.supplier_id
+    WHERE po.id = ? AND po.company_id = ?
+  `).get(req.params.id, companyId);
+  if (!po) return res.status(404).json({ error: 'Purchase order not found' });
+  const lines = db.prepare(`
+    SELECT l.*, p.sku, p.name AS product_name, p.unit
+    FROM purchase_order_lines l LEFT JOIN products p ON p.id = l.product_id
+    WHERE l.po_id = ?
+  `).all(po.id);
+  const receipts = db.prepare(`
+    SELECT id, receipt_number, date, status, total_quantity, total_value
+    FROM goods_receipts WHERE purchase_order_id = ? ORDER BY created_at DESC
+  `).all(po.id);
+  res.json({ ...po, lines, receipts });
+});
+
+// --- Goods receipts (stock increases ONLY here, never on PO/bill creation) ---
+router.get('/purchases/receipts', requirePermission('purchases:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  res.json(goodsReceipts.listGoodsReceipts(companyId));
+});
+
+router.get('/purchases/receipts/:id', requirePermission('purchases:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const gr = goodsReceipts.getGoodsReceipt(companyId, req.params.id);
+  if (!gr) return res.status(404).json({ error: 'Goods receipt not found' });
+  res.json(gr);
+});
+
+router.post('/purchases/receipts', requirePermission('purchases:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(goodsReceipts.createGoodsReceipt(companyId, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/purchases/receipts/:id/post', requirePermission('purchases:post'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(goodsReceipts.postGoodsReceipt(companyId, req.params.id, user));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -1290,6 +1649,107 @@ router.post('/payments', requirePermission('banking:write'), (req, res) => {
   try {
     const result = recordPayment(companyId, req.body, user);
     res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Receipt/payment correction: proper reversal with audit trail (never a silent
+// delete). Undoes the journal entry and every balance side effect.
+router.post('/payments/:id/reverse', requirePermission('banking:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    const result = reversePayment(companyId, req.params.id, req.body?.reason || '', user);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --- Physical cash counting & reconciliation (denomination based) ---
+router.get('/banking/cash-sessions', requirePermission('banking:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  res.json(cashManagement.listCashSessions(companyId));
+});
+
+router.get('/banking/cash-sessions/:id', requirePermission('banking:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const session = cashManagement.getCashSession(companyId, req.params.id);
+  if (!session) return res.status(404).json({ error: 'Cash session not found' });
+  res.json(session);
+});
+
+router.post('/banking/cash-sessions/open', requirePermission('cash:count'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(cashManagement.openCashSession(companyId, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/banking/cash-sessions/:id/close', requirePermission('cash:count'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(cashManagement.closeCashSession(companyId, req.params.id, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/banking/cash-sessions/:id/approve', requirePermission('cash:approve'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(cashManagement.approveCashSession(companyId, req.params.id, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --- Multi-currency: currencies & exchange rates ---
+router.get('/fx/currencies', requirePermission('fx:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  res.json(fx.listCurrencies(companyId, { includeInactive: req.query.include_inactive === '1' }));
+});
+
+router.post('/fx/currencies', requirePermission('fx:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(fx.createCurrency(companyId, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.put('/fx/currencies/:id', requirePermission('fx:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(fx.updateCurrency(companyId, req.params.id, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/fx/rates', requirePermission('fx:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  res.json(fx.listRates(companyId, { from: req.query.from || null, to: req.query.to || null }));
+});
+
+router.post('/fx/rates', requirePermission('fx:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(fx.setRate(companyId, req.body, user));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/fx/convert', requirePermission('fx:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  try {
+    const amount = Number(req.query.amount || 0);
+    const result = fx.convertAmount(companyId, amount, req.query.from, req.query.to, req.query.date || undefined);
+    res.json({ amount, from: req.query.from, to: req.query.to, ...result });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

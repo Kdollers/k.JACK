@@ -30,8 +30,9 @@ const PERMISSIONS = [
   'contacts:read', 'contacts:write',
   'sales:read', 'sales:write', 'sales:post',
   'purchases:read', 'purchases:write', 'purchases:post',
-  'inventory:read', 'inventory:write', 'inventory:adjust',
-  'banking:read', 'banking:write',
+  'inventory:read', 'inventory:write', 'inventory:adjust', 'inventory:approve',
+  'stores:manage',
+  'banking:read', 'banking:write', 'cash:count', 'cash:approve',
   'accounting:read', 'accounting:write', 'journal:post', 'journal:reverse',
   'fx:read', 'fx:write', 'fx:revalue',
   'company:manage', 'users:manage', 'backup:export', 'backup:restore', 'demo:reset'
@@ -43,8 +44,8 @@ const ROLE_PERMISSIONS = {
   admin: PERMISSIONS,
   accountant: [
     'dashboard:read', 'reports:read', 'audit:read',
-    'contacts:read', 'sales:read', 'purchases:read', 'inventory:read',
-    'banking:read', 'banking:write',
+    'contacts:read', 'sales:read', 'purchases:read', 'inventory:read', 'inventory:approve',
+    'banking:read', 'banking:write', 'cash:count', 'cash:approve',
     'accounting:read', 'accounting:write', 'journal:post', 'journal:reverse',
     'fx:read', 'fx:write', 'fx:revalue'
   ],
@@ -60,9 +61,12 @@ const ROLE_PERMISSIONS = {
     'purchases:read', 'purchases:write', 'purchases:post',
     'inventory:read'
   ],
+  // Inventory Officer: runs stores, transfers and physical counts, but cannot
+  // approve their own counts (inventory:approve is deliberately absent).
   inventory: [
     'dashboard:read',
     'inventory:read', 'inventory:write', 'inventory:adjust',
+    'stores:manage',
     'sales:read', 'purchases:read', 'contacts:read'
   ],
   // Managers have full visibility but cannot change or post anything.

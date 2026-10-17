@@ -356,9 +356,10 @@ if (scenario === 'legacy') {
     assert.ok(applied.includes(1));
   });
 
-  check('business records are unchanged by the authentication migration', () => {
+  check('business records are unchanged by the migrations', () => {
     const src = new (require('better-sqlite3'))(SOURCE_DB, { readonly: true, fileMustExist: true });
-    const tables = ['journal_entries', 'journal_entry_lines', 'sales_invoices', 'purchase_invoices', 'customers', 'products', 'companies'];
+    // Transactional tables must keep EXACT row counts through every migration.
+    const tables = ['journal_entries', 'journal_entry_lines', 'sales_invoices', 'purchase_invoices', 'products', 'companies'];
     counts = {};
     for (const t of tables) {
       const expected = src.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get().n;
@@ -366,6 +367,21 @@ if (scenario === 'legacy') {
       assert.strictEqual(actual, expected, `${t} count preserved`);
       counts[t] = expected;
     }
+    // Migration v2 adds exactly ONE system row per company: the anonymous
+    // walk-in customer (structural default, not business data). Every
+    // pre-existing customer row must survive with its identity intact.
+    const companyCount = src.prepare('SELECT COUNT(*) AS n FROM companies').get().n;
+    const srcCustomers = src.prepare('SELECT COUNT(*) AS n FROM customers').get().n;
+    const dstCustomers = getDb().prepare('SELECT COUNT(*) AS n FROM customers').get().n;
+    assert.strictEqual(dstCustomers, srcCustomers + companyCount, 'customers count preserved (+1 walk-in per company)');
+    for (const c of src.prepare('SELECT id, code, name, current_balance FROM customers').all()) {
+      const migrated = getDb().prepare('SELECT id, code, name, current_balance FROM customers WHERE id = ?').get(c.id);
+      assert.ok(migrated, `customer ${c.id} preserved`);
+      assert.strictEqual(migrated.code, c.code);
+      assert.strictEqual(migrated.name, c.name);
+      assert.strictEqual(migrated.current_balance, c.current_balance);
+    }
+    counts.customers = srcCustomers;
     src.close();
   });
 

@@ -1,14 +1,7 @@
 const { getDb } = require('./db');
 const crypto = require('crypto');
-
-function generateId(prefix = 'id') {
-  return `${prefix}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-}
-
-function roundTo(num, decimals = 2) {
-  const factor = Math.pow(10, decimals);
-  return Math.round((Number(num) + Number.EPSILON) * factor) / factor;
-}
+const { generateId, roundTo } = require('./utils');
+const stockLedger = require('./stockLedger');
 
 function nextSequenceNumber(companyId, type, prefix) {
   const db = getDb();
@@ -38,6 +31,12 @@ function nextSequenceNumber(companyId, type, prefix) {
     row = db.prepare(`SELECT credit_note_number as num FROM credit_notes WHERE company_id = ? AND credit_note_number LIKE ? ORDER BY credit_note_number DESC LIMIT 1`).get(companyId, pattern);
   } else if (type === 'PURCHASE_RETURN') {
     row = db.prepare(`SELECT return_number as num FROM purchase_returns WHERE company_id = ? AND return_number LIKE ? ORDER BY return_number DESC LIMIT 1`).get(companyId, pattern);
+  } else if (type === 'TRANSFER') {
+    row = db.prepare(`SELECT transfer_number as num FROM stock_transfers WHERE company_id = ? AND transfer_number LIKE ? ORDER BY transfer_number DESC LIMIT 1`).get(companyId, pattern);
+  } else if (type === 'GOODS_RECEIPT') {
+    row = db.prepare(`SELECT receipt_number as num FROM goods_receipts WHERE company_id = ? AND receipt_number LIKE ? ORDER BY receipt_number DESC LIMIT 1`).get(companyId, pattern);
+  } else if (type === 'CASH_SESSION') {
+    row = db.prepare(`SELECT session_number as num FROM cash_sessions WHERE company_id = ? AND session_number LIKE ? ORDER BY session_number DESC LIMIT 1`).get(companyId, pattern);
   }
 
   let nextSeq = 1;
@@ -196,12 +195,19 @@ function reverseJournalEntry(companyId, entryId, reason, user) {
  * - Updates customer balance
  * - Updates invoice status to POSTED
  */
-function postSalesInvoice(companyId, invoiceId, user) {
+function postSalesInvoice(companyId, invoiceId, user, opts = {}) {
   const db = getDb();
   const tx = db.transaction(() => {
     const inv = db.prepare(`SELECT * FROM sales_invoices WHERE id = ? AND company_id = ?`).get(invoiceId, companyId);
     if (!inv) throw new Error('Invoice not found');
     if (inv.status !== 'DRAFT') throw new Error(`Cannot post invoice with status ${inv.status}`);
+
+    // Walk-in (anonymous) sales are cash sales: they must be settled immediately.
+    // postWalkInSale() passes settleWalkIn=true and records the payment in the
+    // same transaction. Credit sales require a named (non walk-in) customer.
+    if (inv.walk_in && !opts.settleWalkIn) {
+      throw new Error('Walk-in sales must be paid immediately. Use the walk-in checkout, or create a credit sale for a named customer.');
+    }
 
     const lines = db.prepare(`SELECT * FROM sales_invoice_lines WHERE invoice_id = ?`).all(invoiceId);
     if (!lines || lines.length === 0) throw new Error('Cannot post an empty invoice');
@@ -217,6 +223,10 @@ function postSalesInvoice(companyId, invoiceId, user) {
 
     if (!arAccount) throw new Error('Accounts Receivable account (subtype ACCOUNTS_RECEIVABLE) not configured');
 
+    const company = db.prepare(`SELECT inventory_valuation_method FROM companies WHERE id = ?`).get(companyId);
+    const useFifo = String(company?.inventory_valuation_method || 'WEIGHTED_AVERAGE').toUpperCase() === 'FIFO';
+    const warehouseId = inv.warehouse_id || stockLedger.defaultWarehouseId(db, companyId);
+
     let totalCogs = 0;
     const inventoryUpdates = [];
 
@@ -225,8 +235,25 @@ function postSalesInvoice(companyId, invoiceId, user) {
       if (line.product_id) {
         const prod = db.prepare(`SELECT * FROM products WHERE id = ? AND company_id = ?`).get(line.product_id, companyId);
         if (prod && prod.type === 'GOODS') {
-          const unitCost = prod.cost_price || 0;
-          const lineCost = roundTo(line.quantity * unitCost, 2);
+          // Insufficient-stock protection: never sell what is not on hand.
+          const companyStock = roundTo(prod.current_stock || 0, 4);
+          if (companyStock < line.quantity - 0.00005) {
+            throw new Error(`Insufficient stock for ${prod.name}: available ${companyStock}, requested ${roundTo(line.quantity, 4)}.`);
+          }
+          const storeStock = stockLedger.getStockAt(db, prod.id, warehouseId);
+          if (storeStock < line.quantity - 0.00005) {
+            throw new Error(`Insufficient stock for ${prod.name} in the selected store: available ${storeStock}, requested ${roundTo(line.quantity, 4)}.`);
+          }
+
+          let unitCost = prod.cost_price || 0;
+          let lineCost = roundTo(line.quantity * unitCost, 2);
+          let fifoLayers = null;
+          if (useFifo) {
+            // FIFO: cost of this sale comes from the oldest cost layers.
+            fifoLayers = stockLedger.consumeFifo(db, companyId, prod.id, line.quantity, inv.date);
+            lineCost = fifoLayers.totalCost;
+            unitCost = line.quantity > 0 ? roundTo(lineCost / line.quantity, 4) : unitCost;
+          }
           totalCogs = roundTo(totalCogs + lineCost, 2);
 
           const newStock = roundTo(prod.current_stock - line.quantity, 4);
@@ -306,12 +333,13 @@ function postSalesInvoice(companyId, invoiceId, user) {
     const insertMovement = db.prepare(`
       INSERT INTO inventory_movements (
         id, company_id, product_id, date, movement_type, reference_type, reference_id, reference_number,
-        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at
-      ) VALUES (?, ?, ?, ?, 'SALE_OUT', 'SALES_INVOICE', ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at, warehouse_id
+      ) VALUES (?, ?, ?, ?, 'SALE_OUT', 'SALES_INVOICE', ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
     `);
 
     for (const item of inventoryUpdates) {
       updateProdStock.run(item.newStock, item.productId);
+      stockLedger.syncStockLevelDelta(db, item.productId, warehouseId, -item.qty);
       insertMovement.run(
         generateId('mov'),
         companyId,
@@ -324,7 +352,8 @@ function postSalesInvoice(companyId, invoiceId, user) {
         item.lineCost,
         item.newStock,
         `Sale on invoice ${inv.invoice_number}`,
-        user?.id || 'system'
+        user?.id || 'system',
+        warehouseId
       );
     }
 
@@ -374,19 +403,33 @@ function postPurchaseInvoice(companyId, billId, user) {
     const apAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND subtype = 'ACCOUNTS_PAYABLE' LIMIT 1`).get(companyId);
     const defaultInvAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '1200' LIMIT 1`).get(companyId);
     const taxInputAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '1150' LIMIT 1`).get(companyId);
+    const grniAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '2120' LIMIT 1`).get(companyId);
 
     if (!apAccount) throw new Error('Accounts Payable account (subtype ACCOUNTS_PAYABLE) not configured');
+
+    // A bill linked to a POSTED goods receipt does not add stock again: the
+    // goods were already received into the store when the receipt was posted.
+    // Its journal debits the GRNI clearing account instead of Inventory.
+    let linkedReceipt = null;
+    if (bill.goods_receipt_id) {
+      linkedReceipt = db.prepare(`SELECT * FROM goods_receipts WHERE id = ? AND company_id = ?`).get(bill.goods_receipt_id, companyId);
+      if (!linkedReceipt) throw new Error('Linked goods receipt not found');
+      if (linkedReceipt.status !== 'POSTED') throw new Error('Linked goods receipt is not posted');
+    }
+    const warehouseId = linkedReceipt
+      ? linkedReceipt.warehouse_id
+      : stockLedger.defaultWarehouseId(db, companyId);
 
     const inventoryUpdates = [];
     const updateProd = db.prepare(`UPDATE products SET current_stock = ?, cost_price = ? WHERE id = ?`);
     const insertMovement = db.prepare(`
       INSERT INTO inventory_movements (
         id, company_id, product_id, date, movement_type, reference_type, reference_id, reference_number,
-        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at
-      ) VALUES (?, ?, ?, ?, 'PURCHASE_IN', 'PURCHASE_INVOICE', ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at, warehouse_id
+      ) VALUES (?, ?, ?, ?, 'PURCHASE_IN', 'PURCHASE_INVOICE', ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
     `);
 
-    for (const line of lines) {
+    for (const line of linkedReceipt ? [] : lines) {
       if (line.product_id) {
         const prod = db.prepare(`SELECT * FROM products WHERE id = ? AND company_id = ?`).get(line.product_id, companyId);
         if (prod && prod.type === 'GOODS') {
@@ -417,10 +460,16 @@ function postPurchaseInvoice(companyId, billId, user) {
     // Build Double-Entry Journal Entry
     const jeLines = [];
 
-    // 1. Debit Merchandise Inventory for subtotal
+    // 1. Debit Merchandise Inventory — or the GRNI clearing account when the
+    //    goods were already received on a posted goods receipt.
+    if (linkedReceipt && !grniAccount) {
+      throw new Error('GRNI account (code 2120) is not configured');
+    }
     jeLines.push({
-      accountId: defaultInvAccount.id,
-      description: `Purchases/Inventory: Bill #${bill.bill_number}`,
+      accountId: linkedReceipt ? grniAccount.id : defaultInvAccount.id,
+      description: linkedReceipt
+        ? `GRNI clearing: Bill #${bill.bill_number} (goods received on ${linkedReceipt.receipt_number})`
+        : `Purchases/Inventory: Bill #${bill.bill_number}`,
       debit: bill.subtotal,
       credit: 0
     });
@@ -457,6 +506,12 @@ function postPurchaseInvoice(companyId, billId, user) {
     // Apply inventory stock & cost updates
     for (const item of inventoryUpdates) {
       updateProd.run(item.newStock, item.newAvgCost, item.productId);
+      stockLedger.syncStockLevelDelta(db, item.productId, warehouseId, item.qty);
+      stockLedger.addFifoLayer(db, {
+        companyId, productId: item.productId, warehouseId,
+        qty: item.qty, unitCost: item.unitCost, date: bill.date,
+        sourceType: 'PURCHASE_INVOICE', sourceId: bill.id
+      });
       insertMovement.run(
         generateId('mov'),
         companyId,
@@ -469,7 +524,8 @@ function postPurchaseInvoice(companyId, billId, user) {
         item.lineTotal,
         item.newStock,
         `Purchase on bill ${bill.bill_number}`,
-        user?.id || 'system'
+        user?.id || 'system',
+        warehouseId
       );
     }
 
@@ -499,7 +555,7 @@ function recordPayment(companyId, paymentData, user) {
   const db = getDb();
   const tx = db.transaction(() => {
     const {
-      paymentType, // CUSTOMER_RECEIPT, SUPPLIER_PAYMENT, DIRECT_EXPENSE, DIRECT_INCOME, TRANSFER
+      paymentType, // CUSTOMER_RECEIPT, SUPPLIER_PAYMENT, DIRECT_EXPENSE, DIRECT_INCOME, TRANSFER, CUSTOMER_REFUND
       paymentMethod = 'BANK_TRANSFER',
       bankAccountId,
       toBankAccountId,
@@ -509,10 +565,14 @@ function recordPayment(companyId, paymentData, user) {
       purchaseInvoiceId,
       expenseAccountId,
       incomeAccountId,
+      creditNoteId = null,
       amount,
       date = new Date().toISOString().split('T')[0],
       reference = '',
-      notes = ''
+      notes = '',
+      currencyCode = null,
+      exchangeRate = null,
+      foreignAmount = null
     } = paymentData;
 
     const payAmount = roundTo(Number(amount), 2);
@@ -520,6 +580,22 @@ function recordPayment(companyId, paymentData, user) {
 
     const bankAcc = db.prepare(`SELECT * FROM bank_accounts WHERE id = ? AND company_id = ?`).get(bankAccountId, companyId);
     if (!bankAcc) throw new Error('Bank/Cash account not found');
+
+    // Multi-currency bookkeeping: `amount` is ALWAYS the base-currency value.
+    // The transaction currency, its rate and the original foreign amount are
+    // preserved for history; they never overwrite the base amounts.
+    const company = db.prepare(`SELECT currency_code FROM companies WHERE id = ?`).get(companyId);
+    const baseCode = company?.currency_code || 'USD';
+    const payCurrency = currencyCode || baseCode;
+    let payRate = exchangeRate == null ? 1 : Number(exchangeRate);
+    if (payCurrency !== baseCode) {
+      if (!(payRate > 0)) throw new Error(`An exchange rate is required to record a payment in ${payCurrency}.`);
+    } else {
+      payRate = 1;
+    }
+    const payForeign = foreignAmount == null
+      ? roundTo(payAmount / payRate, 4)
+      : roundTo(Number(foreignAmount), 4);
 
     const paymentNumber = nextSequenceNumber(companyId, 'PAYMENT', 'PAY');
     const paymentId = generateId('pay');
@@ -677,6 +753,32 @@ function recordPayment(companyId, paymentData, user) {
 
       db.prepare(`UPDATE bank_accounts SET current_balance = current_balance - ? WHERE id = ?`).run(payAmount, bankAcc.id);
       db.prepare(`UPDATE bank_accounts SET current_balance = current_balance + ? WHERE id = ?`).run(payAmount, toBank.id);
+
+    } else if (paymentType === 'CUSTOMER_REFUND') {
+      // Cash refund of a credit-note balance: settles what the company owes
+      // the customer. Debit AR (reversing the credit-note AR credit), Credit
+      // the cash/bank account actually paying out.
+      const customer = db.prepare(`SELECT * FROM customers WHERE id = ? AND company_id = ?`).get(customerId, companyId);
+      if (!customer) throw new Error('Customer is required for customer refund');
+      if (!arAccount) throw new Error('Accounts Receivable account (subtype ACCOUNTS_RECEIVABLE) not configured');
+
+      desc = `Customer Refund ${paymentNumber} to ${customer.name}`;
+
+      jeLines.push({
+        accountId: arAccount.id,
+        description: `AR: Refund to ${customer.name}`,
+        debit: payAmount,
+        credit: 0
+      });
+      jeLines.push({
+        accountId: bankAcc.account_id,
+        description: `Refund paid via ${bankAcc.bank_name}`,
+        debit: 0,
+        credit: payAmount
+      });
+
+      db.prepare(`UPDATE bank_accounts SET current_balance = current_balance - ? WHERE id = ?`).run(payAmount, bankAcc.id);
+      db.prepare(`UPDATE customers SET current_balance = current_balance + ? WHERE id = ?`).run(payAmount, customer.id);
     } else {
       throw new Error(`Unsupported payment type: ${paymentType}`);
     }
@@ -698,13 +800,15 @@ function recordPayment(companyId, paymentData, user) {
       INSERT INTO payments (
         id, company_id, payment_number, date, payment_type, payment_method, bank_account_id, to_bank_account_id,
         customer_id, supplier_id, sales_invoice_id, purchase_invoice_id, expense_account_id, income_account_id,
-        amount, reference, notes, journal_entry_id, created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        amount, reference, notes, journal_entry_id, created_by, created_at,
+        currency_code, exchange_rate, foreign_amount, status, credit_note_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, 'POSTED', ?)
     `).run(
       paymentId, companyId, paymentNumber, date, paymentType, paymentMethod, bankAcc.id, toBankAccountId || null,
       customerId || null, supplierId || null, salesInvoiceId || null, purchaseInvoiceId || null,
       expenseAccountId || null, incomeAccountId || null, payAmount, reference || null, notes || null,
-      je.id, user?.id || 'system'
+      je.id, user?.id || 'system',
+      payCurrency, payRate, payForeign, creditNoteId || null
     );
 
     logAudit(companyId, user?.id, user?.full_name, 'PAYMENTS', 'CREATE', paymentId, `Recorded payment ${paymentNumber} (${paymentType}) of $${payAmount}`);
@@ -716,16 +820,135 @@ function recordPayment(companyId, paymentData, user) {
 }
 
 /**
+ * Records the immediate settlement of a walk-in (anonymous) sale.
+ * Posts the invoice and records the full payment in ONE transaction, so a
+ * walk-in sale can never leave an outstanding receivable behind.
+ */
+function postWalkInSale(companyId, invoiceId, paymentInfo, user) {
+  const db = getDb();
+  const outer = db.transaction(() => {
+    const inv = db.prepare(`SELECT * FROM sales_invoices WHERE id = ? AND company_id = ?`).get(invoiceId, companyId);
+    if (!inv) throw new Error('Invoice not found');
+    if (!inv.walk_in) throw new Error('Invoice is not a walk-in sale');
+    if (inv.status !== 'DRAFT') throw new Error(`Cannot post invoice with status ${inv.status}`);
+
+    let bankAccountId = paymentInfo?.bankAccountId || null;
+    if (!bankAccountId) {
+      const cash = db.prepare(`
+        SELECT id FROM bank_accounts
+        WHERE company_id = ? AND active = 1 AND account_type = 'CASH'
+        ORDER BY created_at ASC LIMIT 1
+      `).get(companyId);
+      if (!cash) throw new Error('No active cash account is configured for walk-in sales');
+      bankAccountId = cash.id;
+    }
+
+    const posted = postSalesInvoice(companyId, invoiceId, user, { settleWalkIn: true });
+    const payment = recordPayment(companyId, {
+      paymentType: 'CUSTOMER_RECEIPT',
+      paymentMethod: paymentInfo?.paymentMethod || 'CASH',
+      bankAccountId,
+      customerId: inv.customer_id,
+      salesInvoiceId: invoiceId,
+      amount: inv.total,
+      date: paymentInfo?.date || inv.date,
+      reference: `Walk-in ${inv.invoice_number}`,
+      notes: 'Walk-in sale — immediate settlement',
+      currencyCode: inv.currency_code || null,
+      exchangeRate: inv.exchange_rate || 1,
+      foreignAmount: inv.foreign_total || null
+    }, user);
+    return { ...posted, paymentId: payment.paymentId, paymentNumber: payment.paymentNumber };
+  });
+  return outer();
+}
+
+/**
+ * Reverses a recorded payment (receipt correction). Creates a proper REVERSAL
+ * journal entry, undoes every balance side effect and marks the payment
+ * REVERSED. The original payment row is preserved for the audit trail.
+ */
+function reversePayment(companyId, paymentId, reason, user) {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const pay = db.prepare(`SELECT * FROM payments WHERE id = ? AND company_id = ?`).get(paymentId, companyId);
+    if (!pay) throw new Error('Payment not found');
+    if (pay.status === 'REVERSED') throw new Error('Payment is already reversed');
+    if (!pay.journal_entry_id) throw new Error('Payment has no journal entry to reverse');
+
+    const amount = roundTo(pay.amount, 2);
+
+    // Undo balance side effects (mirror of recordPayment).
+    const bankAdjust = (id, delta) => db.prepare(`UPDATE bank_accounts SET current_balance = current_balance + ? WHERE id = ?`).run(delta, id);
+    switch (pay.payment_type) {
+      case 'CUSTOMER_RECEIPT':
+        bankAdjust(pay.bank_account_id, -amount);
+        db.prepare(`UPDATE customers SET current_balance = current_balance + ? WHERE id = ?`).run(amount, pay.customer_id);
+        if (pay.sales_invoice_id) {
+          const inv = db.prepare(`SELECT * FROM sales_invoices WHERE id = ?`).get(pay.sales_invoice_id);
+          if (inv) {
+            const newPaid = Math.max(0, roundTo(inv.amount_paid - amount, 2));
+            const newDue = roundTo(inv.total - newPaid, 2);
+            const newStatus = newDue <= 0 ? 'PAID' : (newPaid > 0 ? 'PARTIALLY_PAID' : (inv.status === 'PAID' || inv.status === 'PARTIALLY_PAID' ? 'POSTED' : inv.status));
+            db.prepare(`UPDATE sales_invoices SET amount_paid = ?, balance_due = ?, status = ? WHERE id = ?`).run(newPaid, newDue, newStatus, inv.id);
+          }
+        }
+        break;
+      case 'CUSTOMER_REFUND':
+        bankAdjust(pay.bank_account_id, amount);
+        db.prepare(`UPDATE customers SET current_balance = current_balance - ? WHERE id = ?`).run(amount, pay.customer_id);
+        break;
+      case 'SUPPLIER_PAYMENT':
+        bankAdjust(pay.bank_account_id, amount);
+        db.prepare(`UPDATE suppliers SET current_balance = current_balance + ? WHERE id = ?`).run(amount, pay.supplier_id);
+        if (pay.purchase_invoice_id) {
+          const bill = db.prepare(`SELECT * FROM purchase_invoices WHERE id = ?`).get(pay.purchase_invoice_id);
+          if (bill) {
+            const newPaid = Math.max(0, roundTo(bill.amount_paid - amount, 2));
+            const newDue = roundTo(bill.total - newPaid, 2);
+            const newStatus = newDue <= 0 ? 'PAID' : (newPaid > 0 ? 'PARTIALLY_PAID' : (bill.status === 'PAID' || bill.status === 'PARTIALLY_PAID' ? 'POSTED' : bill.status));
+            db.prepare(`UPDATE purchase_invoices SET amount_paid = ?, balance_due = ?, status = ? WHERE id = ?`).run(newPaid, newDue, newStatus, bill.id);
+          }
+        }
+        break;
+      case 'DIRECT_EXPENSE':
+        bankAdjust(pay.bank_account_id, amount);
+        break;
+      case 'DIRECT_INCOME':
+        bankAdjust(pay.bank_account_id, -amount);
+        break;
+      case 'TRANSFER':
+        bankAdjust(pay.bank_account_id, amount);
+        bankAdjust(pay.to_bank_account_id, -amount);
+        break;
+      default:
+        throw new Error(`Unsupported payment type: ${pay.payment_type}`);
+    }
+
+    // Proper REVERSAL journal entry (swapped debits/credits, linked to the original).
+    reverseJournalEntry(companyId, pay.journal_entry_id, reason || `Correction of payment ${pay.payment_number}`, user);
+
+    db.prepare(`UPDATE payments SET status = 'REVERSED' WHERE id = ?`).run(pay.id);
+    logAudit(companyId, user?.id, user?.full_name, 'PAYMENTS', 'REVERSE', pay.id,
+      `Reversed payment ${pay.payment_number} (${pay.payment_type}, $${amount}). Reason: ${reason || 'not stated'}`);
+
+    return { paymentId: pay.id, paymentNumber: pay.payment_number, status: 'REVERSED' };
+  });
+  return tx();
+}
+
+/**
  * Creates and posts a Stock Adjustment (loss, damage, found items)
  */
 function postStockAdjustment(companyId, adjustmentData, user) {
   const db = getDb();
   const tx = db.transaction(() => {
-    const { date = new Date().toISOString().split('T')[0], reason, notes = '', lines } = adjustmentData;
+    const { date = new Date().toISOString().split('T')[0], reason, notes = '', lines, warehouseId = null } = adjustmentData;
     if (!lines || lines.length === 0) throw new Error('Stock adjustment lines cannot be empty');
 
     const adjNumber = nextSequenceNumber(companyId, 'ADJUSTMENT', 'ADJ');
     const adjId = generateId('adj');
+    const adjWarehouseId = warehouseId || stockLedger.defaultWarehouseId(db, companyId);
 
     const defaultInvAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '1200' LIMIT 1`).get(companyId);
     const shrinkageAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '5020' LIMIT 1`).get(companyId);
@@ -742,6 +965,9 @@ function postStockAdjustment(companyId, adjustmentData, user) {
 
       const qtyChange = roundTo(Number(l.quantityChange), 4);
       if (qtyChange === 0) continue;
+      if (qtyChange < 0 && roundTo(prod.current_stock + qtyChange, 4) < -0.00005) {
+        throw new Error(`Insufficient stock for ${prod.name}: cannot adjust by ${qtyChange} (available ${roundTo(prod.current_stock, 4)}).`);
+      }
 
       const unitCost = Number(prod.cost_price) || 0;
       const totalCost = roundTo(Math.abs(qtyChange) * unitCost, 2);
@@ -841,14 +1067,23 @@ function postStockAdjustment(companyId, adjustmentData, user) {
     const insertMov = db.prepare(`
       INSERT INTO inventory_movements (
         id, company_id, product_id, date, movement_type, reference_type, reference_id, reference_number,
-        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at
-      ) VALUES (?, ?, ?, ?, ?, 'STOCK_ADJUSTMENT', ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at, warehouse_id
+      ) VALUES (?, ?, ?, ?, ?, 'STOCK_ADJUSTMENT', ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
     `);
 
     for (let i = 0; i < prodUpdates.length; i++) {
       updateStock.run(prodUpdates[i].newStock, prodUpdates[i].id);
       const m = moveInserts[i];
-      insertMov.run(m.id, companyId, m.productId, date, m.type, adjId, adjNumber, m.qty, m.unitCost, m.totalCost, m.newStock, `Adjustment: ${reason}`, user?.id || 'system');
+      stockLedger.syncStockLevelDelta(db, m.productId, adjWarehouseId, m.qty);
+      if (m.qty > 0) {
+        stockLedger.addFifoLayer(db, {
+          companyId, productId: m.productId, warehouseId: adjWarehouseId,
+          qty: m.qty, unitCost: m.unitCost, date, sourceType: 'COUNT_VARIANCE', sourceId: adjId
+        });
+      } else if (m.qty < 0) {
+        stockLedger.consumeFifo(db, companyId, m.productId, -m.qty, date);
+      }
+      insertMov.run(m.id, companyId, m.productId, date, m.type, adjId, adjNumber, m.qty, m.unitCost, m.totalCost, m.newStock, `Adjustment: ${reason}`, user?.id || 'system', adjWarehouseId);
     }
 
     logAudit(companyId, user?.id, user?.full_name, 'INVENTORY', 'POST', adjId, `Posted stock adjustment ${adjNumber} (${reason}) value: $${totalValue}`);
@@ -863,148 +1098,161 @@ function postStockAdjustment(companyId, adjustmentData, user) {
  * Creates and posts a Physical Inventory Count
  * Reconciles system quantity with counted quantity.
  */
+/**
+ * Builds count line rows (system vs counted vs variance) for one warehouse.
+ * Shared by the direct-post path and the draft/approval workflow.
+ */
+function buildCountLineRows(db, companyId, warehouseId, lines) {
+  const lineRows = [];
+  let totalSys = 0;
+  let totalCounted = 0;
+  let totalVarianceQty = 0;
+  let totalVarianceVal = 0;
+
+  for (const l of lines) {
+    const prod = db.prepare(`SELECT * FROM products WHERE id = ? AND company_id = ?`).get(l.productId, companyId);
+    if (!prod) continue;
+
+    // System quantity is the store-level balance of the counted warehouse
+    // (for single-store companies this equals the company-wide stock).
+    const sysQty = stockLedger.getStockAt(db, prod.id, warehouseId);
+    const countedQty = roundTo(Number(l.countedQty), 4);
+    if (!(countedQty >= 0)) throw new Error(`Counted quantity for ${prod.name} must be zero or more`);
+    const varQty = roundTo(countedQty - sysQty, 4);
+    const unitCost = Number(prod.cost_price) || 0;
+    const varVal = roundTo(varQty * unitCost, 2);
+
+    totalSys = roundTo(totalSys + sysQty, 4);
+    totalCounted = roundTo(totalCounted + countedQty, 4);
+    totalVarianceQty = roundTo(totalVarianceQty + varQty, 4);
+    totalVarianceVal = roundTo(totalVarianceVal + varVal, 2);
+
+    lineRows.push({
+      id: l.id || generateId('cntl'),
+      productId: prod.id,
+      sysQty,
+      countedQty,
+      varQty,
+      unitCost,
+      varVal,
+      varianceReason: l.varianceReason || (varQty < 0 ? 'MISSING' : varQty > 0 ? 'EXCESS' : null),
+      notes: l.notes || ''
+    });
+  }
+
+  if (lineRows.length === 0) throw new Error('Physical inventory count lines cannot be empty');
+  return { lineRows, totalSys, totalCounted, totalVarianceQty, totalVarianceVal };
+}
+
+/**
+ * Shared ledger effects of a physical count (JE + stock + movements).
+ * Used by the direct posting path and by the approved-count posting path so
+ * both workflows behave identically. lineRows: [{ productId, sysQty,
+ * countedQty, varQty, unitCost, varVal }].
+ */
+function applyCountEffects(db, companyId, { countId, countNumber, date, warehouseId, lineRows, user }) {
+  const defaultInvAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '1200' LIMIT 1`).get(companyId);
+  const shrinkageAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '5020' LIMIT 1`).get(companyId);
+  const gainAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '4500' LIMIT 1`).get(companyId);
+
+  const totalVarianceQty = roundTo(lineRows.reduce((s, l) => roundTo(s + l.varQty, 4), 0), 4);
+  const totalVarianceVal = roundTo(lineRows.reduce((s, l) => roundTo(s + l.varVal, 2), 0), 2);
+
+  // Journal Entry for count variance
+  let jeId = null;
+  const absVal = Math.abs(totalVarianceVal);
+  if (absVal > 0) {
+    const jeLines = [];
+    if (totalVarianceVal < 0) {
+      jeLines.push({ accountId: shrinkageAccount.id, description: `Physical Inventory Count Shortage - ${countNumber}`, debit: absVal, credit: 0 });
+      jeLines.push({ accountId: defaultInvAccount.id, description: `Inventory Asset Adjustment - ${countNumber}`, debit: 0, credit: absVal });
+    } else {
+      jeLines.push({ accountId: defaultInvAccount.id, description: `Inventory Asset Adjustment - ${countNumber}`, debit: absVal, credit: 0 });
+      jeLines.push({ accountId: gainAccount.id, description: `Physical Inventory Count Surplus - ${countNumber}`, debit: 0, credit: absVal });
+    }
+    const je = createJournalEntry({
+      companyId,
+      date,
+      reference: countNumber,
+      description: `Physical Inventory Count #${countNumber} Reconciliation`,
+      sourceType: 'PHYSICAL_COUNT',
+      sourceId: countId,
+      lines: jeLines,
+      user
+    });
+    jeId = je.id;
+  }
+
+  // Apply stock changes (company total moves by the variance; the counted
+  // store is set to the counted quantity; other stores are untouched).
+  const updateStock = db.prepare(`UPDATE products SET current_stock = ? WHERE id = ?`);
+  const insertMov = db.prepare(`
+    INSERT INTO inventory_movements (
+      id, company_id, product_id, date, movement_type, reference_type, reference_id, reference_number,
+      quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at, warehouse_id
+    ) VALUES (?, ?, ?, ?, 'PHYSICAL_COUNT', 'PHYSICAL_COUNT', ?, ?, ?, ?, ?, ?, 'Physical Count Variance', ?, datetime('now'), ?)
+  `);
+  for (const li of lineRows) {
+    if (!li.varQty) continue;
+    const prodNow = db.prepare(`SELECT current_stock FROM products WHERE id = ?`).get(li.productId);
+    const newCompanyStock = roundTo((prodNow?.current_stock || 0) + li.varQty, 4);
+    updateStock.run(newCompanyStock, li.productId);
+    stockLedger.setStockLevel(db, li.productId, warehouseId, li.countedQty);
+    if (li.varQty > 0) {
+      stockLedger.addFifoLayer(db, {
+        companyId, productId: li.productId, warehouseId,
+        qty: li.varQty, unitCost: li.unitCost, date, sourceType: 'COUNT_VARIANCE', sourceId: countId
+      });
+    } else {
+      stockLedger.consumeFifo(db, companyId, li.productId, -li.varQty, date);
+    }
+    insertMov.run(generateId('mov'), companyId, li.productId, date, countId, countNumber, li.varQty, li.unitCost, Math.abs(li.varVal), newCompanyStock, user?.id || 'system', warehouseId);
+  }
+
+  return { jeId, totalVarianceQty, totalVarianceVal };
+}
+
 function postPhysicalCount(companyId, countData, user) {
   const db = getDb();
   const tx = db.transaction(() => {
-    const { date = new Date().toISOString().split('T')[0], location = 'Main Store', notes = '', lines } = countData;
+    const { date = new Date().toISOString().split('T')[0], location = 'Main Store', notes = '', lines, warehouseId = null } = countData;
     if (!lines || lines.length === 0) throw new Error('Physical inventory count lines cannot be empty');
 
     const countNumber = nextSequenceNumber(companyId, 'COUNT', 'CNT');
     const countId = generateId('cnt');
+    const countWarehouseId = warehouseId || stockLedger.defaultWarehouseId(db, companyId);
 
-    const defaultInvAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '1200' LIMIT 1`).get(companyId);
-    const shrinkageAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '5020' LIMIT 1`).get(companyId);
-    const gainAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '4500' LIMIT 1`).get(companyId);
+    const { lineRows: lineInserts, totalSys, totalCounted, totalVarianceQty, totalVarianceVal } =
+      buildCountLineRows(db, companyId, countWarehouseId, lines);
 
-    let totalSys = 0;
-    let totalCounted = 0;
-    let totalVarianceQty = 0;
-    let totalVarianceVal = 0;
-
-    const lineInserts = [];
-    const moveInserts = [];
-    const prodUpdates = [];
-
-    for (const l of lines) {
-      const prod = db.prepare(`SELECT * FROM products WHERE id = ? AND company_id = ?`).get(l.productId, companyId);
-      if (!prod) continue;
-
-      const sysQty = roundTo(Number(prod.current_stock), 4);
-      const countedQty = roundTo(Number(l.countedQty), 4);
-      const varQty = roundTo(countedQty - sysQty, 4);
-      const unitCost = Number(prod.cost_price) || 0;
-      const varVal = roundTo(varQty * unitCost, 2);
-
-      totalSys = roundTo(totalSys + sysQty, 4);
-      totalCounted = roundTo(totalCounted + countedQty, 4);
-      totalVarianceQty = roundTo(totalVarianceQty + varQty, 4);
-      totalVarianceVal = roundTo(totalVarianceVal + varVal, 2);
-
-      lineInserts.push({
-        id: generateId('cntl'),
-        productId: prod.id,
-        sysQty,
-        countedQty,
-        varQty,
-        unitCost,
-        varVal,
-        notes: l.notes || ''
-      });
-
-      if (varQty !== 0) {
-        prodUpdates.push({ id: prod.id, newStock: countedQty });
-        moveInserts.push({
-          id: generateId('mov'),
-          productId: prod.id,
-          qty: varQty,
-          unitCost,
-          totalCost: Math.abs(varVal),
-          newStock: countedQty
-        });
-      }
-    }
-
-    // Journal Entry for count variance
-    let jeId = null;
-    const absVal = Math.abs(totalVarianceVal);
-    if (absVal > 0) {
-      const jeLines = [];
-      if (totalVarianceVal < 0) {
-        // Net Shrinkage Loss
-        jeLines.push({
-          accountId: shrinkageAccount.id,
-          description: `Physical Inventory Count Shortage - ${countNumber}`,
-          debit: absVal,
-          credit: 0
-        });
-        jeLines.push({
-          accountId: defaultInvAccount.id,
-          description: `Inventory Asset Adjustment - ${countNumber}`,
-          debit: 0,
-          credit: absVal
-        });
-      } else {
-        // Net Surplus Gain
-        jeLines.push({
-          accountId: defaultInvAccount.id,
-          description: `Inventory Asset Adjustment - ${countNumber}`,
-          debit: absVal,
-          credit: 0
-        });
-        jeLines.push({
-          accountId: gainAccount.id,
-          description: `Physical Inventory Count Surplus - ${countNumber}`,
-          debit: 0,
-          credit: absVal
-        });
-      }
-
-      const je = createJournalEntry({
-        companyId,
-        date,
-        reference: countNumber,
-        description: `Physical Inventory Count #${countNumber} Reconciliation`,
-        sourceType: 'PHYSICAL_COUNT',
-        sourceId: countId,
-        lines: jeLines,
-        user
-      });
-      jeId = je.id;
-    }
-
-    // Insert Physical Count Header
+    // Insert Physical Count Header (journal entry is linked after posting)
     db.prepare(`
       INSERT INTO physical_inventory_counts (
         id, company_id, count_number, date, location, status, total_system_qty, total_counted_qty,
-        total_variance_qty, total_variance_value, journal_entry_id, notes, created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, 'POSTED', ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        total_variance_qty, total_variance_value, journal_entry_id, notes, created_by, created_at, warehouse_id
+      ) VALUES (?, ?, ?, ?, ?, 'POSTED', ?, ?, ?, ?, NULL, ?, ?, datetime('now'), ?)
     `).run(
       countId, companyId, countNumber, date, location, totalSys, totalCounted,
-      totalVarianceQty, totalVarianceVal, jeId, notes, user?.id || 'system'
+      totalVarianceQty, totalVarianceVal, notes, user?.id || 'system', countWarehouseId
     );
 
     // Insert lines
     const insertLine = db.prepare(`
-      INSERT INTO physical_inventory_lines (id, count_id, product_id, system_qty, counted_qty, variance_qty, unit_cost, variance_value, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO physical_inventory_lines (id, count_id, product_id, system_qty, counted_qty, variance_qty, unit_cost, variance_value, notes, variance_reason)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     for (const li of lineInserts) {
-      insertLine.run(li.id, countId, li.productId, li.sysQty, li.countedQty, li.varQty, li.unitCost, li.varVal, li.notes);
+      insertLine.run(li.id, countId, li.productId, li.sysQty, li.countedQty, li.varQty, li.unitCost, li.varVal, li.notes, li.varianceReason || null);
     }
 
-    // Apply updates
-    const updateStock = db.prepare(`UPDATE products SET current_stock = ? WHERE id = ?`);
-    const insertMov = db.prepare(`
-      INSERT INTO inventory_movements (
-        id, company_id, product_id, date, movement_type, reference_type, reference_id, reference_number,
-        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at
-      ) VALUES (?, ?, ?, ?, 'PHYSICAL_COUNT', 'PHYSICAL_COUNT', ?, ?, ?, ?, ?, ?, 'Physical Count Variance', ?, datetime('now'))
-    `);
-
-    for (let i = 0; i < prodUpdates.length; i++) {
-      updateStock.run(prodUpdates[i].newStock, prodUpdates[i].id);
-      const m = moveInserts[i];
-      insertMov.run(m.id, companyId, m.productId, date, countId, countNumber, m.qty, m.unitCost, m.totalCost, m.newStock, user?.id || 'system');
+    // Shared posting effects (JE + stock + movements), identical to the
+    // submit → approve → post workflow.
+    const effects = applyCountEffects(db, companyId, {
+      countId, countNumber, date, warehouseId: countWarehouseId, lineRows: lineInserts, user
+    });
+    const jeId = effects.jeId;
+    if (jeId) {
+      db.prepare(`UPDATE physical_inventory_counts SET journal_entry_id = ? WHERE id = ?`).run(jeId, countId);
     }
 
     logAudit(companyId, user?.id, user?.full_name, 'INVENTORY', 'POST', countId, `Completed physical inventory count ${countNumber}: Var Qty ${totalVarianceQty}, Var Value $${totalVarianceVal}`);
@@ -1012,6 +1260,187 @@ function postPhysicalCount(companyId, countData, user) {
     return { countId, countNumber, totalVarianceQty, totalVarianceVal, journalEntryId: jeId };
   });
 
+  return tx();
+}
+
+// ---------------------------------------------------------------------------
+// Physical count workflow (Inventory Officer): DRAFT → SUBMITTED → APPROVED →
+// POSTED, with REJECTED as a return path. The submitter can never approve
+// their own count; every step is written to the audit trail.
+// ---------------------------------------------------------------------------
+
+function createCountDraft(companyId, countData, user) {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const { date = new Date().toISOString().split('T')[0], location = 'Main Store', notes = '', lines, warehouseId = null } = countData;
+    if (!lines || lines.length === 0) throw new Error('Physical inventory count lines cannot be empty');
+    const whId = warehouseId || stockLedger.defaultWarehouseId(db, companyId);
+
+    const countNumber = nextSequenceNumber(companyId, 'COUNT', 'CNT');
+    const countId = generateId('cnt');
+    const { lineRows, totalSys, totalCounted, totalVarianceQty, totalVarianceVal } =
+      buildCountLineRows(db, companyId, whId, lines);
+
+    db.prepare(`
+      INSERT INTO physical_inventory_counts (
+        id, company_id, count_number, date, location, status, total_system_qty, total_counted_qty,
+        total_variance_qty, total_variance_value, journal_entry_id, notes, created_by, created_at, warehouse_id
+      ) VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, NULL, ?, ?, datetime('now'), ?)
+    `).run(countId, companyId, countNumber, date, location, totalSys, totalCounted, totalVarianceQty, totalVarianceVal, notes, user?.id || 'system', whId);
+
+    const insertLine = db.prepare(`
+      INSERT INTO physical_inventory_lines (id, count_id, product_id, system_qty, counted_qty, variance_qty, unit_cost, variance_value, notes, variance_reason)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const li of lineRows) {
+      insertLine.run(li.id, countId, li.productId, li.sysQty, li.countedQty, li.varQty, li.unitCost, li.varVal, li.notes, li.varianceReason || null);
+    }
+
+    logAudit(companyId, user?.id, user?.full_name, 'INVENTORY', 'CREATE', countId, `Created draft physical count ${countNumber}`);
+    return { countId, countNumber, status: 'DRAFT', totalVarianceQty, totalVarianceVal };
+  });
+  return tx();
+}
+
+function updateCountDraft(companyId, countId, countData, user) {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const count = db.prepare(`SELECT * FROM physical_inventory_counts WHERE id = ? AND company_id = ?`).get(countId, companyId);
+    if (!count) throw new Error('Physical count not found');
+    if (count.status !== 'DRAFT' && count.status !== 'REJECTED') {
+      throw new Error(`Only draft or rejected counts can be edited (current status: ${count.status})`);
+    }
+    const { date = count.date, location = count.location, notes = count.notes, lines, warehouseId = count.warehouse_id } = countData;
+    if (!lines || lines.length === 0) throw new Error('Physical inventory count lines cannot be empty');
+    const whId = warehouseId || stockLedger.defaultWarehouseId(db, companyId);
+    const { lineRows, totalSys, totalCounted, totalVarianceQty, totalVarianceVal } =
+      buildCountLineRows(db, companyId, whId, lines);
+
+    db.prepare(`DELETE FROM physical_inventory_lines WHERE count_id = ?`).run(countId);
+    const insertLine = db.prepare(`
+      INSERT INTO physical_inventory_lines (id, count_id, product_id, system_qty, counted_qty, variance_qty, unit_cost, variance_value, notes, variance_reason)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const li of lineRows) {
+      insertLine.run(li.id, countId, li.productId, li.sysQty, li.countedQty, li.varQty, li.unitCost, li.varVal, li.notes, li.varianceReason || null);
+    }
+    db.prepare(`
+      UPDATE physical_inventory_counts
+      SET date = ?, location = ?, notes = ?, warehouse_id = ?, total_system_qty = ?, total_counted_qty = ?,
+          total_variance_qty = ?, total_variance_value = ?, status = 'DRAFT', rejection_reason = NULL
+      WHERE id = ?
+    `).run(date, location, notes || '', whId, totalSys, totalCounted, totalVarianceQty, totalVarianceVal, countId);
+
+    logAudit(companyId, user?.id, user?.full_name, 'INVENTORY', 'UPDATE', countId, `Updated draft physical count ${count.count_number}`);
+    return { countId, countNumber: count.count_number, status: 'DRAFT', totalVarianceQty, totalVarianceVal };
+  });
+  return tx();
+}
+
+function submitCountForReview(companyId, countId, user) {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const count = db.prepare(`SELECT * FROM physical_inventory_counts WHERE id = ? AND company_id = ?`).get(countId, companyId);
+    if (!count) throw new Error('Physical count not found');
+    if (count.status !== 'DRAFT' && count.status !== 'REJECTED') {
+      throw new Error(`Only draft or rejected counts can be submitted (current status: ${count.status})`);
+    }
+    db.prepare(`
+      UPDATE physical_inventory_counts
+      SET status = 'SUBMITTED', submitted_by = ?, submitted_at = datetime('now'), rejection_reason = NULL
+      WHERE id = ?
+    `).run(user?.id || 'system', countId);
+    logAudit(companyId, user?.id, user?.full_name, 'INVENTORY', 'SUBMIT', countId, `Submitted physical count ${count.count_number} for review`);
+    return { countId, countNumber: count.count_number, status: 'SUBMITTED' };
+  });
+  return tx();
+}
+
+function approveCount(companyId, countId, user) {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const count = db.prepare(`SELECT * FROM physical_inventory_counts WHERE id = ? AND company_id = ?`).get(countId, companyId);
+    if (!count) throw new Error('Physical count not found');
+    if (count.status !== 'SUBMITTED') throw new Error(`Only submitted counts can be approved (current status: ${count.status})`);
+    if (user?.id && (user.id === count.submitted_by || user.id === count.created_by)) {
+      throw new Error('You cannot approve a count that you created or submitted. An independent reviewer must approve it.');
+    }
+    db.prepare(`
+      UPDATE physical_inventory_counts
+      SET status = 'APPROVED', reviewed_by = ?, reviewed_at = datetime('now'), approved_by = ?, approved_at = datetime('now')
+      WHERE id = ?
+    `).run(user?.id || 'system', user?.id || 'system', countId);
+    logAudit(companyId, user?.id, user?.full_name, 'INVENTORY', 'APPROVE', countId,
+      `Approved physical count ${count.count_number} (counter: ${count.created_by}, submitted by: ${count.submitted_by})`);
+    return { countId, countNumber: count.count_number, status: 'APPROVED' };
+  });
+  return tx();
+}
+
+function rejectCount(companyId, countId, reason, user) {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const count = db.prepare(`SELECT * FROM physical_inventory_counts WHERE id = ? AND company_id = ?`).get(countId, companyId);
+    if (!count) throw new Error('Physical count not found');
+    if (count.status !== 'SUBMITTED') throw new Error(`Only submitted counts can be rejected (current status: ${count.status})`);
+    if (!reason || !String(reason).trim()) throw new Error('A rejection reason is required');
+    db.prepare(`
+      UPDATE physical_inventory_counts
+      SET status = 'REJECTED', reviewed_by = ?, reviewed_at = datetime('now'), rejection_reason = ?
+      WHERE id = ?
+    `).run(user?.id || 'system', String(reason).trim(), countId);
+    logAudit(companyId, user?.id, user?.full_name, 'INVENTORY', 'REJECT', countId,
+      `Rejected physical count ${count.count_number}: ${String(reason).trim()}`);
+    return { countId, countNumber: count.count_number, status: 'REJECTED' };
+  });
+  return tx();
+}
+
+function postApprovedCount(companyId, countId, user) {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const count = db.prepare(`SELECT * FROM physical_inventory_counts WHERE id = ? AND company_id = ?`).get(countId, companyId);
+    if (!count) throw new Error('Physical count not found');
+    if (count.status !== 'APPROVED') throw new Error(`Only approved counts can be posted (current status: ${count.status})`);
+
+    const whId = count.warehouse_id || stockLedger.defaultWarehouseId(db, companyId);
+    const savedLines = db.prepare(`SELECT * FROM physical_inventory_lines WHERE count_id = ?`).all(countId);
+    if (savedLines.length === 0) throw new Error('Physical count has no lines');
+
+    // Recompute variances against CURRENT stock (stock may have moved between
+    // counting and posting); counted quantities are the authoritative input.
+    const lineRows = savedLines.map((sl) => {
+      const prod = db.prepare(`SELECT cost_price, name FROM products WHERE id = ?`).get(sl.product_id);
+      const sysQty = stockLedger.getStockAt(db, sl.product_id, whId);
+      const countedQty = roundTo(sl.counted_qty, 4);
+      const varQty = roundTo(countedQty - sysQty, 4);
+      const unitCost = Number(prod?.cost_price) || 0;
+      const varVal = roundTo(varQty * unitCost, 2);
+      return { productId: sl.product_id, sysQty, countedQty, varQty, unitCost, varVal };
+    });
+
+    const updateLine = db.prepare(`
+      UPDATE physical_inventory_lines SET system_qty = ?, variance_qty = ?, unit_cost = ?, variance_value = ? WHERE id = ?
+    `);
+    savedLines.forEach((sl, i) => updateLine.run(lineRows[i].sysQty, lineRows[i].varQty, lineRows[i].unitCost, lineRows[i].varVal, sl.id));
+
+    const effects = applyCountEffects(db, companyId, {
+      countId, countNumber: count.count_number, date: count.date, warehouseId: whId, lineRows, user
+    });
+
+    const totalSys = roundTo(lineRows.reduce((s, l) => roundTo(s + l.sysQty, 4), 0), 4);
+    const totalCounted = roundTo(lineRows.reduce((s, l) => roundTo(s + l.countedQty, 4), 0), 4);
+    db.prepare(`
+      UPDATE physical_inventory_counts
+      SET status = 'POSTED', journal_entry_id = ?, total_system_qty = ?, total_counted_qty = ?,
+          total_variance_qty = ?, total_variance_value = ?
+      WHERE id = ?
+    `).run(effects.jeId, totalSys, totalCounted, effects.totalVarianceQty, effects.totalVarianceVal, countId);
+
+    logAudit(companyId, user?.id, user?.full_name, 'INVENTORY', 'POST', countId,
+      `Posted approved physical count ${count.count_number} (counter: ${count.created_by}, reviewer/approver: ${count.approved_by}): Var Qty ${effects.totalVarianceQty}, Var Value $${effects.totalVarianceVal}`);
+    return { countId, countNumber: count.count_number, status: 'POSTED', ...effects };
+  });
   return tx();
 }
 
@@ -1036,6 +1465,41 @@ function postCreditNote(companyId, creditNoteData, user) {
     const customer = db.prepare(`SELECT * FROM customers WHERE id = ? AND company_id = ?`).get(customerId, companyId);
     if (!customer) throw new Error('Customer not found');
 
+    // ----- Return controls: no duplicate returns, no over-refund -----
+    let invoice = null;
+    let alreadyCreditedTotal = 0;
+    const remainingQtyByLine = new Map(); // invoice line id -> still returnable qty
+    if (invoiceId) {
+      invoice = db.prepare(`SELECT * FROM sales_invoices WHERE id = ? AND company_id = ?`).get(invoiceId, companyId);
+      if (!invoice) throw new Error('Linked sales invoice not found');
+      if (invoice.status === 'DRAFT' || invoice.status === 'CANCELLED') {
+        throw new Error('Credit notes can only be issued against posted invoices');
+      }
+      alreadyCreditedTotal = roundTo(
+        db.prepare(`SELECT COALESCE(SUM(total), 0) AS t FROM credit_notes WHERE invoice_id = ? AND status <> 'CANCELLED'`).get(invoiceId).t, 2
+      );
+      if (alreadyCreditedTotal >= roundTo(invoice.total, 2)) {
+        throw new Error(`Invoice ${invoice.invoice_number} has already been fully credited. Duplicate credit notes are not allowed.`);
+      }
+      const invLines = db.prepare(`SELECT * FROM sales_invoice_lines WHERE invoice_id = ?`).all(invoiceId);
+      const creditedByProduct = new Map();
+      const creditedRows = db.prepare(`
+        SELECT cnl.product_id, cnl.quantity
+        FROM credit_note_lines cnl
+        JOIN credit_notes cn ON cn.id = cnl.credit_note_id
+        WHERE cn.invoice_id = ? AND cn.status <> 'CANCELLED'
+      `).all(invoiceId);
+      for (const cr of creditedRows) {
+        const key = cr.product_id || '_';
+        creditedByProduct.set(key, roundTo((creditedByProduct.get(key) || 0) + cr.quantity, 4));
+      }
+      for (const il of invLines) {
+        const key = il.product_id || '_';
+        const already = creditedByProduct.get(key) || 0;
+        remainingQtyByLine.set(key, roundTo((remainingQtyByLine.get(key) || 0) + il.quantity - already, 4));
+      }
+    }
+
     const cnNumber = nextSequenceNumber(companyId, 'CREDIT_NOTE', 'CN');
     const cnId = generateId('cn');
 
@@ -1056,6 +1520,18 @@ function postCreditNote(companyId, creditNoteData, user) {
       const qty = roundTo(Number(l.quantity), 4);
       const unitPrice = roundTo(Number(l.unitPrice), 2);
       const taxRate = roundTo(Number(l.taxRate || 0), 2);
+      if (!(qty > 0)) throw new Error('Credit note line quantity must be greater than zero');
+
+      // Per-line over-return guard against the linked invoice.
+      if (invoice) {
+        const key = l.productId || '_';
+        const remaining = remainingQtyByLine.has(key) ? remainingQtyByLine.get(key) : 0;
+        if (qty > remaining + 0.00005) {
+          throw new Error(`Return quantity for "${l.description || l.productId}" exceeds the still-returnable quantity (${remaining}) of invoice ${invoice.invoice_number}. Over-returns and duplicate returns are blocked.`);
+        }
+        remainingQtyByLine.set(key, roundTo(remaining - qty, 4));
+      }
+
       const lineSub = roundTo(qty * unitPrice, 2);
       const lineTax = roundTo(lineSub * (taxRate / 100), 2);
       const lineTot = roundTo(lineSub + lineTax, 2);
@@ -1097,6 +1573,11 @@ function postCreditNote(companyId, creditNoteData, user) {
     }
 
     const total = roundTo(subtotal + taxTotal, 2);
+
+    // Invoice-level over-refund guard.
+    if (invoice && roundTo(alreadyCreditedTotal + total, 2) > roundTo(invoice.total, 2) + 0.005) {
+      throw new Error(`This credit note would refund more than invoice ${invoice.invoice_number} allows (invoice total ${invoice.total}, already credited ${alreadyCreditedTotal}).`);
+    }
 
     // Journal Entry for Credit Note:
     // Debit: Sales Returns / Revenue (reduces revenue)
@@ -1177,17 +1658,23 @@ function postCreditNote(companyId, creditNoteData, user) {
 
     // Apply restock if enabled
     if (restockItems) {
+      const restockWarehouseId = stockLedger.defaultWarehouseId(db, companyId);
       const updateStock = db.prepare(`UPDATE products SET current_stock = ? WHERE id = ?`);
       const insertMov = db.prepare(`
         INSERT INTO inventory_movements (
           id, company_id, product_id, date, movement_type, reference_type, reference_id, reference_number,
-          quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at
-        ) VALUES (?, ?, ?, ?, 'SALE_RETURN_IN', 'CREDIT_NOTE', ?, ?, ?, ?, ?, ?, 'Sales Return Restock', ?, datetime('now'))
+          quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at, warehouse_id
+        ) VALUES (?, ?, ?, ?, 'SALE_RETURN_IN', 'CREDIT_NOTE', ?, ?, ?, ?, ?, ?, 'Sales Return Restock', ?, datetime('now'), ?)
       `);
 
       for (const ir of inventoryRestores) {
         updateStock.run(ir.newStock, ir.productId);
-        insertMov.run(generateId('mov'), companyId, ir.productId, date, cnId, cnNumber, ir.qty, ir.unitCost, ir.cogsVal, ir.newStock, user?.id || 'system');
+        stockLedger.syncStockLevelDelta(db, ir.productId, restockWarehouseId, ir.qty);
+        stockLedger.addFifoLayer(db, {
+          companyId, productId: ir.productId, warehouseId: restockWarehouseId,
+          qty: ir.qty, unitCost: ir.unitCost, date, sourceType: 'SALES_RETURN', sourceId: cnId
+        });
+        insertMov.run(generateId('mov'), companyId, ir.productId, date, cnId, cnNumber, ir.qty, ir.unitCost, ir.cogsVal, ir.newStock, user?.id || 'system', restockWarehouseId);
       }
     }
 
@@ -1216,6 +1703,7 @@ function postPurchaseReturn(companyId, returnData, user) {
 
     const retNumber = nextSequenceNumber(companyId, 'PURCHASE_RETURN', 'PRET');
     const retId = generateId('pret');
+    const retWarehouseId = stockLedger.defaultWarehouseId(db, companyId);
 
     const apAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND subtype = 'ACCOUNTS_PAYABLE' LIMIT 1`).get(companyId);
     const defaultInvAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '1200' LIMIT 1`).get(companyId);
@@ -1241,6 +1729,9 @@ function postPurchaseReturn(companyId, returnData, user) {
       if (l.productId) {
         const prod = db.prepare(`SELECT * FROM products WHERE id = ? AND company_id = ?`).get(l.productId, companyId);
         if (prod && prod.type === 'GOODS') {
+          if (roundTo(prod.current_stock - qty, 4) < -0.00005) {
+            throw new Error(`Insufficient stock for ${prod.name}: cannot return ${qty} to the supplier (available ${roundTo(prod.current_stock, 4)}).`);
+          }
           const newStock = roundTo(prod.current_stock - qty, 4);
           stockReductions.push({
             productId: prod.id,
@@ -1325,13 +1816,15 @@ function postPurchaseReturn(companyId, returnData, user) {
     const insertMov = db.prepare(`
       INSERT INTO inventory_movements (
         id, company_id, product_id, date, movement_type, reference_type, reference_id, reference_number,
-        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at
-      ) VALUES (?, ?, ?, ?, 'PURCHASE_RETURN_OUT', 'PURCHASE_RETURN', ?, ?, ?, ?, ?, ?, 'Purchase Return to Vendor', ?, datetime('now'))
+        quantity, unit_cost, total_cost, stock_after, notes, user_id, created_at, warehouse_id
+      ) VALUES (?, ?, ?, ?, 'PURCHASE_RETURN_OUT', 'PURCHASE_RETURN', ?, ?, ?, ?, ?, ?, 'Purchase Return to Vendor', ?, datetime('now'), ?)
     `);
 
     for (const sr of stockReductions) {
       updateStock.run(sr.newStock, sr.productId);
-      insertMov.run(generateId('mov'), companyId, sr.productId, date, retId, retNumber, -sr.qty, sr.unitCost, sr.lineSub, sr.newStock, user?.id || 'system');
+      stockLedger.syncStockLevelDelta(db, sr.productId, retWarehouseId, -sr.qty);
+      stockLedger.consumeFifo(db, companyId, sr.productId, sr.qty, date);
+      insertMov.run(generateId('mov'), companyId, sr.productId, date, retId, retNumber, -sr.qty, sr.unitCost, sr.lineSub, sr.newStock, user?.id || 'system', retWarehouseId);
     }
 
     // Reduce Supplier balance
@@ -1353,10 +1846,18 @@ module.exports = {
   createJournalEntry,
   reverseJournalEntry,
   postSalesInvoice,
+  postWalkInSale,
   postPurchaseInvoice,
   recordPayment,
+  reversePayment,
   postStockAdjustment,
   postPhysicalCount,
+  createCountDraft,
+  updateCountDraft,
+  submitCountForReview,
+  approveCount,
+  rejectCount,
+  postApprovedCount,
   postCreditNote,
   postPurchaseReturn
 };

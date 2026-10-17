@@ -686,6 +686,7 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
     // Liabilities (2000 - 2999)
     { id: 'acc-2010', code: '2010', name: 'Accounts Payable (Trade Creditors)', type: 'LIABILITY', subtype: 'ACCOUNTS_PAYABLE', normal: 'CREDIT', is_system: 1 },
     { id: 'acc-2110', code: '2110', name: 'VAT Output Tax (Tax Payable)', type: 'LIABILITY', subtype: 'TAX_PAYABLE', normal: 'CREDIT', is_system: 1 },
+    { id: 'acc-2120', code: '2120', name: 'Goods Received Not Invoiced (GRNI)', type: 'LIABILITY', subtype: 'CURRENT_LIABILITY', normal: 'CREDIT', is_system: 1 },
     { id: 'acc-2200', code: '2200', name: 'Accrued Salaries Payable', type: 'LIABILITY', subtype: 'CURRENT_LIABILITY', normal: 'CREDIT', is_system: 0 },
     { id: 'acc-2500', code: '2500', name: 'Bank Business Loan', type: 'LIABILITY', subtype: 'LONG_TERM_LIABILITY', normal: 'CREDIT', is_system: 0 },
 
@@ -756,6 +757,29 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
   for (const b of bankAccounts) {
     insertBank.run(b.id, companyId, b.account_id, b.name, b.num, b.type, b.curr, b.bal);
   }
+
+  // 5b. Structural operating defaults (demo AND production installs):
+  // the default store, the base currency, and the anonymous walk-in customer
+  // that lets retail sales run without a named customer. (The GRNI account is
+  // part of the seeded chart of accounts above.)
+  const companyRow = database.prepare('SELECT currency_code, currency_symbol, currency_decimals FROM companies WHERE id = ?').get(companyId);
+  database.prepare(`
+    INSERT OR IGNORE INTO warehouses (id, company_id, code, name, is_default, active, created_at)
+    VALUES (?, ?, 'WH-MAIN', 'Main Store', 1, 1, ?)
+  `).run(`wh-main-${companyId}`, companyId, now);
+  database.prepare(`
+    INSERT OR IGNORE INTO currencies (id, company_id, code, name, symbol, decimals, is_base, active)
+    VALUES (?, ?, ?, ?, ?, ?, 1, 1)
+  `).run(
+    `cur-base-${companyId}`, companyId,
+    companyRow.currency_code || 'USD', companyRow.currency_code || 'USD',
+    companyRow.currency_symbol || '$',
+    companyRow.currency_decimals == null ? 2 : companyRow.currency_decimals
+  );
+  database.prepare(`
+    INSERT OR IGNORE INTO customers (id, company_id, code, name, is_walk_in, credit_limit, payment_terms, opening_balance, current_balance, active, created_at)
+    VALUES (?, ?, 'WALK-IN', 'Walk-in Customer', 1, 0, 'IMMEDIATE', 0, 0, 1, ?)
+  `).run(`cust-walkin-${companyId}`, companyId, now);
 
   // Non-demo installs stop here: the company is completed by the setup wizard.
   if (!demo) {
@@ -828,6 +852,21 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
       p.id, companyId, p.sku, 'BAR-' + p.sku, p.name, p.name, p.category, isService ? 'SERVICE' : 'GOODS', p.unit,
       p.cost, p.price, p.tax, p.min_stock, p.stock, p.loc, now
     );
+  }
+
+  // 8b. Per-store stock mirrors and opening FIFO layers for the demo products.
+  const insertLevel = database.prepare(`
+    INSERT OR IGNORE INTO stock_levels (product_id, warehouse_id, quantity, updated_at)
+    VALUES (?, ?, ?, ?)
+  `);
+  const insertLayer = database.prepare(`
+    INSERT OR IGNORE INTO fifo_stock_layers (id, company_id, product_id, warehouse_id, quantity_remaining, unit_cost, received_date, source_type, source_id, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'OPENING', ?, ?)
+  `);
+  for (const p of products) {
+    if (p.type === 'SERVICE') continue;
+    insertLevel.run(p.id, `wh-main-${companyId}`, p.stock, now);
+    insertLayer.run(`fifo-open-${p.id}`, companyId, p.id, `wh-main-${companyId}`, Math.max(0, p.stock), p.cost, String(now).split('T')[0], p.id, now);
   }
 
   // 9. Initial Accounting Balance via Journal Entry:
