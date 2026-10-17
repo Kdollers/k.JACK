@@ -700,6 +700,7 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
     { id: 'acc-4020', code: '4020', name: 'Service & Consulting Revenue', type: 'REVENUE', subtype: 'OPERATING_REVENUE', normal: 'CREDIT', is_system: 1 },
     { id: 'acc-4090', code: '4090', name: 'Sales Discounts & Allowances', type: 'REVENUE', subtype: 'OPERATING_REVENUE', normal: 'DEBIT', is_system: 1 },
     { id: 'acc-4500', code: '4500', name: 'Other Income & Interest', type: 'REVENUE', subtype: 'OTHER_REVENUE', normal: 'CREDIT', is_system: 0 },
+    { id: 'acc-4800', code: '4800', name: 'Foreign Exchange Gain', type: 'REVENUE', subtype: 'OTHER_REVENUE', normal: 'CREDIT', is_system: 1 },
 
     // COGS (5000 - 5999)
     { id: 'acc-5010', code: '5010', name: 'Cost of Goods Sold - Products', type: 'COGS', subtype: 'COGS', normal: 'DEBIT', is_system: 1 },
@@ -714,7 +715,8 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
     { id: 'acc-6060', code: '6060', name: 'Office Supplies & Stationery', type: 'EXPENSE', subtype: 'ADMIN_EXPENSE', normal: 'DEBIT', is_system: 0 },
     { id: 'acc-6070', code: '6070', name: 'Bank Charges & Payment Fees', type: 'EXPENSE', subtype: 'ADMIN_EXPENSE', normal: 'DEBIT', is_system: 0 },
     { id: 'acc-6080', code: '6080', name: 'Repairs & Maintenance', type: 'EXPENSE', subtype: 'OPERATING_EXPENSE', normal: 'DEBIT', is_system: 0 },
-    { id: 'acc-6090', code: '6090', name: 'Depreciation Expense', type: 'EXPENSE', subtype: 'ADMIN_EXPENSE', normal: 'DEBIT', is_system: 0 }
+    { id: 'acc-6090', code: '6090', name: 'Depreciation Expense', type: 'EXPENSE', subtype: 'ADMIN_EXPENSE', normal: 'DEBIT', is_system: 0 },
+    { id: 'acc-5900', code: '5900', name: 'Foreign Exchange Loss', type: 'EXPENSE', subtype: 'OPERATING_EXPENSE', normal: 'DEBIT', is_system: 1 }
   ];
 
   const insertAccount = database.prepare(`

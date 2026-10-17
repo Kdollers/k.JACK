@@ -580,7 +580,8 @@ function recordPayment(companyId, paymentData, user) {
       notes = '',
       currencyCode = null,
       exchangeRate = null,
-      foreignAmount = null
+      foreignAmount = null,
+      settleWithFxDifference = false
     } = paymentData;
 
     const payAmount = roundTo(Number(amount), 2);
@@ -604,6 +605,16 @@ function recordPayment(companyId, paymentData, user) {
     const payForeign = foreignAmount == null
       ? roundTo(payAmount / payRate, 4)
       : roundTo(Number(foreignAmount), 4);
+
+    // Optional FX settlement: when a foreign-currency receipt/payment fully
+    // settles a linked document, the base-currency difference between the
+    // document balance and this payment is posted to FX gain/loss accounts.
+    if (settleWithFxDifference) {
+      const hasDoc = (paymentType === 'CUSTOMER_RECEIPT' && salesInvoiceId) ||
+        (paymentType === 'SUPPLIER_PAYMENT' && purchaseInvoiceId);
+      if (!hasDoc) throw new Error('FX settlement requires a linked invoice or bill.');
+      if (payCurrency === baseCode) throw new Error('FX settlement requires a foreign-currency payment.');
+    }
 
     const paymentNumber = nextSequenceNumber(companyId, 'PAYMENT', 'PAY');
     const paymentId = generateId('pay');
@@ -639,19 +650,39 @@ function recordPayment(companyId, paymentData, user) {
       // Update bank account balance
       db.prepare(`UPDATE bank_accounts SET current_balance = current_balance + ? WHERE id = ?`).run(payAmount, bankAcc.id);
 
-      // Update customer balance
-      db.prepare(`UPDATE customers SET current_balance = current_balance - ? WHERE id = ?`).run(payAmount, customer.id);
-
-      // If tied to invoice, update invoice
+      // If tied to invoice, apply the receipt — optionally settling an FX
+      // difference between the invoice's base balance and this payment.
+      let appliedToCustomer = payAmount;
       if (salesInvoiceId) {
         const inv = db.prepare(`SELECT * FROM sales_invoices WHERE id = ? AND company_id = ?`).get(salesInvoiceId, companyId);
         if (inv) {
-          const newPaid = roundTo(inv.amount_paid + payAmount, 2);
-          const newDue = roundTo(inv.total - newPaid, 2);
-          const newStatus = newDue <= 0 ? 'PAID' : 'PARTIALLY_PAID';
-          db.prepare(`UPDATE sales_invoices SET amount_paid = ?, balance_due = ?, status = ? WHERE id = ?`).run(newPaid, newDue, newStatus, inv.id);
+          const remaining = roundTo(inv.total - inv.amount_paid, 2);
+          const diff = roundTo(remaining - payAmount, 2);
+          if (settleWithFxDifference && Math.abs(diff) > 0.005) {
+            const fxGain = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '4800'`).get(companyId);
+            const fxLoss = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '5900'`).get(companyId);
+            if (!fxGain || !fxLoss) throw new Error('FX gain/loss accounts (4800/5900) are missing for this company.');
+            const arLine = jeLines.find((l) => l.accountId === arAccount.id);
+            arLine.credit = remaining;
+            arLine.description = `AR: FX settlement of ${inv.invoice_number}`;
+            if (diff > 0) {
+              jeLines.push({ accountId: fxLoss.id, description: `FX loss settling ${inv.invoice_number} via ${paymentNumber}`, debit: diff, credit: 0 });
+            } else {
+              jeLines.push({ accountId: fxGain.id, description: `FX gain settling ${inv.invoice_number} via ${paymentNumber}`, debit: 0, credit: -diff });
+            }
+            appliedToCustomer = remaining;
+            db.prepare(`UPDATE sales_invoices SET amount_paid = ?, balance_due = 0, status = 'PAID' WHERE id = ?`).run(inv.total, inv.id);
+          } else {
+            const newPaid = roundTo(inv.amount_paid + payAmount, 2);
+            const newDue = roundTo(inv.total - newPaid, 2);
+            const newStatus = newDue <= 0 ? 'PAID' : 'PARTIALLY_PAID';
+            db.prepare(`UPDATE sales_invoices SET amount_paid = ?, balance_due = ?, status = ? WHERE id = ?`).run(newPaid, newDue, newStatus, inv.id);
+          }
         }
       }
+
+      // Update customer balance
+      db.prepare(`UPDATE customers SET current_balance = current_balance - ? WHERE id = ?`).run(appliedToCustomer, customer.id);
 
     } else if (paymentType === 'SUPPLIER_PAYMENT') {
       const supplier = db.prepare(`SELECT * FROM suppliers WHERE id = ? AND company_id = ?`).get(supplierId, companyId);
@@ -678,19 +709,39 @@ function recordPayment(companyId, paymentData, user) {
       // Update bank account balance
       db.prepare(`UPDATE bank_accounts SET current_balance = current_balance - ? WHERE id = ?`).run(payAmount, bankAcc.id);
 
-      // Update supplier balance
-      db.prepare(`UPDATE suppliers SET current_balance = current_balance - ? WHERE id = ?`).run(payAmount, supplier.id);
-
-      // If tied to bill, update bill
+      // If tied to bill, apply the payment — optionally settling an FX
+      // difference between the bill's base balance and this payment.
+      let appliedToSupplier = payAmount;
       if (purchaseInvoiceId) {
         const bill = db.prepare(`SELECT * FROM purchase_invoices WHERE id = ? AND company_id = ?`).get(purchaseInvoiceId, companyId);
         if (bill) {
-          const newPaid = roundTo(bill.amount_paid + payAmount, 2);
-          const newDue = roundTo(bill.total - newPaid, 2);
-          const newStatus = newDue <= 0 ? 'PAID' : 'PARTIALLY_PAID';
-          db.prepare(`UPDATE purchase_invoices SET amount_paid = ?, balance_due = ?, status = ? WHERE id = ?`).run(newPaid, newDue, newStatus, bill.id);
+          const remaining = roundTo(bill.total - bill.amount_paid, 2);
+          const diff = roundTo(remaining - payAmount, 2);
+          if (settleWithFxDifference && Math.abs(diff) > 0.005) {
+            const fxGain = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '4800'`).get(companyId);
+            const fxLoss = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '5900'`).get(companyId);
+            if (!fxGain || !fxLoss) throw new Error('FX gain/loss accounts (4800/5900) are missing for this company.');
+            const apLine = jeLines.find((l) => l.accountId === apAccount.id);
+            apLine.debit = remaining;
+            apLine.description = `AP: FX settlement of ${bill.bill_number}`;
+            if (diff > 0) {
+              jeLines.push({ accountId: fxGain.id, description: `FX gain settling ${bill.bill_number} via ${paymentNumber}`, debit: 0, credit: diff });
+            } else {
+              jeLines.push({ accountId: fxLoss.id, description: `FX loss settling ${bill.bill_number} via ${paymentNumber}`, debit: -diff, credit: 0 });
+            }
+            appliedToSupplier = remaining;
+            db.prepare(`UPDATE purchase_invoices SET amount_paid = ?, balance_due = 0, status = 'PAID' WHERE id = ?`).run(bill.total, bill.id);
+          } else {
+            const newPaid = roundTo(bill.amount_paid + payAmount, 2);
+            const newDue = roundTo(bill.total - newPaid, 2);
+            const newStatus = newDue <= 0 ? 'PAID' : 'PARTIALLY_PAID';
+            db.prepare(`UPDATE purchase_invoices SET amount_paid = ?, balance_due = ?, status = ? WHERE id = ?`).run(newPaid, newDue, newStatus, bill.id);
+          }
         }
       }
+
+      // Update supplier balance
+      db.prepare(`UPDATE suppliers SET current_balance = current_balance - ? WHERE id = ?`).run(appliedToSupplier, supplier.id);
 
     } else if (paymentType === 'DIRECT_EXPENSE') {
       if (!expenseAccountId) throw new Error('Expense account is required');

@@ -36,6 +36,9 @@ class ApiError extends Error {
  * English (audit/API consumers); the UI translates `code` into en/fr/rw.
  */
 const ERROR_CODE_PATTERNS = [
+  [/FX settlement requires a linked invoice or bill/i, 'FX_SETTLE_REQUIRES_DOCUMENT'],
+  [/FX settlement requires a foreign-currency payment/i, 'FX_SETTLE_BASE_CURRENCY'],
+  [/FX gain\/loss accounts/i, 'FX_ACCOUNTS_MISSING'],
   [/^Insufficient stock for/i, 'INSUFFICIENT_STOCK'],
   [/Cannot post invoice with status/i, 'ALREADY_POSTED'],
   [/Cannot post purchase invoice with status/i, 'ALREADY_POSTED'],

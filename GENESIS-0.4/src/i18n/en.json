@@ -101,7 +101,8 @@
     "choose_account": "Choose GL Account",
     "line_narrative": "Line narrative",
     "outstanding_balance": "Outstanding Balance",
-    "outstanding_due": "Outstanding Due"
+    "outstanding_due": "Outstanding Due",
+    "none": "None"
   },
   "dashboard": {
     "title": "Executive Financial Dashboard",
@@ -411,7 +412,10 @@
     "voucher_number": "Voucher #",
     "account_used": "Account Used",
     "party_category": "Associated Party / Category",
-    "narrative_placeholder": "Voucher narrative or purpose"
+    "narrative_placeholder": "Voucher narrative or purpose",
+    "foreign_amount": "Foreign Amount",
+    "settle_fx_diff": "Settle document fully — post FX difference",
+    "settle_fx_hint": "The base-currency difference between the document balance and this payment is posted to FX gain (4800) / FX loss (5900)."
   },
   "accounting": {
     "title": "General Ledger & Accounting",
@@ -659,7 +663,10 @@
     "SAME_CURRENCY_PAIR": "A rate must link two different currencies.",
     "UNBALANCED_JOURNAL": "Unbalanced journal entry: total debits must equal total credits.",
     "CUSTOMER_REQUIRED": "A customer is required. For an anonymous cash sale, enable walk-in mode.",
-    "SUPPLIER_REQUIRED": "A supplier is required."
+    "SUPPLIER_REQUIRED": "A supplier is required.",
+    "FX_SETTLE_REQUIRES_DOCUMENT": "FX settlement requires a linked invoice or bill.",
+    "FX_SETTLE_BASE_CURRENCY": "FX settlement requires a foreign-currency payment.",
+    "FX_ACCOUNTS_MISSING": "FX gain/loss accounts (4800/5900) are missing for this company."
   },
   "calculator": {
     "title": "Calculator",

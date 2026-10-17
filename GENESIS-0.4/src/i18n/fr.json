@@ -101,7 +101,8 @@
     "choose_account": "Choisir un compte GL",
     "line_narrative": "Libellé de la ligne",
     "outstanding_balance": "Solde en cours",
-    "outstanding_due": "Dette en cours"
+    "outstanding_due": "Dette en cours",
+    "none": "Aucun"
   },
   "dashboard": {
     "title": "Tableau de Bord Financier et Opérationnel",
@@ -411,7 +412,10 @@
     "voucher_number": "N° de pièce",
     "account_used": "Compte utilisé",
     "party_category": "Tiers / Catégorie associé",
-    "narrative_placeholder": "Objet ou motif de la pièce"
+    "narrative_placeholder": "Objet ou motif de la pièce",
+    "foreign_amount": "Montant en devise",
+    "settle_fx_diff": "Régler le document entièrement — comptabiliser l'écart de change",
+    "settle_fx_hint": "La différence en devise de base entre le solde du document et ce paiement est comptabilisée en gain (4800) / perte (5900) de change."
   },
   "accounting": {
     "title": "Comptabilité Générale et Grand Livre",
@@ -659,7 +663,10 @@
     "SAME_CURRENCY_PAIR": "Un taux doit relier deux devises différentes.",
     "UNBALANCED_JOURNAL": "Écriture déséquilibrée : le total des débits doit être égal au total des crédits.",
     "CUSTOMER_REQUIRED": "Un client est requis. Pour une vente au comptoir anonyme, activez le mode comptoir.",
-    "SUPPLIER_REQUIRED": "Un fournisseur est requis."
+    "SUPPLIER_REQUIRED": "Un fournisseur est requis.",
+    "FX_SETTLE_REQUIRES_DOCUMENT": "Le règlement de change requiert une facture ou un reçu lié.",
+    "FX_SETTLE_BASE_CURRENCY": "Le règlement de change requiert un paiement en devise étrangère.",
+    "FX_ACCOUNTS_MISSING": "Les comptes de gain/perte de change (4800/5900) sont manquants pour cette société."
   },
   "calculator": {
     "title": "Calculatrice",

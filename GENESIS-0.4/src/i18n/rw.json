@@ -101,7 +101,8 @@
     "choose_account": "Hitamo Konti ya GL",
     "line_narrative": "Ibisobanuro by'umurongo",
     "outstanding_balance": "Umwenda Usigaye",
-    "outstanding_due": "Ideni Risigaye"
+    "outstanding_due": "Ideni Risigaye",
+    "none": "Ntacyo"
   },
   "dashboard": {
     "title": "Imbonerahamwe Nkuru y'Imari n'Ubucuruzi",
@@ -411,7 +412,10 @@
     "voucher_number": "Nomero y'Inyandiko",
     "account_used": "Konti Yakoreshejwe",
     "party_category": "Uwo Bireba / Icyiciro",
-    "narrative_placeholder": "Intego cyangwa impamvu y'inyandiko"
+    "narrative_placeholder": "Intego cyangwa impamvu y'inyandiko",
+    "foreign_amount": "Amafaranga mu Faranga y'Ikindi Gihugu",
+    "settle_fx_diff": "Kwishyura inyandiko yose — shyira ikinyuranyo cy'ivunjisha mu bitabo",
+    "settle_fx_hint": "Ikinyuranyo hagati y'umusigane w'inyandiko n'ubu bwishyu mu faranga y'ibanze kigenda mu nyungu (4800) / igihombo (5900) cy'ivunjisha."
   },
   "accounting": {
     "title": "Ibaruramari Rusange n'Igitabo Kinini",
@@ -659,7 +663,10 @@
     "SAME_CURRENCY_PAIR": "Igipimo kigomba guhuza amafaranga abiri atandukanye.",
     "UNBALANCED_JOURNAL": "Inyandiko y’ibaruramari ntiiringaniye: igiteranyo cya Debite kigomba kungana n’igiteranyo cya Kredite.",
     "CUSTOMER_REQUIRED": "Umukiriya arasabwa. Ku kugurisha kw’amafaranga ku muntu utazwi, koresha uburyo bwa walk-in.",
-    "SUPPLIER_REQUIRED": "Umugemura arasabwa."
+    "SUPPLIER_REQUIRED": "Umugemura arasabwa.",
+    "FX_SETTLE_REQUIRES_DOCUMENT": "Kwishyura ikinyuranyo cy'ivunjisha bisaba inyemezabwishyu cyangwa facture ifitanye isano.",
+    "FX_SETTLE_BASE_CURRENCY": "Kwishyura ikinyuranyo cy'ivunjisha bisaba kwishyura mu faranga y'amahanga.",
+    "FX_ACCOUNTS_MISSING": "Konti z'inyungu/igihombo cy'ivunjisha (4800/5900) zirabura kuri iyi sosiyete."
   },
   "calculator": {
     "title": "Imashini Ibara",

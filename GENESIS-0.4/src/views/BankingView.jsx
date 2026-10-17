@@ -104,8 +104,18 @@ export default function BankingView() {
     incomeAccountId: '',
     amount: 0,
     reference: '',
-    notes: ''
+    notes: '',
+    salesInvoiceId: '',
+    purchaseInvoiceId: '',
+    currencyCode: '',
+    exchangeRate: '',
+    foreignAmount: '',
+    settleWithFxDifference: false
   });
+
+  const [openInvoices, setOpenInvoices] = useState([]);
+  const [openBills, setOpenBills] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -124,6 +134,13 @@ export default function BankingView() {
       setGlAccounts(accs);
 
       apiRequest('/api/banking/cash-sessions').then(setCashSessions).catch(() => setCashSessions([]));
+      apiRequest('/api/sales/invoices')
+        .then((list) => setOpenInvoices(list.filter((i) => i.status === 'POSTED' || i.status === 'PARTIALLY_PAID')))
+        .catch(() => setOpenInvoices([]));
+      apiRequest('/api/purchases/bills')
+        .then((list) => setOpenBills(list.filter((b) => b.status === 'POSTED' || b.status === 'PARTIALLY_PAID')))
+        .catch(() => setOpenBills([]));
+      apiRequest('/api/fx/currencies').then(setCurrencies).catch(() => setCurrencies([]));
 
       if (banks.length > 0 && !paymentForm.bankAccountId) {
         setPaymentForm((prev) => ({ ...prev, bankAccountId: banks[0].id }));
@@ -164,7 +181,15 @@ export default function BankingView() {
     try {
       const res = await apiRequest('/api/payments', {
         method: 'POST',
-        body: JSON.stringify(paymentForm)
+        body: JSON.stringify({
+          ...paymentForm,
+          salesInvoiceId: paymentForm.salesInvoiceId || null,
+          purchaseInvoiceId: paymentForm.purchaseInvoiceId || null,
+          currencyCode: paymentForm.currencyCode || null,
+          exchangeRate: paymentForm.exchangeRate === '' ? null : Number(paymentForm.exchangeRate),
+          foreignAmount: paymentForm.foreignAmount === '' ? null : Number(paymentForm.foreignAmount),
+          settleWithFxDifference: !!paymentForm.settleWithFxDifference
+        })
       });
       showToast(`${t('banking.tab_payments')} ${res.paymentNumber} — ${t('common.posted')}`, 'success');
       setShowRecordPaymentModal(false);
@@ -863,6 +888,76 @@ export default function BankingView() {
                     ))}
                   </select>
                 </div>
+
+                {(paymentForm.paymentType === 'CUSTOMER_RECEIPT' || paymentForm.paymentType === 'SUPPLIER_PAYMENT') && (
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">
+                      {paymentForm.paymentType === 'CUSTOMER_RECEIPT' ? t('banking.target_invoice') : t('banking.target_bill')}
+                    </label>
+                    <select
+                      value={paymentForm.paymentType === 'CUSTOMER_RECEIPT' ? paymentForm.salesInvoiceId : paymentForm.purchaseInvoiceId}
+                      onChange={(e) => setPaymentForm(paymentForm.paymentType === 'CUSTOMER_RECEIPT'
+                        ? { ...paymentForm, salesInvoiceId: e.target.value }
+                        : { ...paymentForm, purchaseInvoiceId: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-md bg-white"
+                    >
+                      <option value="">{t('common.none')}</option>
+                      {(paymentForm.paymentType === 'CUSTOMER_RECEIPT'
+                        ? openInvoices.filter((i) => !paymentForm.customerId || i.customer_id === paymentForm.customerId)
+                        : openBills.filter((b) => !paymentForm.supplierId || b.supplier_id === paymentForm.supplierId)
+                      ).map((d) => {
+                        const num = d.invoice_number || d.bill_number;
+                        const due = d.balance_due != null ? d.balance_due : d.total;
+                        return (
+                          <option key={d.id} value={d.id}>{num} — {t('common.balance_due')}: {formatCurrency(due)}</option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+
+                {(paymentForm.paymentType === 'CUSTOMER_RECEIPT' || paymentForm.paymentType === 'SUPPLIER_PAYMENT') && (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">{t('sales.currency')}</label>
+                      <select value={paymentForm.currencyCode}
+                        onChange={(e) => setPaymentForm({ ...paymentForm, currencyCode: e.target.value })}
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded-md bg-white">
+                        <option value="">{currentCompany?.currency_code || 'USD'}</option>
+                        {currencies.filter((c) => c.code !== (currentCompany?.currency_code || 'USD')).map((c) => (
+                          <option key={c.id || c.code} value={c.code}>{c.code}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">{t('sales.exchange_rate')}</label>
+                      <input type="number" step="any" min="0" disabled={!paymentForm.currencyCode}
+                        value={paymentForm.exchangeRate}
+                        onChange={(e) => setPaymentForm({ ...paymentForm, exchangeRate: e.target.value })}
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded-md font-mono disabled:bg-slate-100" />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">{t('banking.foreign_amount')}</label>
+                      <input type="number" step="any" min="0" disabled={!paymentForm.currencyCode}
+                        value={paymentForm.foreignAmount}
+                        onChange={(e) => setPaymentForm({ ...paymentForm, foreignAmount: e.target.value })}
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded-md font-mono disabled:bg-slate-100" />
+                    </div>
+                  </div>
+                )}
+
+                {paymentForm.currencyCode &&
+                  (paymentForm.salesInvoiceId || paymentForm.purchaseInvoiceId) && (
+                  <label className="flex items-start space-x-2 bg-indigo-50 border border-indigo-200 rounded-md px-3 py-2 cursor-pointer">
+                    <input type="checkbox" className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600"
+                      checked={paymentForm.settleWithFxDifference}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, settleWithFxDifference: e.target.checked })} />
+                    <span className="text-[11px] text-indigo-900">
+                      <span className="font-semibold">{t('banking.settle_fx_diff')}</span>
+                      <span className="block text-[10px] text-indigo-600">{t('banking.settle_fx_hint')}</span>
+                    </span>
+                  </label>
+                )}
 
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t('common.amount')} *</label>

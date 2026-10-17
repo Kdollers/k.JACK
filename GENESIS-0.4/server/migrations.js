@@ -290,6 +290,22 @@ const MIGRATIONS = [
         `).run(whId, c.id);
       }
     }
+  },
+  {
+    version: 3,
+    name: 'fx: settlement gain/loss accounts (4800/5900)',
+    up(db) {
+      const companies = db.prepare('SELECT id FROM companies').all();
+      const insert = db.prepare(`
+        INSERT INTO accounts (id, company_id, code, name, type, subtype, normal_balance, is_system, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1)
+      `);
+      const has = db.prepare('SELECT id FROM accounts WHERE company_id = ? AND code = ?');
+      for (const c of companies) {
+        if (!has.get(c.id, '4800')) insert.run(`acc-4800-${c.id}`, c.id, '4800', 'Foreign Exchange Gain', 'REVENUE', 'OTHER_REVENUE', 'CREDIT');
+        if (!has.get(c.id, '5900')) insert.run(`acc-5900-${c.id}`, c.id, '5900', 'Foreign Exchange Loss', 'EXPENSE', 'OPERATING_EXPENSE', 'DEBIT');
+      }
+    }
   }
 ];
 
