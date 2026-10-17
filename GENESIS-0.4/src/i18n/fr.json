@@ -394,7 +394,10 @@
     "reversal_reason": "Motif de la contre-passation",
     "reverse_confirm": "Contre-passer ce paiement ? Son écriture et tous les soldes liés seront restaurés, avec piste d’audit.",
     "cash_account": "Compte de caisse",
-    "approval_note": "La personne qui a clôturé la session ne peut pas l’approuver — un approbateur indépendant est requis."
+    "approval_note": "La personne qui a clôturé la session ne peut pas l’approuver — un approbateur indépendant est requis.",
+    "cust_refund": "Remboursement client",
+    "status_open": "Ouverte",
+    "status_closed": "Clôturée"
   },
   "accounting": {
     "title": "Comptabilité Générale et Grand Livre",

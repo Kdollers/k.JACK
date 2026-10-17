@@ -394,7 +394,10 @@
     "reversal_reason": "Impamvu yo Gukuraho",
     "reverse_confirm": "Uremeza gukuraho ubu bwishyu? Inyandiko y’ibaruramari n’imibare yose bizasubizwa uko byari biri, kandi byandikwe mu mateka.",
     "cash_account": "Konti ya Kese",
-    "approval_note": "Wafunze igenzura ntashobora kuryemeza — hagomba kwemeza undi muntu wigenga."
+    "approval_note": "Wafunze igenzura ntashobora kuryemeza — hagomba kwemeza undi muntu wigenga.",
+    "cust_refund": "Kwishyura Umukiriya (Subiza)",
+    "status_open": "Bifunguye",
+    "status_closed": "Bifunze"
   },
   "accounting": {
     "title": "Ibaruramari Rusange n'Igitabo Kinini",

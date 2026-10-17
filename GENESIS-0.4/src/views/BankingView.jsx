@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
-import { apiRequest } from '../services/api';
+import { apiRequest, translateError } from '../services/api';
 import {
   CreditCard,
   Plus,
@@ -12,20 +12,72 @@ import {
   Building2,
   Smartphone,
   Search,
-  X
+  X,
+  Banknote,
+  Undo2,
+  CheckCircle2,
+  Lock
 } from 'lucide-react';
 
+/** Editable denomination grid shared by the open/close cash-session dialogs. */
+function DenominationLines({ lines, onChange, t }) {
+  const total = lines.reduce((sum, l) => sum + (Number(l.unitValue) || 0) * (Number(l.quantity) || 0), 0);
+  const update = (idx, field, value) => {
+    const next = [...lines];
+    next[idx] = { ...next[idx], [field]: value };
+    onChange(next);
+  };
+  return (
+    <div className="space-y-2">
+      {lines.map((l, idx) => (
+        <div key={idx} className="grid grid-cols-[1fr_110px_90px_110px_28px] gap-2 items-center">
+          <input type="text" placeholder={t('banking.denomination')} value={l.denomination}
+            onChange={(e) => update(idx, 'denomination', e.target.value)}
+            className="px-2 py-1.5 border border-slate-300 rounded-md" />
+          <input type="number" step="any" min="0" placeholder={t('banking.unit_value')} value={l.unitValue}
+            onChange={(e) => update(idx, 'unitValue', Number(e.target.value))}
+            className="px-2 py-1.5 border border-slate-300 rounded-md text-right font-mono" />
+          <span className="text-center text-slate-400 font-bold">×</span>
+          <input type="number" step="1" min="0" placeholder="#" value={l.quantity}
+            onChange={(e) => update(idx, 'quantity', Math.max(0, Math.round(Number(e.target.value))))}
+            className="px-2 py-1.5 border border-slate-300 rounded-md text-right font-mono" />
+          <button type="button" onClick={() => onChange(lines.filter((_, i) => i !== idx))}
+            className="p-1 rounded text-rose-500 hover:bg-rose-50"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      ))}
+      <div className="flex items-center justify-between pt-1">
+        <button type="button"
+          onClick={() => onChange([...lines, { denomination: '', unitValue: 0, quantity: 0 }])}
+          className="text-emerald-700 hover:text-emerald-900 font-semibold text-xs flex items-center space-x-1">
+          <Plus className="w-3.5 h-3.5" /><span>{t('banking.add_denom_line')}</span>
+        </button>
+        <div className="text-xs font-bold text-slate-800 font-mono">
+          {t('banking.counted_total')}: {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BankingView() {
-  const { currentCompany, formatCurrency, formatDate, showToast, refreshKey } = useApp();
+  const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, hasPermission } = useApp();
   const { t } = useI18n();
 
-  const [activeTab, setActiveTab] = useState('accounts'); // 'accounts', 'payments'
+  const [activeTab, setActiveTab] = useState('accounts'); // 'accounts', 'payments', 'cash'
   const [bankAccounts, setBankAccounts] = useState([]);
   const [payments, setPayments] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [glAccounts, setGlAccounts] = useState([]);
+  const [cashSessions, setCashSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Cash reconciliation state
+  const [showOpenCashModal, setShowOpenCashModal] = useState(false);
+  const [closingSession, setClosingSession] = useState(null);
+  const [openCashForm, setOpenCashForm] = useState({ bankAccountId: '', countLines: [{ denomination: '', unitValue: 0, quantity: 0 }] });
+  const [closeCashForm, setCloseCashForm] = useState({ countLines: [{ denomination: '', unitValue: 0, quantity: 0 }], explanation: '' });
+  const [closingExpected, setClosingExpected] = useState(0);
 
   // Modals
   const [showAddBankModal, setShowAddBankModal] = useState(false);
@@ -42,7 +94,7 @@ export default function BankingView() {
 
   // Payment Form
   const [paymentForm, setPaymentForm] = useState({
-    paymentType: 'CUSTOMER_RECEIPT', // CUSTOMER_RECEIPT, SUPPLIER_PAYMENT, DIRECT_EXPENSE, DIRECT_INCOME, TRANSFER
+    paymentType: 'CUSTOMER_RECEIPT', // CUSTOMER_RECEIPT, SUPPLIER_PAYMENT, DIRECT_EXPENSE, DIRECT_INCOME, TRANSFER, CUSTOMER_REFUND
     paymentMethod: 'BANK_TRANSFER',
     bankAccountId: '',
     toBankAccountId: '',
@@ -71,11 +123,13 @@ export default function BankingView() {
       setSuppliers(supps);
       setGlAccounts(accs);
 
+      apiRequest('/api/banking/cash-sessions').then(setCashSessions).catch(() => setCashSessions([]));
+
       if (banks.length > 0 && !paymentForm.bankAccountId) {
         setPaymentForm((prev) => ({ ...prev, bankAccountId: banks[0].id }));
       }
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     } finally {
       setLoading(false);
     }
@@ -92,19 +146,19 @@ export default function BankingView() {
         method: 'POST',
         body: JSON.stringify(bankForm)
       });
-      showToast('Cash / Bank account added successfully', 'success');
+      showToast(t('common.success', 'Saved'), 'success');
       setShowAddBankModal(false);
       setBankForm({ bank_name: '', account_number: '', account_type: 'BANK', currency: 'USD', opening_balance: 0 });
       fetchData();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     }
   };
 
   const handleRecordPayment = async (e) => {
     e.preventDefault();
     if (!paymentForm.bankAccountId || paymentForm.amount <= 0) {
-      return showToast('Valid account and positive payment amount are required', 'error');
+      return showToast(t('errors.MISSING_FIELDS'), 'error');
     }
 
     try {
@@ -112,11 +166,85 @@ export default function BankingView() {
         method: 'POST',
         body: JSON.stringify(paymentForm)
       });
-      showToast(`Payment ${res.paymentNumber} posted and ledger updated!`, 'success');
+      showToast(`${t('banking.tab_payments')} ${res.paymentNumber} — ${t('common.posted')}`, 'success');
       setShowRecordPaymentModal(false);
       fetchData();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  // ---------------- payment reversal (receipt corrections) ----------------
+  const handleReversePayment = async (payment) => {
+    const reason = window.prompt(`${t('banking.reversal_reason')} (${payment.payment_number}):`);
+    if (reason === null) return;
+    try {
+      await apiRequest(`/api/payments/${payment.id}/reverse`, {
+        method: 'POST',
+        body: JSON.stringify({ reason })
+      });
+      showToast(`${payment.payment_number} — ${t('common.reversed')}`, 'success');
+      fetchData();
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  // ---------------- cash sessions ----------------
+  const cashAccounts = bankAccounts.filter((b) => b.account_type === 'CASH' && b.active);
+
+  const handleOpenCash = async (e) => {
+    e.preventDefault();
+    const lines = openCashForm.countLines.filter((l) => l.denomination && Number(l.unitValue) > 0 && Number(l.quantity) >= 0);
+    if (!openCashForm.bankAccountId || lines.length === 0) return showToast(t('errors.MISSING_FIELDS'), 'error');
+    try {
+      await apiRequest('/api/banking/cash-sessions/open', {
+        method: 'POST',
+        body: JSON.stringify({ bankAccountId: openCashForm.bankAccountId, countLines: lines })
+      });
+      showToast(`${t('banking.open_session')} — ${t('common.success', 'OK')}`, 'success');
+      setShowOpenCashModal(false);
+      fetchData();
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  const openCloseModal = async (session) => {
+    setClosingSession(session);
+    setCloseCashForm({ countLines: [{ denomination: '', unitValue: 0, quantity: 0 }], explanation: '' });
+    try {
+      const detail = await apiRequest(`/api/banking/cash-sessions/${session.id}`);
+      setClosingExpected(detail.expected_now ?? detail.opening_amount);
+    } catch (_) {
+      setClosingExpected(session.opening_amount);
+    }
+  };
+
+  const handleCloseCash = async (e) => {
+    e.preventDefault();
+    const lines = closeCashForm.countLines.filter((l) => l.denomination && Number(l.unitValue) > 0 && Number(l.quantity) >= 0);
+    if (lines.length === 0) return showToast(t('errors.MISSING_FIELDS'), 'error');
+    try {
+      const res = await apiRequest(`/api/banking/cash-sessions/${closingSession.id}/close`, {
+        method: 'POST',
+        body: JSON.stringify({ countLines: lines, explanation: closeCashForm.explanation })
+      });
+      showToast(`${t('banking.close_session')} — ${t('banking.variance')}: ${formatCurrency(res.varianceAmount)}`, 'success');
+      setClosingSession(null);
+      fetchData();
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  const handleApproveCash = async (session) => {
+    try {
+      await apiRequest(`/api/banking/cash-sessions/${session.id}/approve`, { method: 'POST' });
+      showToast(`${session.session_number} — ${t('common.approved')}`, 'success');
+      fetchData();
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
     }
   };
 
@@ -147,7 +275,30 @@ export default function BankingView() {
             >
               {t('banking.tab_payments')}
             </button>
+            {hasPermission('cash:count') && (
+              <button
+                onClick={() => setActiveTab('cash')}
+                className={`px-3 py-1.5 rounded-md transition ${
+                  activeTab === 'cash' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {t('banking.tab_cash')}
+              </button>
+            )}
           </div>
+
+          {activeTab === 'cash' && hasPermission('cash:count') && (
+            <button
+              onClick={() => {
+                setOpenCashForm({ bankAccountId: cashAccounts[0]?.id || '', countLines: [{ denomination: '', unitValue: 0, quantity: 0 }] });
+                setShowOpenCashModal(true);
+              }}
+              className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition"
+            >
+              <Banknote className="w-3.5 h-3.5" />
+              <span>{t('banking.open_session')}</span>
+            </button>
+          )}
 
           <button
             onClick={() => setShowAddBankModal(true)}
@@ -244,8 +395,10 @@ export default function BankingView() {
                   <th className="py-2.5 px-4">{t('banking.payment_type')}</th>
                   <th className="py-2.5 px-4">Account Used</th>
                   <th className="py-2.5 px-4">Associated Party / Category</th>
-                  <th className="py-2.5 px-4">Method</th>
+                  <th className="py-2.5 px-4">{t('banking.payment_method')}</th>
                   <th className="py-2.5 px-4 text-right">{t('common.amount')}</th>
+                  <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
+                  <th className="py-2.5 px-4 text-center">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -278,19 +431,199 @@ export default function BankingView() {
                           <span className={isReceipt ? 'text-emerald-600' : 'text-slate-900'}>
                             {isReceipt ? '+' : '-'}{formatCurrency(p.amount)}
                           </span>
+                          {p.currency_code && p.currency_code !== (currentCompany?.currency_code || 'USD') && (
+                            <div className="text-[10px] font-medium text-slate-400">
+                              {p.foreign_amount != null ? `${p.foreign_amount} ${p.currency_code} @ ${p.exchange_rate ?? '—'}` : p.currency_code}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                            p.status === 'REVERSED' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {p.status === 'REVERSED' ? t('common.reversed') : t('common.posted')}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {p.status !== 'REVERSED' && hasPermission('banking:write') && (
+                            <button
+                              onClick={() => handleReversePayment(p)}
+                              title={t('banking.reverse_payment')}
+                              className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition"
+                            >
+                              <Undo2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <td colSpan={9} className="py-8 text-center text-slate-400">
                       {t('common.no_data')}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Cash Counting & Reconciliation Tab */}
+      {activeTab === 'cash' && (
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-900">
+            {t('banking.cash_hint')} <span className="font-bold">{t('banking.no_auto_adjust_note')}</span>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-3 border-b border-slate-200 bg-slate-50">
+              <h2 className="text-sm font-bold text-slate-800">{t('banking.tab_cash')}</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="py-2.5 px-4">{t('banking.session_number')}</th>
+                    <th className="py-2.5 px-4">{t('banking.cash_account')}</th>
+                    <th className="py-2.5 px-4">{t('banking.opened_by')} / {t('banking.opened_at')}</th>
+                    <th className="py-2.5 px-4 text-right">{t('banking.opening_count')}</th>
+                    <th className="py-2.5 px-4 text-right">{t('banking.expected_cash')}</th>
+                    <th className="py-2.5 px-4 text-right">{t('banking.counted_total')}</th>
+                    <th className="py-2.5 px-4 text-right">{t('banking.variance')}</th>
+                    <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
+                    <th className="py-2.5 px-4 text-center">{t('common.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {cashSessions.length > 0 ? cashSessions.map((cs) => (
+                    <tr key={cs.id} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-4 font-mono font-bold text-amber-700">{cs.session_number}</td>
+                      <td className="py-2.5 px-4 text-slate-700">{cs.bank_name}</td>
+                      <td className="py-2.5 px-4 text-slate-600">{cs.opened_by_name || '—'}<div className="text-[10px] text-slate-400">{cs.opened_at}</div></td>
+                      <td className="py-2.5 px-4 text-right font-mono">{formatCurrency(cs.opening_amount)}</td>
+                      <td className="py-2.5 px-4 text-right font-mono">{cs.expected_amount != null ? formatCurrency(cs.expected_amount) : '—'}</td>
+                      <td className="py-2.5 px-4 text-right font-mono">{cs.counted_amount != null ? formatCurrency(cs.counted_amount) : '—'}</td>
+                      <td className="py-2.5 px-4 text-right font-mono font-bold">
+                        {cs.variance_amount != null ? (
+                          <span className={Math.abs(cs.variance_amount) < 0.005 ? 'text-slate-400' : cs.variance_amount < 0 ? 'text-rose-600' : 'text-emerald-600'}
+                            title={cs.explanation || ''}>
+                            {formatCurrency(cs.variance_amount)}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      <td className="py-2.5 px-4 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                          cs.status === 'OPEN' ? 'bg-amber-100 text-amber-800'
+                          : cs.status === 'CLOSED' ? 'bg-blue-100 text-blue-800'
+                          : 'bg-emerald-100 text-emerald-800'}`}>
+                          {cs.status === 'OPEN' ? t('banking.status_open') : cs.status === 'CLOSED' ? t('banking.status_closed') : t('common.approved')}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-4 text-center">
+                        <div className="flex items-center justify-center space-x-1">
+                          {cs.status === 'OPEN' && hasPermission('cash:count') && (
+                            <button onClick={() => openCloseModal(cs)} title={t('banking.close_session')}
+                              className="p-1 rounded text-slate-500 hover:text-blue-600 hover:bg-blue-50"><Lock className="w-3.5 h-3.5" /></button>
+                          )}
+                          {cs.status === 'CLOSED' && hasPermission('cash:approve') && (
+                            <button onClick={() => handleApproveCash(cs)} title={t('banking.approve_session')}
+                              className="p-1 rounded text-emerald-600 hover:bg-emerald-50"><CheckCircle2 className="w-4 h-4" /></button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan={9} className="py-8 text-center text-slate-400">{t('banking.no_sessions')}</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-400">{t('banking.approval_note')}</p>
+        </div>
+      )}
+
+      {/* Open Cash Session Modal */}
+      {showOpenCashModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+              <h3 className="font-bold text-sm flex items-center space-x-2">
+                <Banknote className="w-4 h-4 text-amber-400" /><span>{t('banking.open_session')}</span>
+              </h3>
+              <button onClick={() => setShowOpenCashModal(false)} className="text-slate-400 hover:text-white p-1 rounded"><X className="w-4 h-4" /></button>
+            </div>
+            <form onSubmit={handleOpenCash} className="p-5 space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-600 font-semibold mb-1">{t('banking.cash_account')} *</label>
+                <select required value={openCashForm.bankAccountId}
+                  onChange={(e) => setOpenCashForm({ ...openCashForm, bankAccountId: e.target.value })}
+                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md bg-white">
+                  <option value="">—</option>
+                  {cashAccounts.map((b) => <option key={b.id} value={b.id}>{b.bank_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-slate-600 font-semibold mb-1">{t('banking.opening_count')} *</label>
+                <DenominationLines lines={openCashForm.countLines}
+                  onChange={(lines) => setOpenCashForm({ ...openCashForm, countLines: lines })} t={t} />
+              </div>
+              <div className="border-t border-slate-200 pt-3 flex justify-end space-x-2">
+                <button type="button" onClick={() => setShowOpenCashModal(false)}
+                  className="px-3 py-1.5 border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50 font-medium">{t('common.cancel')}</button>
+                <button type="submit" className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-md font-semibold">{t('banking.open_session')}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Close Cash Session Modal */}
+      {closingSession && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+              <h3 className="font-bold text-sm flex items-center space-x-2">
+                <Lock className="w-4 h-4 text-blue-400" />
+                <span>{t('banking.close_session')} — {closingSession.session_number}</span>
+              </h3>
+              <button onClick={() => setClosingSession(null)} className="text-slate-400 hover:text-white p-1 rounded"><X className="w-4 h-4" /></button>
+            </div>
+            <form onSubmit={handleCloseCash} className="p-5 space-y-4 text-xs">
+              <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2 flex justify-between font-semibold text-blue-900">
+                <span>{t('banking.expected_cash')}</span>
+                <span className="font-mono">{formatCurrency(closingExpected)}</span>
+              </div>
+              <div>
+                <label className="block text-slate-600 font-semibold mb-1">{t('banking.closing_count')} *</label>
+                <DenominationLines lines={closeCashForm.countLines}
+                  onChange={(lines) => setCloseCashForm({ ...closeCashForm, countLines: lines })} t={t} />
+              </div>
+              {(() => {
+                const counted = closeCashForm.countLines.reduce((sum, l) => sum + (Number(l.unitValue) || 0) * (Number(l.quantity) || 0), 0);
+                const variance = Math.round((counted - closingExpected) * 100) / 100;
+                return (
+                  <div className={`rounded-md px-3 py-2 border flex justify-between font-bold ${Math.abs(variance) < 0.005 ? 'bg-slate-50 border-slate-200 text-slate-600' : variance < 0 ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
+                    <span>{t('banking.variance')}</span>
+                    <span className="font-mono">{formatCurrency(variance)}</span>
+                  </div>
+                );
+              })()}
+              <div>
+                <label className="block text-slate-600 font-semibold mb-1">{t('banking.explanation')}</label>
+                <textarea rows={2} value={closeCashForm.explanation}
+                  onChange={(e) => setCloseCashForm({ ...closeCashForm, explanation: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md" />
+                <p className="text-[10px] text-slate-400 mt-1">{t('banking.explanation_hint')}</p>
+              </div>
+              <div className="border-t border-slate-200 pt-3 flex justify-end space-x-2">
+                <button type="button" onClick={() => setClosingSession(null)}
+                  className="px-3 py-1.5 border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50 font-medium">{t('common.cancel')}</button>
+                <button type="submit" className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-semibold">{t('banking.close_session')}</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -405,11 +738,12 @@ export default function BankingView() {
                   <option value="DIRECT_EXPENSE">{t('banking.direct_expense')}</option>
                   <option value="DIRECT_INCOME">{t('banking.direct_income')}</option>
                   <option value="TRANSFER">{t('banking.transfer')}</option>
+                  <option value="CUSTOMER_REFUND">{t('banking.cust_refund')}</option>
                 </select>
               </div>
 
               {/* Conditional Party Fields */}
-              {paymentForm.paymentType === 'CUSTOMER_RECEIPT' && (
+              {(paymentForm.paymentType === 'CUSTOMER_RECEIPT' || paymentForm.paymentType === 'CUSTOMER_REFUND') && (
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t('sales.customer')} *</label>
                   <select

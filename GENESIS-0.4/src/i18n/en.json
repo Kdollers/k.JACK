@@ -394,7 +394,10 @@
     "reversal_reason": "Reversal Reason",
     "reverse_confirm": "Reverse this payment? Its journal entry and all balances will be restored and the reversal audited.",
     "cash_account": "Cash Account",
-    "approval_note": "The person who closed the session cannot approve it — an independent approver is required."
+    "approval_note": "The person who closed the session cannot approve it — an independent approver is required.",
+    "cust_refund": "Customer Refund",
+    "status_open": "Open",
+    "status_closed": "Closed"
   },
   "accounting": {
     "title": "General Ledger & Accounting",
