@@ -22,12 +22,35 @@ export function setUnauthorizedHandler(fn) {
 }
 
 export class ApiError extends Error {
-  constructor(message, { status, code } = {}) {
+  constructor(message, { status, code, details } = {}) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.details = details;
   }
+}
+
+/** Fills {placeholders} in a translated message from server-provided details. */
+export function interpolateVars(str, vars) {
+  if (!vars) return str;
+  return String(str).replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? String(vars[k]) : m));
+}
+
+/**
+ * Translates a server error into the active language. Business failures carry a
+ * stable machine `code`; the matching errors.CODE dictionary entry wins, and the
+ * original English message is the fallback so nothing is ever lost.
+ */
+export function translateError(t, err) {
+  if (!err) return '';
+  if (err.code) {
+    const key = `errors.${err.code}`;
+    const translated = t(key, null);
+    if (translated && translated !== key) return interpolateVars(translated, err.details);
+  }
+  if (err.status === 403) return t('errors.FORBIDDEN', err.message);
+  return err.message || String(err);
 }
 
 export async function apiRequest(url, options = {}) {
@@ -50,11 +73,12 @@ export async function apiRequest(url, options = {}) {
 
   if (!response.ok) {
     const code = data && typeof data === 'object' ? data.code : undefined;
+    const details = data && typeof data === 'object' ? data.details : undefined;
     const message = (data && typeof data === 'object' && data.error) || (typeof data === 'string' && data) || 'API Request Failed';
     if ((response.status === 401 || code === 'PASSWORD_CHANGE_REQUIRED') && unauthorizedHandler) {
       unauthorizedHandler({ status: response.status, code });
     }
-    throw new ApiError(message, { status: response.status, code });
+    throw new ApiError(message, { status: response.status, code, details });
   }
 
   return data;

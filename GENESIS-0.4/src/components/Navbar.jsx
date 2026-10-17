@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
+import CalculatorModal from './CalculatorModal';
 import {
   Building2,
   Globe2,
@@ -10,7 +11,8 @@ import {
   Calendar,
   Check,
   ShieldCheck,
-  Layers
+  Layers,
+  Calculator
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -20,6 +22,7 @@ export default function Navbar() {
   const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
 
   const languages = [
     { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -110,13 +113,25 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Right Controls: Date, Language, User Switcher */}
+      {/* Right Controls: Date, Calculator, Language, User Switcher */}
       <div className="flex items-center space-x-3">
         {/* Date Display */}
         <div className="hidden lg:flex items-center space-x-1.5 text-xs text-slate-400 bg-slate-800/40 px-2 py-1 rounded border border-slate-800">
           <Calendar className="w-3.5 h-3.5 text-slate-400" />
           <span>{new Date().toISOString().split('T')[0]}</span>
         </div>
+
+        {/* Built-in Calculator (computes amounts only — never posts transactions) */}
+        <button
+          onClick={() => setShowCalculator(true)}
+          title={t('calculator.title')}
+          aria-label={t('calculator.title')}
+          className="flex items-center space-x-1.5 text-xs font-medium text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-800 px-2.5 py-1.5 rounded border border-slate-700 transition"
+        >
+          <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="hidden sm:inline">{t('calculator.title')}</span>
+        </button>
+        {showCalculator && <CalculatorModal onClose={() => setShowCalculator(false)} />}
 
         {/* Language Switcher */}
         <div className="relative">

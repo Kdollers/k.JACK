@@ -45,6 +45,7 @@ const goodsReceipts = require('../goodsReceipts');
 const cashManagement = require('../cashManagement');
 const fx = require('../fx');
 const stockLedger = require('../stockLedger');
+const { asErrorResponse } = require('../utils');
 const reports = require('../reports');
 
 const APP_VERSION = require('../../package.json').version;
@@ -321,7 +322,7 @@ router.put('/companies/current', requirePermission('company:manage'), (req, res)
     logAudit(companyId, user.id, user.full_name, 'COMPANY', 'UPDATE', companyId, `Updated company profile ${name}`);
     res.json({ success: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -383,7 +384,7 @@ router.post('/companies', requirePermission('company:manage'), (req, res) => {
 
     res.json({ id, code, name });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -435,7 +436,7 @@ router.post('/accounts', requirePermission('accounting:write'), (req, res) => {
     logAudit(companyId, user.id, user.full_name, 'ACCOUNTS', 'CREATE', id, `Created account ${code} - ${name}`);
     res.json({ id, code, name, type, subtype, normal_balance, balance: 0 });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -452,7 +453,7 @@ router.put('/accounts/:id', requirePermission('accounting:write'), (req, res) =>
     logAudit(companyId, user.id, user.full_name, 'ACCOUNTS', 'UPDATE', req.params.id, `Updated account ${req.params.id}`);
     res.json({ success: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -494,7 +495,7 @@ router.post('/customers', requirePermission('contacts:write'), (req, res) => {
     logAudit(companyId, user.id, user.full_name, 'CUSTOMERS', 'CREATE', id, `Created customer ${code} - ${name}`);
     res.json({ id, code, name, current_balance: 0 });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -514,7 +515,7 @@ router.put('/customers/:id', requirePermission('contacts:write'), (req, res) => 
     logAudit(companyId, user.id, user.full_name, 'CUSTOMERS', 'UPDATE', req.params.id, `Updated customer ${name}`);
     res.json({ success: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -525,7 +526,7 @@ router.get('/customers/:id/statement', requirePermission('contacts:read'), (req,
     const data = reports.getCustomerStatement(companyId, req.params.id, startDate, endDate);
     res.json(data);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -565,7 +566,7 @@ router.post('/suppliers', requirePermission('contacts:write'), (req, res) => {
     logAudit(companyId, user.id, user.full_name, 'SUPPLIERS', 'CREATE', id, `Created supplier ${code} - ${name}`);
     res.json({ id, code, name, current_balance: 0 });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -585,7 +586,7 @@ router.put('/suppliers/:id', requirePermission('contacts:write'), (req, res) => 
     logAudit(companyId, user.id, user.full_name, 'SUPPLIERS', 'UPDATE', req.params.id, `Updated supplier ${name}`);
     res.json({ success: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -596,7 +597,7 @@ router.get('/suppliers/:id/statement', requirePermission('contacts:read'), (req,
     const data = reports.getSupplierStatement(companyId, req.params.id, startDate, endDate);
     res.json(data);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -644,13 +645,24 @@ router.post('/products', requirePermission('inventory:write'), (req, res) => {
     `).run(
       id, companyId, sku, barcode || 'BAR-' + sku, name, description || name, category, type, unit,
       Number(cost_price) || 0, Number(selling_price) || 0, tax_rate_id || 'tax-vat-18',
-      Number(min_stock_level) || 0, Number(current_stock) || 0, warehouse_location
+      Number(min_stock_level) || 0, 0 /* stock arrives via the store ledger below */, warehouse_location
     );
+
+    // Opening stock must flow through the store ledger (stock_levels, movement
+    // history and FIFO layers) exactly like any other receipt.
+    if (type !== 'SERVICE' && Number(current_stock) > 0) {
+      stockLedger.receiveStock(db, {
+        companyId, productId: id, qty: Number(current_stock), unitCost: Number(cost_price) || 0,
+        date: new Date().toISOString().split('T')[0],
+        movementType: 'OPENING', referenceType: 'PRODUCT', referenceId: id, referenceNumber: sku,
+        notes: 'Opening stock recorded with the product', userId: user.id, sourceType: 'OPENING'
+      });
+    }
 
     logAudit(companyId, user.id, user.full_name, 'PRODUCTS', 'CREATE', id, `Created product ${sku} - ${name}`);
     res.json({ id, sku, name });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -679,7 +691,7 @@ router.put('/products/:id', requirePermission('inventory:write'), (req, res) => 
     logAudit(companyId, user.id, user.full_name, 'PRODUCTS', 'UPDATE', req.params.id, `Updated product ${name}`);
     res.json({ success: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -687,16 +699,23 @@ router.get('/inventory/movements', requirePermission('inventory:read'), (req, re
   const { companyId } = getSessionContext(req);
   const db = getDb();
   const productId = req.query.productId;
+  const warehouseId = req.query.warehouseId;
   let sql = `
-    SELECT m.*, p.name as product_name, p.sku as product_sku
+    SELECT m.*, p.name as product_name, p.sku as product_sku,
+           w.name AS warehouse_name, w.code AS warehouse_code
     FROM inventory_movements m
     JOIN products p ON m.product_id = p.id
+    LEFT JOIN warehouses w ON w.id = m.warehouse_id
     WHERE m.company_id = ?
   `;
   const params = [companyId];
   if (productId) {
     sql += ' AND m.product_id = ?';
     params.push(productId);
+  }
+  if (warehouseId) {
+    sql += ' AND m.warehouse_id = ?';
+    params.push(warehouseId);
   }
   sql += ' ORDER BY m.date DESC, m.created_at DESC LIMIT 100';
   res.json(db.prepare(sql).all(...params));
@@ -707,7 +726,7 @@ router.get('/inventory/valuation', requirePermission('inventory:read'), (req, re
   try {
     res.json(reports.getInventoryValuation(companyId));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -724,14 +743,23 @@ router.post('/inventory/adjustments', requirePermission('inventory:adjust'), (re
     const result = postStockAdjustment(companyId, req.body, user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
 router.get('/inventory/counts', requirePermission('inventory:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
-  const counts = db.prepare(`SELECT * FROM physical_inventory_counts WHERE company_id = ? ORDER BY date DESC, created_at DESC`).all(companyId);
+  const counts = db.prepare(`
+    SELECT pic.*, w.name AS warehouse_name, w.code AS warehouse_code,
+      uc.full_name AS created_by_name, us.full_name AS submitted_by_name,
+      ua.full_name AS approved_by_name
+    FROM physical_inventory_counts pic
+    LEFT JOIN warehouses w ON w.id = pic.warehouse_id
+    LEFT JOIN users uc ON uc.id = pic.created_by
+    LEFT JOIN users us ON us.id = pic.submitted_by
+    LEFT JOIN users ua ON ua.id = pic.approved_by
+    WHERE pic.company_id = ? ORDER BY pic.date DESC, pic.created_at DESC`).all(companyId);
   res.json(counts);
 });
 
@@ -743,7 +771,7 @@ router.post('/inventory/counts', requirePermission('inventory:approve'), (req, r
     const result = postPhysicalCount(companyId, req.body, user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -777,7 +805,7 @@ router.post('/inventory/counts/draft', requirePermission('inventory:adjust'), (r
   try {
     res.json(createCountDraft(companyId, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -786,7 +814,7 @@ router.put('/inventory/counts/:id', requirePermission('inventory:adjust'), (req,
   try {
     res.json(updateCountDraft(companyId, req.params.id, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -795,7 +823,7 @@ router.post('/inventory/counts/:id/submit', requirePermission('inventory:adjust'
   try {
     res.json(submitCountForReview(companyId, req.params.id, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -804,7 +832,7 @@ router.post('/inventory/counts/:id/approve', requirePermission('inventory:approv
   try {
     res.json(approveCount(companyId, req.params.id, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -813,7 +841,7 @@ router.post('/inventory/counts/:id/reject', requirePermission('inventory:approve
   try {
     res.json(rejectCount(companyId, req.params.id, req.body?.reason, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -822,7 +850,7 @@ router.post('/inventory/counts/:id/post', requirePermission('inventory:approve')
   try {
     res.json(postApprovedCount(companyId, req.params.id, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -837,7 +865,7 @@ router.post('/inventory/warehouses', requirePermission('stores:manage'), (req, r
   try {
     res.json(stores.createWarehouse(companyId, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -846,7 +874,7 @@ router.put('/inventory/warehouses/:id', requirePermission('stores:manage'), (req
   try {
     res.json(stores.updateWarehouse(companyId, req.params.id, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -882,7 +910,7 @@ router.post('/inventory/transfers', requirePermission('inventory:write'), (req, 
   try {
     res.json(stores.createTransfer(companyId, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -891,7 +919,7 @@ router.post('/inventory/transfers/:id/dispatch', requirePermission('inventory:wr
   try {
     res.json(stores.dispatchTransfer(companyId, req.params.id, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -900,7 +928,7 @@ router.post('/inventory/transfers/:id/receive', requirePermission('inventory:wri
   try {
     res.json(stores.receiveTransfer(companyId, req.params.id, req.body?.lines || null, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -909,7 +937,7 @@ router.post('/inventory/transfers/:id/cancel', requirePermission('inventory:writ
   try {
     res.json(stores.cancelTransfer(companyId, req.params.id, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -993,7 +1021,7 @@ router.post('/sales/quotes', requirePermission('sales:write'), (req, res) => {
 
     res.json({ id: quoteId, quoteNumber, total });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1031,7 +1059,7 @@ router.post('/sales/quotes/:id/convert-to-invoice', requirePermission('sales:wri
 
     res.json({ invoiceId: invId, invoiceNumber: invNumber });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1185,7 +1213,7 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
       foreignTotal = roundTo(subtotalF + taxTotalF, fDec);
     }
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json(asErrorResponse(err));
   }
   const total = roundTo(subtotal + taxTotal, 2);
 
@@ -1223,7 +1251,7 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
 
     res.json({ id: invId, invoiceNumber: invNumber, total, walkIn: isWalkIn, currencyCode: txCurrency, exchangeRate: rate, foreignTotal });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1241,7 +1269,7 @@ router.post('/sales/invoices/:id/post', requirePermission('sales:post'), (req, r
       : postSalesInvoice(companyId, req.params.id, user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1264,7 +1292,7 @@ router.post('/sales/credit-notes', requirePermission('sales:post'), (req, res) =
     const result = postCreditNote(companyId, req.body, user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1344,7 +1372,7 @@ router.post('/purchases/orders', requirePermission('purchases:write'), (req, res
 
     res.json({ id: poId, poNumber, total });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1462,7 +1490,7 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
       foreignTotal = roundTo(subtotalF + taxTotalF, fDec);
     }
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json(asErrorResponse(err));
   }
   const total = roundTo(subtotal + taxTotal, 2);
 
@@ -1492,7 +1520,7 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
 
     res.json({ id: billId, billNumber, total });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1502,7 +1530,7 @@ router.post('/purchases/bills/:id/post', requirePermission('purchases:post'), (r
     const result = postPurchaseInvoice(companyId, req.params.id, user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1525,7 +1553,7 @@ router.post('/purchases/returns', requirePermission('purchases:post'), (req, res
     const result = postPurchaseReturn(companyId, req.body, user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1569,7 +1597,7 @@ router.post('/purchases/receipts', requirePermission('purchases:write'), (req, r
   try {
     res.json(goodsReceipts.createGoodsReceipt(companyId, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1578,7 +1606,7 @@ router.post('/purchases/receipts/:id/post', requirePermission('purchases:post'),
   try {
     res.json(goodsReceipts.postGoodsReceipt(companyId, req.params.id, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1623,7 +1651,7 @@ router.post('/payments/bank-accounts', requirePermission('banking:write'), (req,
     logAudit(companyId, user.id, user.full_name, 'BANKING', 'CREATE', id, `Added ${account_type} account ${bank_name}`);
     res.json({ id, bank_name, account_number });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1652,7 +1680,7 @@ router.post('/payments', requirePermission('banking:write'), (req, res) => {
     const result = recordPayment(companyId, req.body, user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1664,7 +1692,7 @@ router.post('/payments/:id/reverse', requirePermission('banking:write'), (req, r
     const result = reversePayment(companyId, req.params.id, req.body?.reason || '', user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1686,7 +1714,7 @@ router.post('/banking/cash-sessions/open', requirePermission('cash:count'), (req
   try {
     res.json(cashManagement.openCashSession(companyId, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1695,7 +1723,7 @@ router.post('/banking/cash-sessions/:id/close', requirePermission('cash:count'),
   try {
     res.json(cashManagement.closeCashSession(companyId, req.params.id, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1704,7 +1732,7 @@ router.post('/banking/cash-sessions/:id/approve', requirePermission('cash:approv
   try {
     res.json(cashManagement.approveCashSession(companyId, req.params.id, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1719,7 +1747,7 @@ router.post('/fx/currencies', requirePermission('fx:write'), (req, res) => {
   try {
     res.json(fx.createCurrency(companyId, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1728,7 +1756,7 @@ router.put('/fx/currencies/:id', requirePermission('fx:write'), (req, res) => {
   try {
     res.json(fx.updateCurrency(companyId, req.params.id, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1742,7 +1770,7 @@ router.post('/fx/rates', requirePermission('fx:write'), (req, res) => {
   try {
     res.json(fx.setRate(companyId, req.body, user));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1753,7 +1781,7 @@ router.get('/fx/convert', requirePermission('fx:read'), (req, res) => {
     const result = fx.convertAmount(companyId, amount, req.query.from, req.query.to, req.query.date || undefined);
     res.json({ amount, from: req.query.from, to: req.query.to, ...result });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1809,7 +1837,7 @@ router.post('/journal-entries', requirePermission('journal:post'), (req, res) =>
     });
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1820,7 +1848,7 @@ router.post('/journal-entries/:id/reverse', requirePermission('journal:reverse')
     const result = reverseJournalEntry(companyId, req.params.id, reason, user);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1833,7 +1861,7 @@ router.get('/reports/dashboard', requirePermission('dashboard:read'), (req, res)
   try {
     res.json(reports.getDashboardStats(companyId, startDate, endDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1842,7 +1870,7 @@ router.get('/reports/trial-balance', requirePermission('reports:read'), (req, re
   try {
     res.json(reports.getTrialBalance(companyId, req.query.asOfDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1852,7 +1880,7 @@ router.get('/reports/profit-loss', requirePermission('reports:read'), (req, res)
   try {
     res.json(reports.getProfitAndLoss(companyId, startDate, endDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1861,7 +1889,7 @@ router.get('/reports/balance-sheet', requirePermission('reports:read'), (req, re
   try {
     res.json(reports.getBalanceSheet(companyId, req.query.asOfDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1871,7 +1899,7 @@ router.get('/reports/cash-flow', requirePermission('reports:read'), (req, res) =
   try {
     res.json(reports.getCashFlowStatement(companyId, startDate, endDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1882,7 +1910,7 @@ router.get('/reports/general-ledger', requirePermission('reports:read'), (req, r
   try {
     res.json(reports.getGeneralLedger(companyId, accountId, startDate, endDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1891,7 +1919,7 @@ router.get('/reports/ar-aging', requirePermission('reports:read'), (req, res) =>
   try {
     res.json(reports.getArAging(companyId, req.query.asOfDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1900,7 +1928,7 @@ router.get('/reports/ap-aging', requirePermission('reports:read'), (req, res) =>
   try {
     res.json(reports.getApAging(companyId, req.query.asOfDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1910,7 +1938,7 @@ router.get('/reports/tax-report', requirePermission('reports:read'), (req, res) 
   try {
     res.json(reports.getTaxReport(companyId, startDate, endDate));
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 
@@ -1941,7 +1969,7 @@ router.post('/taxes', requirePermission('accounting:write'), (req, res) => {
     logAudit(companyId, user.id, user.full_name, 'TAXES', 'CREATE', id, `Created tax rate ${code} (${rate}%)`);
     res.json({ id, code, name, rate });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json(asErrorResponse(err));
   }
 });
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
-import { apiRequest } from '../services/api';
+import { apiRequest, translateError, interpolateVars } from '../services/api';
 import InvoicePrintModal from '../components/InvoicePrintModal';
 import {
   ShoppingCart,
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export default function SalesView() {
-  const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, setActiveView } = useApp();
+  const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, setActiveView, hasPermission } = useApp();
   const { t } = useI18n();
 
   const [activeTab, setActiveTab] = useState('invoices'); // 'invoices', 'quotes', 'orders', 'credit_notes'
@@ -29,8 +29,13 @@ export default function SalesView() {
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [taxes, setTaxes] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [bankAccounts, setBankAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [walkInFilter, setWalkInFilter] = useState(false);
 
   // Modals
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
@@ -41,9 +46,15 @@ export default function SalesView() {
   // Invoice Form State
   const [invoiceForm, setInvoiceForm] = useState({
     customer_id: '',
+    walk_in: false,
+    currency_code: '',
+    exchange_rate: null,
+    warehouse_id: '',
+    payment_method: 'CASH',
+    bank_account_id: '',
     date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-    notes: 'Thank you for your business. Payment terms as agreed.',
+    notes: '',
     autoPost: true,
     lines: [
       {
@@ -77,8 +88,13 @@ export default function SalesView() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      if (search.trim()) params.set('q', search.trim());
+      if (statusFilter) params.set('status', statusFilter);
+      if (walkInFilter) params.set('walk_in', '1');
+      const qs = params.toString();
       const [invData, custData, prodData, taxData] = await Promise.all([
-        apiRequest('/api/sales/invoices'),
+        apiRequest(`/api/sales/invoices${qs ? `?${qs}` : ''}`),
         apiRequest('/api/customers'),
         apiRequest('/api/products'),
         apiRequest('/api/taxes')
@@ -88,6 +104,11 @@ export default function SalesView() {
       setProducts(prodData);
       setTaxes(taxData);
 
+      // Optional reference data (some roles may not read banking/fx — ignore).
+      apiRequest('/api/inventory/warehouses').then(setWarehouses).catch(() => setWarehouses([]));
+      apiRequest('/api/fx/currencies').then(setCurrencies).catch(() => setCurrencies([]));
+      apiRequest('/api/payments/bank-accounts').then(setBankAccounts).catch(() => setBankAccounts([]));
+
       if (activeTab === 'quotes') {
         const qData = await apiRequest('/api/sales/quotes');
         setQuotes(qData);
@@ -96,7 +117,7 @@ export default function SalesView() {
         setCreditNotes(cnData);
       }
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     } finally {
       setLoading(false);
     }
@@ -104,7 +125,7 @@ export default function SalesView() {
 
   useEffect(() => {
     fetchData();
-  }, [currentCompany?.id, activeTab, refreshKey]);
+  }, [currentCompany?.id, activeTab, refreshKey, statusFilter, walkInFilter]);
 
   // Invoice Line item helpers
   const handleProductSelect = (idx, prodId) => {
@@ -167,28 +188,45 @@ export default function SalesView() {
 
   const handleCreateInvoice = async (e) => {
     e.preventDefault();
-    if (!invoiceForm.customer_id) return showToast('Please select a customer', 'error');
+    // Walk-in (anonymous) sales need no customer; credit sales always do.
+    if (!invoiceForm.walk_in && !invoiceForm.customer_id) {
+      return showToast(t('sales.credit_customer_hint'), 'error');
+    }
 
     try {
+      const payload = {
+        ...invoiceForm,
+        customer_id: invoiceForm.walk_in ? null : invoiceForm.customer_id,
+        currency_code: invoiceForm.currency_code || null,
+        exchange_rate: invoiceForm.exchange_rate != null && invoiceForm.exchange_rate !== '' ? Number(invoiceForm.exchange_rate) : null,
+        warehouse_id: invoiceForm.warehouse_id || null,
+        bank_account_id: invoiceForm.bank_account_id || null
+      };
       const res = await apiRequest('/api/sales/invoices', {
         method: 'POST',
-        body: JSON.stringify(invoiceForm)
+        body: JSON.stringify(payload)
       });
-      showToast(`Invoice ${res.invoiceNumber} created and posted to ledger!`, 'success');
+      showToast(`${t('sales.invoice_number')} ${res.invoiceNumber} — ${res.walkIn ? t('common.paid') : t('common.posted')}`, 'success');
       setShowNewInvoiceModal(false);
+      setInvoiceForm((f) => ({ ...f, walk_in: false, customer_id: '', lines: f.lines.map((l) => ({ ...l, product_id: '', description: '', quantity: 1, unit_price: 0 })) }));
       fetchData();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     }
   };
 
-  const handlePostDraft = async (invId) => {
+  const handlePostDraft = async (invId, inv) => {
     try {
-      const res = await apiRequest(`/api/sales/invoices/${invId}/post`, { method: 'POST' });
-      showToast(`Invoice ${res.invoiceNumber} posted to General Ledger and stock updated!`, 'success');
+      let body;
+      if (inv?.walk_in) {
+        // Walk-in checkout: settle immediately (server defaults to the cash account).
+        body = { payment_method: 'CASH' };
+      }
+      const res = await apiRequest(`/api/sales/invoices/${invId}/post`, { method: 'POST', body: body ? JSON.stringify(body) : undefined });
+      showToast(`${t('sales.invoice_number')} ${res.invoiceNumber} — ${t('common.posted')}`, 'success');
       fetchData();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     }
   };
 
@@ -197,18 +235,18 @@ export default function SalesView() {
       const inv = await apiRequest(`/api/sales/invoices/${invId}`);
       setPrintInvoiceData(inv);
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     }
   };
 
   const handleConvertQuote = async (quoteId) => {
     try {
       const res = await apiRequest(`/api/sales/quotes/${quoteId}/convert-to-invoice`, { method: 'POST' });
-      showToast(`Quote converted to Invoice ${res.invoiceNumber}!`, 'success');
+      showToast(`${t('sales.tab_quotes')} → ${t('sales.invoice_number')} ${res.invoiceNumber}`, 'success');
       setActiveTab('invoices');
       fetchData();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     }
   };
 
@@ -219,11 +257,11 @@ export default function SalesView() {
         method: 'POST',
         body: JSON.stringify(creditNoteForm)
       });
-      showToast(`Credit note ${res.creditNoteNumber} posted and customer credited!`, 'success');
+      showToast(`${t('sales.credit_note_number')} ${res.creditNoteNumber} — ${t('common.posted')}`, 'success');
       setShowNewCreditNoteModal(false);
       fetchData();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     }
   };
 
@@ -289,18 +327,38 @@ export default function SalesView() {
       {/* 1. Invoices Tab */}
       {activeTab === 'invoices' && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-            <div className="relative w-72">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder={t('common.search')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+          <div className="p-3 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div className="flex items-center space-x-2">
+              <div className="relative w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder={t('sales.search_invoices')}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') fetchData(); }}
+                  onBlur={() => fetchData()}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-2 py-1.5 text-xs bg-white border border-slate-300 rounded-md"
+              >
+                <option value="">{t('common.all')}</option>
+                <option value="DRAFT">{t('common.draft')}</option>
+                <option value="POSTED">{t('common.posted')}</option>
+                <option value="PARTIALLY_PAID">{t('common.partially_paid')}</option>
+                <option value="PAID">{t('common.paid')}</option>
+                <option value="CANCELLED">{t('common.cancelled')}</option>
+              </select>
+              <label className="flex items-center space-x-1.5 text-xs text-slate-600 font-medium">
+                <input type="checkbox" checked={walkInFilter} onChange={(e) => setWalkInFilter(e.target.checked)} className="rounded border-slate-300" />
+                <span>{t('sales.filter_walk_in')}</span>
+              </label>
             </div>
-            <div className="text-xs text-slate-500 font-medium">{invoices.length} invoices</div>
+            <div className="text-xs text-slate-500 font-medium">{invoices.length} {t('sales.tab_invoices')}</div>
           </div>
 
           <div className="overflow-x-auto">
@@ -332,7 +390,17 @@ export default function SalesView() {
                       <td className="py-3 px-4 font-mono font-bold text-blue-600">{inv.invoice_number}</td>
                       <td className="py-3 px-4 text-slate-600">{formatDate(inv.date)}</td>
                       <td className="py-3 px-4 text-slate-500">{formatDate(inv.due_date)}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{inv.customer_name}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-800">
+                        {inv.walk_in ? (
+                          <span className="inline-flex items-center space-x-1">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-violet-100 text-violet-700 border border-violet-200">
+                              {t('sales.walk_in_badge')}
+                            </span>
+                          </span>
+                        ) : (
+                          inv.customer_name
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-right font-mono text-slate-600">
                         {formatCurrency(inv.subtotal)}
                       </td>
@@ -341,6 +409,11 @@ export default function SalesView() {
                       </td>
                       <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
                         {formatCurrency(inv.total)}
+                        {inv.foreign_total ? (
+                          <div className="text-[10px] font-medium text-slate-400">
+                            {inv.foreign_total} {inv.currency_code} @ {inv.exchange_rate}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="py-3 px-4 text-right font-mono font-bold text-rose-600">
                         {formatCurrency(inv.balance_due)}
@@ -357,18 +430,23 @@ export default function SalesView() {
                               : 'bg-amber-100 text-amber-800'
                           }`}
                         >
-                          {inv.status}
+                          {inv.status === 'PAID' ? t('common.paid')
+                            : inv.status === 'POSTED' ? t('common.posted')
+                            : inv.status === 'DRAFT' ? t('common.draft')
+                            : inv.status === 'PARTIALLY_PAID' ? t('common.partially_paid')
+                            : inv.status === 'CANCELLED' ? t('common.cancelled')
+                            : inv.status}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center space-x-1.5">
                           {inv.status === 'DRAFT' && (
                             <button
-                              onClick={() => handlePostDraft(inv.id)}
-                              title="Post to General Ledger"
+                              onClick={() => handlePostDraft(inv.id, inv)}
+                              title={t('sales.post_invoice')}
                               className="px-2 py-1 rounded text-[10px] font-bold bg-blue-600 text-white hover:bg-blue-500 transition"
                             >
-                              Post
+                              {t('common.post')}
                             </button>
                           )}
                           <button
@@ -529,24 +607,47 @@ export default function SalesView() {
             </div>
 
             <form onSubmit={handleCreateInvoice} className="p-6 space-y-4 text-xs">
+              {/* Walk-in (anonymous) sale toggle */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 bg-violet-50 border border-violet-200 rounded-lg px-4 py-2.5">
+                <label htmlFor="walkIn" className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="walkIn"
+                    checked={invoiceForm.walk_in}
+                    onChange={(e) => setInvoiceForm({
+                      ...invoiceForm,
+                      walk_in: e.target.checked,
+                      customer_id: e.target.checked ? '' : invoiceForm.customer_id,
+                      autoPost: e.target.checked ? true : invoiceForm.autoPost
+                    })}
+                    className="rounded border-slate-300 text-violet-600"
+                  />
+                  <span className="text-violet-900 font-bold">{t('sales.walk_in_sale')}</span>
+                </label>
+                <span className="text-[10px] text-violet-700">{t('sales.walk_in_hint')}</span>
+              </div>
+
               {/* Customer & Dates Header */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">{t('sales.customer')} *</label>
-                  <select
-                    required
-                    value={invoiceForm.customer_id}
-                    onChange={(e) => setInvoiceForm({ ...invoiceForm, customer_id: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
-                  >
-                    <option value="">-- Choose Customer --</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {!invoiceForm.walk_in && (
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">{t('sales.customer')} *</label>
+                    <select
+                      required
+                      value={invoiceForm.customer_id}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, customer_id: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                    >
+                      <option value="">— {t('sales.customer')} —</option>
+                      {customers.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.code})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-slate-400 mt-1">{t('sales.credit_customer_hint')}</p>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t('common.date')} *</label>
@@ -569,7 +670,83 @@ export default function SalesView() {
                     className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
+
+                {warehouses.length > 0 && (
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">{t('inventory.movements_store')}</label>
+                    <select
+                      value={invoiceForm.warehouse_id}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, warehouse_id: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="">{t('inventory.default_store')}</option>
+                      {warehouses.filter((w) => w.active).map((w) => (
+                        <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
+
+              {/* Currency & walk-in checkout */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('sales.currency')}</label>
+                  <select
+                    value={invoiceForm.currency_code}
+                    onChange={(e) => setInvoiceForm({ ...invoiceForm, currency_code: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                  >
+                    <option value="">{currentCompany?.currency_code || 'USD'} ({t('settings.base_currency')})</option>
+                    {currencies.filter((c) => c.code !== (currentCompany?.currency_code || 'USD')).map((c) => (
+                      <option key={c.id || c.code} value={c.code}>{c.code} — {c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('sales.exchange_rate')}</label>
+                  <input
+                    type="number" step="any" min="0"
+                    disabled={!invoiceForm.currency_code}
+                    value={invoiceForm.exchange_rate ?? ''}
+                    onChange={(e) => setInvoiceForm({ ...invoiceForm, exchange_rate: e.target.value === '' ? null : Number(e.target.value) })}
+                    placeholder={t('settings.rate_value')}
+                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono disabled:bg-slate-100"
+                  />
+                </div>
+                {invoiceForm.walk_in && (
+                  <>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">{t('banking.payment_method')}</label>
+                      <select
+                        value={invoiceForm.payment_method}
+                        onChange={(e) => setInvoiceForm({ ...invoiceForm, payment_method: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="CASH">{t('banking.method_cash')}</option>
+                        <option value="MOBILE_MONEY">{t('banking.method_momo')}</option>
+                        <option value="BANK_TRANSFER">{t('banking.method_bank')}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">{t('sales.settlement_account')}</label>
+                      <select
+                        value={invoiceForm.bank_account_id}
+                        onChange={(e) => setInvoiceForm({ ...invoiceForm, bank_account_id: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">{t('banking.type_cash')}</option>
+                        {bankAccounts.filter((b) => b.active).map((b) => (
+                          <option key={b.id} value={b.id}>{b.bank_name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+              </div>
+              {invoiceForm.currency_code && (
+                <p className="text-[10px] text-slate-400 -mt-2">{t('sales.base_total_note')}</p>
+              )}
 
               {/* Line Items Table */}
               <div>
@@ -708,7 +885,7 @@ export default function SalesView() {
                       className="rounded border-slate-300 text-blue-600"
                     />
                     <label htmlFor="autoPost" className="text-slate-700 font-medium">
-                      Post immediately to General Ledger & deduct warehouse inventory
+                      {t('sales.auto_post_hint')}
                     </label>
                   </div>
                 </div>
@@ -738,6 +915,15 @@ export default function SalesView() {
                     <span>{t('common.total')}:</span>
                     <span className="font-mono">{formatCurrency(invTotals.total)}</span>
                   </div>
+                  {invoiceForm.currency_code && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>{t('sales.foreign_total')}:</span>
+                      <span className="font-mono font-semibold text-violet-700">
+                        {invTotals.total.toLocaleString(undefined, { maximumFractionDigits: 4 })} {invoiceForm.currency_code}
+                        {invoiceForm.exchange_rate ? ` × ${invoiceForm.exchange_rate}` : ''}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -754,7 +940,7 @@ export default function SalesView() {
                   type="submit"
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-semibold transition shadow"
                 >
-                  {invoiceForm.autoPost ? t('sales.post_invoice') : 'Save as Draft'}
+                  {invoiceForm.autoPost ? t('sales.post_invoice') : `${t('common.save')} (${t('common.draft')})`}
                 </button>
               </div>
             </form>
