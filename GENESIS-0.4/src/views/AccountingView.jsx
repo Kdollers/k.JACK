@@ -528,7 +528,7 @@ export default function AccountingView() {
                     value={entryForm.reference}
                     onChange={(e) => setEntryForm({ ...entryForm, reference: e.target.value })}
                     className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                    placeholder="Memo / Voucher #"
+                    placeholder={t('common.memo_or_voucher')}
                   />
                 </div>
                 <div>
@@ -579,7 +579,7 @@ export default function AccountingView() {
                               onChange={(e) => updateEntryLine(idx, 'accountId', e.target.value)}
                               className="w-full px-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
                             >
-                              <option value="">-- Choose GL Account --</option>
+                              <option value="">— {t('common.choose_account')} —</option>
                               {accounts.map((a) => (
                                 <option key={a.id} value={a.id}>
                                   {a.code} - {a.name} ({a.type})
@@ -593,7 +593,7 @@ export default function AccountingView() {
                               value={line.description}
                               onChange={(e) => updateEntryLine(idx, 'description', e.target.value)}
                               className="w-full px-2 py-1.5 border border-slate-200 rounded"
-                              placeholder="Line narrative"
+                              placeholder={t('common.line_narrative')}
                             />
                           </td>
                           <td className="py-2 px-3 text-right">

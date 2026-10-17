@@ -380,7 +380,7 @@ export default function DashboardView() {
                 className="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-lg text-left transition border border-slate-700/60"
               >
                 <div className="font-semibold text-amber-400">+ Payment</div>
-                <div className="text-[10px] text-slate-400">Receipt / Voucher</div>
+                <div className="text-[10px] text-slate-400">{t('dashboard.receipt_voucher')}</div>
               </button>
               <button
                 onClick={() => setActiveView('accounting')}

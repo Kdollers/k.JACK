@@ -53,13 +53,15 @@ const ROLE_PERMISSIONS = {
     'dashboard:read',
     'contacts:read', 'contacts:write',
     'sales:read', 'sales:write', 'sales:post',
-    'inventory:read'
+    'inventory:read',
+    'fx:read'
   ],
   purchases: [
     'dashboard:read',
     'contacts:read', 'contacts:write',
     'purchases:read', 'purchases:write', 'purchases:post',
-    'inventory:read'
+    'inventory:read',
+    'fx:read'
   ],
   // Inventory Officer: runs stores, transfers and physical counts, but cannot
   // approve their own counts (inventory:approve is deliberately absent).

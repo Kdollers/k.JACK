@@ -96,7 +96,12 @@
     "submitted": "Submitted",
     "reversed": "Reversed",
     "reason": "Reason",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "memo_or_voucher": "Memo / Voucher #",
+    "choose_account": "Choose GL Account",
+    "line_narrative": "Line narrative",
+    "outstanding_balance": "Outstanding Balance",
+    "outstanding_due": "Outstanding Due"
   },
   "dashboard": {
     "title": "Executive Financial Dashboard",
@@ -123,7 +128,8 @@
     "new_invoice": "New Sales Invoice",
     "new_bill": "New Purchase Bill",
     "record_payment": "Record Payment",
-    "new_journal": "Manual Journal Entry"
+    "new_journal": "Manual Journal Entry",
+    "receipt_voucher": "Receipt / Voucher"
   },
   "customers": {
     "title": "Customer Management",
@@ -144,7 +150,8 @@
     "statement_for": "Statement of Account for",
     "opening_balance": "Opening Balance",
     "closing_balance": "Closing Balance",
-    "aging_title": "Accounts Receivable Aging Report"
+    "aging_title": "Accounts Receivable Aging Report",
+    "total_ar": "Total Outstanding A/R"
   },
   "suppliers": {
     "title": "Supplier Management",
@@ -154,7 +161,8 @@
     "supplier_name": "Supplier Name",
     "statement_title": "Supplier Account Statement",
     "record_payment": "Pay Supplier",
-    "aging_title": "Accounts Payable Aging Report"
+    "aging_title": "Accounts Payable Aging Report",
+    "total_ap": "Total Outstanding A/P"
   },
   "inventory": {
     "title": "Products & Stock Management",
@@ -299,7 +307,8 @@
     "settlement_account": "Settlement Account",
     "filter_walk_in": "Walk-in only",
     "search_invoices": "Search number, customer…",
-    "auto_post_hint": "Post immediately to the General Ledger and deduct store inventory"
+    "auto_post_hint": "Post immediately to the General Ledger and deduct store inventory",
+    "choose_customer": "Choose Customer"
   },
   "purchases": {
     "title": "Purchases & Vendor Bills",
@@ -336,7 +345,8 @@
     "status_partially_received": "Partially Received",
     "status_received": "Received",
     "receipts_of_po": "Receipts for this order",
-    "line_items_stock": "Purchased Items / Stock"
+    "line_items_stock": "Purchased Items / Stock",
+    "choose_product": "Choose Stock Product or Custom"
   },
   "banking": {
     "title": "Payments & Banking",
@@ -397,7 +407,11 @@
     "approval_note": "The person who closed the session cannot approve it — an independent approver is required.",
     "cust_refund": "Customer Refund",
     "status_open": "Open",
-    "status_closed": "Closed"
+    "status_closed": "Closed",
+    "voucher_number": "Voucher #",
+    "account_used": "Account Used",
+    "party_category": "Associated Party / Category",
+    "narrative_placeholder": "Voucher narrative or purpose"
   },
   "accounting": {
     "title": "General Ledger & Accounting",

@@ -123,3 +123,4 @@ function asErrorResponse(err) {
 module.exports.ApiError = ApiError;
 module.exports.errorCode = errorCode;
 module.exports.asErrorResponse = asErrorResponse;
+module.exports.ERROR_CODE_PATTERNS = ERROR_CODE_PATTERNS;

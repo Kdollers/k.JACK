@@ -285,7 +285,7 @@ export default function CustomersView() {
               <p className="text-[11px] text-slate-500">Aging analysis of outstanding customer receivables</p>
             </div>
             <div className="text-right">
-              <span className="text-xs text-slate-500">Total Outstanding A/R: </span>
+              <span className="text-xs text-slate-500">{t('customers.total_ar')}: </span>
               <span className="text-base font-bold font-mono text-blue-700">
                 {formatCurrency(agingData?.totalAr || 0)}
               </span>

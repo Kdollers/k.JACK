@@ -971,7 +971,7 @@ export default function SalesView() {
                   onChange={(e) => setCreditNoteForm({ ...creditNoteForm, customerId: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="">-- Choose Customer --</option>
+                  <option value="">— {t('sales.choose_customer')} —</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name} ({c.code})

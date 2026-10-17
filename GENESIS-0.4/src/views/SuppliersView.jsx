@@ -274,7 +274,7 @@ export default function SuppliersView() {
               <p className="text-[11px] text-slate-500">Aging analysis of supplier accounts payable</p>
             </div>
             <div className="text-right">
-              <span className="text-xs text-slate-500">Total Outstanding A/P: </span>
+              <span className="text-xs text-slate-500">{t('suppliers.total_ap')}: </span>
               <span className="text-base font-bold font-mono text-indigo-700">
                 {formatCurrency(agingData?.totalAp || 0)}
               </span>

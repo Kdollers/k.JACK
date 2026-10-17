@@ -96,7 +96,12 @@
     "submitted": "Byoherejwe",
     "reversed": "Byakuweho",
     "reason": "Impamvu",
-    "refresh": "Ongera Uvugurure"
+    "refresh": "Ongera Uvugurure",
+    "memo_or_voucher": "Icyo Wibuka / Nomero y'Inyandiko",
+    "choose_account": "Hitamo Konti ya GL",
+    "line_narrative": "Ibisobanuro by'umurongo",
+    "outstanding_balance": "Umwenda Usigaye",
+    "outstanding_due": "Ideni Risigaye"
   },
   "dashboard": {
     "title": "Imbonerahamwe Nkuru y'Imari n'Ubucuruzi",
@@ -123,7 +128,8 @@
     "new_invoice": "Kora Fagitire Nshya",
     "new_bill": "Kora Inyandiko yo Kwishyura",
     "record_payment": "Andika Ubwishyu",
-    "new_journal": "Andika mu Ibaruramari"
+    "new_journal": "Andika mu Ibaruramari",
+    "receipt_voucher": "Inyemezabwishyu / Inyandiko"
   },
   "customers": {
     "title": "Gucunga Abakiriya",
@@ -144,7 +150,8 @@
     "statement_for": "Inyandiko y'umukiriya:",
     "opening_balance": "Asanzwe arimo",
     "closing_balance": "Asigaye arimo",
-    "aging_title": "Igihe Imyenda y'Abakiriya Imaranye"
+    "aging_title": "Igihe Imyenda y'Abakiriya Imaranye",
+    "total_ar": "Igiteranyo cy'Imyenda y'Abakiriya"
   },
   "suppliers": {
     "title": "Gucunga Abagemura",
@@ -154,7 +161,8 @@
     "supplier_name": "Izina ry'Umgemura",
     "statement_title": "Inyandiko y'Ubwishyu bw'Umgemura",
     "record_payment": "Kwishyura Umgemura",
-    "aging_title": "Igihe Imyenda y'Abagemura Imaranye"
+    "aging_title": "Igihe Imyenda y'Abagemura Imaranye",
+    "total_ap": "Igiteranyo cy'Imyenda y'Ababigisha"
   },
   "inventory": {
     "title": "Ibicuruzwa n'Ububiko",
@@ -299,7 +307,8 @@
     "settlement_account": "Konti Yakirirwaho Amafaranga",
     "filter_walk_in": "Walk-in gusa",
     "search_invoices": "Shakisha nimero, umukiriya…",
-    "auto_post_hint": "Kwinjiza ako kanya mu ibaruramari no gukuraho ububiko bw'iduka"
+    "auto_post_hint": "Kwinjiza ako kanya mu ibaruramari no gukuraho ububiko bw'iduka",
+    "choose_customer": "Hitamo Umukiriya"
   },
   "purchases": {
     "title": "Ibyaguzwe n'Inyemezabwishyu z'Abagemura",
@@ -336,7 +345,8 @@
     "status_partially_received": "Byakiriwe Igice",
     "status_received": "Byakiriwe",
     "receipts_of_po": "Inyandiko zo kwakira z’iyi komande",
-    "line_items_stock": "Ibicuruzwa Byaguzwe / Ububiko"
+    "line_items_stock": "Ibicuruzwa Byaguzwe / Ububiko",
+    "choose_product": "Hitamo Igicuruzwa cyangwa Icyihariye"
   },
   "banking": {
     "title": "Ubwishyu, Amafaranga na Banki",
@@ -397,7 +407,11 @@
     "approval_note": "Wafunze igenzura ntashobora kuryemeza — hagomba kwemeza undi muntu wigenga.",
     "cust_refund": "Kwishyura Umukiriya (Subiza)",
     "status_open": "Bifunguye",
-    "status_closed": "Bifunze"
+    "status_closed": "Bifunze",
+    "voucher_number": "Nomero y'Inyandiko",
+    "account_used": "Konti Yakoreshejwe",
+    "party_category": "Uwo Bireba / Icyiciro",
+    "narrative_placeholder": "Intego cyangwa impamvu y'inyandiko"
   },
   "accounting": {
     "title": "Ibaruramari Rusange n'Igitabo Kinini",

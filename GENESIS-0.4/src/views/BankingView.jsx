@@ -391,10 +391,10 @@ export default function BankingView() {
               <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                 <tr>
                   <th className="py-2.5 px-4">{t('common.date')}</th>
-                  <th className="py-2.5 px-4">Voucher #</th>
+                  <th className="py-2.5 px-4">{t('banking.voucher_number')}</th>
                   <th className="py-2.5 px-4">{t('banking.payment_type')}</th>
-                  <th className="py-2.5 px-4">Account Used</th>
-                  <th className="py-2.5 px-4">Associated Party / Category</th>
+                  <th className="py-2.5 px-4">{t('banking.account_used')}</th>
+                  <th className="py-2.5 px-4">{t('banking.party_category')}</th>
                   <th className="py-2.5 px-4">{t('banking.payment_method')}</th>
                   <th className="py-2.5 px-4 text-right">{t('common.amount')}</th>
                   <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
@@ -752,10 +752,10 @@ export default function BankingView() {
                     onChange={(e) => setPaymentForm({ ...paymentForm, customerId: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="">-- Choose Customer --</option>
+                    <option value="">— {t('sales.customer')} —</option>
                     {customers.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} — Outstanding Balance: {formatCurrency(c.current_balance)}
+                        {c.name} — {t('common.outstanding_balance')}: {formatCurrency(c.current_balance)}
                       </option>
                     ))}
                   </select>
@@ -771,10 +771,10 @@ export default function BankingView() {
                     onChange={(e) => setPaymentForm({ ...paymentForm, supplierId: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="">-- Choose Supplier --</option>
+                    <option value="">— {t('purchases.supplier')} —</option>
                     {suppliers.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.name} — Outstanding Due: {formatCurrency(s.current_balance)}
+                        {s.name} — {t('common.outstanding_due')}: {formatCurrency(s.current_balance)}
                       </option>
                     ))}
                   </select>
@@ -790,7 +790,7 @@ export default function BankingView() {
                     onChange={(e) => setPaymentForm({ ...paymentForm, expenseAccountId: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="">-- Choose Operating Expense --</option>
+                    <option value="">— {t('banking.expense_account')} —</option>
                     {glAccounts
                       .filter((a) => a.type === 'EXPENSE')
                       .map((a) => (
@@ -811,7 +811,7 @@ export default function BankingView() {
                     onChange={(e) => setPaymentForm({ ...paymentForm, incomeAccountId: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="">-- Choose Income Account --</option>
+                    <option value="">— {t('banking.income_account')} —</option>
                     {glAccounts
                       .filter((a) => a.type === 'REVENUE')
                       .map((a) => (
@@ -832,7 +832,7 @@ export default function BankingView() {
                     onChange={(e) => setPaymentForm({ ...paymentForm, toBankAccountId: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="">-- Choose Destination Account --</option>
+                    <option value="">— {t('banking.to_account')} —</option>
                     {bankAccounts
                       .filter((b) => b.id !== paymentForm.bankAccountId)
                       .map((b) => (
@@ -914,7 +914,7 @@ export default function BankingView() {
                   value={paymentForm.notes}
                   onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Voucher narrative or purpose"
+                  placeholder={t('banking.narrative_placeholder')}
                 />
               </div>
 

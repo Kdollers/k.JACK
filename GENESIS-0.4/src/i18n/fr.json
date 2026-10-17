@@ -96,7 +96,12 @@
     "submitted": "Soumis",
     "reversed": "Contre-passé",
     "reason": "Motif",
-    "refresh": "Actualiser"
+    "refresh": "Actualiser",
+    "memo_or_voucher": "Mémo / N° de pièce",
+    "choose_account": "Choisir un compte GL",
+    "line_narrative": "Libellé de la ligne",
+    "outstanding_balance": "Solde en cours",
+    "outstanding_due": "Dette en cours"
   },
   "dashboard": {
     "title": "Tableau de Bord Financier et Opérationnel",
@@ -123,7 +128,8 @@
     "new_invoice": "Nouvelle facture client",
     "new_bill": "Nouvelle facture fournisseur",
     "record_payment": "Enregistrer un paiement",
-    "new_journal": "Saisie d'écriture comptable"
+    "new_journal": "Saisie d'écriture comptable",
+    "receipt_voucher": "Reçu / Pièce"
   },
   "customers": {
     "title": "Gestion des Clients",
@@ -144,7 +150,8 @@
     "statement_for": "Relevé de compte pour",
     "opening_balance": "Solde initial",
     "closing_balance": "Solde final",
-    "aging_title": "Balance Âgée des Créances Clients"
+    "aging_title": "Balance Âgée des Créances Clients",
+    "total_ar": "Total A/R en cours"
   },
   "suppliers": {
     "title": "Gestion des Fournisseurs",
@@ -154,7 +161,8 @@
     "supplier_name": "Nom du fournisseur",
     "statement_title": "Extrait de Compte Fournisseur",
     "record_payment": "Régler le fournisseur",
-    "aging_title": "Balance Âgée des Dettes Fournisseurs"
+    "aging_title": "Balance Âgée des Dettes Fournisseurs",
+    "total_ap": "Total A/P en cours"
   },
   "inventory": {
     "title": "Produits et Gestion des Stocks",
@@ -299,7 +307,8 @@
     "settlement_account": "Compte d’encaissement",
     "filter_walk_in": "Comptoir uniquement",
     "search_invoices": "Rechercher numéro, client…",
-    "auto_post_hint": "Comptabiliser immédiatement au grand livre et déduire le stock du magasin"
+    "auto_post_hint": "Comptabiliser immédiatement au grand livre et déduire le stock du magasin",
+    "choose_customer": "Choisir un client"
   },
   "purchases": {
     "title": "Achats et Dépenses Fournisseurs",
@@ -336,7 +345,8 @@
     "status_partially_received": "Partiellement reçue",
     "status_received": "Reçue",
     "receipts_of_po": "Réceptions de cette commande",
-    "line_items_stock": "Articles achetés / Stock"
+    "line_items_stock": "Articles achetés / Stock",
+    "choose_product": "Choisir un produit en stock ou personnalisé"
   },
   "banking": {
     "title": "Trésorerie et Règlements",
@@ -397,7 +407,11 @@
     "approval_note": "La personne qui a clôturé la session ne peut pas l’approuver — un approbateur indépendant est requis.",
     "cust_refund": "Remboursement client",
     "status_open": "Ouverte",
-    "status_closed": "Clôturée"
+    "status_closed": "Clôturée",
+    "voucher_number": "N° de pièce",
+    "account_used": "Compte utilisé",
+    "party_category": "Tiers / Catégorie associé",
+    "narrative_placeholder": "Objet ou motif de la pièce"
   },
   "accounting": {
     "title": "Comptabilité Générale et Grand Livre",

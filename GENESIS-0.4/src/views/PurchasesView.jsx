@@ -719,7 +719,7 @@ export default function PurchasesView() {
                                 onChange={(e) => handleProductSelect(idx, e.target.value)}
                                 className="w-full px-2 py-1 border border-slate-300 rounded mb-1 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
                               >
-                                <option value="">-- Choose Stock Product or Custom --</option>
+                                <option value="">— {t('purchases.choose_product')} —</option>
                                 {products.map((p) => (
                                   <option key={p.id} value={p.id}>
                                     {p.name} ({p.sku})
