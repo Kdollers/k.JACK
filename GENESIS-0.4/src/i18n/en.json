@@ -335,7 +335,8 @@
     "no_receipts": "No goods receipts recorded",
     "status_partially_received": "Partially Received",
     "status_received": "Received",
-    "receipts_of_po": "Receipts for this order"
+    "receipts_of_po": "Receipts for this order",
+    "line_items_stock": "Purchased Items / Stock"
   },
   "banking": {
     "title": "Payments & Banking",

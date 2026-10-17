@@ -335,7 +335,8 @@
     "no_receipts": "Aucune réception enregistrée",
     "status_partially_received": "Partiellement reçue",
     "status_received": "Reçue",
-    "receipts_of_po": "Réceptions de cette commande"
+    "receipts_of_po": "Réceptions de cette commande",
+    "line_items_stock": "Articles achetés / Stock"
   },
   "banking": {
     "title": "Trésorerie et Règlements",

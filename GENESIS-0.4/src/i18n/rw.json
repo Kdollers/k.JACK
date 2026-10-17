@@ -335,7 +335,8 @@
     "no_receipts": "Nta kwakira kwabaye",
     "status_partially_received": "Byakiriwe Igice",
     "status_received": "Byakiriwe",
-    "receipts_of_po": "Inyandiko zo kwakira z’iyi komande"
+    "receipts_of_po": "Inyandiko zo kwakira z’iyi komande",
+    "line_items_stock": "Ibicuruzwa Byaguzwe / Ububiko"
   },
   "banking": {
     "title": "Ubwishyu, Amafaranga na Banki",
