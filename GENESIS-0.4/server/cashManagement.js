@@ -44,8 +44,10 @@ function insertCountLines(db, sessionId, phase, lines) {
 
 /** Cash expected in the till: opening + receipts − payouts within the window. */
 function computeExpectedCash(db, session) {
-  const fromDate = String(session.opened_at || '').split('T')[0];
-  const toDate = session.closed_at ? String(session.closed_at).split('T')[0] : new Date().toISOString().split('T')[0];
+  // SQLite datetimes are 'YYYY-MM-DD HH:MM:SS' (space, no 'T') — normalise both.
+  const datePart = (v) => String(v || '').replace('T', ' ').slice(0, 10);
+  const fromDate = datePart(session.opened_at);
+  const toDate = session.closed_at ? datePart(session.closed_at) : new Date().toISOString().slice(0, 10);
   const rows = db.prepare(`
     SELECT payment_type, bank_account_id, to_bank_account_id, amount FROM payments
     WHERE company_id = ? AND status = 'POSTED' AND date >= ? AND date <= ?

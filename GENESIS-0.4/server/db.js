@@ -785,6 +785,9 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
   if (!demo) {
     database.prepare('UPDATE companies SET name = ?, legal_name = ?, address = NULL, phone = NULL, email = NULL, tax_id = NULL WHERE id = ?')
       .run('New Company', 'New Company', companyId);
+    // Starter bank/cash accounts exist so payments work immediately, but a
+    // production install must NOT begin with fabricated demo balances.
+    database.prepare('UPDATE bank_accounts SET current_balance = 0 WHERE company_id = ?').run(companyId);
     return;
   }
 

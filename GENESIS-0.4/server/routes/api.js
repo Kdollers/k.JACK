@@ -297,7 +297,8 @@ router.put('/companies/current', requirePermission('company:manage'), (req, res)
   const {
     name, legal_name, address, phone, email, tax_id,
     currency_code, currency_symbol, currency_decimals,
-    fiscal_year_start, fiscal_year_end, default_language, tax_inclusive_pricing, inventory_valuation_method
+    fiscal_year_start, fiscal_year_end, default_language, tax_inclusive_pricing, inventory_valuation_method,
+    require_goods_receipt
   } = req.body;
 
   try {
@@ -306,13 +307,14 @@ router.put('/companies/current', requirePermission('company:manage'), (req, res)
       SET name = ?, legal_name = ?, address = ?, phone = ?, email = ?, tax_id = ?,
           currency_code = ?, currency_symbol = ?, currency_decimals = ?,
           fiscal_year_start = ?, fiscal_year_end = ?, default_language = ?,
-          tax_inclusive_pricing = ?, inventory_valuation_method = ?, updated_at = datetime('now')
+          tax_inclusive_pricing = ?, inventory_valuation_method = ?, require_goods_receipt = ?, updated_at = datetime('now')
       WHERE id = ?
     `).run(
       name, legal_name, address, phone, email, tax_id,
       currency_code, currency_symbol, currency_decimals,
       fiscal_year_start, fiscal_year_end, default_language,
       tax_inclusive_pricing ? 1 : 0, inventory_valuation_method || 'WEIGHTED_AVERAGE',
+      require_goods_receipt ? 1 : 0,
       companyId
     );
 

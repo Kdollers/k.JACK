@@ -415,6 +415,14 @@ function postPurchaseInvoice(companyId, billId, user) {
       linkedReceipt = db.prepare(`SELECT * FROM goods_receipts WHERE id = ? AND company_id = ?`).get(bill.goods_receipt_id, companyId);
       if (!linkedReceipt) throw new Error('Linked goods receipt not found');
       if (linkedReceipt.status !== 'POSTED') throw new Error('Linked goods receipt is not posted');
+    } else {
+      // Companies can require formal goods receiving: with the policy on, a
+      // supplier invoice alone never increases stock — a posted goods receipt
+      // is mandatory.
+      const policy = db.prepare(`SELECT require_goods_receipt FROM companies WHERE id = ?`).get(companyId);
+      if (policy && policy.require_goods_receipt) {
+        throw new Error('This company requires a posted goods receipt before a supplier invoice can be posted. Receive the goods first and link the receipt to the bill.');
+      }
     }
     const warehouseId = linkedReceipt
       ? linkedReceipt.warehouse_id

@@ -209,6 +209,7 @@ const MIGRATIONS = [
       `);
 
       // ---------------- additive columns on existing tables ----------------
+      addColumn(db, 'companies', 'require_goods_receipt', 'INTEGER NOT NULL DEFAULT 0');
       addColumn(db, 'customers', 'is_walk_in', 'INTEGER NOT NULL DEFAULT 0');
       addColumn(db, 'physical_inventory_counts', 'warehouse_id', 'TEXT REFERENCES warehouses(id)');
       addColumn(db, 'physical_inventory_counts', 'submitted_by', 'TEXT');

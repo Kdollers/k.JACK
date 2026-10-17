@@ -263,17 +263,20 @@ function setStockLevel(db, productId, warehouseId, quantity) {
 }
 
 /** Per-warehouse stock rows for one product or all products. */
-function stockByWarehouse(db, companyId, productId = null) {  const sql = productId
-    ? `SELECT sl.warehouse_id, w.code, w.name, sl.quantity
-       FROM stock_levels sl JOIN warehouses w ON w.id = sl.warehouse_id
-       WHERE w.company_id = ? AND sl.product_id = ?`
+function stockByWarehouse(db, companyId, productId = null) {
+  const sql = productId
+    ? `SELECT w.id AS warehouse_id, w.code, w.name, COALESCE(sl.quantity, 0) AS quantity
+       FROM warehouses w
+       LEFT JOIN stock_levels sl ON sl.warehouse_id = w.id AND sl.product_id = ?
+       WHERE w.company_id = ? AND w.active = 1
+       ORDER BY w.code`
     : `SELECT sl.product_id, p.sku, p.name, sl.warehouse_id, w.code AS warehouse_code, w.name AS warehouse_name, sl.quantity
        FROM stock_levels sl
        JOIN warehouses w ON w.id = sl.warehouse_id
        JOIN products p ON p.id = sl.product_id
        WHERE w.company_id = ?
        ORDER BY p.sku, w.code`;
-  return (productId ? db.prepare(sql).all(companyId, productId) : db.prepare(sql).all(companyId))
+  return (productId ? db.prepare(sql).all(productId, companyId) : db.prepare(sql).all(companyId))
     .map(r => ({ ...r, quantity: roundTo(r.quantity, 4) }));
 }
 
