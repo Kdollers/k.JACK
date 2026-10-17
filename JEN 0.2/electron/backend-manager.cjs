@@ -1,12 +1,12 @@
 'use strict';
 /**
- * Lifecycle management for the local GENESIS backend process.
+ * Lifecycle management for the local JENESIS backend process.
  *
  * This module intentionally does not import 'electron', so it can be unit-tested
  * with plain Node.js. The Electron main process uses it to:
  *   - pick a free loopback port,
  *   - start the Express server in a child process (Electron's Node runtime),
- *   - wait until the server identifies itself as GENESIS on /api/health,
+ *   - wait until the server identifies itself as JENESIS on /api/health,
  *   - stop the server cleanly, escalating only if it does not exit in time.
  */
 const net = require('net');
@@ -48,7 +48,7 @@ function httpGetJson(url, timeoutMs) {
 }
 
 /**
- * Polls the health endpoint until the expected GENESIS server answers.
+ * Polls the health endpoint until the expected JENESIS server answers.
  * Rejects after timeoutMs, or immediately if `isAlive()` reports the process has exited.
  */
 async function waitForHealth({ port, host = LOOPBACK, timeoutMs = 20000, intervalMs = 150, isAlive = () => true }) {
@@ -57,7 +57,7 @@ async function waitForHealth({ port, host = LOOPBACK, timeoutMs = 20000, interva
   let lastError = null;
   while (Date.now() < deadline) {
     if (!isAlive()) {
-      throw new Error('The GENESIS backend process exited before it became ready.');
+      throw new Error('The JENESIS backend process exited before it became ready.');
     }
     try {
       const { status, body } = await httpGetJson(url, 1000);
@@ -66,18 +66,18 @@ async function waitForHealth({ port, host = LOOPBACK, timeoutMs = 20000, interva
       }
       // Something else is listening on this port. Do not attach to it.
       if (status === 200 || body) {
-        lastError = new Error('Another service is listening on the GENESIS backend port.');
+        lastError = new Error('Another service is listening on the JENESIS backend port.');
         throw lastError;
       }
       lastError = new Error(`Unexpected HTTP status ${status} from the backend.`);
     } catch (err) {
-      if (err && err.message === 'Another service is listening on the GENESIS backend port.') throw err;
+      if (err && err.message === 'Another service is listening on the JENESIS backend port.') throw err;
       lastError = err;
     }
     await new Promise((r) => setTimeout(r, intervalMs));
   }
   const reason = lastError ? ` Last error: ${lastError.message}` : '';
-  throw new Error(`The GENESIS backend did not become ready within ${Math.round(timeoutMs / 1000)} seconds.${reason}`);
+  throw new Error(`The JENESIS backend did not become ready within ${Math.round(timeoutMs / 1000)} seconds.${reason}`);
 }
 
 class BackendProcess {

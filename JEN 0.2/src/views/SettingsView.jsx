@@ -120,7 +120,10 @@ export default function SettingsView() {
   useEffect(() => {
     if (activeTab === 'taxes') fetchTaxes();
     else if (activeTab === 'audit') fetchAuditLogs();
-    else if (activeTab === 'currencies') fetchCurrencies();
+    else if (activeTab === 'currencies') {
+      fetchCurrencies();
+      apiRequest('/api/fx/revaluations').then(setRevaluations).catch(() => setRevaluations([]));
+    }
   }, [activeTab, refreshKey]);
 
   const handleSaveCompany = async (e) => {
@@ -200,6 +203,8 @@ export default function SettingsView() {
   const [currencyForm, setCurrencyForm] = useState({ code: '', name: '', symbol: '', decimals: 2 });
   const [rateForm, setRateForm] = useState({ baseCode: '', quoteCode: '', rate: '', effectiveDate: new Date().toISOString().split('T')[0] });
   const [convForm, setConvForm] = useState({ amount: '', from: '', to: '' });
+  const [revaluations, setRevaluations] = useState([]);
+  const [revalForm, setRevalForm] = useState({ date: new Date().toISOString().split('T')[0], notes: '' });
   const [convResult, setConvResult] = useState(null);
 
   const fetchCurrencies = async () => {
@@ -252,6 +257,22 @@ export default function SettingsView() {
       });
       showToast(t('settings.rate_added'), 'success');
       setRateForm({ ...rateForm, rate: '' });
+      fetchRates(rateForm.baseCode);
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  const handleRunRevaluation = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await apiRequest('/api/fx/revaluate', {
+        method: 'POST',
+        body: JSON.stringify({ date: revalForm.date, notes: revalForm.notes })
+      });
+      showToast(`${res.revaluationNumber}: ${t('settings.reval_docs')} ${res.documents}, ${t('settings.reval_gain')} ${res.totalGain}, ${t('settings.reval_loss')} ${res.totalLoss}`, 'success');
+      const list = await apiRequest('/api/fx/revaluations');
+      setRevaluations(list);
       fetchRates(rateForm.baseCode);
     } catch (err) {
       showToast(translateError(t, err), 'error');
@@ -781,6 +802,59 @@ export default function SettingsView() {
                   )}
                 </div>
               </form>
+            </div>
+          </div>
+
+          {/* Period-end FX revaluation */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-slate-200 bg-slate-50">
+              <h2 className="text-sm font-bold text-slate-800">{t('settings.fx_revaluation')}</h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">{t('settings.fx_revaluation_hint')}</p>
+            </div>
+            <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
+              <form onSubmit={handleRunRevaluation} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">{t('common.date')} *</label>
+                    <input type="date" required value={revalForm.date}
+                      onChange={(e) => setRevalForm({ ...revalForm, date: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-md" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">{t('common.notes')}</label>
+                    <input type="text" value={revalForm.notes}
+                      onChange={(e) => setRevalForm({ ...revalForm, notes: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-md" />
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button type="submit" className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md font-semibold">{t('settings.run_revaluation')}</button>
+                </div>
+              </form>
+              <div className="max-h-52 overflow-y-auto border border-slate-200 rounded-lg">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-500 uppercase text-[9px] font-bold border-b border-slate-200 sticky top-0">
+                    <tr>
+                      <th className="py-2 px-3">{t('common.date')}</th>
+                      <th className="py-2 px-3 text-center">{t('settings.reval_docs')}</th>
+                      <th className="py-2 px-3 text-right">{t('settings.reval_gain')}</th>
+                      <th className="py-2 px-3 text-right">{t('settings.reval_loss')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {revaluations.length > 0 ? revaluations.map((r) => (
+                      <tr key={r.id} title={r.revaluation_number}>
+                        <td className="py-2 px-3 font-mono">{r.revaluation_date}</td>
+                        <td className="py-2 px-3 text-center">{r.documents_count}</td>
+                        <td className="py-2 px-3 text-right font-mono text-emerald-700">{r.total_gain}</td>
+                        <td className="py-2 px-3 text-right font-mono text-rose-600">{r.total_loss}</td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={4} className="py-4 px-3 text-center text-slate-400">{t('settings.no_revaluations')}</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 

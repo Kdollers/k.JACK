@@ -36,6 +36,8 @@ class ApiError extends Error {
  * English (audit/API consumers); the UI translates `code` into en/fr/rw.
  */
 const ERROR_CODE_PATTERNS = [
+  [/A revaluation has already been posted/i, 'FX_REVALUATION_EXISTS'],
+  [/No open foreign-currency balances/i, 'NO_FX_EXPOSURE'],
   [/FX settlement requires a linked invoice or bill/i, 'FX_SETTLE_REQUIRES_DOCUMENT'],
   [/FX settlement requires a foreign-currency payment/i, 'FX_SETTLE_BASE_CURRENCY'],
   [/FX gain\/loss accounts/i, 'FX_ACCOUNTS_MISSING'],

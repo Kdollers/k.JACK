@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Authentication and authorization for the GENESIS API.
+ * Authentication and authorization for the JENESIS API.
  *
  *  - Passwords: scrypt with a random per-user salt (legacy SHA-256 hashes are
  *    accepted once, then upgraded on successful login).

@@ -111,11 +111,11 @@ function buildBackup(db, companyId, { genesisVersion, exportedAt = new Date().to
  */
 function validateBackup(doc, expectedCompanyId) {
   const fail = (code, error) => ({ ok: false, code, error });
-  if (!doc || typeof doc !== 'object') return fail('BACKUP_INVALID', 'The backup file is not a valid GENESIS backup.');
+  if (!doc || typeof doc !== 'object') return fail('BACKUP_INVALID', 'The backup file is not a valid JENESIS backup.');
   if (doc.formatVersion !== FORMAT_VERSION) {
     return fail(
       'BACKUP_FORMAT_UNSUPPORTED',
-      'This backup was made by an earlier version of GENESIS and cannot be restored safely, because it does not contain every table. Export a new backup from the current version.'
+      'This backup was made by an earlier version of JENESIS and cannot be restored safely, because it does not contain every table. Export a new backup from the current version.'
     );
   }
   if (!doc.data || typeof doc.data !== 'object' || !doc.data.tables || typeof doc.data.tables !== 'object' || !doc.data.company) {

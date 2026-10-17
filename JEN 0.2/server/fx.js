@@ -14,7 +14,7 @@
  */
 const { getDb } = require('./db');
 const { generateId, roundTo } = require('./utils');
-const { logAudit } = require('./accountingEngine');
+const { logAudit, createJournalEntry, nextSequenceNumber } = require('./accountingEngine');
 
 const CURRENCY_CODE_RE = /^[A-Z]{3}$/;
 
@@ -164,7 +164,7 @@ function convertAmount(companyId, amount, fromCode, toCode, date = new Date().to
 /**
  * Resolves the base-currency amount of a foreign-currency transaction.
  * The caller supplies either the foreign amount + rate, or the foreign amount
- * and lets GENESIS look up the effective rate for the date.
+ * and lets JENESIS look up the effective rate for the date.
  */
 function toBaseAmount(companyId, { amount, currencyCode, exchangeRate = null, date }) {
   const db = getDb();
@@ -181,6 +181,164 @@ function toBaseAmount(companyId, { amount, currencyCode, exchangeRate = null, da
   return { baseAmount: roundTo(Number(amount) * rate, 2), rate, foreignAmount: Number(amount), currencyCode: code };
 }
 
+
+/**
+ * Period-end revaluation of open foreign-currency balances.
+ *
+ * For every posted/partially-paid invoice or bill denominated in a foreign
+ * currency, the outstanding base-currency balance is restated at the effective
+ * rate on the revaluation date. The difference is posted to the Unrealized FX
+ * Gain (4810) / Unrealized FX Loss (5910) accounts against the A/R or A/P
+ * control account, the document's book rate is advanced (its ORIGINAL booking
+ * rate stays in booked_exchange_rate forever) and the counterparty balance is
+ * adjusted so sub-ledger and control account stay in step. Re-running for the
+ * same date is refused, and a run where nothing moved posts nothing.
+ */
+function revalueOpenBalances(companyId, { date, notes = null } = {}, user) {
+  const db = getDb();
+  const runDate = String(date || new Date().toISOString().split('T')[0]);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(runDate)) throw new Error('Effective date must be YYYY-MM-DD.');
+
+  const tx = db.transaction(() => {
+    const company = db.prepare('SELECT currency_code FROM companies WHERE id = ?').get(companyId);
+    const base = company?.currency_code || 'USD';
+
+    if (db.prepare('SELECT id FROM fx_revaluations WHERE company_id = ? AND revaluation_date = ?').get(companyId, runDate)) {
+      throw new Error('A revaluation has already been posted for this date.');
+    }
+
+    const arAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND subtype = 'ACCOUNTS_RECEIVABLE' LIMIT 1`).get(companyId);
+    const apAccount = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND subtype = 'ACCOUNTS_PAYABLE' LIMIT 1`).get(companyId);
+    const gainAcc = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '4810'`).get(companyId);
+    const lossAcc = db.prepare(`SELECT id FROM accounts WHERE company_id = ? AND code = '5910'`).get(companyId);
+    if (!arAccount || !apAccount || !gainAcc || !lossAcc) {
+      throw new Error('FX gain/loss accounts (4810/5910) are missing for this company.');
+    }
+
+    const docs = [
+      ...db.prepare(`
+        SELECT id, invoice_number AS number, 'SALE' AS kind, customer_id AS party_id, currency_code,
+               exchange_rate, booked_exchange_rate, total, amount_paid, balance_due
+        FROM sales_invoices
+        WHERE company_id = ? AND status IN ('POSTED','PARTIALLY_PAID')
+          AND balance_due > 0.004 AND currency_code IS NOT NULL AND UPPER(currency_code) != ?
+      `).all(companyId, base),
+      ...db.prepare(`
+        SELECT id, bill_number AS number, 'PURCHASE' AS kind, supplier_id AS party_id, currency_code,
+               exchange_rate, booked_exchange_rate, total, amount_paid, balance_due
+        FROM purchase_invoices
+        WHERE company_id = ? AND status IN ('POSTED','PARTIALLY_PAID')
+          AND balance_due > 0.004 AND currency_code IS NOT NULL AND UPPER(currency_code) != ?
+      `).all(companyId, base)
+    ];
+    if (docs.length === 0) throw new Error('No open foreign-currency balances to revalue.');
+
+    const jeLines = [];
+    const detail = [];
+    let totalGain = 0;
+    let totalLoss = 0;
+
+    for (const d of docs) {
+      const cur = String(d.currency_code).toUpperCase();
+      const newRate = getRate(companyId, cur, base, runDate); // aborts the whole run when a rate is missing
+      const bookRate = Number(d.exchange_rate) > 0 ? Number(d.exchange_rate) : 1;
+      const openForeign = d.balance_due / bookRate;
+      const newBaseBal = roundTo(openForeign * newRate, 2);
+      const diff = roundTo(newBaseBal - d.balance_due, 2);
+      if (Math.abs(diff) < 0.005) continue;
+
+      const isSale = d.kind === 'SALE';
+      const control = isSale ? arAccount : apAccount;
+      const ref = `${d.number} @ ${newRate}`;
+      if (isSale) {
+        if (diff > 0) {
+          jeLines.push({ accountId: control.id, description: `FX revaluation ${runDate}: ${ref}`, debit: diff, credit: 0 });
+          jeLines.push({ accountId: gainAcc.id, description: `Unrealized FX gain ${runDate}: ${ref}`, debit: 0, credit: diff });
+          totalGain = roundTo(totalGain + diff, 2);
+        } else {
+          jeLines.push({ accountId: lossAcc.id, description: `Unrealized FX loss ${runDate}: ${ref}`, debit: -diff, credit: 0 });
+          jeLines.push({ accountId: control.id, description: `FX revaluation ${runDate}: ${ref}`, debit: 0, credit: -diff });
+          totalLoss = roundTo(totalLoss - diff, 2);
+        }
+      } else if (diff > 0) {
+        jeLines.push({ accountId: lossAcc.id, description: `Unrealized FX loss ${runDate}: ${ref}`, debit: diff, credit: 0 });
+        jeLines.push({ accountId: control.id, description: `FX revaluation ${runDate}: ${ref}`, debit: 0, credit: diff });
+        totalLoss = roundTo(totalLoss + diff, 2);
+      } else {
+        jeLines.push({ accountId: control.id, description: `FX revaluation ${runDate}: ${ref}`, debit: -diff, credit: 0 });
+        jeLines.push({ accountId: gainAcc.id, description: `Unrealized FX gain ${runDate}: ${ref}`, debit: 0, credit: -diff });
+        totalGain = roundTo(totalGain - diff, 2);
+      }
+
+      const tbl = isSale ? 'sales_invoices' : 'purchase_invoices';
+      db.prepare(`
+        UPDATE ${tbl}
+        SET balance_due = ?, total = ?, exchange_rate = ?,
+            booked_exchange_rate = COALESCE(booked_exchange_rate, ?)
+        WHERE id = ?
+      `).run(newBaseBal, roundTo(d.total + diff, 2), newRate, d.exchange_rate, d.id);
+
+      if (d.party_id) {
+        const partyTbl = isSale ? 'customers' : 'suppliers';
+        db.prepare(`UPDATE ${partyTbl} SET current_balance = current_balance + ? WHERE id = ?`).run(diff, d.party_id);
+      }
+
+      detail.push({
+        kind: d.kind, id: d.id, number: d.number, currency_code: cur,
+        bookRate, newRate, oldBalance: d.balance_due, newBalance: newBaseBal, diff
+      });
+    }
+
+    if (jeLines.length === 0) throw new Error('No open foreign-currency balances to revalue.');
+
+    const revaluationNumber = nextSequenceNumber(companyId, 'FX_REVALUATION', 'FXR');
+    const je = createJournalEntry({
+      companyId,
+      date: runDate,
+      reference: revaluationNumber,
+      description: `Period-end FX revaluation as of ${runDate}`,
+      sourceType: 'FX_REVALUATION',
+      lines: jeLines,
+      user
+    });
+
+    const id = generateId('fxr');
+    db.prepare(`
+      INSERT INTO fx_revaluations (id, company_id, revaluation_number, revaluation_date, documents_count, total_gain, total_loss, notes, journal_entry_id, created_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `).run(id, companyId, revaluationNumber, runDate, detail.length, totalGain, totalLoss, notes ? String(notes) : null, je.id, user?.id || null);
+
+    const insLine = db.prepare(`
+      INSERT INTO fx_revaluation_lines (id, revaluation_id, document_type, document_id, document_number, currency_code, previous_rate, new_rate, previous_base_balance, new_base_balance, difference)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const l of detail) {
+      insLine.run(generateId('fxrl'), id, l.kind, l.id, l.number, l.currency_code, l.bookRate, l.newRate, l.oldBalance, l.newBalance, l.diff);
+    }
+
+    logAudit(companyId, user?.id, user?.full_name, 'SETTINGS', 'FX_REVALUE', id,
+      `FX revaluation ${revaluationNumber} as of ${runDate}: ${detail.length} document(s), unrealized gain ${totalGain}, loss ${totalLoss}`);
+
+    return { revaluationId: id, revaluationNumber, date: runDate, documents: detail.length, totalGain, totalLoss, journalEntryId: je.id };
+  });
+  return tx();
+}
+
+function listRevaluations(companyId) {
+  return getDb().prepare(`
+    SELECT * FROM fx_revaluations WHERE company_id = ?
+    ORDER BY revaluation_date DESC, created_at DESC
+  `).all(companyId);
+}
+
+function getRevaluation(companyId, id) {
+  const db = getDb();
+  const head = db.prepare('SELECT * FROM fx_revaluations WHERE id = ? AND company_id = ?').get(id, companyId);
+  if (!head) throw new Error('Revaluation not found.');
+  const lines = db.prepare('SELECT * FROM fx_revaluation_lines WHERE revaluation_id = ? ORDER BY document_type, document_number').all(id);
+  return { ...head, lines };
+}
+
 module.exports = {
   listCurrencies,
   createCurrency,
@@ -190,5 +348,8 @@ module.exports = {
   setRate,
   getRate,
   convertAmount,
-  toBaseAmount
+  toBaseAmount,
+  revalueOpenBalances,
+  listRevaluations,
+  getRevaluation
 };

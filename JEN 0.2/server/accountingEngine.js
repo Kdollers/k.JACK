@@ -37,6 +37,8 @@ function nextSequenceNumber(companyId, type, prefix) {
     row = db.prepare(`SELECT receipt_number as num FROM goods_receipts WHERE company_id = ? AND receipt_number LIKE ? ORDER BY receipt_number DESC LIMIT 1`).get(companyId, pattern);
   } else if (type === 'CASH_SESSION') {
     row = db.prepare(`SELECT session_number as num FROM cash_sessions WHERE company_id = ? AND session_number LIKE ? ORDER BY session_number DESC LIMIT 1`).get(companyId, pattern);
+  } else if (type === 'FX_REVALUATION') {
+    row = db.prepare(`SELECT revaluation_number as num FROM fx_revaluations WHERE company_id = ? AND revaluation_number LIKE ? ORDER BY revaluation_number DESC LIMIT 1`).get(companyId, pattern);
   }
 
   let nextSeq = 1;

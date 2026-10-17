@@ -274,6 +274,118 @@ async function main() {
     assert.strictEqual(row.status, 'PARTIALLY_PAID');
   });
 
+  // ---- period-end revaluation of the still-open EUR invoice (due 60 @ book rate 1.05)
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+  await check('migration v4 created unrealized FX accounts 4810/5910 and backfilled booked rates', async () => {
+    const v4 = q(`SELECT version FROM schema_migrations WHERE version = 4`);
+    assert.ok(v4, 'schema_migrations must contain version 4');
+    assert.ok(q(`SELECT id FROM accounts WHERE company_id = ? AND code = '4810'`, COMPANY), '4810 missing');
+    assert.ok(q(`SELECT id FROM accounts WHERE company_id = ? AND code = '5910'`, COMPANY), '5910 missing');
+    const openEur = q(`SELECT booked_exchange_rate FROM sales_invoices WHERE customer_id = 'cust-03' AND currency_code = 'EUR'`);
+    assert.strictEqual(openEur.booked_exchange_rate, 1.05, 'booked rate must be backfilled from the original rate');
+  });
+
+  let firstReval = null;
+  await check('period-end revaluation restates the open EUR balance into 4810 and advances the book rate', async () => {
+    const custBefore = q(`SELECT current_balance FROM customers WHERE id = 'cust-03'`).current_balance;
+    await api('POST', '/fx/rates', { token: admin, body: { fromCode: 'EUR', toCode: 'USD', rate: 1.2, effectiveDate: today } });
+    const r = await api('POST', '/fx/revaluate', { token: admin, body: { date: today, notes: 'test run' } });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.json));
+    firstReval = r.json;
+    assert.strictEqual(r.json.documents, 1);
+    assert.strictEqual(r.json.totalGain, 8.57);   // 60 / 1.05 * 1.2 = 68.57
+    assert.strictEqual(r.json.totalLoss, 0);
+    assert.match(r.json.revaluationNumber, /^FXR-\d{4}-\d{4}$/);
+
+    const inv = q(`SELECT total, amount_paid, balance_due, exchange_rate, booked_exchange_rate, status FROM sales_invoices WHERE customer_id = 'cust-03' AND currency_code = 'EUR'`);
+    assert.strictEqual(inv.balance_due, 68.57);
+    assert.strictEqual(inv.total, 218.57, 'total = amount_paid + balance_due invariant must hold');
+    assert.strictEqual(inv.amount_paid, 150);
+    assert.strictEqual(inv.exchange_rate, 1.2, 'book rate advanced');
+    assert.strictEqual(inv.booked_exchange_rate, 1.05, 'original booking rate preserved');
+    assert.strictEqual(inv.status, 'PARTIALLY_PAID');
+
+    const custAfter = q(`SELECT current_balance FROM customers WHERE id = 'cust-03'`).current_balance;
+    assert.ok(Math.abs((custAfter - custBefore) - 8.57) < 0.005, 'customer sub-ledger follows the control account');
+
+    const lines = db().prepare(`SELECT l.*, a.code FROM journal_entry_lines l JOIN accounts a ON a.id = l.account_id WHERE l.journal_entry_id = ?`).all(r.json.journalEntryId);
+    const dr = lines.reduce((x, l) => x + l.debit, 0);
+    const cr = lines.reduce((x, l) => x + l.credit, 0);
+    assert.ok(Math.abs(dr - cr) < 0.005, `revaluation journal unbalanced: ${dr} vs ${cr}`);
+    const gain = lines.find((l) => l.code === '4810');
+    assert.ok(gain && Math.abs(gain.credit - 8.57) < 0.005, 'unrealized gain 8.57 must be credited to 4810');
+  });
+
+  await check('re-running the revaluation for the same date is refused (no duplicate posting)', async () => {
+    const r = await api('POST', '/fx/revaluate', { token: admin, body: { date: today } });
+    assert.strictEqual(r.status, 400);
+    assert.strictEqual(r.json.code, 'FX_REVALUATION_EXISTS');
+  });
+
+  await check('only admin/accountant may revalue (sales role is refused)', async () => {
+    db().prepare(`INSERT INTO users (id, username, password_hash, full_name, email, role, company_id, active, created_at, must_change_password)
+      VALUES ('usr-t-fxsales', 't.fxsales', ?, 't.fxsales', NULL, 'sales', ?, 1, datetime('now'), 0)`)
+      .run(hashPassword(PASSWORD), COMPANY);
+    const login2 = await api('POST', '/auth/login', { body: { username: 't.fxsales', password: PASSWORD } });
+    const r = await api('POST', '/fx/revaluate', { token: login2.json.token, body: { date: tomorrow } });
+    assert.strictEqual(r.status, 403, JSON.stringify(r.json));
+  });
+
+  await check('supplier-side revaluation posts an unrealized loss to 5910 and keeps history', async () => {
+    const bill = await api('POST', '/purchases/bills', {
+      token: admin,
+      body: {
+        supplier_id: 'supp-02', vendor_invoice_number: 'FX-VEND-002', date: today, due_date: today,
+        currency_code: 'EUR', exchange_rate: 1.2, autoPost: true,
+        lines: [{ product_id: 'prod-03', description: 'Printer', quantity: 2, unit_cost: 50, tax_rate: 0 }]
+      }
+    });
+    assert.strictEqual(bill.status, 200, JSON.stringify(bill.json));
+    const suppBefore = q(`SELECT current_balance FROM suppliers WHERE id = 'supp-02'`).current_balance;
+
+    await api('POST', '/fx/rates', { token: admin, body: { fromCode: 'EUR', toCode: 'USD', rate: 1.3, effectiveDate: tomorrow } });
+    const r = await api('POST', '/fx/revaluate', { token: admin, body: { date: tomorrow } });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.json));
+    assert.strictEqual(r.json.documents, 2);
+    assert.strictEqual(r.json.totalGain, 5.71);  // invoice: 68.57 / 1.2 * 1.3 = 74.28
+    assert.strictEqual(r.json.totalLoss, 10);    // bill:    120   / 1.2 * 1.3 = 130
+
+    const inv = q(`SELECT balance_due, exchange_rate, booked_exchange_rate FROM sales_invoices WHERE customer_id = 'cust-03' AND currency_code = 'EUR'`);
+    assert.strictEqual(inv.balance_due, 74.28);
+    assert.strictEqual(inv.exchange_rate, 1.3);
+    assert.strictEqual(inv.booked_exchange_rate, 1.05, 'booked rate never moves after the first revaluation');
+
+    const b = q(`SELECT balance_due, exchange_rate, booked_exchange_rate FROM purchase_invoices WHERE id = ?`, bill.json.id);
+    assert.strictEqual(b.balance_due, 130);
+    assert.strictEqual(b.exchange_rate, 1.3);
+    assert.strictEqual(b.booked_exchange_rate, 1.2);
+
+    const suppAfter = q(`SELECT current_balance FROM suppliers WHERE id = 'supp-02'`).current_balance;
+    assert.ok(Math.abs((suppAfter - suppBefore) - 10) < 0.005, 'supplier sub-ledger follows the control account');
+
+    const list = await api('GET', '/fx/revaluations', { token: admin });
+    assert.strictEqual(list.status, 200);
+    assert.strictEqual(list.json.length, 2);
+    const detail = await api('GET', `/fx/revaluations/${r.json.revaluationId}`, { token: admin });
+    assert.strictEqual(detail.status, 200);
+    assert.strictEqual(detail.json.lines.length, 2);
+    const billLine = detail.json.lines.find((l) => l.document_type === 'PURCHASE');
+    assert.strictEqual(billLine.previous_rate, 1.2);
+    assert.strictEqual(billLine.new_rate, 1.3);
+    assert.strictEqual(billLine.difference, 10);
+
+    const gain = q(`SELECT code FROM journal_entry_lines l JOIN accounts a ON a.id = l.account_id WHERE l.journal_entry_id = ? AND a.code = '5910' AND l.debit > 0`, r.json.journalEntryId);
+    assert.ok(gain, '5910 must carry the unrealized loss debit');
+  });
+
+  await check('a revaluation where no rate moved posts nothing', async () => {
+    const r = await api('POST', '/fx/revaluate', { token: admin, body: { date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0] } });
+    assert.strictEqual(r.status, 400);
+    assert.strictEqual(r.json.code, 'NO_FX_EXPOSURE');
+    assert.strictEqual(q(`SELECT COUNT(*) AS n FROM fx_revaluations`).n, 2, 'no revaluation row may be created');
+  });
+
   await check('the Trial Balance remains balanced after all FX settlements', async () => {
     const tb = await api('GET', '/reports/trial-balance', { token: admin });
     assert.strictEqual(tb.status, 200);

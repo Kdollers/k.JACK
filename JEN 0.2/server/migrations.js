@@ -292,6 +292,63 @@ const MIGRATIONS = [
     }
   },
   {
+    version: 4,
+    name: 'fx: period-end revaluation (accounts 4810/5910, booked rates, history)',
+    up(db) {
+      // Unrealized gain/loss accounts for period-end revaluation.
+      const companies = db.prepare('SELECT id FROM companies').all();
+      const insert = db.prepare(`
+        INSERT INTO accounts (id, company_id, code, name, type, subtype, normal_balance, is_system, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, 1)
+      `);
+      const has = db.prepare('SELECT id FROM accounts WHERE company_id = ? AND code = ?');
+      for (const c of companies) {
+        if (!has.get(c.id, '4810')) insert.run(`acc-4810-${c.id}`, c.id, '4810', 'Unrealized FX Gain', 'REVENUE', 'OTHER_REVENUE', 'CREDIT');
+        if (!has.get(c.id, '5910')) insert.run(`acc-5910-${c.id}`, c.id, '5910', 'Unrealized FX Loss', 'EXPENSE', 'OPERATING_EXPENSE', 'DEBIT');
+      }
+
+      // Original booking rate is preserved forever; exchange_rate becomes the
+      // current book rate and is advanced by each revaluation.
+      addColumn(db, 'sales_invoices', 'booked_exchange_rate', 'REAL');
+      addColumn(db, 'purchase_invoices', 'booked_exchange_rate', 'REAL');
+      db.exec(`UPDATE sales_invoices SET booked_exchange_rate = exchange_rate WHERE booked_exchange_rate IS NULL AND exchange_rate IS NOT NULL`);
+      db.exec(`UPDATE purchase_invoices SET booked_exchange_rate = exchange_rate WHERE booked_exchange_rate IS NULL AND exchange_rate IS NOT NULL`);
+
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS fx_revaluations (
+          id TEXT PRIMARY KEY,
+          company_id TEXT NOT NULL REFERENCES companies(id),
+          revaluation_number TEXT NOT NULL,
+          revaluation_date TEXT NOT NULL,
+          documents_count INTEGER NOT NULL DEFAULT 0,
+          total_gain REAL NOT NULL DEFAULT 0,
+          total_loss REAL NOT NULL DEFAULT 0,
+          notes TEXT,
+          journal_entry_id TEXT REFERENCES journal_entries(id),
+          created_by TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          UNIQUE(company_id, revaluation_date)
+        );
+
+        CREATE TABLE IF NOT EXISTS fx_revaluation_lines (
+          id TEXT PRIMARY KEY,
+          revaluation_id TEXT NOT NULL REFERENCES fx_revaluations(id) ON DELETE CASCADE,
+          document_type TEXT NOT NULL,
+          document_id TEXT NOT NULL,
+          document_number TEXT,
+          currency_code TEXT NOT NULL,
+          previous_rate REAL NOT NULL,
+          new_rate REAL NOT NULL,
+          previous_base_balance REAL NOT NULL,
+          new_base_balance REAL NOT NULL,
+          difference REAL NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_fx_revaluation_lines_reval ON fx_revaluation_lines(revaluation_id);
+      `);
+    }
+  },
+  {
     version: 3,
     name: 'fx: settlement gain/loss accounts (4800/5900)',
     up(db) {

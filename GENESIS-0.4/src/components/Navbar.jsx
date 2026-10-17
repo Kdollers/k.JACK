@@ -51,7 +51,7 @@ export default function Navbar() {
           </div>
           <div>
             <div className="flex items-center space-x-1.5">
-              <span className="font-extrabold text-base tracking-wide text-white">GENESIS</span>
+              <span className="font-extrabold text-base tracking-wide text-white">JENESIS</span>
               <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
                 ERP 1.0
               </span>

@@ -23,7 +23,7 @@ function Shell({ title, intro, children }) {
         <div className="flex items-center justify-center space-x-3 mb-6 text-white">
           <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center font-black text-2xl shadow-lg">G</div>
           <div>
-            <div className="text-sm font-bold tracking-wider">GENESIS ERP & ACCOUNTING</div>
+            <div className="text-sm font-bold tracking-wider">JENESIS ERP & ACCOUNTING</div>
             <div className="text-xs text-slate-400">{t('auth.app_tagline', 'Business accounting & management')}</div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export function LoginScreen() {
   };
 
   return (
-    <Shell title={t('auth.login_title', 'Sign in')} intro={t('auth.login_intro', 'Enter your GENESIS username and password.')}>
+    <Shell title={t('auth.login_title', 'Sign in')} intro={t('auth.login_intro', 'Enter your JENESIS username and password.')}>
       <form onSubmit={submit} className="space-y-3">
         <ErrorBox message={error || authError} />
         <Field label={t('auth.username', 'Username')}>
@@ -143,7 +143,7 @@ export function SetupScreen() {
   };
 
   return (
-    <Shell title={t('auth.setup_title', 'Set up GENESIS')} intro={t('auth.setup_intro', 'Create the company and the first administrator account. This step is available only once.')}>
+    <Shell title={t('auth.setup_title', 'Set up JENESIS')} intro={t('auth.setup_intro', 'Create the company and the first administrator account. This step is available only once.')}>
       <form onSubmit={submit} className="space-y-3">
         <ErrorBox message={error} />
         <Field label={t('auth.company_name', 'Company name')}>
@@ -201,7 +201,7 @@ export function ChangePasswordScreen() {
   };
 
   return (
-    <Shell title={t('auth.change_password_title', 'Change your password')} intro={t('auth.change_password_intro', 'Your password must be changed before you can use GENESIS.')}>
+    <Shell title={t('auth.change_password_title', 'Change your password')} intro={t('auth.change_password_intro', 'Your password must be changed before you can use JENESIS.')}>
       <form onSubmit={submit} className="space-y-3">
         <ErrorBox message={error} />
         <p className="text-xs text-slate-600">{currentUser?.full_name} (@{currentUser?.username})</p>
@@ -229,7 +229,7 @@ export function ChangePasswordScreen() {
 export function BackendUnavailable({ message }) {
   const { t } = useI18n();
   return (
-    <Shell title={t('auth.unavailable_title', 'GENESIS cannot reach its local service')} intro={t('auth.unavailable_intro', 'The accounting service did not respond. Close GENESIS and start it again. If the problem continues, check the log file in your GENESIS data folder.')}>
+    <Shell title={t('auth.unavailable_title', 'JENESIS cannot reach its local service')} intro={t('auth.unavailable_intro', 'The accounting service did not respond. Close JENESIS and start it again. If the problem continues, check the log file in your JENESIS data folder.')}>
       <ErrorBox message={message} />
       <button type="button" onClick={() => window.location.reload()} className="w-full bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold py-2 rounded-md flex items-center justify-center gap-2">
         <RefreshCw className="w-4 h-4" /> {t('auth.retry', 'Try again')}

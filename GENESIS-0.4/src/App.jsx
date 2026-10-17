@@ -32,7 +32,7 @@ function AppContent() {
           G
         </div>
         <div className="text-center">
-          <div className="text-sm font-bold tracking-wider">GENESIS ERP & ACCOUNTING</div>
+          <div className="text-sm font-bold tracking-wider">JENESIS ERP & ACCOUNTING</div>
           <div className="text-xs text-slate-400 mt-1">Initializing ledger & database...</div>
         </div>
       </div>

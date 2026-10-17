@@ -1,12 +1,12 @@
 'use strict';
 /**
- * GENESIS Windows desktop shell (Electron main process).
+ * JENESIS Windows desktop shell (Electron main process).
  *
  * Responsibilities:
  *   - enforce a single running instance,
  *   - prepare the per-user database location (never overwriting data),
  *   - start the local Express backend on a loopback port and wait for it,
- *   - open the GENESIS window with a locked-down renderer,
+ *   - open the JENESIS window with a locked-down renderer,
  *   - stop the backend cleanly when the application exits.
  */
 const { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } = require('electron');
@@ -15,7 +15,7 @@ const path = require('path');
 const { BackendProcess, findFreePort, LOOPBACK } = require('./backend-manager.cjs');
 const { prepareDataDirectory } = require('./data-location.cjs');
 
-const APP_TITLE = 'GENESIS';
+const APP_TITLE = 'JENESIS';
 const WINDOW_MIN_WIDTH = 1024;
 const WINDOW_MIN_HEIGHT = 640;
 const MAX_START_ATTEMPTS = 3;
@@ -105,7 +105,7 @@ async function startBackend() {
           writeLog(`Backend exited unexpectedly: ${JSON.stringify(info)}`);
           dialog.showErrorBox(
             APP_TITLE,
-            'The GENESIS backend stopped unexpectedly. Please close and restart GENESIS.\n\n' +
+            'The JENESIS backend stopped unexpectedly. Please close and restart JENESIS.\n\n' +
             `Log file: ${logFilePath()}`
           );
         }
@@ -117,7 +117,7 @@ async function startBackend() {
       await proc.stop(1000).catch(() => {});
     }
   }
-  throw lastError || new Error('The GENESIS backend could not be started.');
+  throw lastError || new Error('The JENESIS backend could not be started.');
 }
 
 function stopBackend() {
@@ -166,7 +166,7 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => mainWindow.show());
 
-  // Only the GENESIS backend origin may be displayed inside the window.
+  // Only the JENESIS backend origin may be displayed inside the window.
   const allowedOrigin = new URL(backendUrl).origin;
   mainWindow.webContents.on('will-navigate', (event, url) => {
     if (new URL(url).origin !== allowedOrigin) {
@@ -187,7 +187,7 @@ function showStartupError(err) {
   writeLog(`Startup failed: ${err && err.stack ? err.stack : err}`);
   dialog.showErrorBox(
     APP_TITLE,
-    'GENESIS could not start its local accounting service.\n\n' +
+    'JENESIS could not start its local accounting service.\n\n' +
     `${err && err.message ? err.message : 'Unknown error.'}\n\n` +
     `Details were written to:\n${logFilePath()}\n\n` +
     'Your business data has not been changed.'

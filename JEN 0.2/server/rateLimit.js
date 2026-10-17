@@ -2,7 +2,7 @@
 /**
  * Fixed-window request limiter (in memory, no dependencies).
  *
- * GENESIS runs as a single local process bound to loopback, so an in-memory store is
+ * JENESIS runs as a single local process bound to loopback, so an in-memory store is
  * sufficient. Limits protect sign-in, password change, first-run setup and backup
  * restore from brute-force and accidental repeated submissions. Every rejected request
  * receives HTTP 429 with a Retry-After header.

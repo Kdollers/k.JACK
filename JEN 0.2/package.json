@@ -1,9 +1,9 @@
 {
   "name": "genesis-accounting",
-  "productName": "GENESIS",
+  "productName": "JENESIS",
   "version": "1.0.0",
-  "description": "GENESIS - Professional Business Accounting & Management Software",
-  "author": "GENESIS",
+  "description": "JENESIS - Professional Business Accounting & Management Software",
+  "author": "JENESIS",
   "license": "UNLICENSED",
   "private": true,
   "main": "electron/main.cjs",
@@ -27,9 +27,9 @@
     "test:e2e": "python3 tests/e2e/auth_ui_test.py"
   },
   "build": {
-    "appId": "com.genesis.accounting",
-    "productName": "GENESIS",
-    "copyright": "Copyright (c) GENESIS",
+    "appId": "com.jenesis.accounting",
+    "productName": "JENESIS",
+    "copyright": "Copyright (c) JENESIS",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -56,7 +56,7 @@
         }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "GENESIS-Setup-${version}.${ext}"
+      "artifactName": "JENESIS-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -65,8 +65,8 @@
       "allowElevation": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "GENESIS",
-      "uninstallDisplayName": "GENESIS",
+      "shortcutName": "JENESIS",
+      "uninstallDisplayName": "JENESIS",
       "deleteAppDataOnUninstall": false,
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico"

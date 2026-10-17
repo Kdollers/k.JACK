@@ -1,6 +1,6 @@
-# GENESIS — Professional Business Accounting & Management Software
+# JENESIS — Professional Business Accounting & Management Software
 
-**GENESIS** is an enterprise-grade accounting and business-management application crafted specifically for small and medium-sized enterprises (SMEs). Inspired by the rigor, depth, and workflows of established systems like **Sage 100**, GENESIS provides an original, modern implementation with a double-entry accounting engine, multi-company support, inventory valuation (Weighted Average & FIFO), physical stock counts, multi-currency, granular role-based permissions, and complete three-language localization (**English**, **French**, and **Kinyarwanda**).
+**JENESIS** is an enterprise-grade accounting and business-management application crafted specifically for small and medium-sized enterprises (SMEs). Inspired by the rigor, depth, and workflows of established systems like **Sage 100**, JENESIS provides an original, modern implementation with a double-entry accounting engine, multi-company support, inventory valuation (Weighted Average & FIFO), physical stock counts, multi-currency, granular role-based permissions, and complete three-language localization (**English**, **French**, and **Kinyarwanda**).
 
 ---
 
@@ -110,7 +110,7 @@ The server will start on port `3000` (e.g., `http://localhost:3000`).
 
 ## 👥 First Start, Sign-in and Accounts
 
-- **New installation:** GENESIS opens a one-time setup screen. Enter the company name and create the first
+- **New installation:** JENESIS opens a one-time setup screen. Enter the company name and create the first
   administrator. There are no default accounts and no default passwords.
 - **Existing database:** sign in with your existing username. Accounts that still use an old password format
   are asked to choose a new password at first sign-in.

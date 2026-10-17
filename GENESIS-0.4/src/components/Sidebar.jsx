@@ -66,7 +66,7 @@ export default function Sidebar() {
 
       <div className="p-3 border-t border-slate-800 text-[11px] text-slate-400 bg-slate-950/40">
         <div className="flex items-center justify-between mb-1">
-          <span className="font-semibold text-slate-300">GENESIS Software</span>
+          <span className="font-semibold text-slate-300">JENESIS Software</span>
           <span className="px-1 py-0.5 rounded text-[9px] bg-emerald-900/60 text-emerald-300 border border-emerald-700/60">
             Certified
           </span>

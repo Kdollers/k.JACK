@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Preload script: the ONLY bridge between the GENESIS web interface and Electron.
+ * Preload script: the ONLY bridge between the JENESIS web interface and Electron.
  * It exposes a small, read-only API. No Node.js, filesystem, shell or generic
  * IPC access is available to the renderer.
  */

@@ -172,7 +172,7 @@ router.post('/setup/initialize', setupLimiter.middleware, (req, res) => {
 
   const companyRow = db.prepare('SELECT id FROM companies ORDER BY created_at ASC LIMIT 1').get();
   if (!companyRow) {
-    return res.status(500).json({ error: 'No company record exists. Restart GENESIS to initialise the database.', code: 'NO_COMPANY' });
+    return res.status(500).json({ error: 'No company record exists. Restart JENESIS to initialise the database.', code: 'NO_COMPANY' });
   }
   const id = generateId('usr');
   db.transaction(() => {
@@ -1222,10 +1222,10 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
   try {
     db.transaction(() => {
       db.prepare(`
-        INSERT INTO sales_invoices (id, company_id, invoice_number, date, due_date, customer_id, subtotal, tax_total, discount_total, total, amount_paid, balance_due, status, notes, created_by, created_at, walk_in, warehouse_id, currency_code, exchange_rate, foreign_total)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'DRAFT', ?, ?, datetime('now'), ?, ?, ?, ?, ?)
+        INSERT INTO sales_invoices (id, company_id, invoice_number, date, due_date, customer_id, subtotal, tax_total, discount_total, total, amount_paid, balance_due, status, notes, created_by, created_at, walk_in, warehouse_id, currency_code, exchange_rate, booked_exchange_rate, foreign_total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'DRAFT', ?, ?, datetime('now'), ?, ?, ?, ?, ?, ?)
       `).run(invId, companyId, invNumber, date, due_date || date, customerId, subtotal, taxTotal, discountTotal, total, total, notes || null, user.id,
-        isWalkIn ? 1 : 0, whId, txCurrency, rate, foreignTotal);
+        isWalkIn ? 1 : 0, whId, txCurrency, rate, rate, foreignTotal);
 
       const insertLine = db.prepare(`
         INSERT INTO sales_invoice_lines (id, invoice_id, product_id, description, quantity, unit_price, unit_cost, discount_percent, tax_rate_id, tax_rate, tax_amount, line_total)
@@ -1497,10 +1497,10 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
   try {
     db.transaction(() => {
       db.prepare(`
-        INSERT INTO purchase_invoices (id, company_id, bill_number, vendor_invoice_number, date, due_date, supplier_id, subtotal, tax_total, total, amount_paid, balance_due, status, notes, created_by, created_at, goods_receipt_id, currency_code, exchange_rate, foreign_total)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'DRAFT', ?, ?, datetime('now'), ?, ?, ?, ?)
+        INSERT INTO purchase_invoices (id, company_id, bill_number, vendor_invoice_number, date, due_date, supplier_id, subtotal, tax_total, total, amount_paid, balance_due, status, notes, created_by, created_at, goods_receipt_id, currency_code, exchange_rate, booked_exchange_rate, foreign_total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'DRAFT', ?, ?, datetime('now'), ?, ?, ?, ?, ?)
       `).run(billId, companyId, billNumber, vendor_invoice_number || null, date, due_date || date, supplier_id, subtotal, taxTotal, total, total, notes || null, user.id,
-        goods_receipt_id || null, txCurrency, rate, foreignTotal);
+        goods_receipt_id || null, txCurrency, rate, rate, foreignTotal);
 
       const insertLine = db.prepare(`
         INSERT INTO purchase_invoice_lines (id, bill_id, product_id, description, quantity, unit_cost, tax_rate_id, tax_rate, tax_amount, line_total)
@@ -1780,6 +1780,32 @@ router.get('/fx/convert', requirePermission('fx:read'), (req, res) => {
     const amount = Number(req.query.amount || 0);
     const result = fx.convertAmount(companyId, amount, req.query.from, req.query.to, req.query.date || undefined);
     res.json({ amount, from: req.query.from, to: req.query.to, ...result });
+  } catch (err) {
+    res.status(400).json(asErrorResponse(err));
+  }
+});
+
+router.get('/fx/revaluations', requirePermission('fx:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  res.json(fx.listRevaluations(companyId));
+});
+
+router.get('/fx/revaluations/:id', requirePermission('fx:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  try {
+    res.json(fx.getRevaluation(companyId, req.params.id));
+  } catch (err) {
+    res.status(404).json(asErrorResponse(err));
+  }
+});
+
+// Period-end revaluation of open foreign-currency balances (unrealized FX
+// gain/loss). Destructive only to open document book rates; history is kept
+// in fx_revaluation_lines and booked_exchange_rate.
+router.post('/fx/revaluate', requirePermission('fx:revalue'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(fx.revalueOpenBalances(companyId, { date: req.body?.date, notes: req.body?.notes }, user));
   } catch (err) {
     res.status(400).json(asErrorResponse(err));
   }

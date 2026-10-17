@@ -1,5 +1,5 @@
 {
-  "app_name": "GENESIS",
+  "app_name": "JENESIS",
   "app_tagline": "Professional Business Accounting & ERP",
   "nav": {
     "dashboard": "Dashboard",
@@ -556,18 +556,26 @@
     "from_currency": "From Currency",
     "to_currency": "To Currency",
     "convert": "Convert",
-    "rate_added": "Exchange rate saved"
+    "rate_added": "Exchange rate saved",
+    "fx_revaluation": "Period-End FX Revaluation",
+    "fx_revaluation_hint": "Restates open foreign-currency invoices and bills at the effective rate of the chosen date. Unrealized differences are posted to accounts 4810 / 5910; original booking rates are preserved.",
+    "run_revaluation": "Run Revaluation",
+    "revaluation_history": "Revaluation History",
+    "no_revaluations": "No revaluations posted yet",
+    "reval_gain": "Unrealized Gain",
+    "reval_loss": "Unrealized Loss",
+    "reval_docs": "Documents"
   },
   "auth": {
     "app_tagline": "Business accounting & management",
     "language": "Language",
     "login_title": "Sign in",
-    "login_intro": "Enter your GENESIS username and password.",
+    "login_intro": "Enter your JENESIS username and password.",
     "username": "Username",
     "password": "Password",
     "sign_in": "Sign in",
     "signing_in": "Signing in…",
-    "setup_title": "Set up GENESIS",
+    "setup_title": "Set up JENESIS",
     "setup_intro": "Create the company and the first administrator account. This step is available only once.",
     "company_name": "Company name",
     "full_name": "Administrator full name",
@@ -578,14 +586,14 @@
     "password_mismatch": "The passwords do not match.",
     "password_hint": "At least 10 characters. Do not use your username.",
     "change_password_title": "Change your password",
-    "change_password_intro": "Your password must be changed before you can use GENESIS.",
+    "change_password_intro": "Your password must be changed before you can use JENESIS.",
     "current_password": "Current password",
     "new_password": "New password",
     "change_password": "Change password",
     "sign_out": "Sign out",
     "account": "Account",
-    "unavailable_title": "GENESIS cannot reach its local service",
-    "unavailable_intro": "The accounting service did not respond. Close GENESIS and start it again. If the problem continues, check the log file in your GENESIS data folder.",
+    "unavailable_title": "JENESIS cannot reach its local service",
+    "unavailable_intro": "The accounting service did not respond. Close JENESIS and start it again. If the problem continues, check the log file in your JENESIS data folder.",
     "retry": "Try again"
   },
   "errors": {
@@ -610,7 +618,7 @@
     "LAST_ADMIN": "At least one active administrator must remain.",
     "ROLE_INVALID": "The selected role is not valid.",
     "RESET_DISABLED": "Resetting the database from the interface is disabled. Use a backup and restore instead.",
-    "NO_COMPANY": "No company record exists. Restart GENESIS to initialise the database.",
+    "NO_COMPANY": "No company record exists. Restart JENESIS to initialise the database.",
     "MISSING_FIELDS": "Please fill in all required fields.",
     "USER_CREATE_FAILED": "The user could not be created.",
     "USER_UPDATE_FAILED": "The user could not be updated.",
@@ -666,7 +674,9 @@
     "SUPPLIER_REQUIRED": "A supplier is required.",
     "FX_SETTLE_REQUIRES_DOCUMENT": "FX settlement requires a linked invoice or bill.",
     "FX_SETTLE_BASE_CURRENCY": "FX settlement requires a foreign-currency payment.",
-    "FX_ACCOUNTS_MISSING": "FX gain/loss accounts (4800/5900) are missing for this company."
+    "FX_ACCOUNTS_MISSING": "FX gain/loss accounts (4800/5900) are missing for this company.",
+    "FX_REVALUATION_EXISTS": "A revaluation has already been posted for this date.",
+    "NO_FX_EXPOSURE": "No open foreign-currency balances to revalue."
   },
   "calculator": {
     "title": "Calculator",

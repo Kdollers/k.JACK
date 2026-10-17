@@ -1,6 +1,6 @@
 'use strict';
 /**
- * HTTP security headers for the GENESIS interface and API.
+ * HTTP security headers for the JENESIS interface and API.
  *
  * The desktop window loads the UI from this loopback server only, so the policy allows
  * nothing else: no third-party scripts, styles, fonts, frames or network endpoints.

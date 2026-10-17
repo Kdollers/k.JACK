@@ -1,5 +1,5 @@
 {
-  "app_name": "GENESIS",
+  "app_name": "JENESIS",
   "app_tagline": "Comptabilité d'Entreprise et Gestion Commerciale",
   "nav": {
     "dashboard": "Tableau de bord",
@@ -556,18 +556,26 @@
     "from_currency": "Devise source",
     "to_currency": "Devise cible",
     "convert": "Convertir",
-    "rate_added": "Taux de change enregistré"
+    "rate_added": "Taux de change enregistré",
+    "fx_revaluation": "Réévaluation de change de fin de période",
+    "fx_revaluation_hint": "Réévalue les factures et les dettes ouvertes en devise étrangère au taux effectif de la date choisie. Les écarts latents sont comptabilisés dans les comptes 4810 / 5910 ; les taux d'origine sont préservés.",
+    "run_revaluation": "Lancer la réévaluation",
+    "revaluation_history": "Historique des réévaluations",
+    "no_revaluations": "Aucune réévaluation comptabilisée",
+    "reval_gain": "Gain latent",
+    "reval_loss": "Perte latente",
+    "reval_docs": "Documents"
   },
   "auth": {
     "app_tagline": "Gestion et comptabilité d’entreprise",
     "language": "Langue",
     "login_title": "Connexion",
-    "login_intro": "Saisissez votre nom d’utilisateur et votre mot de passe GENESIS.",
+    "login_intro": "Saisissez votre nom d’utilisateur et votre mot de passe JENESIS.",
     "username": "Nom d’utilisateur",
     "password": "Mot de passe",
     "sign_in": "Se connecter",
     "signing_in": "Connexion en cours…",
-    "setup_title": "Configurer GENESIS",
+    "setup_title": "Configurer JENESIS",
     "setup_intro": "Créez l’entreprise et le premier compte administrateur. Cette étape n’est disponible qu’une seule fois.",
     "company_name": "Nom de l’entreprise",
     "full_name": "Nom complet de l’administrateur",
@@ -578,14 +586,14 @@
     "password_mismatch": "Les mots de passe ne correspondent pas.",
     "password_hint": "Au moins 10 caractères. N’utilisez pas votre nom d’utilisateur.",
     "change_password_title": "Changer votre mot de passe",
-    "change_password_intro": "Vous devez changer votre mot de passe avant d’utiliser GENESIS.",
+    "change_password_intro": "Vous devez changer votre mot de passe avant d’utiliser JENESIS.",
     "current_password": "Mot de passe actuel",
     "new_password": "Nouveau mot de passe",
     "change_password": "Changer le mot de passe",
     "sign_out": "Se déconnecter",
     "account": "Compte",
-    "unavailable_title": "GENESIS ne peut pas joindre son service local",
-    "unavailable_intro": "Le service comptable ne répond pas. Fermez GENESIS puis relancez-le. Si le problème persiste, consultez le fichier journal dans votre dossier de données GENESIS.",
+    "unavailable_title": "JENESIS ne peut pas joindre son service local",
+    "unavailable_intro": "Le service comptable ne répond pas. Fermez JENESIS puis relancez-le. Si le problème persiste, consultez le fichier journal dans votre dossier de données JENESIS.",
     "retry": "Réessayer"
   },
   "errors": {
@@ -610,7 +618,7 @@
     "LAST_ADMIN": "Au moins un administrateur actif doit subsister.",
     "ROLE_INVALID": "Le rôle sélectionné n’est pas valide.",
     "RESET_DISABLED": "La réinitialisation de la base depuis l’interface est désactivée. Utilisez une sauvegarde et une restauration.",
-    "NO_COMPANY": "Aucune entreprise n’existe. Redémarrez GENESIS pour initialiser la base.",
+    "NO_COMPANY": "Aucune entreprise n’existe. Redémarrez JENESIS pour initialiser la base.",
     "MISSING_FIELDS": "Veuillez remplir tous les champs obligatoires.",
     "USER_CREATE_FAILED": "L’utilisateur n’a pas pu être créé.",
     "USER_UPDATE_FAILED": "L’utilisateur n’a pas pu être modifié.",
@@ -666,7 +674,9 @@
     "SUPPLIER_REQUIRED": "Un fournisseur est requis.",
     "FX_SETTLE_REQUIRES_DOCUMENT": "Le règlement de change requiert une facture ou un reçu lié.",
     "FX_SETTLE_BASE_CURRENCY": "Le règlement de change requiert un paiement en devise étrangère.",
-    "FX_ACCOUNTS_MISSING": "Les comptes de gain/perte de change (4800/5900) sont manquants pour cette société."
+    "FX_ACCOUNTS_MISSING": "Les comptes de gain/perte de change (4800/5900) sont manquants pour cette société.",
+    "FX_REVALUATION_EXISTS": "Une réévaluation a déjà été comptabilisée à cette date.",
+    "NO_FX_EXPOSURE": "Aucun solde ouvert en devise étrangère à réévaluer."
   },
   "calculator": {
     "title": "Calculatrice",

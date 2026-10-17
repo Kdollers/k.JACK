@@ -1,5 +1,5 @@
 {
-  "app_name": "GENESIS",
+  "app_name": "JENESIS",
   "app_tagline": "Gahunda y'Ubucuruzi n'Ibaruramari ry'Ubucuruzi Buto n'Uburinganiye",
   "nav": {
     "dashboard": "Imbonerahamwe y'Ibanze",
@@ -556,18 +556,26 @@
     "from_currency": "Kuva ku Faranga",
     "to_currency": "Kuri Faranga",
     "convert": "Vunja",
-    "rate_added": "Ivunjisha ryabitswe"
+    "rate_added": "Ivunjisha ryabitswe",
+    "fx_revaluation": "Kongera Kubara Ivunjisha ku Mpera y'Igihe",
+    "fx_revaluation_hint": "Ongera ubare factures n'ideni bifunguye mu faranga y'amahanga ku gipimo cy'ivunjisha cy'iyo tariki. Ikinyuranyo kitagezweho kijya muri konti 4810 / 5910; ibipimo by'umwimerere birabikwa.",
+    "run_revaluation": "Kora Ihinduragaciro",
+    "revaluation_history": "Amateka y'Ihinduragaciro",
+    "no_revaluations": "Nta ihinduragaciro ryakozwe",
+    "reval_gain": "Inyungu Itaragezweho",
+    "reval_loss": "Igihombo Kitagaragajwe",
+    "reval_docs": "Inyandiko"
   },
   "auth": {
     "app_tagline": "Imicungire n’ibaruramari ry’ubucuruzi",
     "language": "Ururimi",
     "login_title": "Injira",
-    "login_intro": "Andika izina ry’ukoresha n’ijambobanga rya GENESIS.",
+    "login_intro": "Andika izina ry’ukoresha n’ijambobanga rya JENESIS.",
     "username": "Izina ry’ukoresha",
     "password": "Ijambobanga",
     "sign_in": "Injira",
     "signing_in": "Biragenda kwinjira…",
-    "setup_title": "Shyiraho GENESIS",
+    "setup_title": "Shyiraho JENESIS",
     "setup_intro": "Shyiraho ikigo n’konti ya mbere y’umuyobozi. Iyi ntambwe ikorwa rimwe gusa.",
     "company_name": "Izina ry’ikigo",
     "full_name": "Amazina yuzuye y’umuyobozi",
@@ -578,14 +586,14 @@
     "password_mismatch": "Amajambobanga ntahuye.",
     "password_hint": "Nibura inyuguti 10. Ntukoreshe izina ry’ukoresha.",
     "change_password_title": "Hindura ijambobanga ryawe",
-    "change_password_intro": "Ugomba guhindura ijambobanga mbere yo gukoresha GENESIS.",
+    "change_password_intro": "Ugomba guhindura ijambobanga mbere yo gukoresha JENESIS.",
     "current_password": "Ijambobanga rya none",
     "new_password": "Ijambobanga rishya",
     "change_password": "Hindura ijambobanga",
     "sign_out": "Sohoka",
     "account": "Konti",
-    "unavailable_title": "GENESIS ntibashije kugera kuri serivisi yayo y’imbere",
-    "unavailable_intro": "Serivisi y’ibaruramari ntiyasubije. Funga GENESIS wongere uyitangire. Niba ikibazo gikomeje, reba dosiye y’amateka mu bubiko bwa GENESIS.",
+    "unavailable_title": "JENESIS ntibashije kugera kuri serivisi yayo y’imbere",
+    "unavailable_intro": "Serivisi y’ibaruramari ntiyasubije. Funga JENESIS wongere uyitangire. Niba ikibazo gikomeje, reba dosiye y’amateka mu bubiko bwa JENESIS.",
     "retry": "Ongera ugerageze"
   },
   "errors": {
@@ -610,7 +618,7 @@
     "LAST_ADMIN": "Hagomba gusigara nibura umuyobozi umwe ukora.",
     "ROLE_INVALID": "Inshingano yatoranyijwe ntiyemewe.",
     "RESET_DISABLED": "Gusubiza ububiko ku ntangiriro binyuze mu nteruro byahagaritswe. Koresha kopi y’ubwizigame no kuyisubiza.",
-    "NO_COMPANY": "Nta kigo kibaho. Ongera utangire GENESIS kugira ngo ububiko butangizwe.",
+    "NO_COMPANY": "Nta kigo kibaho. Ongera utangire JENESIS kugira ngo ububiko butangizwe.",
     "MISSING_FIELDS": "Uzuza imyanya yose isabwa.",
     "USER_CREATE_FAILED": "Umukoresha ntiyashoboye kuremwa.",
     "USER_UPDATE_FAILED": "Umukoresha ntiyashoboye guhindurwa.",
@@ -666,7 +674,9 @@
     "SUPPLIER_REQUIRED": "Umugemura arasabwa.",
     "FX_SETTLE_REQUIRES_DOCUMENT": "Kwishyura ikinyuranyo cy'ivunjisha bisaba inyemezabwishyu cyangwa facture ifitanye isano.",
     "FX_SETTLE_BASE_CURRENCY": "Kwishyura ikinyuranyo cy'ivunjisha bisaba kwishyura mu faranga y'amahanga.",
-    "FX_ACCOUNTS_MISSING": "Konti z'inyungu/igihombo cy'ivunjisha (4800/5900) zirabura kuri iyi sosiyete."
+    "FX_ACCOUNTS_MISSING": "Konti z'inyungu/igihombo cy'ivunjisha (4800/5900) zirabura kuri iyi sosiyete.",
+    "FX_REVALUATION_EXISTS": "Ivunjisha ryongeye ryanditswe kuri iyi tariki.",
+    "NO_FX_EXPOSURE": "Nta mwenda ugaragara mu faranga y'amahanga wo kongera kubara."
   },
   "calculator": {
     "title": "Imashini Ibara",
