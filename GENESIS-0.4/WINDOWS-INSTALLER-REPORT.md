@@ -22,7 +22,7 @@ Date: 2026-10-17 · Branch `arena/d8792eb2-k-jack` · Work done on the existing 
 - `appId: 'genesis-accounting'` in `/api/health` + `EXPECTED_APP_ID` in `backend-manager.cjs` + npm package `name` — the shell↔backend handshake protocol (asserted by desktop tests).
 - DB file name `genesis.db`, env vars `GENESIS_DB_PATH / GENESIS_DIST_DIR / GENESIS_PORT / GENESIS_HOST / GENESIS_SEED_DEMO / GENESIS_CHILD_LOG`, IPC channel `genesis:get-app-info`, backup file prefixes.
 - Demo-company name inside the bundled demo database (accounting data must not be rewritten).
-- Folder names `GENESIS-0.4/`, `JEN 0.2/`, git history, `GENESIS_AI_Builder_Prompt.md`.
+- Folder names `GENESIS-0.4/`, `JAN 0.3/` (formerly `JEN 0.2/`), git history, `GENESIS_AI_Builder_Prompt.md`.
 - Consequence to note: because `productName` changed, the packaged app's data directory is now `%APPDATA%\JENESIS` (it was `%APPDATA%\GENESIS` in docs). No installer was ever distributed, so no real data exists at the old path; if one ever appears, copy `genesis.db` across before first launch.
 
 ## B. Test results (all re-run after every change; final run all green)
@@ -52,9 +52,9 @@ So: **Linux-side source build = successful and verified; Windows installer = not
 **Shortest reliable procedure on a Windows PC (Node.js 18+ required, normal internet):**
 ```bat
 :: 1. get the code (either)
-::    - unzip JEN 0.2.zip, or
+::    - unzip JAN 0.3.zip, or
 ::    - git clone -b arena/d8792eb2-k-jack https://github.com/Kdollers/k.JACK && cd k.JACK\GENESIS-0.4
-cd JEN 0.2            :: (or k.JACK\GENESIS-0.4)
+cd JAN 0.3            :: (or k.JACK\GENESIS-0.4)
 npm install           :: downloads Electron 33 + builds/downloads better-sqlite3 for Windows
 npm run test:all      :: optional but recommended: must be fully green
 npm run desktop:dist  :: vite build + electron-builder --win nsis
