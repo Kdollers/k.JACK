@@ -525,7 +525,20 @@
     "require_goods_receipt": "Require goods receipts",
     "require_goods_receipt_hint": "When enabled, a supplier bill can only be posted against a posted goods receipt — stock never increases without formal receiving.",
     "valuation_hint": "FIFO consumes the oldest purchase layers; weighted average uses the moving average cost.",
-    "no_currencies": "No currencies configured"
+    "no_currencies": "No currencies configured",
+    "currency_decimals": "Decimal Places",
+    "is_base": "Base Currency",
+    "base_locked": "The base currency cannot be deactivated or removed",
+    "currency_active": "Active",
+    "currency_inactive": "Inactive",
+    "exchange_rates": "Exchange Rates",
+    "no_rates_yet": "No exchange rates recorded yet",
+    "conversion_tester": "Conversion Tester",
+    "amount_to_convert": "Amount to Convert",
+    "from_currency": "From Currency",
+    "to_currency": "To Currency",
+    "convert": "Convert",
+    "rate_added": "Exchange rate saved"
   },
   "auth": {
     "app_tagline": "Business accounting & management",

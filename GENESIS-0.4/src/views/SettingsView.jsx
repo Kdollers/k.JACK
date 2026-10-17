@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
-import { apiRequest, downloadAuthenticated } from '../services/api';
+import { apiRequest, downloadAuthenticated, translateError } from '../services/api';
 import {
   Settings,
   Building,
@@ -42,7 +42,8 @@ export default function SettingsView() {
     fiscal_year_end: '12-31',
     default_language: 'en',
     tax_inclusive_pricing: 0,
-    inventory_valuation_method: 'WEIGHTED_AVERAGE'
+    inventory_valuation_method: 'WEIGHTED_AVERAGE',
+    require_goods_receipt: 0
   });
 
   // New Company Modal
@@ -92,7 +93,8 @@ export default function SettingsView() {
         fiscal_year_end: currentCompany.fiscal_year_end || '12-31',
         default_language: currentCompany.default_language || 'en',
         tax_inclusive_pricing: currentCompany.tax_inclusive_pricing || 0,
-        inventory_valuation_method: currentCompany.inventory_valuation_method || 'WEIGHTED_AVERAGE'
+        inventory_valuation_method: currentCompany.inventory_valuation_method || 'WEIGHTED_AVERAGE',
+        require_goods_receipt: currentCompany.require_goods_receipt || 0
       });
     }
   }, [currentCompany]);
@@ -118,6 +120,7 @@ export default function SettingsView() {
   useEffect(() => {
     if (activeTab === 'taxes') fetchTaxes();
     else if (activeTab === 'audit') fetchAuditLogs();
+    else if (activeTab === 'currencies') fetchCurrencies();
   }, [activeTab, refreshKey]);
 
   const handleSaveCompany = async (e) => {
@@ -127,10 +130,10 @@ export default function SettingsView() {
         method: 'PUT',
         body: JSON.stringify(companyForm)
       });
-      showToast('Company profile and settings updated successfully', 'success');
+      showToast(t('common.success', 'Saved'), 'success');
       triggerRefresh();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(translateError(t, err), 'error');
     }
   };
 
@@ -190,6 +193,82 @@ export default function SettingsView() {
   };
 
   // Restore is staged: choose a file, then confirm with the current password and the word RESTORE.
+  // ---------------- currencies & FX ----------------
+  const [currencies, setCurrencies] = useState([]);
+  const [rates, setRates] = useState([]);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [currencyForm, setCurrencyForm] = useState({ code: '', name: '', symbol: '', decimals: 2 });
+  const [rateForm, setRateForm] = useState({ baseCode: '', quoteCode: '', rate: '', effectiveDate: new Date().toISOString().split('T')[0] });
+  const [convForm, setConvForm] = useState({ amount: '', from: '', to: '' });
+  const [convResult, setConvResult] = useState(null);
+
+  const fetchCurrencies = async () => {
+    try {
+      const c = await apiRequest('/api/fx/currencies');
+      setCurrencies(c);
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  const fetchRates = async (base) => {
+    if (!base) { setRates([]); return; }
+    try {
+      const r = await apiRequest(`/api/fx/rates?from=${base}`);
+      setRates(r);
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  const handleAddCurrency = async (e) => {
+    e.preventDefault();
+    try {
+      await apiRequest('/api/fx/currencies', { method: 'POST', body: JSON.stringify(currencyForm) });
+      showToast(t('common.success', 'Saved'), 'success');
+      setShowCurrencyModal(false);
+      setCurrencyForm({ code: '', name: '', symbol: '', decimals: 2 });
+      fetchCurrencies();
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  const handleToggleCurrency = async (cur) => {
+    try {
+      await apiRequest(`/api/fx/currencies/${cur.id}`, { method: 'PUT', body: JSON.stringify({ active: cur.active ? 0 : 1 }) });
+      fetchCurrencies();
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  const handleAddRate = async (e) => {
+    e.preventDefault();
+    try {
+      await apiRequest('/api/fx/rates', {
+        method: 'POST',
+        body: JSON.stringify({ fromCode: rateForm.baseCode, toCode: rateForm.quoteCode, rate: Number(rateForm.rate), effectiveDate: rateForm.effectiveDate })
+      });
+      showToast(t('settings.rate_added'), 'success');
+      setRateForm({ ...rateForm, rate: '' });
+      fetchRates(rateForm.baseCode);
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  const handleConvert = async (e) => {
+    e.preventDefault();
+    setConvResult(null);
+    try {
+      const res = await apiRequest(`/api/fx/convert?amount=${Number(convForm.amount)}&from=${convForm.from}&to=${convForm.to}&date=${new Date().toISOString().split('T')[0]}`);
+      setConvResult(res);
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
   const [restoreDraft, setRestoreDraft] = useState(null);
   const [restorePassword, setRestorePassword] = useState('');
   const [restoreConfirm, setRestoreConfirm] = useState('');
@@ -275,6 +354,14 @@ export default function SettingsView() {
           }`}
         >
           {t('settings.tab_audit')}
+        </button>
+        <button
+          onClick={() => setActiveTab('currencies')}
+          className={`px-3 py-1.5 rounded-md transition ${
+            activeTab === 'currencies' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          {t('settings.tab_currencies')}
         </button>
         <button
           onClick={() => setActiveTab('backup')}
@@ -415,6 +502,20 @@ export default function SettingsView() {
                 </select>
               </div>
 
+              <div className="flex items-start space-x-2.5">
+                <input
+                  type="checkbox"
+                  id="require_goods_receipt"
+                  checked={!!companyForm.require_goods_receipt}
+                  onChange={(e) => setCompanyForm({ ...companyForm, require_goods_receipt: e.target.checked ? 1 : 0 })}
+                  className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="require_goods_receipt" className="text-xs text-slate-600 cursor-pointer">
+                  <span className="font-semibold text-slate-700">{t('settings.require_goods_receipt')}</span>
+                  <span className="block text-[10px] text-slate-400">{t('settings.require_goods_receipt_hint')}</span>
+                </label>
+              </div>
+
               <div>
                 <label className="block text-slate-600 font-semibold mb-1">{t('common.language')}</label>
                 <select
@@ -536,6 +637,200 @@ export default function SettingsView() {
       )}
 
       {/* 4. Audit Trail Tab */}
+      {/* 2b. Currencies & Exchange Rates Tab */}
+      {activeTab === 'currencies' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_currencies')}</h2>
+                <p className="text-[11px] text-slate-500">{t('settings.base_currency')}: {currentCompany?.currency_code}</p>
+              </div>
+              <button onClick={() => setShowCurrencyModal(true)}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow">
+                <span>{t('settings.add_currency')}</span>
+              </button>
+            </div>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-2.5 px-4">{t('settings.currency_code')}</th>
+                  <th className="py-2.5 px-4">{t('settings.currency_name')}</th>
+                  <th className="py-2.5 px-4">{t('settings.currency_symbol')}</th>
+                  <th className="py-2.5 px-4 text-center">{t('settings.currency_decimals')}</th>
+                  <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {currencies.map((c) => (
+                  <tr key={c.id} className="hover:bg-slate-50">
+                    <td className="py-2.5 px-4 font-mono font-bold text-slate-800">{c.code}</td>
+                    <td className="py-2.5 px-4 text-slate-600">{c.name}</td>
+                    <td className="py-2.5 px-4">{c.symbol || '—'}</td>
+                    <td className="py-2.5 px-4 text-center font-mono">{c.decimals}</td>
+                    <td className="py-2.5 px-4 text-center">
+                      {c.is_base ? (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-indigo-100 text-indigo-800" title={t('settings.base_locked')}>{t('settings.is_base')}</span>
+                      ) : (
+                        <button onClick={() => handleToggleCurrency(c)}
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${c.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-400'}`}>
+                          {c.active ? t('settings.currency_active') : t('settings.currency_inactive')}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Rates */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-slate-200 bg-slate-50">
+                <h2 className="text-sm font-bold text-slate-800">{t('settings.exchange_rates')}</h2>
+              </div>
+              <form onSubmit={handleAddRate} className="p-4 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('settings.from_currency')}</label>
+                  <select required value={rateForm.baseCode}
+                    onChange={(e) => { const nf = { ...rateForm, baseCode: e.target.value }; setRateForm(nf); fetchRates(e.target.value); }}
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md bg-white">
+                    <option value="">—</option>
+                    {currencies.filter((c) => c.active).map((c) => <option key={c.id} value={c.code}>{c.code}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('settings.to_currency')}</label>
+                  <select required value={rateForm.quoteCode}
+                    onChange={(e) => setRateForm({ ...rateForm, quoteCode: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md bg-white">
+                    <option value="">—</option>
+                    {currencies.filter((c) => c.active && c.code !== rateForm.baseCode).map((c) => <option key={c.id} value={c.code}>{c.code}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('settings.rate_value')}</label>
+                  <input type="number" step="any" min="0" required value={rateForm.rate}
+                    onChange={(e) => setRateForm({ ...rateForm, rate: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md font-mono" />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('settings.effective_date')}</label>
+                  <input type="date" required value={rateForm.effectiveDate}
+                    onChange={(e) => setRateForm({ ...rateForm, effectiveDate: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md" />
+                </div>
+                <div className="col-span-2 flex justify-end">
+                  <button type="submit" className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-semibold">{t('settings.add_rate')}</button>
+                </div>
+              </form>
+              <div className="max-h-64 overflow-y-auto border-t border-slate-200">
+                <table className="w-full text-left text-xs">
+                  <tbody className="divide-y divide-slate-100">
+                    {rates.length > 0 ? rates.map((r) => (
+                      <tr key={r.id}>
+                        <td className="py-2 px-4 font-mono">{r.from_code} → {r.to_code}</td>
+                        <td className="py-2 px-4 font-mono font-bold">{r.rate}</td>
+                        <td className="py-2 px-4 text-slate-500">{r.effective_date}</td>
+                      </tr>
+                    )) : (
+                      <tr><td className="py-4 px-4 text-center text-slate-400">{t('settings.no_rates_yet')}</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Conversion tester */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-fit">
+              <div className="p-4 border-b border-slate-200 bg-slate-50">
+                <h2 className="text-sm font-bold text-slate-800">{t('settings.conversion_tester')}</h2>
+              </div>
+              <form onSubmit={handleConvert} className="p-4 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('settings.amount_to_convert')}</label>
+                  <input type="number" step="any" required value={convForm.amount}
+                    onChange={(e) => setConvForm({ ...convForm, amount: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md font-mono" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">{t('settings.from_currency')}</label>
+                    <select required value={convForm.from} onChange={(e) => setConvForm({ ...convForm, from: e.target.value })}
+                      className="w-full px-2 py-1.5 border border-slate-300 rounded-md bg-white">
+                      <option value="">—</option>
+                      {currencies.filter((c) => c.active).map((c) => <option key={c.id} value={c.code}>{c.code}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">{t('settings.to_currency')}</label>
+                    <select required value={convForm.to} onChange={(e) => setConvForm({ ...convForm, to: e.target.value })}
+                      className="w-full px-2 py-1.5 border border-slate-300 rounded-md bg-white">
+                      <option value="">—</option>
+                      {currencies.filter((c) => c.active).map((c) => <option key={c.id} value={c.code}>{c.code}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="col-span-2 flex items-center justify-between">
+                  <button type="submit" className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-md font-semibold">{t('settings.convert')}</button>
+                  {convResult && (
+                    <div className="text-sm font-bold font-mono text-emerald-700">
+                      {convResult.amount} {convResult.from} → {convResult.converted} {convResult.to} @ {convResult.rate}
+                    </div>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Add currency modal */}
+          {showCurrencyModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+                <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+                  <h3 className="font-bold text-sm">{t('settings.add_currency')}</h3>
+                  <button onClick={() => setShowCurrencyModal(false)} className="text-slate-400 hover:text-white p-1 rounded"><X className="w-4 h-4" /></button>
+                </div>
+                <form onSubmit={handleAddCurrency} className="p-5 space-y-3 text-xs">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_code')} *</label>
+                      <input required pattern="[A-Za-z]{3}" value={currencyForm.code}
+                        onChange={(e) => setCurrencyForm({ ...currencyForm, code: e.target.value.toUpperCase() })}
+                        placeholder="EUR" className="w-full px-3 py-1.5 border border-slate-300 rounded-md font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_symbol')}</label>
+                      <input value={currencyForm.symbol}
+                        onChange={(e) => setCurrencyForm({ ...currencyForm, symbol: e.target.value })}
+                        placeholder="€" className="w-full px-3 py-1.5 border border-slate-300 rounded-md" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_name')} *</label>
+                    <input required value={currencyForm.name}
+                      onChange={(e) => setCurrencyForm({ ...currencyForm, name: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-md" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_decimals')}</label>
+                    <input type="number" min="0" max="4" value={currencyForm.decimals}
+                      onChange={(e) => setCurrencyForm({ ...currencyForm, decimals: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-md font-mono" />
+                  </div>
+                  <div className="border-t border-slate-200 pt-3 flex justify-end space-x-2">
+                    <button type="button" onClick={() => setShowCurrencyModal(false)}
+                      className="px-3 py-1.5 border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50 font-medium">{t('common.cancel')}</button>
+                    <button type="submit" className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-semibold">{t('common.save')}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === 'audit' && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50">

@@ -525,7 +525,20 @@
     "require_goods_receipt": "Exiger un bon de réception",
     "require_goods_receipt_hint": "Si activé, une facture fournisseur ne peut être comptabilisée que liée à une réception comptabilisée — le stock n’augmente jamais sans réception formelle.",
     "valuation_hint": "FIFO consomme les couches d’achat les plus anciennes ; le coût moyen pondéré utilise le coût moyen mobile.",
-    "no_currencies": "Aucune devise configurée"
+    "no_currencies": "Aucune devise configurée",
+    "currency_decimals": "Décimales",
+    "is_base": "Devise de base",
+    "base_locked": "La devise de base ne peut pas être désactivée ni supprimée",
+    "currency_active": "Active",
+    "currency_inactive": "Inactive",
+    "exchange_rates": "Taux de change",
+    "no_rates_yet": "Aucun taux de change enregistré",
+    "conversion_tester": "Testeur de conversion",
+    "amount_to_convert": "Montant à convertir",
+    "from_currency": "Devise source",
+    "to_currency": "Devise cible",
+    "convert": "Convertir",
+    "rate_added": "Taux de change enregistré"
   },
   "auth": {
     "app_tagline": "Gestion et comptabilité d’entreprise",

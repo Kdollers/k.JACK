@@ -525,7 +525,20 @@
     "require_goods_receipt": "Gusaba inyandiko yo kwakira",
     "require_goods_receipt_hint": "Nibyemezwa, fagitire y’umugemura yinjizwa gusa ifitanye isano n’inyandiko yo kwakira yinjiye — ububiko ntabwo bwiyongera bidafite kwakira ku mugaragaro.",
     "valuation_hint": "FIFO ikoresha ibiciro by’ibya mbere byaguzwe; impuzandengo (weighted average) ikoresha impuzandengo y’ibiciro igenda ihinduka.",
-    "no_currencies": "Nta mafaranga yanditswe"
+    "no_currencies": "Nta mafaranga yanditswe",
+    "currency_decimals": "Imibare Nyuma y'Akabago",
+    "is_base": "Ifaranga y'Ibanze",
+    "base_locked": "Ifaranga y'ibanze ntishobora gukurwaho cyangwa guhagarikwa",
+    "currency_active": "Irarangwa",
+    "currency_inactive": "Ntirangwa",
+    "exchange_rates": "Ivunjisha ry'Amafaranga",
+    "no_rates_yet": "Nta vunjisha ryanditswe",
+    "conversion_tester": "Ikipimo cy'Ivunjisha",
+    "amount_to_convert": "Amafaranga yo Kuvunja",
+    "from_currency": "Kuva ku Faranga",
+    "to_currency": "Kuri Faranga",
+    "convert": "Vunja",
+    "rate_added": "Ivunjisha ryabitswe"
   },
   "auth": {
     "app_tagline": "Imicungire n’ibaruramari ry’ubucuruzi",
