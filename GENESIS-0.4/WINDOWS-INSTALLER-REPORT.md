@@ -49,7 +49,7 @@ Date: 2026-10-17 · Branch `arena/d8792eb2-k-jack` · Work done on the existing 
 
 So: **Linux-side source build = successful and verified; Windows installer = not produced, not tested.** Nothing in the project configuration caused the failure.
 
-**Shortest reliable procedure on a Windows PC (Node.js 18+ required, normal internet):**
+**Shortest reliable procedure on a Windows PC (Node.js 18+ required, normal internet):** double-click `build-installer.bat` in the project folder (checks Node, installs deps, builds, opens the release folder), or by hand:
 ```bat
 :: 1. get the code (either)
 ::    - unzip JAN 0.3.zip, or
