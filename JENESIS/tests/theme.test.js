@@ -43,7 +43,9 @@ function walk(dir, extensions, skip = ['node_modules', 'dist']) {
         if (skip.includes(entry.name)) continue;
         descend(full);
       } else if (extensions.some((ext) => entry.name.endsWith(ext))) {
-        out.push(path.relative(ROOT, full));
+        // Always forward slashes: the assertions below match on path text and
+        // path.relative() uses backslashes on Windows.
+        out.push(path.relative(ROOT, full).split(path.sep).join('/'));
       }
     }
   })(abs);
