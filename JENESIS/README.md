@@ -11,6 +11,7 @@ This is the **consolidated JENESIS application**: the features of the previous
 **Light Mode / Dark Mode theme system** — and verified by
 **203 automated checks**.
 
+- **Download the Windows installer / portable package**: [`DOWNLOAD.md`](DOWNLOAD.md)
 - **Merge report** (what came from where, bugs fixed, test results): [`MERGE-REPORT.md`](MERGE-REPORT.md)
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)

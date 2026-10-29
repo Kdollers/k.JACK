@@ -109,13 +109,104 @@ jobs:
             throw "Installed-application smoke test failed (exit $code). Transcript: ci-logs/smoke-test-output.txt"
           }
 
+      - name: Package the portable build and write checksums
+        if: success()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $installer = Get-ChildItem release -Filter 'JENESIS-Setup-*.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'The installer was not produced.' }
+
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Out-File -FilePath "release\$($installer.Name).sha256" -Encoding ascii
+
+          # Portable package: the very same unpacked application the installer
+          # deploys, so JENESIS can be run from a folder or a USB stick without
+          # installing anything. Data still goes to %APPDATA%\JENESIS.
+          if (-not (Test-Path 'dist\win-unpacked')) { throw 'dist\win-unpacked is missing: nothing to package.' }
+          $zip = "release\JENESIS-Portable-$version.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path 'dist\win-unpacked\*' -DestinationPath $zip -CompressionLevel Optimal
+          $zipItem = Get-Item $zip
+          $zipHash = (Get-FileHash $zipItem.FullName -Algorithm SHA256).Hash.ToLower()
+          "$zipHash  $($zipItem.Name)" | Out-File -FilePath "$zip.sha256" -Encoding ascii
+
+          Write-Host "installer : $($installer.Name)  $([math]::Round($installer.Length / 1MB, 1)) MB  sha256 $hash"
+          Write-Host "portable  : $($zipItem.Name)  $([math]::Round($zipItem.Length / 1MB, 1)) MB  sha256 $zipHash"
+
+          # Show the download table on the run page as well.
+          $summary = $env:GITHUB_STEP_SUMMARY
+          "### JENESIS $version — downloadable files" | Out-File -FilePath $summary -Encoding utf8
+          '' | Out-File -FilePath $summary -Append -Encoding utf8
+          '| File | Size | SHA-256 |' | Out-File -FilePath $summary -Append -Encoding utf8
+          '|---|---|---|' | Out-File -FilePath $summary -Append -Encoding utf8
+          "| ``$($installer.Name)`` | $([math]::Round($installer.Length / 1MB, 1)) MB | ``$hash`` |" | Out-File -FilePath $summary -Append -Encoding utf8
+          "| ``$($zipItem.Name)`` | $([math]::Round($zipItem.Length / 1MB, 1)) MB | ``$zipHash`` |" | Out-File -FilePath $summary -Append -Encoding utf8
+
       - name: Upload the installer
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: JENESIS-Windows-installer
-          path: JENESIS/release/*.exe
+          path: |
+            JENESIS/release/*.exe
+            JENESIS/release/*.sha256
           if-no-files-found: ignore
+
+      - name: Upload the portable package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: JENESIS-Portable
+          path: |
+            JENESIS/release/*.zip
+            JENESIS/release/*.zip.sha256
+          if-no-files-found: ignore
+
+      - name: Publish the downloadable files as a release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tag = "v$version"
+          $assets = @()
+          foreach ($pattern in '*.exe', '*.zip', '*.exe.sha256', '*.zip.sha256') {
+            $assets += (Get-ChildItem release -Filter $pattern | ForEach-Object { $_.FullName })
+          }
+          if ($assets.Count -eq 0) { throw 'No downloadable files were produced.' }
+          $notes = @"
+          JENESIS $version — Windows desktop accounting application.
+
+          **Install:** download ``JENESIS-Setup-$version.exe``, double-click it, accept the
+          SmartScreen prompt (More info -> Run anyway), and follow the installer.
+          JENESIS then appears on the Desktop and in the Start menu — no command
+          prompt needed. See ``DOWNLOAD.md`` in the repository for details, database
+          location and backup instructions.
+
+          **Portable:** ``JENESIS-Portable-$version.zip`` runs without installing
+          (unzip, then double-click ``JENESIS.exe``).
+
+          Verify a download with ``certutil -hashfile <file> SHA256`` and compare with
+          the ``.sha256`` file shipped next to it.
+
+          Built and smoke-tested by GitHub Actions (run ${{ github.run_id }}): 203
+          automated checks and 18/18 installed-application checks. The installer is
+          unsigned and has not been run on a physical Windows PC.
+          "@
+          $notes | Out-File -FilePath ..\release-notes.md -Encoding utf8
+
+          gh release view $tag --repo ${{ github.repository }} *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "release $tag exists: replacing its files"
+            gh release upload $tag $assets --clobber --repo ${{ github.repository }}
+          } else {
+            Write-Host "creating release $tag"
+            gh release create $tag $assets --title "JENESIS $version" --notes-file ..\release-notes.md --repo ${{ github.repository }}
+          }
 
       - name: Upload diagnostics when something fails
         if: failure()

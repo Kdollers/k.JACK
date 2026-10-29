@@ -1,4 +1,10 @@
-# JENESIS — Installation, Upgrade and First Launch
+# JENESIS — Installation
+
+> **Looking for the files to install?**
+> [`DOWNLOAD.md`](DOWNLOAD.md) has the direct download links for the Windows
+> installer and the portable package, their checksums, and the step-by-step
+> Windows instructions. This document covers installation and upgrade in
+> general., Upgrade and First Launch
 
 JENESIS is a Windows desktop application. You install it once with a normal
 installer and then start it from a desktop or Start-menu shortcut. **No command
