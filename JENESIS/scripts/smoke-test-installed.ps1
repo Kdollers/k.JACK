@@ -120,7 +120,11 @@ function Close-AppGracefully {
   # Preferred path: ask the window to close, exactly as a user would.
   $windows = Wait-ForAppWindow
   if ($windows.Count -gt 0) {
-    foreach ($w in $windows) { [void]$w.CloseMainWindow() }
+    foreach ($w in $windows) {
+      $posted = $w.CloseMainWindow()
+      Write-Host ("    close message posted to pid {0} (handle {1}, title '{2}', responding {3}): {4}" -f `
+        $w.Id, $w.MainWindowHandle, $w.MainWindowTitle, $w.Responding, $posted)
+    }
     $deadline = (Get-Date).AddSeconds(60)
     while ((Get-Date) -lt $deadline -and (Get-AppProcesses)) { Start-Sleep -Milliseconds 300 }
   } else {
