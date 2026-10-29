@@ -26,6 +26,7 @@ let backendUrl = null;
 let logStream = null;
 let quitting = false;
 let shutdownPromise = null;
+let quitWatchdog = null;
 
 // ---------------------------------------------------------------------------
 // Paths
@@ -134,7 +135,13 @@ function stopBackend() {
     shutdownPromise = (async () => {
       if (backend) {
         writeLog('Stopping backend...');
-        await backend.stop(5000);
+        // stop() gives the backend 5 s to exit cleanly and then escalates. The
+        // race adds a hard ceiling on top of it: a child that cannot be reaped
+        // must never keep the desktop application open on shutdown.
+        await Promise.race([
+          backend.stop(5000).catch((err) => writeLog(`Backend stop error: ${err && err.message ? err.message : err}`)),
+          new Promise((resolve) => setTimeout(resolve, 8000))
+        ]);
         writeLog('Backend stopped.');
         backend = null;
       }
@@ -254,7 +261,17 @@ if (!gotLock) {
     if (!shutdownPromise) {
       quitting = true;
       event.preventDefault();
-      stopBackend().finally(() => app.quit());
+      // Watchdog: business data is already committed by then, so the
+      // application must never stay open because shutdown took too long.
+      quitWatchdog = setTimeout(() => {
+        writeLog('Shutdown watchdog fired (20s): forcing exit.');
+        app.exit(0);
+      }, 20000);
+      stopBackend().finally(() => {
+        if (quitWatchdog) clearTimeout(quitWatchdog);
+        quitWatchdog = null;
+        app.quit();
+      });
     }
   });
 

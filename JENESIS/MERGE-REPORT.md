@@ -110,6 +110,7 @@ nothing in JEN 0.2 was missing from JAN 0.3.
 | 9 | `FINAL-REPORT-v2.md` shipped in the JENESIS build but describes the GENESIS 0.4 session | readers could not tell which report is current | marked historical, this report is the current one |
 | 10 | `scripts/add_i18n_v2.py` docstring still said GENESIS | cosmetic | docstring updated |
 | 11 | `smoke-test-installed.ps1` assumed the runner always exposes a window handle (`No JENESIS window found to close`) | the installed-app check aborted at "graceful shutdown" on a GitHub-hosted runner (run 40896463853), hiding the 5 remaining checks | `Wait-ForAppWindow` polls up to 90 s for the handle and, if the session never exposes one, stops the process directly; "all processes exit" is still asserted either way |
+| 12 | **Desktop shutdown could hang**: `stopBackend()` awaited `backend.stop()` with no ceiling, and `before-quit` only called `app.quit()` after it resolved | on a second close (after relaunch) the window and the backend process stayed alive for more than 60 s (run 40899570266, "Close again and confirm clean shutdown") — a user closing JENESIS could be left with a dead window and a running backend | hard ceiling around the backend stop (8 s) plus a 20 s shutdown watchdog that forces `app.exit(0)`; the backend is always stopped first, so no data is at risk |
 
 Nothing was found that corrupted accounting data; the bundled `genesis.db` is
 byte-identical to both source archives (MD5 `f6a9690dbdabc6d4778c04c4dfcf0365`,
