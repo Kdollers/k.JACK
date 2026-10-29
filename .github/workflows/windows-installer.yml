@@ -94,10 +94,19 @@ jobs:
           # Run in a child process so the transcript is written even when the test exits non-zero.
           pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-test-installed.ps1 -InstallerPath $installer.FullName 2>&1 |
             Tee-Object -FilePath ..\ci-logs\smoke-test-output.txt
+          $code = $LASTEXITCODE
+          # Always publish the application's own logs: they show whether the
+          # close request reached the app and how shutdown progressed.
           $logDir = Join-Path $env:APPDATA 'JENESIS\logs'
-          if (Test-Path $logDir) { Copy-Item (Join-Path $logDir '*') ..\ci-logs -Force }
-          if ($LASTEXITCODE -ne 0) {
-            throw "Installed-application smoke test failed (exit $LASTEXITCODE). Transcript: ci-logs/smoke-test-output.txt"
+          Write-Host "application log folder: $logDir (exists: $(Test-Path $logDir))"
+          if (Test-Path $logDir) {
+            Get-ChildItem $logDir -File | ForEach-Object {
+              try { Copy-Item $_.FullName (Join-Path '..\ci-logs' $_.Name) -Force }
+              catch { Write-Host "could not copy $($_.Name): $($_.Exception.Message)" }
+            }
+          }
+          if ($code -ne 0) {
+            throw "Installed-application smoke test failed (exit $code). Transcript: ci-logs/smoke-test-output.txt"
           }
 
       - name: Upload the installer
@@ -123,7 +132,7 @@ jobs:
       # Delete the ci-logs folder once the failure is understood; a green run
       # does not create it.
       - name: Commit smoke-test diagnostics to the branch
-        if: failure()
+        if: always()
         shell: bash
         working-directory: ${{ github.workspace }}
         env:
