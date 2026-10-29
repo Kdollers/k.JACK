@@ -235,24 +235,35 @@ better-sqlite3 behaviours the app relies on correctly.
 
 ### Windows CI (executed — this is where the installer was built)
 
-`.github/workflows/windows-installer.yml`, final run **40914097531**, branch
-`arena/a2c625e8-k-jack`, both jobs green:
+`.github/workflows/windows-installer.yml`, run **40957626626** (18/18 transcript
+below), branch `arena/a2c625e8-k-jack`, both jobs green:
 
 | Job | Steps | Result |
 |---|---|---|
-| Test suite (Linux, Node 20) | `npm ci` → `npm run test:all` → `npm run build` | **success** (165 checks with the real `better-sqlite3`) |
+| Test suite (Linux, Node 20) | `npm ci` → `npm run test:all` → `npm run build` | **success** (195 checks with the real `better-sqlite3`, including the 30 theme checks) |
 | Windows installer (`windows-2022`) | `npm ci` → `npm run test:all` → `npm run desktop:dist` → `verify-package.cjs` → installed-app smoke test → artifact upload | **success** |
 
-Installed-application smoke test — **17/17 PASS** (transcript committed by the job as
-`ci-logs/smoke-test-output.txt` while diagnostics were enabled):
+Installed-application smoke test — **18/18 PASS**:
 
 silent install → desktop + Start-menu shortcuts → **application starts from the
 executable with no manual server or terminal** → backend on loopback only → no
 external browser → unauthenticated requests refused → first-run setup → sign-in →
 balanced journal entry → trial balance balanced → backup export → **graceful
 shutdown, all processes exit** → **relaunch: business data persists** → backup
-restore with a `pre-restore` copy → clean close → **silent uninstall keeps the
-business database**.
+restore with a `pre-restore` copy → clean close → **the installed build ships
+both themes** (the `app.asar` of the installed program is checked for the
+`jenesis_theme` bootstrap, `prefers-color-scheme`, the dark palette
+`--j-canvas: 2 6 23` and the remapped `.dark .bg-white` rule) → **silent
+uninstall keeps the business database**.
+
+The check was added with the theme system (the step before it is the 17th);
+run 40957626626 is the run whose transcript was captured:
+
+```
+==> Both themes ship in the installed application
+    installed build contains the theme bootstrap, the dark palette and the remapped utilities
+    PASS
+```
 
 Artifact: `JENESIS-Windows-installer` → `JENESIS-Setup-1.0.0.exe`, **88 MB**
 (92.5 MB). Runs since the window-close fix (bugs #11/#14) are green:
@@ -270,8 +281,11 @@ open, not hidden:
 | 40906371950, 40907360663 | **green** (17/17) |
 | 40908215193, 40911107625 (run A), 40911086548 (run B) | failed with the same symptom — the diagnostic (window title `''`) that exposed bug #14 |
 | 40909845502, 40912939198, 40912949515 | **green** (17/17) after the fix |
-| **40914097531** | **green** (17/17) — the delivered code, before the final documentation commit |
-| **40915127284** | **green** (17/17) — the exact branch state delivered (documentation commit on top) |
+| **40914097531** | **green** (17/17) — delivered code, before the final documentation commit |
+| **40915127284** | **green** (17/17) — the exact branch state delivered at that point |
+| 40955901490 | failed in `npm run test:all` on Windows only: the new theme audit matched `views/` while `path.relative()` returns backslashes on Windows → fixed, paths normalised |
+| **40956721324** | **green** (18/18) — theme system, both jobs |
+| **40957626626** | **green** (18/18) — same code with the transcript captured; **18/18 PASS** including "Both themes ship in the installed application" |
 
 ### Not run here (environment limits — not claimed as passing)
 
