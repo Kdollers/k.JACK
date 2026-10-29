@@ -2,26 +2,630 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   JENESIS theme tokens
+   --------------------------------------------------------------------------
+   Every surface, text, border and interactive colour in the application is
+   defined once here. Light Mode is the default (`:root`); Dark Mode re-binds
+   the same tokens under `.dark`, which the theme provider puts on <html>.
+
+   New code should use the semantic utilities generated from these tokens
+   (bg-canvas, bg-surface, text-ink, border-line, ...) instead of raw palette
+   shades. The "Dark Mode compatibility layer" further down keeps the existing
+   palette-based classes (bg-white, text-slate-600, ...) correct in both
+   themes, so no screen is left half-themed.
+   ========================================================================== */
 @layer base {
+  :root {
+    color-scheme: light;
+
+    --j-canvas: 241 245 249;         /* slate-100  - application background */
+    --j-surface: 255 255 255;        /* white      - cards, panels, modals */
+    --j-surface-muted: 248 250 252;  /* slate-50   - table headers, muted rows */
+    --j-surface-hover: 233 238 245;  /* ~slate-150 - hover, chips, tab trays */
+
+    --j-line: 226 232 240;           /* slate-200  - borders and dividers */
+    --j-line-strong: 133 148 170;    /* ~slate-450 - input borders (3:1) */
+
+    --j-ink: 15 23 42;               /* slate-900  - primary text */
+    --j-ink-secondary: 30 41 59;     /* slate-800  - secondary text */
+    --j-ink-muted: 71 85 105;        /* slate-600  - labels, helper text */
+    --j-ink-subtle: 94 109 131;      /* ~slate-550 - hints, placeholders (4.5:1) */
+
+    --j-shell: 15 23 42;             /* slate-900  - header and sidebar */
+    --j-shell-line: 30 41 59;        /* slate-800  - header/sidebar borders */
+    --j-shell-ink: 241 245 249;      /* slate-100  - header/sidebar text */
+    --j-shell-muted: 148 163 184;    /* slate-400  - header/sidebar hints */
+
+    --j-brand: 37 99 235;            /* blue-600   - primary action colour */
+    --j-brand-strong: 29 78 216;     /* blue-700 */
+    --j-selection: 191 219 254;      /* blue-200 */
+
+    --j-scrollbar: 203 213 225;
+    --j-scrollbar-track: 241 245 249;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --j-canvas: 2 6 23;              /* slate-950 - application background */
+    --j-surface: 15 23 42;           /* slate-900 - cards, panels, modals */
+    --j-surface-muted: 30 41 59;     /* slate-800 - table headers, muted rows */
+    --j-surface-hover: 51 65 85;     /* slate-700 - hover, chips, tab trays */
+
+    --j-line: 51 65 85;              /* slate-700 - borders and dividers */
+    --j-line-strong: 100 116 139;    /* slate-500 - input borders */
+
+    --j-ink: 241 245 249;            /* slate-100 - primary text */
+    --j-ink-secondary: 226 232 240;  /* slate-200 - secondary text */
+    --j-ink-muted: 203 213 225;      /* slate-300 - labels, helper text */
+    --j-ink-subtle: 148 163 184;     /* slate-400 - hints, placeholders */
+
+    --j-shell: 2 6 23;               /* slate-950 - header and sidebar */
+    --j-shell-line: 30 41 59;        /* slate-800 - header/sidebar borders */
+    --j-shell-ink: 226 232 240;      /* slate-200 - header/sidebar text */
+    --j-shell-muted: 148 163 184;    /* slate-400 - header/sidebar hints */
+
+    --j-brand: 96 165 250;           /* blue-400 - brighter for dark surfaces */
+    --j-brand-strong: 147 197 253;   /* blue-300 */
+    --j-selection: 30 58 138;        /* blue-900 */
+
+    --j-scrollbar: 71 85 105;
+    --j-scrollbar-track: 15 23 42;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
   body {
-    @apply bg-slate-100 text-slate-900;
+    @apply bg-canvas text-ink;
+  }
+
+  /* Native controls (date pickers, dropdown arrows, scrollbars, autofill)
+     follow the active theme through color-scheme, which is set on :root. */
+  ::selection {
+    background-color: rgb(var(--j-selection) / 0.6);
+    color: rgb(var(--j-ink));
+  }
+
+  /* Chromium paints autofilled inputs with its own light yellow; force the
+     field to stay inside the theme. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: rgb(var(--j-ink));
+    -webkit-box-shadow: 0 0 0 1000px rgb(var(--j-surface)) inset;
+    caret-color: rgb(var(--j-ink));
   }
 }
 
+@layer components {
+  /* Table header/row borders stay consistent without touching every view. */
+  .jenesis-table th {
+    @apply bg-surface-muted text-ink-muted border-line;
+  }
+
+  .jenesis-table td {
+    @apply border-line;
+  }
+}
+
+@layer utilities {
+  .scrollbar-themed {
+    scrollbar-color: rgb(var(--j-scrollbar)) rgb(var(--j-scrollbar-track));
+  }
+}
+
+/* Respect the operating system's reduced-motion setting: the interface never
+   animates on its own, but the fade used by toasts and modals is dropped. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode compatibility layer
+   --------------------------------------------------------------------------
+   The screens were written against the slate/white palette before theming
+   existed. These rules rebind those utility classes to the tokens above while
+   a theme is dark, so every existing screen, table, dialog and badge follows
+   the selected theme without rewriting them.
+
+   tests/theme.test.js asserts that every colour class used in src/ is covered
+   here (or explicitly listed as theme-neutral), so a new screen cannot
+   silently ship light-only colours.
+   ========================================================================== */
+.dark .bg-white {
+  background-color: rgb(var(--j-surface));
+}
+
+.dark .bg-slate-50 {
+  background-color: rgb(var(--j-surface-muted));
+}
+
+.dark .bg-slate-50\/50 {
+  background-color: rgb(var(--j-surface-muted) / 0.5);
+}
+
+.dark .bg-slate-100, .dark .disabled\:bg-slate-100 {
+  background-color: rgb(var(--j-surface-hover));
+}
+
+.dark .bg-slate-200 {
+  background-color: rgb(71 85 105);
+}
+
+.dark .bg-slate-300 {
+  background-color: rgb(100 116 139);
+}
+
+.dark .bg-slate-900 {
+  background-color: rgb(var(--j-shell));
+}
+
+.dark .text-slate-900 {
+  color: rgb(248 250 252);
+}
+
+.dark .text-slate-800 {
+  color: rgb(241 245 249);
+}
+
+.dark .text-slate-700 {
+  color: rgb(226 232 240);
+}
+
+.dark .text-slate-600, .dark .text-slate-500 {
+  color: rgb(203 213 225);
+}
+
+.dark .border-slate-100, .dark .border-slate-200, .dark .divide-slate-100, .dark .divide-slate-200 {
+  border-color: rgb(var(--j-line));
+}
+
+.dark .border-slate-300 {
+  border-color: rgb(var(--j-line-strong));
+}
+
+.dark .hover\:bg-slate-50 {
+  background-color: rgb(51 65 85);
+}
+
+.dark .hover\:bg-slate-100 {
+  background-color: rgb(71 85 105);
+}
+
+.dark .hover\:bg-slate-200 {
+  background-color: rgb(100 116 139);
+}
+
+.dark .hover\:text-slate-800, .dark .hover\:text-slate-900 {
+  color: rgb(248 250 252) !important;
+}
+
+.dark .hover\:border-slate-300 {
+  border-color: rgb(100 116 139);
+}
+
+.dark .text-amber-600, .dark .text-amber-700 {
+  color: rgb(252 211 77);
+}
+
+.dark .text-amber-500 {
+  color: rgb(251 191 36);
+}
+
+.dark .text-amber-800, .dark .text-amber-900 {
+  color: rgb(253 230 138);
+}
+
+.dark .hover\:text-amber-600, .dark .hover\:text-amber-700, .dark .hover\:text-amber-800, .dark .hover\:text-amber-900 {
+  color: rgb(252 211 77) !important;
+}
+
+.dark .bg-amber-50, .dark .hover\:bg-amber-50 {
+  background-color: rgb(245 158 11 / 0.15);
+}
+
+.dark .bg-amber-50\/50, .dark .hover\:bg-amber-50\/50 {
+  background-color: rgb(245 158 11 / 0.1);
+}
+
+.dark .bg-amber-100, .dark .hover\:bg-amber-100 {
+  background-color: rgb(245 158 11 / 0.22);
+}
+
+.dark .bg-amber-200, .dark .hover\:bg-amber-200 {
+  background-color: rgb(245 158 11 / 0.3);
+}
+
+.dark .border-amber-200, .dark .border-amber-300 {
+  border-color: rgb(245 158 11 / 0.35);
+}
+
+.dark .text-blue-600, .dark .text-blue-700 {
+  color: rgb(147 197 253);
+}
+
+.dark .text-blue-500 {
+  color: rgb(96 165 250);
+}
+
+.dark .text-blue-800, .dark .text-blue-900 {
+  color: rgb(191 219 254);
+}
+
+.dark .hover\:text-blue-600, .dark .hover\:text-blue-700, .dark .hover\:text-blue-800, .dark .hover\:text-blue-900 {
+  color: rgb(147 197 253) !important;
+}
+
+.dark .bg-blue-50, .dark .hover\:bg-blue-50 {
+  background-color: rgb(59 130 246 / 0.15);
+}
+
+.dark .bg-blue-50\/50, .dark .hover\:bg-blue-50\/50 {
+  background-color: rgb(59 130 246 / 0.1);
+}
+
+.dark .bg-blue-100, .dark .hover\:bg-blue-100 {
+  background-color: rgb(59 130 246 / 0.22);
+}
+
+.dark .bg-blue-200, .dark .hover\:bg-blue-200 {
+  background-color: rgb(59 130 246 / 0.3);
+}
+
+.dark .border-blue-200, .dark .border-blue-300 {
+  border-color: rgb(59 130 246 / 0.35);
+}
+
+.dark .text-cyan-600, .dark .text-cyan-700 {
+  color: rgb(103 232 249);
+}
+
+.dark .text-cyan-500 {
+  color: rgb(34 211 238);
+}
+
+.dark .text-cyan-800, .dark .text-cyan-900 {
+  color: rgb(165 243 252);
+}
+
+.dark .hover\:text-cyan-600, .dark .hover\:text-cyan-700, .dark .hover\:text-cyan-800, .dark .hover\:text-cyan-900 {
+  color: rgb(103 232 249) !important;
+}
+
+.dark .bg-cyan-50, .dark .hover\:bg-cyan-50 {
+  background-color: rgb(6 182 212 / 0.15);
+}
+
+.dark .bg-cyan-50\/50, .dark .hover\:bg-cyan-50\/50 {
+  background-color: rgb(6 182 212 / 0.1);
+}
+
+.dark .bg-cyan-100, .dark .hover\:bg-cyan-100 {
+  background-color: rgb(6 182 212 / 0.22);
+}
+
+.dark .bg-cyan-200, .dark .hover\:bg-cyan-200 {
+  background-color: rgb(6 182 212 / 0.3);
+}
+
+.dark .border-cyan-200, .dark .border-cyan-300 {
+  border-color: rgb(6 182 212 / 0.35);
+}
+
+.dark .text-emerald-600, .dark .text-emerald-700 {
+  color: rgb(110 231 183);
+}
+
+.dark .text-emerald-500 {
+  color: rgb(52 211 153);
+}
+
+.dark .text-emerald-800, .dark .text-emerald-900 {
+  color: rgb(167 243 208);
+}
+
+.dark .hover\:text-emerald-600, .dark .hover\:text-emerald-700, .dark .hover\:text-emerald-800, .dark .hover\:text-emerald-900 {
+  color: rgb(110 231 183) !important;
+}
+
+.dark .bg-emerald-50, .dark .hover\:bg-emerald-50 {
+  background-color: rgb(16 185 129 / 0.15);
+}
+
+.dark .bg-emerald-50\/50, .dark .hover\:bg-emerald-50\/50 {
+  background-color: rgb(16 185 129 / 0.1);
+}
+
+.dark .bg-emerald-100, .dark .hover\:bg-emerald-100 {
+  background-color: rgb(16 185 129 / 0.22);
+}
+
+.dark .bg-emerald-200, .dark .hover\:bg-emerald-200 {
+  background-color: rgb(16 185 129 / 0.3);
+}
+
+.dark .border-emerald-200, .dark .border-emerald-300 {
+  border-color: rgb(16 185 129 / 0.35);
+}
+
+.dark .text-indigo-600, .dark .text-indigo-700 {
+  color: rgb(165 180 252);
+}
+
+.dark .text-indigo-500 {
+  color: rgb(129 140 248);
+}
+
+.dark .text-indigo-800, .dark .text-indigo-900 {
+  color: rgb(199 210 254);
+}
+
+.dark .hover\:text-indigo-600, .dark .hover\:text-indigo-700, .dark .hover\:text-indigo-800, .dark .hover\:text-indigo-900 {
+  color: rgb(165 180 252) !important;
+}
+
+.dark .bg-indigo-50, .dark .hover\:bg-indigo-50 {
+  background-color: rgb(99 102 241 / 0.15);
+}
+
+.dark .bg-indigo-50\/50, .dark .hover\:bg-indigo-50\/50 {
+  background-color: rgb(99 102 241 / 0.1);
+}
+
+.dark .bg-indigo-100, .dark .hover\:bg-indigo-100 {
+  background-color: rgb(99 102 241 / 0.22);
+}
+
+.dark .bg-indigo-200, .dark .hover\:bg-indigo-200 {
+  background-color: rgb(99 102 241 / 0.3);
+}
+
+.dark .border-indigo-200, .dark .border-indigo-300 {
+  border-color: rgb(99 102 241 / 0.35);
+}
+
+.dark .text-purple-600, .dark .text-purple-700 {
+  color: rgb(216 180 254);
+}
+
+.dark .text-purple-500 {
+  color: rgb(192 132 252);
+}
+
+.dark .text-purple-800, .dark .text-purple-900 {
+  color: rgb(233 213 255);
+}
+
+.dark .hover\:text-purple-600, .dark .hover\:text-purple-700, .dark .hover\:text-purple-800, .dark .hover\:text-purple-900 {
+  color: rgb(216 180 254) !important;
+}
+
+.dark .bg-purple-50, .dark .hover\:bg-purple-50 {
+  background-color: rgb(168 85 247 / 0.15);
+}
+
+.dark .bg-purple-50\/50, .dark .hover\:bg-purple-50\/50 {
+  background-color: rgb(168 85 247 / 0.1);
+}
+
+.dark .bg-purple-100, .dark .hover\:bg-purple-100 {
+  background-color: rgb(168 85 247 / 0.22);
+}
+
+.dark .bg-purple-200, .dark .hover\:bg-purple-200 {
+  background-color: rgb(168 85 247 / 0.3);
+}
+
+.dark .border-purple-200, .dark .border-purple-300 {
+  border-color: rgb(168 85 247 / 0.35);
+}
+
+.dark .text-red-600, .dark .text-red-700 {
+  color: rgb(252 165 165);
+}
+
+.dark .text-red-500 {
+  color: rgb(248 113 113);
+}
+
+.dark .text-red-800, .dark .text-red-900 {
+  color: rgb(254 202 202);
+}
+
+.dark .hover\:text-red-600, .dark .hover\:text-red-700, .dark .hover\:text-red-800, .dark .hover\:text-red-900 {
+  color: rgb(252 165 165) !important;
+}
+
+.dark .bg-red-50, .dark .hover\:bg-red-50 {
+  background-color: rgb(239 68 68 / 0.15);
+}
+
+.dark .bg-red-50\/50, .dark .hover\:bg-red-50\/50 {
+  background-color: rgb(239 68 68 / 0.1);
+}
+
+.dark .bg-red-100, .dark .hover\:bg-red-100 {
+  background-color: rgb(239 68 68 / 0.22);
+}
+
+.dark .bg-red-200, .dark .hover\:bg-red-200 {
+  background-color: rgb(239 68 68 / 0.3);
+}
+
+.dark .border-red-200, .dark .border-red-300 {
+  border-color: rgb(239 68 68 / 0.35);
+}
+
+.dark .text-rose-600, .dark .text-rose-700 {
+  color: rgb(253 164 175);
+}
+
+.dark .text-rose-500 {
+  color: rgb(251 113 133);
+}
+
+.dark .text-rose-800, .dark .text-rose-900 {
+  color: rgb(254 205 211);
+}
+
+.dark .hover\:text-rose-600, .dark .hover\:text-rose-700, .dark .hover\:text-rose-800, .dark .hover\:text-rose-900 {
+  color: rgb(253 164 175) !important;
+}
+
+.dark .bg-rose-50, .dark .hover\:bg-rose-50 {
+  background-color: rgb(244 63 94 / 0.15);
+}
+
+.dark .bg-rose-50\/50, .dark .hover\:bg-rose-50\/50 {
+  background-color: rgb(244 63 94 / 0.1);
+}
+
+.dark .bg-rose-100, .dark .hover\:bg-rose-100 {
+  background-color: rgb(244 63 94 / 0.22);
+}
+
+.dark .bg-rose-200, .dark .hover\:bg-rose-200 {
+  background-color: rgb(244 63 94 / 0.3);
+}
+
+.dark .border-rose-200, .dark .border-rose-300 {
+  border-color: rgb(244 63 94 / 0.35);
+}
+
+.dark .text-violet-600, .dark .text-violet-700 {
+  color: rgb(196 181 253);
+}
+
+.dark .text-violet-500 {
+  color: rgb(167 139 250);
+}
+
+.dark .text-violet-800, .dark .text-violet-900 {
+  color: rgb(221 214 254);
+}
+
+.dark .hover\:text-violet-600, .dark .hover\:text-violet-700, .dark .hover\:text-violet-800, .dark .hover\:text-violet-900 {
+  color: rgb(196 181 253) !important;
+}
+
+.dark .bg-violet-50, .dark .hover\:bg-violet-50 {
+  background-color: rgb(139 92 246 / 0.15);
+}
+
+.dark .bg-violet-50\/50, .dark .hover\:bg-violet-50\/50 {
+  background-color: rgb(139 92 246 / 0.1);
+}
+
+.dark .bg-violet-100, .dark .hover\:bg-violet-100 {
+  background-color: rgb(139 92 246 / 0.22);
+}
+
+.dark .bg-violet-200, .dark .hover\:bg-violet-200 {
+  background-color: rgb(139 92 246 / 0.3);
+}
+
+.dark .border-violet-200, .dark .border-violet-300 {
+  border-color: rgb(139 92 246 / 0.35);
+}
+
+.dark .text-yellow-600, .dark .text-yellow-700 {
+  color: rgb(253 224 71);
+}
+
+.dark .text-yellow-500 {
+  color: rgb(250 204 21);
+}
+
+.dark .text-yellow-800, .dark .text-yellow-900 {
+  color: rgb(254 240 138);
+}
+
+.dark .hover\:text-yellow-600, .dark .hover\:text-yellow-700, .dark .hover\:text-yellow-800, .dark .hover\:text-yellow-900 {
+  color: rgb(253 224 71) !important;
+}
+
+.dark .bg-yellow-50, .dark .hover\:bg-yellow-50 {
+  background-color: rgb(234 179 8 / 0.15);
+}
+
+.dark .bg-yellow-50\/50, .dark .hover\:bg-yellow-50\/50 {
+  background-color: rgb(234 179 8 / 0.1);
+}
+
+.dark .bg-yellow-100, .dark .hover\:bg-yellow-100 {
+  background-color: rgb(234 179 8 / 0.22);
+}
+
+.dark .bg-yellow-200, .dark .hover\:bg-yellow-200 {
+  background-color: rgb(234 179 8 / 0.3);
+}
+
+.dark .border-yellow-200, .dark .border-yellow-300 {
+  border-color: rgb(234 179 8 / 0.35);
+}
+
+/* Scrollbars follow the theme in the desktop shell. */
+* {
+  scrollbar-color: rgb(var(--j-scrollbar)) rgb(var(--j-scrollbar-track));
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--j-scrollbar-track));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--j-scrollbar));
+  border-radius: 6px;
+  border: 2px solid rgb(var(--j-scrollbar-track));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--j-ink-subtle));
+}
+
+/* Printing always uses the light palette: paper is white. */
 @media print {
   body {
     background: white !important;
     color: black !important;
   }
-  header, aside, button, nav, .print\:hidden {
+
+  header,
+  aside,
+  button,
+  nav,
+  .print\:hidden {
     display: none !important;
   }
+
   main {
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
   }
-  #printable-area, #report-print-area {
+
+  #printable-area,
+  #report-print-area {
     display: block !important;
     width: 100% !important;
     margin: 0 !important;

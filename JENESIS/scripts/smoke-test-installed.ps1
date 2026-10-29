@@ -359,6 +359,25 @@ Step 'Close again and confirm clean shutdown' {
   Close-AppGracefully
 }
 
+Step 'Both themes ship in the installed application' {
+  # The packaged archive is not compressed, so the shipped markup and
+  # stylesheet can be inspected directly: the theme must be in the build the
+  # user installs, not only in the source tree.
+  $asar = Join-Path $InstallDir 'resources\app.asar'
+  Assert (Test-Path $asar) "Packaged application archive not found at $asar."
+  $text = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($asar))
+  $markers = @(
+    @{ needle = 'jenesis_theme';        what = 'the saved-theme bootstrap and storage key' },
+    @{ needle = 'prefers-color-scheme'; what = 'System Default support' },
+    @{ needle = '--j-canvas: 2 6 23';   what = 'the Dark Mode palette' },
+    @{ needle = '.dark .bg-white';      what = 'the Dark Mode compatibility layer' }
+  )
+  foreach ($marker in $markers) {
+    Assert ($text.Contains($marker.needle)) "The installed application is missing $($marker.what)."
+  }
+  Write-Host '    installed build contains the theme bootstrap, the dark palette and the remapped utilities' -ForegroundColor DarkGray
+}
+
 Step 'Silent uninstall removes the program but keeps business data' {
   $uninstaller = Join-Path $InstallDir "Uninstall $AppName.exe" 
   Assert (Test-Path $uninstaller) 'Uninstaller not found.'

@@ -102,7 +102,9 @@
     "line_narrative": "Ibisobanuro by'umurongo",
     "outstanding_balance": "Umwenda Usigaye",
     "outstanding_due": "Ideni Risigaye",
-    "none": "Ntacyo"
+    "none": "Ntacyo",
+    "theme": "Insanganyamatsiko",
+    "appearance": "Imiterere"
   },
   "dashboard": {
     "title": "Imbonerahamwe Nkuru y'Imari n'Ubucuruzi",
@@ -564,7 +566,22 @@
     "no_revaluations": "Nta ihinduragaciro ryakozwe",
     "reval_gain": "Inyungu Itaragezweho",
     "reval_loss": "Igihombo Kitagaragajwe",
-    "reval_docs": "Inyandiko"
+    "reval_docs": "Inyandiko",
+    "tab_appearance": "Imiterere",
+    "appearance_title": "Imiterere n'insanganyamatsiko",
+    "appearance_subtitle": "Hitamo uburyo bw'umucyo cyangwa ubw'ijoro kuri ecran zose za JENESIS",
+    "theme_light": "Uburyo bw'umucyo",
+    "theme_light_desc": "Ahakorerwa hacanye, inyandiko yijimye",
+    "theme_dark": "Uburyo bw'ijoro",
+    "theme_dark_desc": "Ahakorerwa hijimye, heza mu gihe cy'akazi karekare",
+    "theme_system": "Igenamiterere rya mudasobwa",
+    "theme_system_desc": "Kurikiza igenamiterere ry'imiterere rya mudasobwa",
+    "theme_active": "Birakoreshwa",
+    "theme_applies_now": "Insanganyamatsiko ihita ikoreshwa ako kanya, nta gufunga porogaramu.",
+    "theme_system_active": "Kurikiza igenamiterere rya mudasobwa",
+    "theme_persist_note": "Icyo wahisemo kibikwa kuri iyi mudasobwa kandi kigakomeza no nyuma yo gufunga no kongera gufungura JENESIS.",
+    "switch_to_light": "Hindura ku buryo bw'umucyo",
+    "switch_to_dark": "Hindura ku buryo bw'ijoro"
   },
   "auth": {
     "app_tagline": "Imicungire n’ibaruramari ry’ubucuruzi",

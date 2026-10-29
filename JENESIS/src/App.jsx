@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { I18nProvider } from './i18n';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -40,7 +41,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 text-slate-900 antialiased font-sans">
+    <div className="min-h-screen flex flex-col bg-canvas text-ink antialiased font-sans">
       <Navbar />
 
       <div className="flex flex-1 overflow-hidden">
@@ -66,11 +67,15 @@ function AppContent() {
 }
 
 export default function App() {
+  // ThemeProvider is outermost: the sign-in, first-run and error screens are
+  // rendered by AppContent and must honour the saved theme too.
   return (
-    <I18nProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </I18nProvider>
+    <ThemeProvider>
+      <I18nProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </I18nProvider>
+    </ThemeProvider>
   );
 }

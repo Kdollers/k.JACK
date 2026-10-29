@@ -81,6 +81,10 @@ certificate is configured.
    - **Currencies and exchange rates** — only needed if you trade in foreign currency.
 4. Choose your language (English / Français / Ikinyarwanda) in the top bar or in
    Settings; switching language never changes data.
+5. Choose your **appearance** in **Settings → Appearance**: Light Mode, Dark Mode
+   or System Default (follows Windows). The sun/moon switch in the header changes
+   it at any time, it applies to the whole application immediately, and it is
+   remembered for the next launch. Changing the theme never touches your data.
 
 **Other roles** sign in with the accounts the administrator creates for them. An
 account created by the administrator must choose a new password at its first

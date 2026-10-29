@@ -97,6 +97,66 @@ nothing in JEN 0.2 was missing from JAN 0.3.
    "historical document" banner on `FINAL-REPORT-v2.md`, which still described the
    pre-rename GENESIS 0.4 session while shipping inside the JENESIS build.
 
+## 4b. New feature: Light Mode, Dark Mode and System Default
+
+JENESIS has a complete theme system. It was built on top of the existing
+React + Tailwind + Electron stack with **no new dependency**.
+
+**What the user gets**
+
+- **Settings → Appearance** (`src/views/SettingsView.jsx`) offers three choices
+  with sun / moon / monitor icons: **Light Mode**, **Dark Mode** and **System
+  Default** (follows the Windows appearance setting and reacts when it changes).
+- A compact **sun / moon switch in the header** (`src/components/Navbar.jsx`)
+  and on the sign-in screens (`src/components/AuthScreens.jsx`), both driven by
+  the same `ThemeProvider`.
+- Switching is **immediate**: the class on `<html>` is updated in a layout
+  effect, so no screen ever repaints in the old theme, and nothing is reloaded.
+- The choice **persists** in `localStorage` under `jenesis_theme` (Electron
+  stores it per Windows profile), so it survives closing and reopening the
+  application, restarting the computer, and reinstalling.
+- `index.html` applies the saved theme **before the first paint** (inline
+  bootstrap), so there is no flash of the wrong theme at startup.
+
+**How it is built**
+
+| Piece | File | Role |
+|---|---|---|
+| Theme rules | `src/theme.mjs` | preferences, resolution, storage, painting — no React, unit-testable |
+| Provider | `src/context/ThemeContext.jsx` | one manager: storage, OS listener, cross-window sync, painting, Electron notification |
+| Control | `src/components/ThemeToggle.jsx` | header switch and Settings three-way control |
+| Tokens | `src/index.css` + `tailwind.config.js` | `--j-*` design tokens for canvas, surfaces, text, borders, shell, brand, states |
+| Compatibility layer | `src/index.css` | rebinds the existing `bg-white`/`text-slate-*` utilities to the tokens while dark, so all 10.5k lines of existing JSX follow the theme |
+| Desktop shell | `electron/main.cjs`, `electron/preload.cjs` | window background matches the theme (no white flash), native appearance follows the choice, through one validated IPC channel |
+
+**Centralised tokens, not scattered colours.** `--j-canvas`, `--j-surface`,
+`--j-surface-muted`, `--j-surface-hover`, `--j-line`, `--j-line-strong`,
+`--j-ink`, `--j-ink-secondary`, `--j-ink-muted`, `--j-ink-subtle`, `--j-shell`,
+`--j-shell-line`, `--j-shell-ink`, `--j-brand` and `--j-brand-strong` are
+defined once for Light (`:root`) and re-bound for Dark (`.dark`). New screens
+use the semantic utilities generated from them (`bg-canvas`, `bg-surface`,
+`text-ink`, `border-line`, …); the existing palette-based classes are remapped
+in the compatibility layer rather than rewritten, which keeps the accounting
+screens exactly as they were tested.
+
+**Coverage is enforced, not assumed.** `tests/theme.test.js` extracts every
+colour class used anywhere in `src/` and fails if any of them is neither
+remapped for Dark Mode nor explicitly documented as theme-neutral — 170 classes
+are audited on every run, so a future screen cannot silently ship light-only
+colours.
+
+**Accounting-specific readability.** Contrast is asserted, not eyeballed: in
+Light Mode primary text is **17.9:1**, labels **7.6:1**, hints **4.8:1**, brand
+**5.2:1** and input borders **3.1:1**; in Dark Mode **16.3:1**, **12.0:1**,
+**7.9:1**, **7.0:1** and **3.8:1**. Status colours (paid / unpaid / overdue /
+pending) keep their tinted badges in both themes, and status is never carried
+by colour alone — the existing text labels are unchanged. Printing always uses
+the light palette, and `prefers-reduced-motion` switches off the fade-in.
+
+**Nothing accounting-related was touched.** The theme code contains no API
+calls, no database access and no writes other than the `jenesis_theme` key
+(asserted by tests). No migration, no schema change, no recalculation.
+
 ## 5. Bugs found and fixed
 
 | # | Bug | Effect | Fix |
@@ -116,13 +176,18 @@ nothing in JEN 0.2 was missing from JAN 0.3.
 | 13 | The window gave no visibility into its load state and could stay invisible if `ready-to-show` never fired | a user closing JENESIS could be left with an empty, invisible frame; the condition was undiagnosable from the log | the shell now logs `did-finish-load` / `did-fail-load` / `render-process-gone` / `ready-to-show`, retries the load once when it fails or stalls for 15 s, and shows the window after 20 s regardless |
 | 14 | **The smoke test closed the wrong window** (test bug, found by CI): `Process.CloseMainWindow()` uses .NET's `MainWindowHandle`, which is whichever top-level window `EnumWindows` returns first — an Electron app owns several (the visible window plus hidden helpers) | 5 of 11 Windows CI runs failed "Close again and confirm clean shutdown": WM_CLOSE went to a helper window and was ignored, leaving the app and its backend running. The application was not at fault — its log shows `Window ready to show` immediately before each failed attempt | the smoke test enumerates the process's visible windows with Win32 `EnumWindows`/`GetWindowText` and posts WM_CLOSE to the one carrying the product name; still a user-style close, and "all processes exit" is still asserted |
 
+| 15 | `bg-slate-750` was used by the sidebar's active company row but never existed in the Tailwind palette | the class did nothing: the selected company was not highlighted | `slate.750` added to the palette and remapped for Dark Mode |
+| 16 | `animate-fade-in` was used by toasts and modals but no keyframes were defined in `tailwind.config.js` | notifications appeared without their fade-in | keyframes and animation added; `prefers-reduced-motion` now switches them off |
+| 17 | Hint and placeholder text used `slate-400` on white — a **2.56:1** contrast ratio, below the WCAG AA minimum | small helper text and placeholders were hard to read, especially on dim screens | the `--j-ink-subtle` token was darkened to reach **4.8:1** in Light Mode (Dark Mode: 7.9:1) |
+| 18 | Input borders used `slate-300` on white — **1.49:1**, below the 3:1 required for control boundaries | form fields had almost no visible outline | `--j-line-strong` was darkened to reach **3.08:1** in Light Mode (Dark Mode: 3.75:1), keeping the same look and feel |
+
 Nothing was found that corrupted accounting data; the bundled `genesis.db` is
 byte-identical to both source archives (MD5 `f6a9690dbdabc6d4778c04c4dfcf0365`,
 asserted by six suites).
 
 ## 6. Test results (executed, this sandbox, 2026-10-29)
 
-`npm run test:all` → **165 checks, 0 failed.**
+`npm run test:all` → **195 checks, 0 failed.**
 
 | Suite | Command | Result |
 |---|---|---|
@@ -132,11 +197,12 @@ asserted by six suites).
 | Desktop backend lifecycle | `npm run test:desktop` | 10/10 |
 | Operations | `npm run test:ops` | 36/36 — walk-in sales, returns, stores, transfers, GRN, counts, cash, FX, authorisation |
 | Migrations | `npm run test:migrations` | 9/9 (7 legacy upgrade + 2 fresh install) + repo DB MD5 unchanged |
-| i18n parity | `npm run test:i18n` | 10/10 — **652 keys × en/fr/rw**, no empties, placeholder parity, every `t()` key resolves |
+| i18n parity | `npm run test:i18n` | 10/10 — **669 keys × en/fr/rw** (652 + 17 theme strings), no empties, placeholder parity, every `t()` key resolves |
 | FX settlement | `npm run test:fx` | 17/17 — 4800/5900 posting, revaluation, role guard, TB balanced |
 | **FX revaluation integrity (new)** | `npm run test:fxreval` | **15/15** — history untouched, sub-ledger ↔ control account, company isolation, skip-on-bad-rate, audit trail, no-movement posts nothing |
 | **Data-location migration (new)** | `npm run test:datadir` | **11/11** — adoption, source preserved, sidecars, no-overwrite, corruption refused, seeding unaffected |
 | **Branding consistency (new)** | `npm run test:branding` | **9/9** — product identity, no stale GENESIS strings, script correctness, dictionary parity |
+| **Theme system (new)** | `npm run test:theme` | **30/30** — Light/Dark/System selection, immediate switching, persistence, first-paint bootstrap, token parity, WCAG contrast in both themes, full-UI colour coverage, Electron bridge, no backend access |
 
 Also executed:
 - `npm run build` (Vite production build) — **success**, 594 kB bundle
@@ -218,6 +284,13 @@ open, not hidden:
 - **Browser-visual review of every screen in fr/rw** — dictionary parity and
   key coverage are machine-checked; pixels are not.
 - `npm run test:e2e` (Python/Playwright UI test) — no browser available.
+- **The rendered themes were never seen by a human or a browser engine.** The
+  sandbox has no display (no Xvfb, and Electron's binary cannot be downloaded
+  here), so Dark Mode was verified by: the token/contrast tests, the full-UI
+  colour audit (170 classes), the first-paint bootstrap executed in Node with
+  stubs, and a check inside the installed `app.asar` on the Windows runner that
+  the theme bootstrap and dark palette really ship. **A two-minute look at both
+  themes after installing is still recommended** before rolling the build out.
 
 ## 7. Database safety, migrations and backups
 

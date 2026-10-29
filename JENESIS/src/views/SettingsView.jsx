@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
+import { useTheme } from '../context/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 import { apiRequest, downloadAuthenticated, translateError } from '../services/api';
 import {
   Settings,
@@ -15,14 +17,17 @@ import {
   Plus,
   Check,
   AlertTriangle,
-  X
+  X,
+  Palette,
+  Info
 } from 'lucide-react';
 
 export default function SettingsView() {
   const { currentCompany, companies, switchCompany, users, showToast, refreshKey, triggerRefresh, logout } = useApp();
   const { lang, setLang, t } = useI18n();
+  const { preference, systemPrefersDark } = useTheme();
 
-  const [activeTab, setActiveTab] = useState('company'); // 'company', 'users', 'taxes', 'audit', 'backup'
+  const [activeTab, setActiveTab] = useState('company'); // 'company', 'users', 'taxes', 'audit', 'currencies', 'backup', 'appearance'
   const [auditLogs, setAuditLogs] = useState([]);
   const [taxes, setTaxes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -392,7 +397,44 @@ export default function SettingsView() {
         >
           {t('settings.tab_backup')}
         </button>
+        <button
+          onClick={() => setActiveTab('appearance')}
+          className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center space-x-1 ${
+            activeTab === 'appearance' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Palette className="w-3.5 h-3.5" />
+          <span>{t('settings.tab_appearance')}</span>
+        </button>
       </div>
+
+      {/* Appearance Tab: Light / Dark / System Default */}
+      {activeTab === 'appearance' && (
+        <div className="bg-surface rounded-xl border border-line shadow-sm p-6 max-w-3xl">
+          <div className="border-b border-line pb-4 mb-4">
+            <h2 className="text-sm font-bold text-ink">{t('settings.appearance_title')}</h2>
+            <p className="text-[11px] text-ink-muted mt-0.5">{t('settings.appearance_subtitle')}</p>
+          </div>
+
+          <ThemeToggle variant="segmented" />
+
+          <div className="mt-5 flex items-start space-x-2 text-[11px] text-ink-muted bg-surface-muted border border-line rounded-lg p-3">
+            <Info className="w-4 h-4 shrink-0 mt-0.5 text-brand" aria-hidden="true" />
+            <div className="space-y-1">
+              <div>{t('settings.theme_applies_now')}</div>
+              {preference === 'system' && (
+                <div>
+                  {t('settings.theme_system_active')}:{' '}
+                  <strong className="text-ink">
+                    {systemPrefersDark ? t('settings.theme_dark') : t('settings.theme_light')}
+                  </strong>
+                </div>
+              )}
+              <div>{t('settings.theme_persist_note')}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1. Company Setup Tab */}
       {activeTab === 'company' && (

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import CalculatorModal from './CalculatorModal';
+import ThemeToggle from './ThemeToggle';
 import {
   Building2,
   Globe2,
@@ -132,6 +133,9 @@ export default function Navbar() {
           <span className="hidden sm:inline">{t('calculator.title')}</span>
         </button>
         {showCalculator && <CalculatorModal onClose={() => setShowCalculator(false)} />}
+
+        {/* Appearance: Light / Dark / System (same theme manager as Settings) */}
+        <ThemeToggle variant="button" />
 
         {/* Language Switcher */}
         <div className="relative">

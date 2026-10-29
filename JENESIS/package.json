@@ -21,13 +21,14 @@
     "test:fxreval": "node tests/fx-revaluation-integrity.test.js",
     "test:datadir": "node tests/data-location-migration.test.js",
     "test:branding": "node tests/branding-consistency.test.js",
-    "test:all": "npm test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:datadir && npm run test:branding",
+    "test:all": "npm test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:datadir && npm run test:branding && npm run test:theme",
     "desktop": "electron .",
     "desktop:pack": "npm run build && electron-builder --win --dir",
     "desktop:dist": "npm run build && electron-builder --win nsis",
     "test:auth": "node tests/auth-security.test.js",
     "test:security": "node tests/security-hardening.test.js",
-    "test:e2e": "python3 tests/e2e/auth_ui_test.py"
+    "test:e2e": "python3 tests/e2e/auth_ui_test.py",
+    "test:theme": "node tests/theme.test.js"
   },
   "build": {
     "appId": "com.jenesis.accounting",

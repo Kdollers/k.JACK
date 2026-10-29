@@ -7,20 +7,21 @@
 ## 📦 About this build
 
 This is the **consolidated JENESIS application**: the features of the previous
-`JEN 0.2` and `JAN 0.3` archives, merged into one project and verified by
-**165 automated checks**.
+`JEN 0.2` and `JAN 0.3` archives, merged into one project — plus a full
+**Light Mode / Dark Mode theme system** — and verified by
+**195 automated checks**.
 
 - **Merge report** (what came from where, bugs fixed, test results): [`MERGE-REPORT.md`](MERGE-REPORT.md)
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)
 
-Status: **165 automated checks pass** (locally and on Linux CI, with the real
+Status: **195 automated checks pass** (locally and on Linux CI, with the real
 SQLite driver) and the **Windows installer is built and smoke-tested on a
-GitHub-hosted Windows runner** — `JENESIS-Setup-1.0.0.exe`, 88 MB, 17/17
-installed-application checks green (CI run 40914097531 and 3 earlier re-runs; the installer is attached
-to that run as the `JENESIS-Windows-installer` artifact). It is unsigned and has
-not been run on a physical PC. See `MERGE-REPORT.md` §6 and §9 for exactly what is
-and is not verified.
+GitHub-hosted Windows runner** — `JENESIS-Setup-1.0.0.exe`, 88 MB, installed-
+application checks green (see the latest CI run cited in `MERGE-REPORT.md` §6;
+the installer is attached to that run as the `JENESIS-Windows-installer`
+artifact). It is unsigned and has not been run on a physical PC. See
+`MERGE-REPORT.md` §6 and §9 for exactly what is and is not verified.
 
 ---
 
@@ -34,6 +35,21 @@ and is not verified.
   - **Purchase Bill Posting**: Debits Merchandise Inventory & Input VAT, Credits Accounts Payable, increments warehouse stock, recalculates weighted-average unit cost, and updates supplier balance.
   - **Payments & Receipts**: Automatic debit/credit linking customer receipts, vendor disbursements, operating expenses, and bank transfers.
 - **Audit-Proof Reversals**: Posted journal entries cannot be silently destroyed; a proper `REVERSAL` transaction swaps debits and credits while referencing the original voucher.
+
+### 1b. Light Mode and Dark Mode
+- **Three choices** in **Settings → Appearance**: **Light Mode**, **Dark Mode**
+  and **System Default** (follows Windows), with sun / moon / monitor icons.
+- **Immediate switching**: the theme is applied to every screen without a
+  restart, a reload or any loss of state.
+- **Remembered**: the choice is stored on the computer and is restored on the
+  next launch, after a restart of the PC, and after reinstalling the app.
+- **Applied everywhere**: dashboard, sidebar, header, sales, purchases,
+  customers, suppliers, inventory, banking, accounting, reports, tables, forms,
+  dialogs, toasts, status badges and the sign-in screens.
+- **Built for long sessions**: coordinated dark surfaces, borders that stay
+  visible without glare, and text contrast verified automatically against
+  WCAG AA in both themes (see `tests/theme.test.js`).
+- A quick **sun/moon switch** in the header uses the same central theme manager.
 
 ### 2. Trilingual Localization
 1. **English (UK / US)**

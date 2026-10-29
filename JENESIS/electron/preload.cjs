@@ -8,5 +8,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('genesisDesktop', {
   isDesktop: true,
-  getAppInfo: () => ipcRenderer.invoke('genesis:get-app-info')
+  getAppInfo: () => ipcRenderer.invoke('genesis:get-app-info'),
+  // Appearance only: the main process accepts 'light', 'dark' or 'system' and
+  // ignores anything else. It grants no other capability.
+  setTheme: (theme) => ipcRenderer.invoke('genesis:set-theme', theme)
 });

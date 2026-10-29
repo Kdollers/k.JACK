@@ -51,6 +51,30 @@ The in-application JSON backup/restore is part of the existing Settings module.
 Uninstall JENESIS from Windows Settings → Apps. The uninstaller removes the program
 files only. `%APPDATA%\JENESIS` (your business data) is kept unless you delete it yourself.
 
+## Appearance (Light Mode / Dark Mode)
+
+JENESIS ships a full theme system. **Settings → Appearance** offers Light Mode,
+Dark Mode and System Default (follows Windows); a sun/moon switch in the header
+changes it instantly, and the choice is remembered for the next launch.
+
+How it is wired into the desktop shell:
+
+| Where | What |
+|---|---|
+| `src/theme.mjs`, `src/context/ThemeContext.jsx` | the single theme manager: storage (`localStorage`, key `jenesis_theme`), OS listener, painting |
+| `index.html` | applies the saved theme before the first paint, so the window never opens in the wrong theme |
+| `electron/preload.cjs` → `genesis:set-theme` | the only bridge: the renderer passes `'light'`, `'dark'` or `'system'` |
+| `electron/main.cjs` | validates that value, sets `nativeTheme.themeSource`, and repaints the window background (`#f1f5f9` / `#020617`) so there is no white flash on startup |
+| Electron storage | `localStorage` lives in the JENESIS user-data folder (`%APPDATA%\JENESIS`), so the theme is part of the user profile and survives reinstalls |
+
+Security is unchanged: the renderer stays sandboxed with `nodeIntegration:
+false` and `contextIsolation: true`, and the new channel accepts exactly three
+strings — it grants no file, shell or Node access.
+
+Resetting the appearance: choose Light Mode in Settings (or remove the
+`jenesis_theme` entry from the JENESIS local storage). Nothing else is affected:
+the theme never touches accounting data.
+
 ## Security notes
 - The backend binds to 127.0.0.1 only and checks its own identity before the window opens.
 - The renderer runs with contextIsolation, sandbox and nodeIntegration disabled.

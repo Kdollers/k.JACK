@@ -102,7 +102,9 @@
     "line_narrative": "Line narrative",
     "outstanding_balance": "Outstanding Balance",
     "outstanding_due": "Outstanding Due",
-    "none": "None"
+    "none": "None",
+    "theme": "Theme",
+    "appearance": "Appearance"
   },
   "dashboard": {
     "title": "Executive Financial Dashboard",
@@ -564,7 +566,22 @@
     "no_revaluations": "No revaluations posted yet",
     "reval_gain": "Unrealized Gain",
     "reval_loss": "Unrealized Loss",
-    "reval_docs": "Documents"
+    "reval_docs": "Documents",
+    "tab_appearance": "Appearance",
+    "appearance_title": "Appearance & Theme",
+    "appearance_subtitle": "Choose Light Mode or Dark Mode for every screen of JENESIS",
+    "theme_light": "Light Mode",
+    "theme_light_desc": "Bright workspace with dark text",
+    "theme_dark": "Dark Mode",
+    "theme_dark_desc": "Dark workspace for low light and long sessions",
+    "theme_system": "System Default",
+    "theme_system_desc": "Follow the appearance setting of this computer",
+    "theme_active": "Active",
+    "theme_applies_now": "The theme is applied immediately — no restart needed.",
+    "theme_system_active": "Following your computer setting",
+    "theme_persist_note": "Your choice is saved on this computer and stays active after closing and reopening JENESIS.",
+    "switch_to_light": "Switch to Light Mode",
+    "switch_to_dark": "Switch to Dark Mode"
   },
   "auth": {
     "app_tagline": "Business accounting & management",

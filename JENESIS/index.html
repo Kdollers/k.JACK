@@ -3,9 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>JENESIS — Professional Business Accounting & Management Software</title>
+    <script>
+      /*
+       * Theme bootstrap: runs before the first paint so the saved theme is
+       * already applied and the interface never flashes the wrong colours.
+       * Kept in sync with src/theme.mjs (tests/theme.test.js executes it).
+       */
+      (function () {
+        try {
+          var pref = localStorage.getItem('jenesis_theme');
+          if (pref !== 'light' && pref !== 'dark' && pref !== 'system') {
+            pref = 'light';
+          }
+          var dark =
+            pref === 'dark' ||
+            (pref === 'system' &&
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          if (dark) {
+            root.classList.add('dark');
+          }
+          root.setAttribute('data-theme', dark ? 'dark' : 'light');
+          root.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (err) {
+          /* storage unavailable: Light Mode is used */
+        }
+      })();
+    </script>
   </head>
-  <body class="bg-slate-100 text-slate-900 overflow-x-hidden antialiased">
+  <body class="bg-canvas text-ink overflow-x-hidden antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

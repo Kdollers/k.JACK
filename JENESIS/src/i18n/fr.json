@@ -102,7 +102,9 @@
     "line_narrative": "Libellé de la ligne",
     "outstanding_balance": "Solde en cours",
     "outstanding_due": "Dette en cours",
-    "none": "Aucun"
+    "none": "Aucun",
+    "theme": "Thème",
+    "appearance": "Apparence"
   },
   "dashboard": {
     "title": "Tableau de Bord Financier et Opérationnel",
@@ -564,7 +566,22 @@
     "no_revaluations": "Aucune réévaluation comptabilisée",
     "reval_gain": "Gain latent",
     "reval_loss": "Perte latente",
-    "reval_docs": "Documents"
+    "reval_docs": "Documents",
+    "tab_appearance": "Apparence",
+    "appearance_title": "Apparence et thème",
+    "appearance_subtitle": "Choisissez le mode clair ou le mode sombre pour tous les écrans de JENESIS",
+    "theme_light": "Mode clair",
+    "theme_light_desc": "Espace de travail lumineux avec du texte foncé",
+    "theme_dark": "Mode sombre",
+    "theme_dark_desc": "Espace de travail sombre, adapté à la faible lumière et aux longues sessions",
+    "theme_system": "Valeur du système",
+    "theme_system_desc": "Suit le paramètre d'apparence de cet ordinateur",
+    "theme_active": "Actif",
+    "theme_applies_now": "Le thème est appliqué immédiatement, sans redémarrage.",
+    "theme_system_active": "Suit le réglage de l'ordinateur",
+    "theme_persist_note": "Votre choix est enregistré sur cet ordinateur et reste actif après la fermeture et la réouverture de JENESIS.",
+    "switch_to_light": "Passer au mode clair",
+    "switch_to_dark": "Passer au mode sombre"
   },
   "auth": {
     "app_tagline": "Gestion et comptabilité d’entreprise",

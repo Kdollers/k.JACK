@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
+import ThemeToggle from './ThemeToggle';
 
 const inputClass =
   'w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white';
@@ -18,7 +19,11 @@ export function errorText(err, t) {
 function Shell({ title, intro, children }) {
   const { lang, setLang, t } = useI18n();
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-900 p-4">
+    <div className="relative min-h-screen w-screen flex items-center justify-center bg-slate-900 p-4">
+      {/* Appearance switch: the sign-in screens use the same theme manager. */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle variant="button" />
+      </div>
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center space-x-3 mb-6 text-white">
           <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center font-black text-2xl shadow-lg">G</div>

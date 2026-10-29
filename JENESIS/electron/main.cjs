@@ -9,7 +9,7 @@
  *   - open the JENESIS window with a locked-down renderer,
  *   - stop the backend cleanly when the application exits.
  */
-const { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, session, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { BackendProcess, findFreePort, LOOPBACK } = require('./backend-manager.cjs');
@@ -155,6 +155,42 @@ function stopBackend() {
 }
 
 // ---------------------------------------------------------------------------
+// Appearance
+// ---------------------------------------------------------------------------
+// The window is painted before the interface loads, so its background has to
+// match the theme the renderer is about to apply. The renderer tells us which
+// theme is active through one narrow IPC channel that accepts exactly three
+// strings - no Node.js, file system or shell access is involved.
+const THEME_BACKGROUNDS = { light: '#f1f5f9', dark: '#020617' };
+const ALLOWED_THEMES = ['light', 'dark', 'system'];
+
+function darkWindowBackground() {
+  return nativeTheme && nativeTheme.shouldUseDarkColors ? THEME_BACKGROUNDS.dark : THEME_BACKGROUNDS.light;
+}
+
+function applyShellTheme(theme) {
+  if (!ALLOWED_THEMES.includes(theme)) return null;
+  if (nativeTheme) nativeTheme.themeSource = theme;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setBackgroundColor(
+      nativeTheme && nativeTheme.shouldUseDarkColors ? THEME_BACKGROUNDS.dark : THEME_BACKGROUNDS.light
+    );
+  }
+  writeLog(`Appearance set to ${theme}.`);
+  return theme;
+}
+
+ipcMain.handle('genesis:set-theme', (event, requested) => applyShellTheme(requested));
+
+// The operating system can change its appearance while JENESIS is running;
+// keep the window background in step when the user follows the system.
+if (nativeTheme && typeof nativeTheme.on === 'function') {
+  nativeTheme.on('updated', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setBackgroundColor(darkWindowBackground());
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Window
 // ---------------------------------------------------------------------------
 function createWindow() {
@@ -165,7 +201,7 @@ function createWindow() {
     minWidth: WINDOW_MIN_WIDTH,
     minHeight: WINDOW_MIN_HEIGHT,
     show: false,
-    backgroundColor: '#f8fafc',
+    backgroundColor: darkWindowBackground(),
     autoHideMenuBar: true,
     icon: path.join(appRoot(), 'build', 'icon.ico'),
     webPreferences: {
