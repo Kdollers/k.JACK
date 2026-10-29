@@ -105,15 +105,22 @@ function Get-AppProcesses {
 }
 
 function Wait-ForAppWindow([int] $TimeoutSec = 90) {
-  # A freshly started Electron window can take a moment to publish a main window
-  # handle, and headless/remote sessions sometimes never publish one at all.
+  # Wait until the window is really up: a handle alone is not enough, the title
+  # is only set once the page has loaded. Asking an application to close before
+  # its window has finished loading is not something a user can do, and on a
+  # slow runner the close request is then ignored.
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  $fallback = @()
   while ((Get-Date) -lt $deadline) {
-    $windows = @(Get-AppProcesses | Where-Object { $_.MainWindowHandle -ne 0 })
-    if ($windows.Count -gt 0) { return $windows }
+    $all = @(Get-AppProcesses | Where-Object { $_.MainWindowHandle -ne 0 })
+    if ($all.Count -gt 0 -and -not $fallback) { $fallback = $all }
+    $ready = @($all | Where-Object { $_.MainWindowTitle })
+    if ($ready.Count -gt 0) { return $ready }
     Start-Sleep -Milliseconds 500
   }
-  return @()
+  # Headless/remote sessions sometimes never publish a titled window; the
+  # caller then falls back to stopping the process directly.
+  return $fallback
 }
 
 function Close-AppGracefully {
