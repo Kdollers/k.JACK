@@ -145,6 +145,27 @@ remapped for Dark Mode nor explicitly documented as theme-neutral — 170 classe
 are audited on every run, so a future screen cannot silently ship light-only
 colours.
 
+**Every text/background pair is measured, not assumed.** A perfect token set
+still allows an unreadable screen if a component puts the wrong text colour on
+the wrong background, so `tests/theme.test.js` extracts every pair that appears
+together in a `className` (including each branch of a conditional class),
+resolves both colours — for Light from the Tailwind palette, for Dark from the
+CSS itself with the tokens substituted — and fails below 4.5:1. **122 pairs**
+are measured on every run. Five combinations were found below the bar and
+fixed (see bugs #19–#22); translucent backgrounds and custom shades are
+reported as "not measurable" rather than silently passed.
+
+**Native and third-party pieces.** There is no charting library in the project
+(verified: no chart dependency, no `<svg>` chart code), so nothing had to be
+adapted there. Icons are `lucide-react` and inherit `currentColor`, so they
+follow the text colour automatically; date pickers, select popups, scrollbars
+and form autofill are native Chromium controls and follow the theme through
+`color-scheme`, which is set on `:root` for Light and `.dark` for Dark;
+Chromium's own light autofill yellow is overridden. Tooltips use the native
+`title` attribute (drawn by Windows) and custom dropdown menus use the themed
+surface classes. The brand mark is a gradient tile with a white "G" and is
+unchanged in both themes.
+
 **Accounting-specific readability.** Contrast is asserted, not eyeballed: in
 Light Mode primary text is **17.9:1**, labels **7.6:1**, hints **4.8:1**, brand
 **5.2:1** and input borders **3.1:1**; in Dark Mode **16.3:1**, **12.0:1**,
@@ -180,6 +201,11 @@ calls, no database access and no writes other than the `jenesis_theme` key
 | 16 | `animate-fade-in` was used by toasts and modals but no keyframes were defined in `tailwind.config.js` | notifications appeared without their fade-in | keyframes and animation added; `prefers-reduced-motion` now switches them off |
 | 17 | Hint and placeholder text used `slate-400` on white — a **2.56:1** contrast ratio, below the WCAG AA minimum | small helper text and placeholders were hard to read, especially on dim screens | the `--j-ink-subtle` token was darkened to reach **4.8:1** in Light Mode (Dark Mode: 7.9:1) |
 | 18 | Input borders used `slate-300` on white — **1.49:1**, below the 3:1 required for control boundaries | form fields had almost no visible outline | `--j-line-strong` was darkened to reach **3.08:1** in Light Mode (Dark Mode: 3.75:1), keeping the same look and feel |
+| 19 | Inactive status badge: `text-slate-400` on `bg-slate-100` — **2.34:1** in Light Mode, 4.04:1 in Dark | the "inactive" pill was barely legible | text changed to `text-slate-600` → **6.9:1** light, **7.0:1** dark |
+| 20 | Disabled button: `text-slate-500` on `bg-slate-300` — **3.21:1** in both themes | disabled actions looked like enabled-but-faded text | text changed to `text-slate-700` and the Dark Mode value of `bg-slate-300` darkened one step → **6.97:1** light, **6.15:1** dark |
+| 21 | "Add company" row in the header dropdown: `text-blue-400` on the `hover:bg-slate-700` row — **4.07:1** | the link dimmed when the pointer was over it | `hover:text-blue-300` added → **5.74:1** |
+| 22 | Service / inactive badges: `text-slate-500` on `bg-slate-100` — **4.34:1** in Light Mode | small uppercase labels just under the AA bar | text changed to `text-slate-600` → **6.91:1** light, **6.97:1** dark |
+| 23 | The interface shipped as one 605 kB JavaScript bundle, over Vite's 500 kB warning threshold | slower first load, warning on every build | `manualChunks` splits React (135 kB) and the icon set (32 kB) out; the app chunk is 437 kB and the warning is gone |
 
 Nothing was found that corrupted accounting data; the bundled `genesis.db` is
 byte-identical to both source archives (MD5 `f6a9690dbdabc6d4778c04c4dfcf0365`,
@@ -187,7 +213,7 @@ asserted by six suites).
 
 ## 6. Test results (executed, this sandbox, 2026-10-29)
 
-`npm run test:all` → **195 checks, 0 failed.**
+`npm run test:all` → **196 checks, 0 failed.**
 
 | Suite | Command | Result |
 |---|---|---|
@@ -202,11 +228,12 @@ asserted by six suites).
 | **FX revaluation integrity (new)** | `npm run test:fxreval` | **15/15** — history untouched, sub-ledger ↔ control account, company isolation, skip-on-bad-rate, audit trail, no-movement posts nothing |
 | **Data-location migration (new)** | `npm run test:datadir` | **11/11** — adoption, source preserved, sidecars, no-overwrite, corruption refused, seeding unaffected |
 | **Branding consistency (new)** | `npm run test:branding` | **9/9** — product identity, no stale GENESIS strings, script correctness, dictionary parity |
-| **Theme system (new)** | `npm run test:theme` | **30/30** — Light/Dark/System selection, immediate switching, persistence, first-paint bootstrap, token parity, WCAG contrast in both themes, full-UI colour coverage, Electron bridge, no backend access |
+| **Theme system (new)** | `npm run test:theme` | **31/31** — Light/Dark/System selection, immediate switching, persistence, first-paint bootstrap, token parity, WCAG contrast in both themes, **122 measured text/background pairs**, full-UI colour coverage (176 classes), Electron bridge, no backend access |
 
 Also executed:
-- `npm run build` (Vite production build) — **success**, 594 kB bundle
-  (`dist/assets/index-DhpQgir6.js`), only the pre-existing >500 kB chunk warning.
+- `npm run build` (Vite production build) — **success**, three chunks:
+  `index.js` 437 kB, `react.js` 135 kB, `icons.js` 32 kB (the previous single
+  605 kB bundle triggered Vite's size warning; it is gone).
 - Production server smoke test against the built `dist/`: `/api/health` →
   `{"status":"healthy","application":"JENESIS …","appId":"genesis-accounting"}`,
   `/` → 200 with the JENESIS title and the built bundle, `/api/setup/status` →
@@ -362,8 +389,8 @@ the first administrator; afterwards sign in with that account.
 1. **The installer is built and smoke-tested on a GitHub-hosted Windows runner, but
    not on a physical Windows PC, and it is unsigned.** Windows SmartScreen will warn
    until a code-signing certificate is configured (`CSC_LINK` / `CSC_KEY_PASSWORD`).
-   The installer exists only as a CI artifact (run 40914097531); it is not stored in
-   the repository and this sandbox cannot download artifacts from GitHub.
+   The installer exists only as a CI artifact (see the runs cited in §6); it is not
+   stored in the repository and this sandbox cannot download artifacts from GitHub.
 2. **No live-Windows-database migration test.** v4 was exercised on copies of the
    bundled database and on fresh installs (9 checks), and the CI smoke test upgrades
    nothing — it starts from an empty database. A database created by an *installed*
@@ -373,7 +400,6 @@ the first administrator; afterwards sign in with that account.
 4. **Code signing is not configured**: Windows SmartScreen will warn until
    `CSC_LINK` / `CSC_KEY_PASSWORD` are set in CI.
 5. **Installer auto-update is not implemented** (reinstall keeps `%APPDATA%\JENESIS`).
-6. **Vite chunk-size warning** (594 kB > 500 kB) — cosmetic, no code-splitting yet.
 7. **Period-end revaluation requires a rate for every open foreign document** on
    the revaluation date; if one is missing the whole run aborts and nothing posts.
    This is deliberate (no partial revaluation) but means rates must be maintained.

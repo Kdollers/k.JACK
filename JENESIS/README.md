@@ -9,13 +9,13 @@
 This is the **consolidated JENESIS application**: the features of the previous
 `JEN 0.2` and `JAN 0.3` archives, merged into one project — plus a full
 **Light Mode / Dark Mode theme system** — and verified by
-**195 automated checks**.
+**196 automated checks**.
 
 - **Merge report** (what came from where, bugs fixed, test results): [`MERGE-REPORT.md`](MERGE-REPORT.md)
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)
 
-Status: **195 automated checks pass** (locally and on Linux CI, with the real
+Status: **196 automated checks pass** (locally and on Linux CI, with the real
 SQLite driver) and the **Windows installer is built and smoke-tested on a
 GitHub-hosted Windows runner** — `JENESIS-Setup-1.0.0.exe`, 88 MB, installed-
 application checks green (see the latest CI run cited in `MERGE-REPORT.md` §6;

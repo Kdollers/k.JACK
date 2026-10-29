@@ -736,7 +736,7 @@ export default function SettingsView() {
                         <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-indigo-100 text-indigo-800" title={t('settings.base_locked')}>{t('settings.is_base')}</span>
                       ) : (
                         <button onClick={() => handleToggleCurrency(c)}
-                          className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${c.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-400'}`}>
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${c.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
                           {c.active ? t('settings.currency_active') : t('settings.currency_inactive')}
                         </button>
                       )}

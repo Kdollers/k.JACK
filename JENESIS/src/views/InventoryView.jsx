@@ -561,7 +561,7 @@ export default function InventoryView() {
                         </td>
                         <td className="py-3 px-4 text-center">
                           {!isGoods ? (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-slate-100 text-slate-500">{t('inventory.service')}</span>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-slate-100 text-slate-600">{t('inventory.service')}</span>
                           ) : isOut ? (
                             <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-rose-100 text-rose-800">
                               <AlertTriangle className="w-2.5 h-2.5" /><span>{t('inventory.out_of_stock')}</span>
@@ -642,7 +642,7 @@ export default function InventoryView() {
                     <td className="py-2.5 px-4 text-slate-500">{w.address || '-'}</td>
                     <td className="py-2.5 px-4 text-center">{w.is_default ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : '—'}</td>
                     <td className="py-2.5 px-4 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${w.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${w.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
                         {w.active ? t('common.active') : t('common.inactive')}
                       </span>
                     </td>

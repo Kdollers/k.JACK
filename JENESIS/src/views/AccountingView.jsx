@@ -681,7 +681,7 @@ export default function AccountingView() {
                   className={`px-6 py-2 rounded-md font-semibold transition shadow ${
                     isBalanced
                       ? 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
-                      : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                      : 'bg-slate-300 text-slate-700 cursor-not-allowed'
                   }`}
                 >
                   {t('common.post_now')}

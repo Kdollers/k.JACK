@@ -503,6 +503,145 @@ test('the interface audit covers every screen of the application', () => {
 });
 
 // ---------------------------------------------------------------------------
+// 3a. Text/background pairs as they are actually written in the interface.
+//     A token can be perfect and a screen still unreadable if a component puts
+//     the wrong text colour on the wrong background, so every pair that appears
+//     together in a className is measured in both themes.
+// ---------------------------------------------------------------------------
+const FAMILIES = ['slate', 'gray', 'zinc', 'neutral', 'stone', 'red', 'orange', 'amber', 'yellow',
+  'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple',
+  'fuchsia', 'pink', 'rose'];
+
+let tailwindColors = null;
+try {
+  tailwindColors = require('tailwindcss/colors');
+} catch (_) {
+  tailwindColors = null;
+}
+const PALETTE = (tailwindColors && (tailwindColors.default || tailwindColors)) || null;
+
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  return [parseInt(full.slice(0, 2), 16), parseInt(full.slice(2, 4), 16), parseInt(full.slice(4, 6), 16)];
+}
+
+function paletteColor(family, shade) {
+  if (family === 'white') return [255, 255, 255];
+  if (family === 'black') return [0, 0, 0];
+  const scale = PALETTE && PALETTE[family];
+  if (!scale) return null;
+  // Custom shades live in tailwind.config, not in the palette: report as unknown
+  // instead of guessing a different shade.
+  if (shade && scale[shade] === undefined) return null;
+  const value = shade ? scale[shade] : scale['500'];
+  return typeof value === 'string' ? hexToRgb(value) : null;
+}
+
+/** The colour a utility class resolves to inside the dark theme. */
+function darkRuleFor(cls) {
+  const start = css.lastIndexOf('Dark Mode compatibility layer');
+  const section = css.slice(start);
+  const layer = section
+    .slice(section.indexOf('*/') + 2)
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const match of layer.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+    const selectors = match[1].trim();
+    if (!selectors.startsWith('.dark ')) continue;
+    for (const part of selectors.split(',')) {
+      let name = part
+        .trim()
+        .replace(/^\.dark\s+/, '')
+        .replace(/\\/g, '')
+        .replace(/(::?[a-z-]+(\([^)]*\))?)+$/g, '');
+      if (name.startsWith('.')) name = name.slice(1);
+      if (name === cls) return match[2];
+    }
+  }
+  return null;
+}
+
+function darkToken(name) {
+  const start = css.indexOf('\n  .dark {');
+  const block = css.slice(start, css.indexOf('\n  }', start));
+  const match = block.match(new RegExp(`${name}:\\s*([^;]+);`));
+  return match ? match[1].trim().split(/\s+/).map(Number) : null;
+}
+
+/** Resolve a utility class to [r, g, b] for a theme, or null when unknown. */
+function resolveClass(cls, theme) {
+  const familyList = `(?:${FAMILIES.join('|')})`;
+  const match = new RegExp(`^(?:hover:|focus:|dark:)?(bg|text)-(${familyList}|white|black)(?:-(\\d{2,4}))?$`).exec(cls);
+  if (!match) return null;
+  const family = match[2];
+  const shade = match[3];
+  if (/\//.test(cls)) return null; // translucent: depends on what is behind it
+
+  if (theme === 'dark') {
+    const declaration = darkRuleFor(cls);
+    if (declaration) {
+      const token = declaration.match(/rgb\(\s*var\((--j-[a-z-]+)\)\s*\)/);
+      if (token) return darkToken(token[1]);
+      const rgb = declaration.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)\s*\)/);
+      if (rgb) return [+rgb[1], +rgb[2], +rgb[3]];
+      const hex = declaration.match(/color:\s*(#[0-9a-fA-F]{3,6})/);
+      if (hex) return hexToRgb(hex[1]);
+      return null; // tinted (rgba) backgrounds are blended: not measurable alone
+    }
+  }
+  return paletteColor(family, shade);
+}
+
+/** Split a className expression into plain class lists, one per branch. */
+function classSegments(chunk) {
+  const out = [];
+  const re = /\$\{([^{}]*)\}/g;
+  let last = 0;
+  let match;
+  while ((match = re.exec(chunk)) !== null) {
+    out.push(chunk.slice(last, match.index));
+    for (const quoted of match[1].matchAll(/'([^']*)'/g)) out.push(quoted[1]);
+    last = match.index + match[0].length;
+  }
+  out.push(chunk.slice(last));
+  return out;
+}
+
+/** Every (text, background) pair written together in a className. */
+function colourPairs() {
+  const textRe = new RegExp(`\\btext-((?:${FAMILIES.join('|')})|white|black)-\\d{2,4}\\b`, 'g');
+  const bgRe = new RegExp(`\\b(?:hover\\:)?bg-((?:${FAMILIES.join('|')})|white|black)(?:-\\d{2,4})?(?![\\/\\d-])`, 'g');
+  const pairs = [];
+  for (const file of walk('src', ['.jsx', '.js'])) {
+    const source = read(file);
+    const chunks = [
+      ...[...source.matchAll(/className="([^"]*)"/g)].map((m) => m[1]),
+      ...[...source.matchAll(/className=\{\s*`([^`]*)`\s*\}/g)].map((m) => m[1]),
+      ...[...source.matchAll(/className=\{\s*'([^']*)'\s*\}/g)].map((m) => m[1]),
+      ...[...source.matchAll(/=\s*\n?\s*'([^']*bg-[^']*)'/g)].map((m) => m[1]),
+    ];
+    for (const chunk of chunks) {
+      for (const segment of classSegments(chunk)) {
+        const texts = [...segment.matchAll(textRe)].map((m) => m[0]);
+        const bgs = [...segment.matchAll(bgRe)].map((m) => m[0]);
+        for (const bg of bgs) {
+          // A hover background is only seen with the hover text colour, never
+          // with the resting one.
+          const hovering = bg.startsWith('hover:');
+          const candidates = hovering
+            ? texts.filter((t) => t.startsWith('hover:')).map((t) => t.slice(6))
+            : texts.filter((t) => !t.startsWith('hover:'));
+          for (const text of candidates) {
+            pairs.push({ file, text, bg });
+          }
+        }
+      }
+    }
+  }
+  return pairs;
+}
+
+// ---------------------------------------------------------------------------
 // 3b. Contrast: accounting screens are used for hours, so text must stay
 //     readable in both themes (WCAG 2.1 AA: 4.5:1 body text, 3:1 UI borders).
 // ---------------------------------------------------------------------------
@@ -552,6 +691,37 @@ for (const [scope, label] of [[':root', 'Light Mode'], ['.dark', 'Dark Mode']]) 
     }
   });
 }
+
+test('no text/background pair in the interface falls below 4.5:1 in either theme', () => {
+  if (!PALETTE) {
+    skipped++;
+    console.log('    (skipped: the Tailwind palette is not installed)');
+    return;
+  }
+  const pairs = colourPairs();
+  let measured = 0;
+  const problems = [];
+  for (const { file, text, bg } of pairs) {
+    const lightText = resolveClass(text, 'light');
+    const lightBg = resolveClass(bg, 'light');
+    const darkText = resolveClass(text, 'dark');
+    const darkBg = resolveClass(bg, 'dark');
+    if (!lightText || !lightBg || !darkText || !darkBg) continue; // translucent or custom shade
+    measured++;
+    const light = contrast(lightText, lightBg);
+    const dark = contrast(darkText, darkBg);
+    if (light < 4.5 || dark < 4.5) {
+      problems.push(`${text} on ${bg}: light ${light.toFixed(2)}:1, dark ${dark.toFixed(2)}:1 (${file})`);
+    }
+  }
+  assert.ok(measured > 80, `expected to measure the whole interface, measured ${measured} pairs`);
+  assert.deepStrictEqual(
+    problems.slice(0, 12),
+    [],
+    `unreadable combinations:\n      ${problems.slice(0, 12).join('\n      ')}`
+  );
+  console.log(`    ${measured} text/background pairs measured in both themes`);
+});
 
 test('cards, panels and shells stay distinguishable from their background', () => {
   for (const scope of [':root', '.dark']) {

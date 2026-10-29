@@ -15,6 +15,17 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // The single 600 kB bundle triggered Vite's size warning. Splitting the
+        // framework and the icon set out keeps each file small and lets the
+        // desktop shell cache them between releases.
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          icons: ['lucide-react']
+        }
+      }
+    }
   }
 });
