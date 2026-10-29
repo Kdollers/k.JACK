@@ -132,7 +132,7 @@ jobs:
       # Delete the ci-logs folder once the failure is understood; a green run
       # does not create it.
       - name: Commit smoke-test diagnostics to the branch
-        if: failure()
+        if: always()
         shell: bash
         working-directory: ${{ github.workspace }}
         env:
