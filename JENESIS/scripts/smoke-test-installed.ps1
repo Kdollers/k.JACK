@@ -31,6 +31,20 @@ $DataDir = Join-Path $env:APPDATA $AppName
 $LogFile = Join-Path $DataDir 'logs\desktop.log'
 $ExePath = Join-Path $InstallDir "$AppName.exe"
 
+function Write-ApplicationLogTail([int] $Lines = 40) {
+  # The application log shows whether the close request reached the app at all.
+  try {
+    if (Test-Path $LogFile) {
+      Write-Host "    --- application log $LogFile (last $Lines lines) ---" -ForegroundColor DarkGray
+      Get-Content $LogFile -Tail $Lines | ForEach-Object { Write-Host "    | $_" -ForegroundColor DarkGray }
+    } else {
+      Write-Host "    (no application log found at $LogFile)" -ForegroundColor DarkGray
+    }
+  } catch {
+    Write-Host "    (application log could not be read: $($_.Exception.Message))" -ForegroundColor DarkGray
+  }
+}
+
 function Step([string] $Name, [scriptblock] $Body) {
   Write-Host "==> $Name" -ForegroundColor Cyan
   try {
@@ -41,6 +55,7 @@ function Step([string] $Name, [scriptblock] $Body) {
   } catch {
     $script:Results += [pscustomobject]@{ Step = $Name; Result = "FAIL: $($_.Exception.Message)" }
     Write-Host "    FAIL: $($_.Exception.Message)" -ForegroundColor Red
+    Write-ApplicationLogTail
     Write-Summary
     exit 1
   }
