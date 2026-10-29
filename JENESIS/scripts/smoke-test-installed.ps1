@@ -104,43 +104,92 @@ function Get-AppProcesses {
   return @(Get-Process -Name $AppName -ErrorAction SilentlyContinue)
 }
 
-function Wait-ForAppWindow([int] $TimeoutSec = 90) {
-  # Wait until the window is really up: a handle alone is not enough, the title
-  # is only set once the page has loaded. Asking an application to close before
-  # its window has finished loading is not something a user can do, and on a
-  # slow runner the close request is then ignored.
+# ---------------------------------------------------------------------------
+# Window handling.
+#
+# .NET's Process.MainWindowHandle/MainWindowTitle are unreliable for an Electron
+# application: EnumWindows returns several top-level windows (the app window plus
+# hidden helper windows) and the "main" one is whichever comes first, so
+# CloseMainWindow() intermittently sends WM_CLOSE to the wrong window and the
+# application never closes. Enumerate the real windows instead and close the
+# visible one that carries the application title, exactly as a user would.
+# ---------------------------------------------------------------------------
+if (-not ('Win32.WindowFinder' -as [type])) {
+  Add-Type -Namespace Win32 -Name WindowFinder -MemberDefinition @'
+  [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, System.IntPtr lParam);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr hWnd, out uint pid);
+  [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr hWnd);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowTextLength(System.IntPtr hWnd);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(System.IntPtr hWnd, System.Text.StringBuilder sb, int max);
+  [DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr hWnd, uint msg, System.IntPtr wParam, System.IntPtr lParam);
+  public delegate bool EnumWindowsProc(System.IntPtr hWnd, System.IntPtr lParam);
+  public const uint WM_CLOSE = 0x0010;
+  public static System.Collections.Generic.List<System.IntPtr> WindowsOf(int pid) {
+    var found = new System.Collections.Generic.List<System.IntPtr>();
+    EnumWindows(delegate (System.IntPtr hWnd, System.IntPtr lParam) {
+      uint owner;
+      GetWindowThreadProcessId(hWnd, out owner);
+      if (owner == (uint)pid && IsWindowVisible(hWnd)) found.Add(hWnd);
+      return true;
+    }, System.IntPtr.Zero);
+    return found;
+  }
+  public static string Title(System.IntPtr hWnd) {
+    int len = GetWindowTextLength(hWnd);
+    var sb = new System.Text.StringBuilder(len + 1);
+    GetWindowText(hWnd, sb, sb.Capacity);
+    return sb.ToString();
+  }
+'@
+}
+
+function Get-AppWindows {
+  $windows = @()
+  foreach ($p in Get-AppProcesses) {
+    foreach ($h in [Win32.WindowFinder]::WindowsOf($p.Id)) {
+      $windows += [pscustomobject]@{
+        Id      = $p.Id
+        Handle  = $h
+        Title   = [Win32.WindowFinder]::Title($h)
+      }
+    }
+  }
+  return $windows
+}
+
+function Wait-ForAppWindow([int] $TimeoutSec = 120) {
+  # Wait for the visible application window: a handle alone is not enough, the
+  # title is only set once the window is really up.
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
   $fallback = @()
   while ((Get-Date) -lt $deadline) {
-    $all = @(Get-AppProcesses | Where-Object { $_.MainWindowHandle -ne 0 })
-    if ($all.Count -gt 0 -and -not $fallback) { $fallback = $all }
-    $ready = @($all | Where-Object { $_.MainWindowTitle })
-    if ($ready.Count -gt 0) { return $ready }
+    $all = @(Get-AppWindows)
+    if ($all.Count -gt 0 -and $fallback.Count -eq 0) { $fallback = $all }
+    $app = @($all | Where-Object { $_.Title -like "*$AppName*" })
+    if ($app.Count -gt 0) { return $app }
     Start-Sleep -Milliseconds 500
   }
-  # Headless/remote sessions sometimes never publish a titled window; the
-  # caller then falls back to stopping the process directly.
   return $fallback
 }
 
 function Close-AppGracefully {
-  # Preferred path: ask the window to close, exactly as a user would.
+  # Preferred path: send WM_CLOSE to the application window, exactly as a user
+  # closing the window would, then wait for every process to exit.
   $windows = Wait-ForAppWindow
   if ($windows.Count -gt 0) {
     foreach ($w in $windows) {
-      $posted = $w.CloseMainWindow()
-      Write-Host ("    close message posted to pid {0} (handle {1}, title '{2}', responding {3}): {4}" -f `
-        $w.Id, $w.MainWindowHandle, $w.MainWindowTitle, $w.Responding, $posted)
+      $posted = [Win32.WindowFinder]::PostMessage($w.Handle, [Win32.WindowFinder]::WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
+      Write-Host ("    WM_CLOSE posted to pid {0} handle {1} title '{2}': {3}" -f $w.Id, $w.Handle, $w.Title, $posted)
     }
     $deadline = (Get-Date).AddSeconds(60)
     while ((Get-Date) -lt $deadline -and (Get-AppProcesses)) { Start-Sleep -Milliseconds 300 }
   } else {
-    # No window handle in this session (headless CI runner). Fall back to
+    # No visible window in this session (headless CI runner). Fall back to
     # terminating the application; the guarantee under test - that every process
     # exits and nothing is left behind - is still asserted below.
     $running = Get-AppProcesses
     Assert ($running.Count -gt 0) "No $AppName process found to stop."
-    Write-Host "    note: this session exposed no $AppName window handle; stopping the process directly." -ForegroundColor Yellow
+    Write-Host "    note: this session exposed no visible $AppName window; stopping the process directly." -ForegroundColor Yellow
     foreach ($p in $running) { Stop-Process -Id $p.Id -Force }
     Start-Sleep -Seconds 3
   }
@@ -149,7 +198,7 @@ function Close-AppGracefully {
     # Diagnostics for the log: which processes remain, when they started, and their command lines.
     $left | ForEach-Object {
       $cim = Get-CimInstance Win32_Process -Filter "ProcessId=$($_.Id)" -ErrorAction SilentlyContinue
-      Write-Host "    leftover pid $($_.Id) started $($_.StartTime) window=$($_.MainWindowHandle) cmd=$($cim.CommandLine)"
+      Write-Host "    leftover pid $($_.Id) started $($_.StartTime) cmd=$($cim.CommandLine)"
     }
     throw "$AppName processes still running after the window was closed: $($left.Id -join ', ')"
   }
