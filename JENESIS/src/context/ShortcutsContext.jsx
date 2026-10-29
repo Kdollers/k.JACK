@@ -241,8 +241,8 @@ export function ShortcutsProvider({ children }) {
     openHelp,
     goBack,
     goForward,
-    canGoBack: historyVersion >= 0 && canGoBack,
-    canGoForward: historyVersion >= 0 && canGoForward,
+    canGoBack,
+    canGoForward,
     calculatorOpen,
     openCalculator: () => setCalculatorOpen(true),
     closeCalculator: () => setCalculatorOpen(false),
@@ -262,7 +262,7 @@ export function ShortcutsProvider({ children }) {
     refreshKey
   }), [registerLayer, registerAction, openHelp, goBack, goForward, canGoBack, canGoForward,
     calculatorOpen, messengerOpen, referenceOpen, messengerUnread, refreshMessengerUnread,
-    historyVersion, refreshKey]);
+    historyVersion, refreshKey]); // historyVersion keeps back/forward fresh after navigation
 
   return <ShortcutsContext.Provider value={value}>{children}</ShortcutsContext.Provider>;
 }

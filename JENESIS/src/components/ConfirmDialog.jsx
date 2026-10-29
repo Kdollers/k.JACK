@@ -5,8 +5,8 @@ import { useEscapeLayer } from '../context/ShortcutsContext';
 
 /**
  * Small confirmation dialog used when a shortcut (Esc) would discard unsaved
- * work. Escape here confirms the "keep editing" path, so a user who hammers Esc
- * never loses data by accident.
+ * work. The safe choice (keep editing) has the focus and Escape confirms it, so
+ * a user who hammers Esc never loses data by accident.
  */
 export default function ConfirmDialog({
   open,
@@ -43,6 +43,7 @@ export default function ConfirmDialog({
         <div className="flex justify-end space-x-2 px-5 py-4">
           <button
             type="button"
+            autoFocus
             onClick={onCancel}
             className="px-3 py-1.5 rounded-md border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-50"
           >
@@ -50,7 +51,6 @@ export default function ConfirmDialog({
           </button>
           <button
             type="button"
-            autoFocus
             onClick={onConfirm}
             className="px-3 py-1.5 rounded-md bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500"
           >

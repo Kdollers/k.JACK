@@ -153,9 +153,9 @@ export function resolveAction(actions, combo, e) {
   return pool.sort((a, b) => (b.order || 0) - (a.order || 0))[0] || null;
 }
 
-/** Human-readable label parts for a combo, used by the reference screen. */
+/** Human-readable form of a combo, used by the reference screen and the guide. */
 export function formatCombo(combo) {
-  return normalizeCombo(combo).replace(/Ctrl/g, 'Ctrl').replace(/\+/g, ' + ');
+  return normalizeCombo(combo).replace(/\+/g, ' + ');
 }
 
 /**
