@@ -1,0 +1,73 @@
+JENESIS installed-application smoke test
+Installer: D:\a\k.JACK\k.JACK\JENESIS\release\JENESIS-Setup-1.0.0.exe
+Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
+==> Preconditions: no existing user data or running instance
+    PASS
+==> Silent install into a normal application folder
+    PASS
+==> Desktop and Start menu shortcuts were created
+    PASS
+==> Application starts from the executable, with no manual server or terminal
+    PASS
+==> Backend listens on loopback only (not reachable on a LAN address)
+    PASS
+==> No external browser window was opened for JENESIS
+    PASS
+==> Unauthenticated API requests are refused
+    PASS
+==> First-run setup creates the company and administrator
+    PASS
+==> Sign in and reach the application (no forced password change)
+    PASS
+==> Accounting transaction: balanced journal entry is posted
+    PASS
+==> Trial balance is balanced
+    PASS
+==> Full backup export is produced and contains the transaction
+    PASS
+==> Graceful shutdown: window closes and all processes exit
+    PASS
+==> Relaunch: business data persists after restart
+    PASS
+==> Backup restore protection: a restore first keeps a copy of the database
+    PASS
+==> Close again and confirm clean shutdown
+    leftover pid 504 started 10/29/2026 15:52:35 window=328076 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" 
+    leftover pid 1248 started 10/29/2026 15:52:35 window=0 cmd=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\server\index.js
+    leftover pid 2064 started 10/29/2026 15:52:35 window=0 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --field-trial-handle=2060,i,13126724902909331623,1099844682806058927,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=2056 /prefetch:3
+    leftover pid 2688 started 10/29/2026 15:52:35 window=0 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=renderer --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --app-path="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar" --enable-sandbox --disable-gpu-compositing --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=2 --enable-main-frame-before-activation --renderer-client-id=5 --time-ticks-at-unix-epoch=-1793288790396358 --launch-time-ticks=365575110 --field-trial-handle=3312,i,13126724902909331623,1099844682806058927,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=3308 /prefetch:1
+    leftover pid 6208 started 10/29/2026 15:52:35 window=0 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=gpu-process --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAAAAAABgAAEAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --field-trial-handle=1800,i,13126724902909331623,1099844682806058927,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=1792 /prefetch:2
+    FAIL: JENESIS processes still running after the window was closed: 504, 1248, 2064, 2688, 6208
+    --- application log C:\Users\runneradmin\AppData\Roaming\JENESIS\logs\desktop.log (last 40 lines) ---
+    | 2026-10-29T15:52:27.889Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
+    | 2026-10-29T15:52:28.853Z JENESIS server running at http://127.0.0.1:56686
+    | 2026-10-29T15:52:28.887Z Backend ready at http://127.0.0.1:56686/ (attempt 1)
+    | 2026-10-29T15:52:33.090Z Stopping backend...
+    | 2026-10-29T15:52:33.153Z Backend stopped.
+    | 2026-10-29T15:52:35.567Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
+    | 2026-10-29T15:52:35.567Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261029-155235.db
+    | 2026-10-29T15:52:35.859Z JENESIS server running at http://127.0.0.1:56707
+    | 2026-10-29T15:52:35.930Z Backend ready at http://127.0.0.1:56707/ (attempt 1)
+
+Summary
+
+Step                                                                      Result
+----                                                                      ------
+Preconditions: no existing user data or running instance                  PASS
+Silent install into a normal application folder                           PASS
+Desktop and Start menu shortcuts were created                             PASS
+Application starts from the executable, with no manual server or terminal PASS
+Backend listens on loopback only (not reachable on a LAN address)         PASS
+No external browser window was opened for JENESIS                         PASS
+Unauthenticated API requests are refused                                  PASS
+First-run setup creates the company and administrator                     PASS
+Sign in and reach the application (no forced password change)             PASS
+Accounting transaction: balanced journal entry is posted                  PASS
+Trial balance is balanced                                                 PASS
+Full backup export is produced and contains the transaction               PASS
+Graceful shutdown: window closes and all processes exit                   PASS
+Relaunch: business data persists after restart                            PASS
+Backup restore protection: a restore first keeps a copy of the database   PASS
+Close again and confirm clean shutdown                                    FAIL: JENESIS processes still running after t…
+
+
