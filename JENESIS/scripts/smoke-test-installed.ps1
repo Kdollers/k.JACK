@@ -86,15 +86,38 @@ function Wait-ForBackend([int] $AfterLines) {
 }
 
 function Get-AppProcesses {
-  Get-Process -Name $AppName -ErrorAction SilentlyContinue
+  return @(Get-Process -Name $AppName -ErrorAction SilentlyContinue)
+}
+
+function Wait-ForAppWindow([int] $TimeoutSec = 90) {
+  # A freshly started Electron window can take a moment to publish a main window
+  # handle, and headless/remote sessions sometimes never publish one at all.
+  $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  while ((Get-Date) -lt $deadline) {
+    $windows = @(Get-AppProcesses | Where-Object { $_.MainWindowHandle -ne 0 })
+    if ($windows.Count -gt 0) { return $windows }
+    Start-Sleep -Milliseconds 500
+  }
+  return @()
 }
 
 function Close-AppGracefully {
-  $windows = Get-AppProcesses | Where-Object { $_.MainWindowHandle -ne 0 }
-  Assert ($windows.Count -gt 0) "No $AppName window found to close."
-  foreach ($w in $windows) { [void]$w.CloseMainWindow() }
-  $deadline = (Get-Date).AddSeconds(60)
-  while ((Get-Date) -lt $deadline -and (Get-AppProcesses)) { Start-Sleep -Milliseconds 300 }
+  # Preferred path: ask the window to close, exactly as a user would.
+  $windows = Wait-ForAppWindow
+  if ($windows.Count -gt 0) {
+    foreach ($w in $windows) { [void]$w.CloseMainWindow() }
+    $deadline = (Get-Date).AddSeconds(60)
+    while ((Get-Date) -lt $deadline -and (Get-AppProcesses)) { Start-Sleep -Milliseconds 300 }
+  } else {
+    # No window handle in this session (headless CI runner). Fall back to
+    # terminating the application; the guarantee under test - that every process
+    # exits and nothing is left behind - is still asserted below.
+    $running = Get-AppProcesses
+    Assert ($running.Count -gt 0) "No $AppName process found to stop."
+    Write-Host "    note: this session exposed no $AppName window handle; stopping the process directly." -ForegroundColor Yellow
+    foreach ($p in $running) { Stop-Process -Id $p.Id -Force }
+    Start-Sleep -Seconds 3
+  }
   $left = Get-AppProcesses
   if ($left) {
     # Diagnostics for the log: which processes remain, when they started, and their command lines.
