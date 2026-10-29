@@ -6,7 +6,9 @@ Date: 2026-10-29 · Branch `arena/a2c625e8-k-jack` · Sources: `JEN 0.2.zip` and
 **Result: one consolidated project, `JENESIS/`. 165 automated checks pass locally,
 0 fail, and the full suite also passes on Linux CI with the real SQLite driver.
 The Windows installer has been built and smoke-tested on a GitHub-hosted Windows
-runner (workflow run 40898212001): `release/JENESIS-Setup-1.0.0.exe`, 88 MB, all
+runner (final verification: workflow run **40914097531**, plus 40912949515,
+40912939198 and 40909845502 after the fixes below): `release/JENESIS-Setup-1.0.0.exe`,
+88 MB, all
 17 installed-application checks green. The installer is attached to that run as the
 `JENESIS-Windows-installer` artifact; it is not committed to the repository.**
 
@@ -167,7 +169,7 @@ better-sqlite3 behaviours the app relies on correctly.
 
 ### Windows CI (executed — this is where the installer was built)
 
-`.github/workflows/windows-installer.yml`, run **40898212001**, branch
+`.github/workflows/windows-installer.yml`, final run **40914097531**, branch
 `arena/a2c625e8-k-jack`, both jobs green:
 
 | Job | Steps | Result |
@@ -202,6 +204,7 @@ open, not hidden:
 | 40906371950, 40907360663 | **green** (17/17) |
 | 40908215193, 40911107625 (run A), 40911086548 (run B) | failed with the same symptom — the diagnostic (window title `''`) that exposed bug #14 |
 | 40909845502, 40912939198, 40912949515 | **green** (17/17) after the fix |
+| **40914097531** | **green** (17/17) — the final run, on the exact branch state delivered |
 
 ### Not run here (environment limits — not claimed as passing)
 
@@ -270,7 +273,7 @@ the first administrator; afterwards sign in with that account.
 1. **The installer is built and smoke-tested on a GitHub-hosted Windows runner, but
    not on a physical Windows PC, and it is unsigned.** Windows SmartScreen will warn
    until a code-signing certificate is configured (`CSC_LINK` / `CSC_KEY_PASSWORD`).
-   The installer exists only as a CI artifact (run 40898212001); it is not stored in
+   The installer exists only as a CI artifact (run 40914097531); it is not stored in
    the repository and this sandbox cannot download artifacts from GitHub.
 2. **No live-Windows-database migration test.** v4 was exercised on copies of the
    bundled database and on fresh installs (9 checks), and the CI smoke test upgrades

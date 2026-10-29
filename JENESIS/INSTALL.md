@@ -55,7 +55,8 @@ smoke-tests the **installed** application (install → launch → setup → sign
 accounting entry → backup → close → relaunch → data still present → uninstall keeps
 data). The installer is uploaded as the `JENESIS-Windows-installer` artifact.
 
-That pipeline has run green: CI run **40898212001** produced
+That pipeline has run green repeatedly; the most recent verification was CI run
+**40914097531**, which produced
 `JENESIS-Setup-1.0.0.exe` (88 MB) and passed **17/17** installed-application
 checks, including "data survives a relaunch" and "uninstall keeps the database".
 Download the artifact from that run (or from the latest green run) — it is the
