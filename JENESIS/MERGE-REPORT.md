@@ -141,9 +141,9 @@ screens exactly as they were tested.
 
 **Coverage is enforced, not assumed.** `tests/theme.test.js` extracts every
 colour class used anywhere in `src/` and fails if any of them is neither
-remapped for Dark Mode nor explicitly documented as theme-neutral — 170 classes
-are audited on every run, so a future screen cannot silently ship light-only
-colours.
+remapped for Dark Mode nor explicitly documented as theme-neutral. On every run
+it audits **19 screens and components, 643 colour usages, 176 distinct
+classes** — so a future screen cannot silently ship light-only colours.
 
 **Every text/background pair is measured, not assumed.** A perfect token set
 still allows an unreadable screen if a component puts the wrong text colour on
@@ -213,7 +213,7 @@ asserted by six suites).
 
 ## 6. Test results (executed, this sandbox, 2026-10-29)
 
-`npm run test:all` → **202 checks, 0 failed.**
+`npm run test:all` → **203 checks, 0 failed.**
 
 | Suite | Command | Result |
 |---|---|---|
@@ -228,7 +228,7 @@ asserted by six suites).
 | **FX revaluation integrity (new)** | `npm run test:fxreval` | **15/15** — history untouched, sub-ledger ↔ control account, company isolation, skip-on-bad-rate, audit trail, no-movement posts nothing |
 | **Data-location migration (new)** | `npm run test:datadir` | **11/11** — adoption, source preserved, sidecars, no-overwrite, corruption refused, seeding unaffected |
 | **Branding consistency (new)** | `npm run test:branding` | **9/9** — product identity, no stale GENESIS strings, script correctness, dictionary parity |
-| **Theme system (new)** | `npm run test:theme` | **31/31** — Light/Dark/System selection, immediate switching, persistence, first-paint bootstrap, token parity, WCAG contrast in both themes, **122 measured text/background pairs**, full-UI colour coverage (176 classes), Electron bridge, no backend access |
+| **Theme system (new)** | `npm run test:theme` | **32/32** — Light/Dark/System selection, immediate switching, persistence, first-paint bootstrap, token parity, WCAG contrast in both themes, **122 measured text/background pairs**, full-UI colour coverage (176 classes), Electron bridge, no backend access |
 | **Theme UI rendered (new)** | `npm run test:themeui` | **6/6** — the theme components are compiled with esbuild and rendered with React: three radio options with icons and accessible names, English/French/Kinyarwanda labels, the stored preference shown by the interface, Light Mode fallback, header switch naming |
 
 Also executed:
@@ -263,12 +263,12 @@ better-sqlite3 behaviours the app relies on correctly.
 
 ### Windows CI (executed — this is where the installer was built)
 
-`.github/workflows/windows-installer.yml`, run **40957626626** (18/18 transcript
-below), branch `arena/a2c625e8-k-jack`, both jobs green:
+`.github/workflows/windows-installer.yml`, latest run **40963360751** (transcript
+of run **40957626626** quoted below), branch `arena/a2c625e8-k-jack`, both jobs green:
 
 | Job | Steps | Result |
 |---|---|---|
-| Test suite (Linux, Node 20) | `npm ci` → `npm run test:all` → `npm run build` | **success** (195 checks with the real `better-sqlite3`, including the 30 theme checks) |
+| Test suite (Linux, Node 20) | `npm ci` → `npm run test:all` → `npm run build` | **success** (203 checks with the real `better-sqlite3`, including 38 theme checks) |
 | Windows installer (`windows-2022`) | `npm ci` → `npm run test:all` → `npm run desktop:dist` → `verify-package.cjs` → installed-app smoke test → artifact upload | **success** |
 
 Installed-application smoke test — **18/18 PASS**:
@@ -315,6 +315,8 @@ open, not hidden:
 | **40956721324** | **green** (18/18) — theme system, both jobs |
 | **40957626626** | **green** (18/18) — same code with the transcript captured; **18/18 PASS** including "Both themes ship in the installed application" |
 | **40958446528** | **green** (18/18) — the delivered state: theme system, diagnostics back to failure-only |
+| **40962100209** | **green** (18/18) — the five contrast fixes and the split bundle |
+| **40963360751** | **green** (18/18) — 203 checks including the rendered theme UI |
 
 ### Not run here (environment limits — not claimed as passing)
 

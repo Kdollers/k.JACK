@@ -111,7 +111,7 @@ if `%APPDATA%\JENESIS` already exists, so it cannot touch a real business databa
 the executable name, data folder, process name, shortcut names and uninstaller from its `-AppName`
 parameter (default `JENESIS`), so `-AppName GENESIS` still smoke-tests an old build.
 
-### Verified on Windows CI (run 40958446528, branch `arena/a2c625e8-k-jack`)
+### Verified on Windows CI (run 40963360751, branch `arena/a2c625e8-k-jack`)
 
 Both jobs of `.github/workflows/windows-installer.yml` are green:
 

@@ -478,6 +478,40 @@ test('every colour class used in the interface is themed for Dark Mode', () => {
   assert.ok(used.size > 50, `expected to audit a large UI, found ${used.size} classes`);
 });
 
+test('every screen of the application is audited for both themes', () => {
+  const files = walk('src', ['.jsx', '.js']).sort();
+  const covered = coveredClasses();
+  const perScreen = [];
+  let withColour = 0;
+  let classes = 0;
+  for (const file of files) {
+    const source = read(file);
+    const palette =
+      /-(slate|gray|zinc|neutral|stone|white|black|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)(?:-|$)/;
+    const prefix =
+      /\b((?:hover|focus|active|group-hover|disabled|dark|md|lg|sm|focus-within)?\:?(?:bg|text|border|divide|ring|outline|placeholder|from|via|to|fill|stroke)-[a-z]+(?:-\d{2,4})?(?:\/\d{1,3})?)/g;
+    const list = new Set();
+    for (const match of source.matchAll(prefix)) {
+      if (palette.test(match[1])) list.add(match[1]);
+    }
+    if (list.size === 0) continue;
+    withColour += 1;
+    classes += list.size;
+    const unthemed = [...list].filter(
+      (cls) => !covered.has(cls) && !cls.startsWith('dark:') && !THEME_NEUTRAL[cls]
+    );
+    perScreen.push({ file, colours: list.size, unthemed });
+  }
+  const broken = perScreen.filter((s) => s.unthemed.length);
+  assert.deepStrictEqual(
+    broken.map((s) => `${s.file}: ${s.unthemed.join(', ')}`),
+    [],
+    'these screens still contain colours that do not follow the theme'
+  );
+  assert.ok(withColour >= 15, `expected the whole interface, audited ${withColour} files`);
+  console.log(`    ${withColour} screens/components audited, ${classes} colour usages, all themed`);
+});
+
 test('the interface audit covers every screen of the application', () => {
   const files = walk('src', ['.jsx']);
   const views = files.filter((f) => f.includes('views/') || f.includes('components/'));

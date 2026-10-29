@@ -56,7 +56,7 @@ accounting entry → backup → close → relaunch → data still present → un
 data). The installer is uploaded as the `JENESIS-Windows-installer` artifact.
 
 That pipeline has run green repeatedly; the most recent verification was CI run
-**40958446528** (18/18 installed-application checks), which produced
+**40963360751** (18/18 installed-application checks), which produced
 `JENESIS-Setup-1.0.0.exe` (88 MB) and passed **17/17** installed-application
 checks, including "data survives a relaunch" and "uninstall keeps the database".
 Download the artifact from that run (or from the latest green run) — it is the
