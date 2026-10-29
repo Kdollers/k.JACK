@@ -1,0 +1,106 @@
+name: JENESIS Windows installer
+
+# Builds and verifies the JENESIS desktop installer for Windows.
+#
+# Job 1 (tests) runs the whole suite on Linux on every push.
+# Job 2 (installer) produces release/JENESIS-Setup-<version>.exe on Windows,
+# verifies the packaged folder and smoke-tests the INSTALLED application
+# (install -> launch -> first-run setup -> sign-in -> accounting entry ->
+# backup -> close -> relaunch -> data still there -> uninstall keeps data).
+#
+# The application source lives in the JENESIS/ folder of this repository. If you
+# move JENESIS/ into its own repository, move this .github folder with it:
+# GitHub only reads workflows from the repository root.
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'arena/**'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Test suite (Linux)
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: JENESIS
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: JENESIS/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run the full test suite
+        run: npm run test:all
+
+      - name: Build the frontend
+        run: npm run build
+
+  installer:
+    name: Windows installer (build, verify, install, smoke test)
+    runs-on: windows-2022
+    needs: tests
+    defaults:
+      run:
+        working-directory: JENESIS
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: JENESIS/package-lock.json
+
+      # node-gyp needs Python 3.11 when no prebuilt better-sqlite3 binary matches.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run the full test suite
+        run: npm run test:all
+
+      - name: Build the frontend and the NSIS installer
+        run: npm run desktop:dist
+
+      - name: Verify the packaged application
+        run: node scripts/verify-package.cjs release/win-unpacked
+
+      - name: Smoke-test the installed application
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem release -Filter 'JENESIS-Setup-*.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'The installer was not produced.' }
+          Write-Host "Installer: $($installer.FullName)"
+          .\scripts\smoke-test-installed.ps1 -InstallerPath $installer.FullName
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: JENESIS-Windows-installer
+          path: JENESIS/release/*.exe
+          if-no-files-found: error
+
+      - name: Upload diagnostics when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-diagnostics
+          path: |
+            JENESIS/release/**/builder-debug.yml
+            ${{ env.APPDATA }}/JENESIS/logs/
+          if-no-files-found: warn
