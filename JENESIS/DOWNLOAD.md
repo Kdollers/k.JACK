@@ -7,8 +7,10 @@ Everything you need to run JENESIS on a Windows PC, with direct download links.
 notes, inventory, customers/suppliers, cash/bank/mobile money, AR/AP, trial
 balance, P&L, balance sheet, cash flow, multi-company, multi-currency with
 period-end FX revaluation, audit trail, backup/restore, English / Français /
-Ikinyarwanda) **plus the new Light Mode, Dark Mode and System Default theme
-system**.
+Ikinyarwanda) **plus the Light / Dark / System theme system, documents that are
+created PAID, a full keyboard layer (F1–F5, Ctrl/Alt shortcuts, layered Esc),
+a keyboard-driven calculator, JENESIS Messenger, and an in-app user guide in
+English, French and Kinyarwanda (F1)**.
 
 ---
 
@@ -24,6 +26,28 @@ Both files are built by GitHub Actions from this exact commit and are the same
 build that was smoke-tested (see §6). Neither contains tests, source maps,
 development tooling or the sandbox-only database adapter — the packaged
 application is checked for that on every build (`scripts/verify-package.cjs`).
+
+---
+
+### New in this build
+
+- **Documents are created PAID.** A new sales receipt/invoice or purchase bill is
+  settled the moment it is saved: JENESIS posts it and records the real payment in
+  one operation. There is no PAID/UNPAID choice anywhere — and PAID is never just a
+  label, it is backed by a genuine payment and a balanced journal entry. Pressing
+  **F2** twice settles once.
+- **Keyboard shortcuts.** F1 guide, F2 settle, F3 print, F5 refresh, Ctrl+N new,
+  Ctrl+P print, Ctrl+K Messenger, Ctrl+Shift+C calculator, Ctrl+Shift+T theme,
+  Ctrl+Shift+L language, Ctrl+/ shortcut reference, Alt+←/→ previous/next screen,
+  and a layered **Esc** (dialog → panel → screen; it never quits JENESIS).
+- **The calculator works with the physical keyboard** (digits, keypad, operators,
+  Enter, Backspace, Esc), is clear about division by zero, moves and minimises.
+- **JENESIS Messenger** — the button sits next to the calculator in the header
+  (Ctrl+K): conversations with colleagues of your company, unread badge, delivery
+  and read receipts.
+- **Help & User Guide** in the sidebar or with F1: every-day steps in English,
+  French and Kinyarwanda, including what a Seller, an Administrator and
+  Maintenance can do.
 
 ---
 
@@ -152,10 +176,14 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 | Check | Result |
 |---|---|
-| Full automated suite (Linux, real SQLite driver) | **203 checks, 0 failed** |
+| Full automated suite (Linux, real SQLite driver) | **258 checks, 0 failed** |
 | Theme rules: Light/Dark/System, immediate switching, persistence, first-paint, tokens, contrast, Electron bridge | **32 checks passed** |
 | Theme UI rendered with React (options, icons, accessible names, en/fr/rw, stored preference, fallback) | **6 checks passed** |
-| Production build (Vite) | **success** (app 437 kB + React 135 kB + icons 32 kB) |
+| Documents created PAID (settlement, idempotent F2, no duplicate payments) | **19 checks passed** |
+| Keyboard shortcuts (single listener, typing safety, Escape layering, destinations) | **17 checks passed** |
+| Messenger (delivery, receipts, permissions, company isolation, live push, no text in logs) | **18 checks passed** |
+| User guide (en/fr/rw parity, completeness, agreement with the code) | **14 checks passed** |
+| Production build (Vite) | **success** (app 539 kB + React 135 kB + icons 32 kB) |
 | Packaged-application verification (no test code, no bundled database, SQLite binary present) | **success** |
 | Installed-application smoke test on a clean Windows Server 2022 VM | **18/18 PASS** |
 
@@ -181,6 +209,13 @@ both themes** → silent uninstall keeps the business database.
   themes after installing.
 - **The installer is unsigned**, so Windows SmartScreen will warn until a code
   signing certificate is configured.
+- **Parts B–F were never used by a human on screen**: the keyboard shortcuts,
+  the Messenger panel and the user guide are verified by tests, source
+  assertions and a production build — not by clicking through them in the
+  installed application. A short hands-on pass is recommended.
+- **Messenger between two different computers is not set up.** It uses the same
+  loopback backend as the desktop app; live delivery, receipts, permissions and
+  company isolation are all tested against one server with two sessions.
 - Not covered: printing on a physical printer, Playwright end-to-end tests
   (no browser in the build environment), and a live upgrade of a database
   created by an installed GENESIS build on Windows (covered by 11 unit tests on

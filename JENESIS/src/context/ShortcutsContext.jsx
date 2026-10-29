@@ -175,14 +175,14 @@ export function ShortcutsProvider({ children }) {
         return;
       }
 
-      // 2. A key-capturing layer (calculator) receives the raw key first.
+      // 2. A key-capturing layer (calculator) receives the raw key first. When
+      //    it does not want the key (modifier combinations and function keys),
+      //    the key falls through to the application shortcuts below — that is
+      //    how Ctrl+Shift+C still closes the calculator and F1 still opens help.
       const capture = keyCaptureLayer(layers);
-      if (capture) {
-        const handled = capture.onKey(event, combo);
-        if (handled) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
+      if (capture && capture.onKey(event, combo)) {
+        event.preventDefault();
+        event.stopPropagation();
         return;
       }
 

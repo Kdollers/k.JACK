@@ -40,7 +40,7 @@ not verified.
   - **Payments & Receipts**: Automatic debit/credit linking customer receipts, vendor disbursements, operating expenses, and bank transfers.
 - **Audit-Proof Reversals**: Posted journal entries cannot be silently destroyed; a proper `REVERSAL` transaction swaps debits and credits while referencing the original voucher.
 
-### 1b. Light Mode and Dark Mode
+### 1b. Light Mode, Dark Mode and System Default
 - **Three choices** in **Settings → Appearance**: **Light Mode**, **Dark Mode**
   and **System Default** (follows Windows), with sun / moon / monitor icons.
 - **Immediate switching**: the theme is applied to every screen without a
@@ -54,6 +54,29 @@ not verified.
   visible without glare, and text contrast verified automatically against
   WCAG AA in both themes (see `tests/theme.test.js`).
 - A quick **sun/moon switch** in the header uses the same central theme manager.
+
+### 1c. Keyboard first
+- **F1** user guide · **F2** settle (PAID) · **F3** print · **F5** refresh ·
+  **Ctrl+N** new document · **Ctrl+P** print · **Ctrl+K** Messenger ·
+  **Ctrl+Shift+C** calculator · **Ctrl+Shift+T** theme · **Ctrl+Shift+L**
+  language · **Ctrl+/** searchable shortcut reference · **Alt+←/→** previous /
+  next screen · **Esc** closes the dialog, then the panel, then the screen — it
+  never quits JENESIS.
+- One keyboard listener for the whole application; typing is never interrupted;
+  permissions apply to shortcuts too (`tests/shortcuts.test.js`).
+- The built-in **calculator** is fully usable from the physical keyboard
+  (digits, keypad, operators, Enter, Backspace, Esc), is explicit about division
+  by zero, and keeps accounting precision.
+
+### 1d. JENESIS Messenger and the user guide
+- **Messenger** (header button next to the calculator, or **Ctrl+K**):
+  conversations between users of the same company, unread badge, delivered /
+  read receipts, live delivery over the existing local API; the server enforces
+  who may read and write, and message text is never written to logs.
+- **Help & User Guide** (sidebar or **F1**): how to use every module, in
+  **English, French and Kinyarwanda**, with purpose, where to find it, steps,
+  expected result and notes — including what a Seller, an Administrator and
+  Maintenance can do.
 
 ### 2. Trilingual Localization
 1. **English (UK / US)**
@@ -79,11 +102,12 @@ Language switching is accessible from the top navigation bar and within Settings
 ### 5. Sales & Invoicing
 - **Quotations / Estimates**: Pro-forma estimates with one-click conversion to Sales Invoices.
 - **Sales Invoices**: Line-item computation with discounts, configurable VAT tax rates, subtotal, and balance due tracking.
+- **Created PAID**: a saved sales document is settled immediately — JENESIS posts it and records the real receipt in one operation. There is no PAID/UNPAID choice; PAID is always backed by a genuine payment and a balanced journal entry. **F2** settles a draft; pressing it twice settles once.
 - **Official Print Layout**: Clean, printer-ready corporate tax invoice with company letterhead, TIN, client billing address, itemized breakdown, and banking instructions.
 - **Credit Notes**: Sales returns and refunds with optional automatic stock restoration.
 
 ### 6. Purchases & Vendor Bills
-- Purchase Orders and Vendor Bills.
+- Purchase Orders and Vendor Bills, **created PAID** like sales: the bill is posted and the supplier payment recorded in the same transaction (**F2** settles a draft, idempotently).
 - Direct inventory increments and automatic unit cost recalculation.
 - Accounts Payable tracking with supplier balance summaries.
 
@@ -143,14 +167,17 @@ npm install
 npm test
 ```
 
-### 3. Run the Whole Suite (165 checks)
+### 3. Run the Whole Suite (258 checks)
 ```bash
 npm run test:all
 ```
 Individual suites: `npm run test:auth`, `npm run test:security`, `npm run test:desktop`,
 `npm run test:ops`, `npm run test:migrations`, `npm run test:i18n`, `npm run test:fx`
 (FX settlement), `npm run test:fxreval` (FX revaluation integrity),
-`npm run test:datadir` (data-directory migration), `npm run test:branding`.
+`npm run test:settlement` (documents created PAID), `npm run test:shortcuts`
+(keyboard layer), `npm run test:messenger` (Messenger), `npm run test:help`
+(user guide), `npm run test:datadir` (data-directory migration),
+`npm run test:branding`, `npm run test:theme`, `npm run test:themeui`.
 
 ### 4. Build Client & Start Production Server
 ```bash

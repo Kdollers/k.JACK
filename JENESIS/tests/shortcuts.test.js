@@ -273,6 +273,18 @@ check('the calculator captures the keyboard without leaking shortcuts', () => {
   assert.ok(/divide_by_zero/.test(calc), 'division by zero shows a real message');
 });
 
+check('a key the capture layer refuses still reaches the application', () => {
+  const provider = readSrc('src/context/ShortcutsContext.jsx');
+  assert.ok(
+    /if \(capture && capture\.onKey\(event, combo\)\)/.test(provider),
+    'the provider must fall through when the capture layer does not handle a key'
+  );
+  assert.ok(
+    /falls? through to the application shortcuts below/.test(provider),
+    'the fall-through must be documented in the provider'
+  );
+});
+
 check('the calculator keeps accounting precision (no floating-point noise)', () => {
   const calc = readSrc('src/components/CalculatorModal.jsx');
   assert.ok(/PRECISION = 1e8/.test(calc), 'results are rounded to 8 decimals');

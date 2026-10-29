@@ -178,6 +178,151 @@ the light palette, and `prefers-reduced-motion` switches off the fade-in.
 calls, no database access and no writes other than the `jenesis_theme` key
 (asserted by tests). No migration, no schema change, no recalculation.
 
+## 4c. Part B — documents are created PAID (and PAID is an accounting fact)
+
+Every sales receipt/invoice and every purchase document is now created in the
+**PAID** state, and the interface offers **no PAID/UNPAID choice at all**.
+
+The rule is implemented as an accounting operation, never as a flag:
+
+| Piece | File | Role |
+|---|---|---|
+| Settlement engine | `server/settlement.js` | posts a draft (if needed) **and** records one real payment for the outstanding balance, in a single transaction |
+| Create endpoints | `server/routes/api.js` | `POST /sales/invoices` and `POST /purchases/bills` accept `settle` (the UI always sends it with "Post now") |
+| Settle endpoints | `server/routes/api.js` | `POST /sales/invoices/:id/settle` (`sales:post`) and `POST /purchases/bills/:id/settle` (`purchases:post`) — **idempotent** |
+| Screens | `src/views/SalesView.jsx`, `src/views/PurchasesView.jsx` | payment method + settlement account for every sale; "Post now" settles; **Settle** button; F2 |
+
+**Why this is not a cosmetic change.** `PAID` only ever results from a genuine
+`payments` row created by the existing `recordPayment()` engine: a balanced
+journal entry, a bank/cash movement and a partner-balance update. Nothing is
+fabricated and nothing is posted twice:
+
+- settling a document that is already paid returns `alreadySettled: true` and
+  records **nothing** (F2 can be pressed twice);
+- a partially paid document is settled for the **remainder only**, so it can
+  never be overpaid;
+- a draft is posted **once**, inside the same transaction as its payment;
+- a cancelled document is refused;
+- document status (DRAFT / POSTED / PARTIALLY_PAID / PAID) and the payment
+  transaction are kept as separate records — the audit trail shows both, and
+  reversing a payment moves the document back to POSTED/PARTIALLY_PAID
+  automatically (existing `reversePayment` behaviour, unchanged).
+
+A document is only left unpaid when the user deliberately unchecks "Post now"
+(it then stays a DRAFT) — that is the credit-sale path, and F2 settles it later.
+
+## 4d. Part C — one keyboard layer (F1, F2, F3, F5, Esc, Ctrl/Alt combos)
+
+There is exactly **one** `keydown` listener in the whole application
+(`src/context/ShortcutsContext.jsx`); every screen and dialog registers a
+handler instead of listening for itself. `tests/shortcuts.test.js` asserts this
+by scanning every file under `src/`.
+
+| Shortcut | Action | Destination |
+|---|---|---|
+| **F1** | Help & User Guide | a real screen (`src/views/HelpView.jsx`, also in the sidebar) |
+| **F2** | Settle (PAID) the selected document | Sales + Purchases rows; idempotent; permission-checked; "select a document first" when nothing is selected |
+| **F3** / **Ctrl+P** | Print the selected document | Sales invoice, purchase bill, the report on screen, and this guide |
+| **F5** | Reload the data on this screen | `triggerRefresh()` |
+| **Ctrl+N** | New document | Sales, Purchases, Inventory, Customers, Suppliers, Banking, Accounting — each checks its own permission |
+| **Ctrl+K** | Messenger | panel beside the calculator |
+| **Ctrl+Shift+C** | Calculator | same panel as the header button |
+| **Ctrl+Shift+T** | Theme: Light → Dark → System | `ThemeContext` |
+| **Ctrl+Shift+L** | Language: EN → FR → RW | `I18nProvider` |
+| **Ctrl+/** | Searchable shortcut reference | built from the same catalogue the listener uses |
+| **Alt+← / Alt+→** | Previous / next screen | view history kept by the provider |
+| **Esc** | Layered close | dialog → calculator/Messenger → previous screen; **never quits JENESIS** |
+
+Rules the tests enforce:
+
+- **Typing is never interrupted.** Shortcuts are suspended while the caret is
+  in a text field, except function keys, Escape and Alt/Shift combinations
+  (`allowedWhileTyping`). Combo names come from `event.code`, so a different
+  keyboard layout cannot change a shortcut.
+- **Escape is layered by priority** (dialog 100/120 → panel 80/90 → screen) and
+  the highest priority closes first; with nothing open it goes back a screen.
+  A half-filled invoice/bill form asks for confirmation first
+  (`ConfirmDialog`), so hammering Esc cannot lose work.
+- **Permissions apply to shortcuts too**: Ctrl+N without the matching
+  `:write` permission shows the same refusal as the button, and the server
+  re-checks every request.
+- **Every documented shortcut has a destination** — the test parses the
+  catalogue, the provider's built-ins and every `useShortcutAction()` call and
+  fails if a combo exists in one place only.
+
+## 4e. Part D — the calculator on the physical keyboard
+
+The existing calculator (`src/components/CalculatorModal.jsx`) now registers as
+the **key-capturing layer** of the shortcut system:
+
+- digits `0–9` (keypad included), `.` and `,`, `+ − * /`, `Enter` or `=`,
+  `Backspace`, `Delete` (clear entry), `C`, `%`, `Escape`;
+- **no leakage**: modifier combinations and function keys are handed back to
+  the application, so Ctrl+Shift+C still closes it and F1 still opens help;
+  while it is open, typing `5` never reaches an application shortcut;
+- **division by zero** shows "Cannot divide by zero" instead of an error code;
+- **accounting precision**: results are rounded to 8 decimals and
+  floating-point noise is removed (`0.1 + 0.2` → `0.3`);
+- the panel stays **movable** (drag its title bar) and can be **minimised** to a
+  small bar showing the current value.
+
+## 4f. Part E — JENESIS Messenger
+
+Internal chat between authorised users of the same company, using the existing
+local HTTP API only (no new port, no new OS/Node surface, nothing new exposed
+through Electron).
+
+| Piece | File | Role |
+|---|---|---|
+| Schema | `server/migrations.js` (v5) | `messages` table with delivery and read timestamps |
+| Engine | `server/messenger.js` | company-scoped conversations, send/list/read, unread counts, in-process pub/sub |
+| API | `server/routes/api.js` | `/messenger/users`, `/conversations`, `/messages`, `/unread`, `/stream` (SSE), `POST /conversations/:peerId/read` |
+| Panel | `src/components/MessengerPanel.jsx` | conversation list with unread badges, thread, send box, one/two/blue ticks, live indicator |
+| Entry point | `src/components/Navbar.jsx` | the Messenger button sits **immediately next to the calculator**, with an unread badge |
+
+Guarantees, each covered by a test:
+
+- the sender is **always the session user** (a client-supplied id is ignored);
+- a user of **another company** can never be messaged or read;
+- empty, over-long (2 000 chars), self-addressed and unknown-recipient
+  messages are refused **before** anything is stored;
+- `messaging:read` / `messaging:write` are enforced **server-side** (a
+  read-only manager can read but not send) and every route has exactly one
+  permission guard;
+- live delivery uses **Server-Sent Events** over the same authenticated
+  endpoint with automatic reconnection (`retry: 3000`, heartbeat) plus a
+  20-second polling fallback; every event carries the message id and the client
+  de-duplicates, so a reconnect never shows a message twice;
+- **message text is never logged**: the audit trail records who messaged whom
+  and when, and a test asserts no audit description contains a message body.
+
+Honest limitation: real multi-computer messaging was verified **inside one
+running server** (two sessions, SSE push, receipts). The server is the same
+loopback-bound backend the desktop app already uses; messaging between two
+separate computers requires that backend to be reachable from both, which is
+not the default desktop configuration and was **not** set up or tested here.
+
+## 4g. Part F — "How to use JENESIS" (English + French + Kinyarwanda)
+
+A real screen (`src/views/HelpView.jsx`), reachable from the sidebar and from
+**F1**, with content in `src/views/helpContent.js`.
+
+- Fifteen sections — welcome, sign-in, navigation, **sales (PAID, F2, F3)**,
+  purchases, inventory, calculator, Messenger, appearance, shortcuts,
+  accounting and reports, settings/permissions, backup, troubleshooting, and
+  **who does what (Seller, Administrator, Maintenance)** — each with
+  **purpose → where to find it → steps → expected result → notes/warnings**.
+- Written **together** in English, French and Kinyarwanda; the content is one
+  structure per language, and `tests/help-content.test.js` fails if any
+  language is missing a section, a step or a note, if a value is empty, or if a
+  translation turns out to be an untranslated copy.
+- The guide is checked **against the code**: every shortcut it documents must
+  exist in the application catalogue and vice versa, the PAID behaviour it
+  describes must be implemented by the settlement endpoints, F1 must open it,
+  and every label it uses must resolve in all three dictionaries.
+- It renders the live shortcut catalogue and the calculator key table, can be
+  searched, and can be printed (F3 / Ctrl+P).
+
 ## 5. Bugs found and fixed
 
 | # | Bug | Effect | Fix |
@@ -213,7 +358,7 @@ asserted by six suites).
 
 ## 6. Test results (executed, this sandbox, 2026-10-29)
 
-`npm run test:all` → **203 checks, 0 failed.**
+`npm run test:all` → **258 checks, 0 failed.**
 
 | Suite | Command | Result |
 |---|---|---|
@@ -223,12 +368,16 @@ asserted by six suites).
 | Desktop backend lifecycle | `npm run test:desktop` | 10/10 |
 | Operations | `npm run test:ops` | 36/36 — walk-in sales, returns, stores, transfers, GRN, counts, cash, FX, authorisation |
 | Migrations | `npm run test:migrations` | 9/9 (7 legacy upgrade + 2 fresh install) + repo DB MD5 unchanged |
-| i18n parity | `npm run test:i18n` | 10/10 — **669 keys × en/fr/rw** (652 + 17 theme strings), no empties, placeholder parity, every `t()` key resolves |
+| i18n parity | `npm run test:i18n` | 10/10 — **752 keys × en/fr/rw**, no empties, placeholder parity, every `t()` key resolves |
+| **Settlement / PAID documents (new)** | `npm run test:settlement` | **19/19** — created PAID with one real payment, balanced entry, idempotent F2 (no second payment, no second entry), draft posted once, remainder-only on partial, cancelled refused, permission guard, trial balance balanced, audit row |
+| **Keyboard shortcuts (new)** | `npm run test:shortcuts` | **17/17** — combo normalisation, layout-independent key names, typing never interrupted, layered Escape, key capture, **exactly one keydown listener in `src/`**, every catalogue shortcut has a destination, calculator precision and divide-by-zero |
+| **Messenger (new)** | `npm run test:messenger` | **18/18** — migration v5, session identity, delivery and read receipts, unread counts, company isolation, validation before storing, manager read-only, **live SSE push to the right recipient only**, no message text in the audit log, one guard per route |
+| **User guide (new)** | `npm run test:help` | **14/14** — identical structure in en/fr/rw, every section has purpose/where/steps/expected/notes, translations are not copies, guide ↔ code agreement (shortcuts, PAID endpoints, F1, sidebar, route) |
 | FX settlement | `npm run test:fx` | 17/17 — 4800/5900 posting, revaluation, role guard, TB balanced |
 | **FX revaluation integrity (new)** | `npm run test:fxreval` | **15/15** — history untouched, sub-ledger ↔ control account, company isolation, skip-on-bad-rate, audit trail, no-movement posts nothing |
 | **Data-location migration (new)** | `npm run test:datadir` | **11/11** — adoption, source preserved, sidecars, no-overwrite, corruption refused, seeding unaffected |
 | **Branding consistency (new)** | `npm run test:branding` | **9/9** — product identity, no stale GENESIS strings, script correctness, dictionary parity |
-| **Theme system (new)** | `npm run test:theme` | **32/32** — Light/Dark/System selection, immediate switching, persistence, first-paint bootstrap, token parity, WCAG contrast in both themes, **122 measured text/background pairs**, full-UI colour coverage (176 classes), Electron bridge, no backend access |
+| **Theme system (new)** | `npm run test:theme` | **32/32** — Light/Dark/System selection, immediate switching, persistence, first-paint bootstrap, token parity, WCAG contrast in both themes, **128 measured text/background pairs**, full-UI colour coverage (**23 screens/components, 714 colour usages**), Electron bridge, no backend access |
 | **Theme UI rendered (new)** | `npm run test:themeui` | **6/6** — the theme components are compiled with esbuild and rendered with React: three radio options with icons and accessible names, English/French/Kinyarwanda labels, the stored preference shown by the interface, Light Mode fallback, header switch naming |
 
 Also executed:
@@ -392,17 +541,26 @@ the first administrator; afterwards sign in with that account.
 1. **The installer is built and smoke-tested on a GitHub-hosted Windows runner, but
    not on a physical Windows PC, and it is unsigned.** Windows SmartScreen will warn
    until a code-signing certificate is configured (`CSC_LINK` / `CSC_KEY_PASSWORD`).
-   The installer exists only as a CI artifact (see the runs cited in §6); it is not
-   stored in the repository and this sandbox cannot download artifacts from GitHub.
-2. **No live-Windows-database migration test.** v4 was exercised on copies of the
-   bundled database and on fresh installs (9 checks), and the CI smoke test upgrades
-   nothing — it starts from an empty database. A database created by an *installed*
-   GENESIS build and adopted by the JENESIS data-directory migration has never been
-   exercised on Windows (only by 11 unit tests on temporary folders).
-3. **Electron GUI and the installer UI were never displayed** in this environment.
-4. **Code signing is not configured**: Windows SmartScreen will warn until
+   The installers are published as a GitHub **release** (`v1.0.0`) with checksums —
+   see `JENESIS/DOWNLOAD.md` for the direct links.
+2. **Parts B–F were verified by automated tests and by reading the code, not by a
+   human using the interface.** No person has pressed F2/F3/Ctrl+… in the running
+   desktop application, nobody has looked at the Messenger panel or the user guide
+   on screen, and the calculator's keyboard handling is verified through the rule
+   layer and source assertions rather than by typing on a real keyboard. The rules
+   themselves (typing safety, Escape ordering, single listener, destinations) are
+   covered by 17 checks; a two-minute hands-on pass is still worth doing after
+   installing.
+3. **No live-Windows-database migration test.** v4/v5 were exercised on copies of
+   the bundled database and on fresh installs (9 checks), and the CI smoke test
+   upgrades nothing — it starts from an empty database. A database created by an
+   *installed* GENESIS build and adopted by the JENESIS data-directory migration
+   has never been exercised on Windows (only by 11 unit tests on temporary
+   folders).
+4. **Electron GUI and the installer UI were never displayed** in this environment.
+5. **Code signing is not configured**: Windows SmartScreen will warn until
    `CSC_LINK` / `CSC_KEY_PASSWORD` are set in CI.
-5. **Installer auto-update is not implemented** (reinstall keeps `%APPDATA%\JENESIS`).
+6. **Installer auto-update is not implemented** (reinstall keeps `%APPDATA%\JENESIS`).
 7. **Period-end revaluation requires a rate for every open foreign document** on
    the revaluation date; if one is missing the whole run aborts and nothing posts.
    This is deliberate (no partial revaluation) but means rates must be maintained.
@@ -410,6 +568,21 @@ the first administrator; afterwards sign in with that account.
    revaluation and no revaluation of open bank balances in foreign currency.
 9. `koraledger/`, `SAGE/`, `GEN 0.2.zip`, `GEN 0.4.zip` at the repository root are
    untouched and out of scope.
+10. **Messenger between two separate computers was not set up or tested.** The
+   messaging backend is the same loopback-only server the desktop app uses, so
+   today it serves the running application. Live delivery, receipts, permissions
+   and company isolation are verified (18 checks) against one server with two
+   sessions; using it from a second computer would require exposing that backend
+   on a trusted network — a configuration decision that has **not** been made or
+   tested here.
+11. **Settlement records a payment, it is not a "mark as paid" switch** — a
+   document created as PAID always moves money through the chosen cash/bank
+   account. That is the requested behaviour, and it means a genuine credit sale
+   must be saved as a draft (uncheck "Post now") and settled later with F2.
+12. **No Playwright/browser end-to-end run exists** (no browser in the build
+   environment), so the React shortcut layer, the Messenger panel and the guide
+   screen are verified by unit tests, source assertions and a production build —
+   not by clicking through them in a browser.
 
 ## 10. File map of the consolidated project
 
