@@ -120,7 +120,7 @@ jobs:
       # so a failing job commits its own transcript to the branch. Remove this
       # step (and the ci-logs folder) once the Windows job is green.
       - name: Commit smoke-test diagnostics to the branch
-        if: failure()
+        if: always()
         shell: bash
         working-directory: ${{ github.workspace }}
         env:
