@@ -204,7 +204,8 @@ open, not hidden:
 | 40906371950, 40907360663 | **green** (17/17) |
 | 40908215193, 40911107625 (run A), 40911086548 (run B) | failed with the same symptom — the diagnostic (window title `''`) that exposed bug #14 |
 | 40909845502, 40912939198, 40912949515 | **green** (17/17) after the fix |
-| **40914097531** | **green** (17/17) — the final run, on the exact branch state delivered |
+| **40914097531** | **green** (17/17) — the delivered code, before the final documentation commit |
+| **40915127284** | **green** (17/17) — the exact branch state delivered (documentation commit on top) |
 
 ### Not run here (environment limits — not claimed as passing)
 
