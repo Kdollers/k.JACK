@@ -180,7 +180,48 @@ function createWindow() {
     }
   });
 
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  // Window lifecycle is logged: a window that never finishes loading is the one
+  // failure mode that leaves the user with an empty frame, so it must be visible
+  // in desktop.log.
+  let pageLoaded = false;
+  let loadRetried = false;
+  const reloadOnce = (reason) => {
+    if (loadRetried || pageLoaded) return;
+    loadRetried = true;
+    writeLog(`Window load ${reason}; reloading the interface once.`);
+    try { mainWindow.loadURL(backendUrl); } catch (err) { writeLog(`Reload failed: ${err.message}`); }
+  };
+  mainWindow.webContents.on('did-finish-load', () => {
+    pageLoaded = true;
+    writeLog('Window finished loading.');
+  });
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, url) => {
+    writeLog(`Window failed to load: ${errorCode} ${errorDescription} (${url})`);
+    reloadOnce('failed');
+  });
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    writeLog(`Renderer gone: ${JSON.stringify(details)}`);
+    reloadOnce('lost its renderer');
+  });
+  // A stalled load (no error, no completion) leaves an invisible window; retry once.
+  const loadWatchdog = setTimeout(() => reloadOnce('did not finish within 15s'), 15000);
+
+  mainWindow.once('ready-to-show', () => {
+    clearTimeout(loadWatchdog);
+    writeLog('Window ready to show.');
+    mainWindow.show();
+  });
+  // Safety net: never leave the user staring at nothing.
+  const showWatchdog = setTimeout(() => {
+    if (mainWindow && !mainWindow.isVisible()) {
+      writeLog('Window had not signalled ready-to-show after 20s; showing it anyway.');
+      mainWindow.show();
+    }
+  }, 20000);
+  mainWindow.once('closed', () => {
+    clearTimeout(loadWatchdog);
+    clearTimeout(showWatchdog);
+  });
 
   // Only the JENESIS backend origin may be displayed inside the window.
   const allowedOrigin = new URL(backendUrl).origin;
@@ -195,7 +236,10 @@ function createWindow() {
     return { action: 'deny' };
   });
 
-  mainWindow.on('closed', () => { mainWindow = null; });
+  mainWindow.on('closed', () => {
+    writeLog('Window closed.');
+    mainWindow = null;
+  });
   return mainWindow.loadURL(backendUrl);
 }
 
