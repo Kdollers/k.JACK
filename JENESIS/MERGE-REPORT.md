@@ -213,7 +213,7 @@ asserted by six suites).
 
 ## 6. Test results (executed, this sandbox, 2026-10-29)
 
-`npm run test:all` → **196 checks, 0 failed.**
+`npm run test:all` → **202 checks, 0 failed.**
 
 | Suite | Command | Result |
 |---|---|---|
@@ -229,6 +229,7 @@ asserted by six suites).
 | **Data-location migration (new)** | `npm run test:datadir` | **11/11** — adoption, source preserved, sidecars, no-overwrite, corruption refused, seeding unaffected |
 | **Branding consistency (new)** | `npm run test:branding` | **9/9** — product identity, no stale GENESIS strings, script correctness, dictionary parity |
 | **Theme system (new)** | `npm run test:theme` | **31/31** — Light/Dark/System selection, immediate switching, persistence, first-paint bootstrap, token parity, WCAG contrast in both themes, **122 measured text/background pairs**, full-UI colour coverage (176 classes), Electron bridge, no backend access |
+| **Theme UI rendered (new)** | `npm run test:themeui` | **6/6** — the theme components are compiled with esbuild and rendered with React: three radio options with icons and accessible names, English/French/Kinyarwanda labels, the stored preference shown by the interface, Light Mode fallback, header switch naming |
 
 Also executed:
 - `npm run build` (Vite production build) — **success**, three chunks:
