@@ -20,8 +20,11 @@ SQLite driver) and the **Windows installer is built and smoke-tested on a
 GitHub-hosted Windows runner** — `JENESIS-Setup-1.0.0.exe`, 88 MB, installed-
 application checks green (see the latest CI run cited in `MERGE-REPORT.md` §6;
 the installer is attached to that run as the `JENESIS-Windows-installer`
-artifact). It is unsigned and has not been run on a physical PC. See
-`MERGE-REPORT.md` §6 and §9 for exactly what is and is not verified.
+artifact). It is unsigned and has not been run on a physical PC, and **no human
+or browser engine has looked at the rendered themes** (the sandbox has no
+display; the themes are verified by tests, contrast maths and a check inside the
+installed package). See `MERGE-REPORT.md` §6 and §9 for exactly what is and is
+not verified.
 
 ---
 

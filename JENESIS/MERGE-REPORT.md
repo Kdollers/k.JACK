@@ -286,6 +286,7 @@ open, not hidden:
 | 40955901490 | failed in `npm run test:all` on Windows only: the new theme audit matched `views/` while `path.relative()` returns backslashes on Windows → fixed, paths normalised |
 | **40956721324** | **green** (18/18) — theme system, both jobs |
 | **40957626626** | **green** (18/18) — same code with the transcript captured; **18/18 PASS** including "Both themes ship in the installed application" |
+| **40958446528** | **green** (18/18) — the delivered state: theme system, diagnostics back to failure-only |
 
 ### Not run here (environment limits — not claimed as passing)
 
