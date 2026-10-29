@@ -118,11 +118,12 @@ jobs:
             ${{ env.APPDATA }}/JENESIS/logs/
           if-no-files-found: warn
 
-      # TEMPORARY: this sandbox cannot download GitHub log archives or artifacts,
-      # so a failing job commits its own transcript to the branch. Remove this
-      # step (and the ci-logs folder) once the Windows job is green.
+      # A failing job publishes its transcript as a commit on this branch so the
+      # failure can be diagnosed even when log archives cannot be downloaded.
+      # Delete the ci-logs folder once the failure is understood; a green run
+      # does not create it.
       - name: Commit smoke-test diagnostics to the branch
-        if: always()
+        if: failure()
         shell: bash
         working-directory: ${{ github.workspace }}
         env:
