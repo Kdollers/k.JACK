@@ -5,6 +5,11 @@ import rw from './rw.json';
 
 const translations = { en, fr, rw };
 
+/** Replaces {name} placeholders with the supplied variables. */
+function interpolate(text, vars) {
+  return text.replace(/\{(\w+)\}/g, (match, name) => (vars[name] !== undefined ? String(vars[name]) : match));
+}
+
 const I18nContext = createContext();
 
 export function I18nProvider({ children }) {
@@ -19,7 +24,20 @@ export function I18nProvider({ children }) {
     }
   };
 
-  const t = (keyPath, fallback = '') => {
+  /**
+   * Translate a dotted key path.
+   *
+   * t('sales.title')                       → the translated string
+   * t('sales.settled_toast', { number: 7 }) → "Invoice 7 recorded as PAID…"
+   * t('auth.account', 'Account')           → second argument as a fallback
+   *
+   * A second argument that is a plain object is treated as interpolation
+   * variables ({name} placeholders); a string stays a fallback, which keeps
+   * every existing call site working unchanged.
+   */
+  const t = (keyPath, options) => {
+    const vars = options && typeof options === 'object' ? options : null;
+    const fallback = typeof options === 'string' ? options : '';
     const keys = keyPath.split('.');
     let current = translations[lang] || translations.en;
     for (const k of keys) {
@@ -35,10 +53,10 @@ export function I18nProvider({ children }) {
             return fallback || keyPath;
           }
         }
-        return engFallback;
+        return typeof engFallback === 'string' && vars ? interpolate(engFallback, vars) : engFallback;
       }
     }
-    return current;
+    return typeof current === 'string' && vars ? interpolate(current, vars) : current;
   };
 
   return (

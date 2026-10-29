@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useShortcuts } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
-import CalculatorModal from './CalculatorModal';
 import ThemeToggle from './ThemeToggle';
 import {
   Building2,
@@ -23,7 +23,15 @@ export default function Navbar() {
   const [companyMenuOpen, setCompanyMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [showCalculator, setShowCalculator] = useState(false);
+  // Calculator and Messenger are owned by the shortcut layer so the header
+  // buttons and the keyboard always open exactly the same panel.
+  const {
+    toggleCalculator,
+    toggleMessenger,
+    messengerOpen,
+    messengerUnread,
+    refreshMessengerUnread
+  } = useShortcuts();
 
   const languages = [
     { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -32,6 +40,14 @@ export default function Navbar() {
   ];
 
   const currentLang = languages.find((l) => l.code === lang) || languages[0];
+
+  // The badge is refreshed on a timer so an unread message is noticed even if
+  // the Messenger panel has never been opened in this session.
+  useEffect(() => {
+    refreshMessengerUnread?.();
+    const id = setInterval(() => refreshMessengerUnread?.(), 30000);
+    return () => clearInterval(id);
+  }, [refreshMessengerUnread]);
 
   const roleColors = {
     admin: 'bg-red-900/60 text-red-200 border-red-700',
@@ -124,15 +140,37 @@ export default function Navbar() {
 
         {/* Built-in Calculator (computes amounts only — never posts transactions) */}
         <button
-          onClick={() => setShowCalculator(true)}
-          title={t('calculator.title')}
+          onClick={toggleCalculator}
+          title={`${t('calculator.title')} (Ctrl+Shift+C)`}
           aria-label={t('calculator.title')}
           className="flex items-center space-x-1.5 text-xs font-medium text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-800 px-2.5 py-1.5 rounded border border-slate-700 transition"
         >
           <Calculator className="w-3.5 h-3.5 text-emerald-400" />
           <span className="hidden sm:inline">{t('calculator.title')}</span>
         </button>
-        {showCalculator && <CalculatorModal onClose={() => setShowCalculator(false)} />}
+
+        {/* JENESIS Messenger — internal chat with colleagues (Ctrl+K) */}
+        <button
+          onClick={toggleMessenger}
+          title={`${t('messenger.title')} (Ctrl+K)`}
+          aria-label={t('messenger.title')}
+          aria-haspopup="dialog"
+          aria-expanded={messengerOpen}
+          className={`relative flex items-center space-x-1.5 text-xs font-medium text-slate-200 hover:text-white px-2.5 py-1.5 rounded border transition ${
+            messengerOpen ? 'bg-emerald-700 border-emerald-600' : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700'
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="hidden sm:inline">{t('messenger.title')}</span>
+          {messengerUnread > 0 && (
+            <span
+              className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center"
+              aria-label={t('messenger.unread_badge', { count: messengerUnread })}
+            >
+              {messengerUnread > 99 ? '99+' : messengerUnread}
+            </span>
+          )}
+        </button>
 
         {/* Appearance: Light / Dark / System (same theme manager as Settings) */}
         <ThemeToggle variant="button" />

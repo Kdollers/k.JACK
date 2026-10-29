@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useShortcutAction } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { apiRequest } from '../services/api';
 import {
@@ -56,6 +57,10 @@ export default function ReportsView() {
   const handlePrint = () => {
     window.print();
   };
+
+  // F3 (and Ctrl+P) print the report that is on screen.
+  useShortcutAction('F3', () => { handlePrint(); return true; }, { order: 10 });
+  useShortcutAction('Ctrl+P', () => { handlePrint(); return true; }, { order: 10 });
 
   const handleExportCSV = () => {
     if (!data) return;

@@ -47,6 +47,8 @@ const fx = require('../fx');
 const stockLedger = require('../stockLedger');
 const { asErrorResponse } = require('../utils');
 const reports = require('../reports');
+const settlement = require('../settlement');
+const messenger = require('../messenger');
 
 const APP_VERSION = require('../../package.json').version;
 
@@ -1119,7 +1121,9 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
   const {
     date = new Date().toISOString().split('T')[0], due_date, customer_id, notes, lines, autoPost = false,
     walk_in = false, warehouse_id = null, currency_code = null, exchange_rate = null,
-    bank_account_id = null, payment_method = 'CASH'
+    bank_account_id = null, payment_method = 'CASH',
+    // JENESIS default: a sales document is settled (PAID) when it is created.
+    settle = false
   } = req.body;
   if (!lines || lines.length === 0) {
     return res.status(400).json({ error: 'At least one line item is required' });
@@ -1240,16 +1244,39 @@ router.post('/sales/invoices', requirePermission('sales:write'), (req, res) => {
         `Created sales invoice draft ${invNumber}${isWalkIn ? ' (walk-in)' : ''} (${foreignTotal != null ? `${foreignTotal} ${txCurrency} = ` : ''}${total} base)`);
     })();
 
-    if (autoPost) {
+    // --- Settlement ---------------------------------------------------------
+    // JENESIS creates sales documents PAID: there is no PAID/UNPAID choice.
+    // `settle` posts the document (if needed) AND records one real payment for
+    // the outstanding balance in a single transaction, so the PAID status is
+    // always backed by a genuine `payments` row and a balanced journal entry.
+    let settlementResult = null;
+    if (settle) {
+      settlementResult = settlement.settleSalesInvoice(companyId, invId, {
+        bankAccountId: bank_account_id, paymentMethod: payment_method, date
+      }, user);
+    } else if (autoPost) {
       if (isWalkIn) {
         // Walk-in sales settle immediately in ONE transaction.
-        postWalkInSale(companyId, invId, { bankAccountId: bank_account_id, paymentMethod: payment_method, date }, user);
+        const r = postWalkInSale(companyId, invId, { bankAccountId: bank_account_id, paymentMethod: payment_method, date }, user);
+        settlementResult = { status: 'PAID', paymentId: r.paymentId, paymentNumber: r.paymentNumber, amount: total, alreadySettled: false };
       } else {
         postSalesInvoice(companyId, invId, user);
       }
     }
 
-    res.json({ id: invId, invoiceNumber: invNumber, total, walkIn: isWalkIn, currencyCode: txCurrency, exchangeRate: rate, foreignTotal });
+    res.json({
+      id: invId,
+      invoiceNumber: invNumber,
+      total,
+      walkIn: isWalkIn,
+      currencyCode: txCurrency,
+      exchangeRate: rate,
+      foreignTotal,
+      status: settlementResult ? settlementResult.status : 'DRAFT',
+      paid: settlementResult ? settlementResult.status === 'PAID' : false,
+      paymentNumber: settlementResult ? settlementResult.paymentNumber : null,
+      alreadySettled: settlementResult ? settlementResult.alreadySettled : false
+    });
   } catch (err) {
     res.status(400).json(asErrorResponse(err));
   }
@@ -1267,6 +1294,24 @@ router.post('/sales/invoices/:id/post', requirePermission('sales:post'), (req, r
         paymentMethod: req.body?.payment_method || 'CASH'
       }, user)
       : postSalesInvoice(companyId, req.params.id, user);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json(asErrorResponse(err));
+  }
+});
+
+// Settlement: apply/confirm PAID on a sales document (F2 in the UI).
+// Idempotent — settling an already paid invoice records nothing and reports
+// `alreadySettled: true`, so the shortcut can be pressed twice safely.
+router.post('/sales/invoices/:id/settle', requirePermission('sales:post'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    const result = settlement.settleSalesInvoice(companyId, req.params.id, {
+      bankAccountId: req.body?.bank_account_id || null,
+      paymentMethod: req.body?.payment_method || 'CASH',
+      date: req.body?.date || null,
+      reference: req.body?.reference || null
+    }, user);
     res.json(result);
   } catch (err) {
     res.status(400).json(asErrorResponse(err));
@@ -1418,7 +1463,10 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
   const {
     vendor_invoice_number, date = new Date().toISOString().split('T')[0],
     due_date, supplier_id, notes, lines, autoPost = false,
-    goods_receipt_id = null, currency_code = null, exchange_rate = null
+    goods_receipt_id = null, currency_code = null, exchange_rate = null,
+    bank_account_id = null, payment_method = 'CASH',
+    // JENESIS default: a purchase document is settled (PAID) when it is created.
+    settle = false
   } = req.body;
 
   if (!supplier_id || !lines || lines.length === 0) {
@@ -1514,11 +1562,26 @@ router.post('/purchases/bills', requirePermission('purchases:write'), (req, res)
       logAudit(companyId, user.id, user.full_name, 'PURCHASES', 'CREATE', billId, `Created purchase bill draft ${billNumber} ($${total})`);
     })();
 
-    if (autoPost) {
+    // Settlement: see the note on POST /sales/invoices — purchase documents are
+    // created PAID as well, backed by a real supplier payment.
+    let settlementResult = null;
+    if (settle) {
+      settlementResult = settlement.settlePurchaseInvoice(companyId, billId, {
+        bankAccountId: bank_account_id, paymentMethod: payment_method, date
+      }, user);
+    } else if (autoPost) {
       postPurchaseInvoice(companyId, billId, user);
     }
 
-    res.json({ id: billId, billNumber, total });
+    res.json({
+      id: billId,
+      billNumber,
+      total,
+      status: settlementResult ? settlementResult.status : (autoPost ? 'POSTED' : 'DRAFT'),
+      paid: settlementResult ? settlementResult.status === 'PAID' : false,
+      paymentNumber: settlementResult ? settlementResult.paymentNumber : null,
+      alreadySettled: settlementResult ? settlementResult.alreadySettled : false
+    });
   } catch (err) {
     res.status(400).json(asErrorResponse(err));
   }
@@ -1528,6 +1591,22 @@ router.post('/purchases/bills/:id/post', requirePermission('purchases:post'), (r
   const { companyId, user } = getSessionContext(req);
   try {
     const result = postPurchaseInvoice(companyId, req.params.id, user);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json(asErrorResponse(err));
+  }
+});
+
+// Settlement: apply/confirm PAID on a purchase document (F2 in the UI).
+router.post('/purchases/bills/:id/settle', requirePermission('purchases:post'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    const result = settlement.settlePurchaseInvoice(companyId, req.params.id, {
+      bankAccountId: req.body?.bank_account_id || null,
+      paymentMethod: req.body?.payment_method || 'CASH',
+      date: req.body?.date || null,
+      reference: req.body?.reference || null
+    }, user);
     res.json(result);
   } catch (err) {
     res.status(400).json(asErrorResponse(err));
@@ -2014,6 +2093,97 @@ router.get('/audit-trail', requirePermission('audit:read'), (req, res) => {
   }
   sql += ' ORDER BY timestamp DESC LIMIT 200';
   res.json(db.prepare(sql).all(...params));
+});
+
+// --------------------------------------------------------------------------
+// 13b. JENESIS MESSENGER (internal, authorised users of the same company)
+// --------------------------------------------------------------------------
+// Colleagues available for a conversation (same company, active, not me).
+router.get('/messenger/users', requirePermission('messaging:read'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  res.json(messenger.listUsers(companyId, user.id));
+});
+
+// Conversations with the last message and the unread count per colleague.
+router.get('/messenger/conversations', requirePermission('messaging:read'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  res.json(messenger.listConversations(companyId, user.id));
+});
+
+// Total unread messages (badge).
+router.get('/messenger/unread', requirePermission('messaging:read'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  res.json({ unread: messenger.unreadCount(companyId, user.id) });
+});
+
+// One thread. Fetching it marks messages addressed to me as delivered.
+router.get('/messenger/messages', requirePermission('messaging:read'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const peerId = String(req.query.peerId || '');
+  if (!peerId) return res.status(400).json({ error: 'peerId is required', code: 'PEER_REQUIRED' });
+  try {
+    res.json(messenger.listMessages(companyId, user.id, peerId, { markDelivered: true }));
+  } catch (err) {
+    res.status(400).json(asErrorResponse(err));
+  }
+});
+
+// Send a message. The sender is the session user; the body is validated.
+router.post('/messenger/messages', requirePermission('messaging:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    const message = messenger.sendMessage(companyId, user.id, user, {
+      recipientId: req.body?.recipientId || req.body?.recipient_id,
+      body: req.body?.body
+    });
+    res.json(message);
+  } catch (err) {
+    res.status(400).json(asErrorResponse(err));
+  }
+});
+
+// Mark everything received from one colleague as read.
+router.post('/messenger/conversations/:peerId/read', requirePermission('messaging:read'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    res.json(messenger.markConversationRead(companyId, user.id, req.params.peerId));
+  } catch (err) {
+    res.status(400).json(asErrorResponse(err));
+  }
+});
+
+/**
+ * Live updates (Server-Sent Events). The client (Electron renderer or browser)
+ * reconnects automatically if the connection drops; nothing is ever sent twice
+ * because every message carries one id and clients de-duplicate by id.
+ */
+router.get('/messenger/stream', requirePermission('messaging:read'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+  res.write('retry: 3000\n\n');
+  res.write(`event: ready\ndata: ${JSON.stringify({ userId: user.id })}\n\n`);
+
+  const send = (messageCompanyId, message) => {
+    if (messageCompanyId !== companyId) return;
+    // Only the recipient (or the sender, for the read/delivery echo) is told.
+    if (message.recipientId !== user.id && message.senderId !== user.id) return;
+    res.write(`event: message\ndata: ${JSON.stringify(message)}\n\n`);
+  };
+
+  const unsubscribe = messenger.subscribe(send);
+  const heartbeat = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch (_) { /* gone */ }
+  }, 25000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+  });
 });
 
 // --------------------------------------------------------------------------

@@ -30,10 +30,14 @@ export default function Sidebar() {
     { id: 'banking', icon: CreditCard, label: t('nav.banking'), perm: 'banking:read' },
     { id: 'accounting', icon: BookOpen, label: t('nav.accounting'), perm: 'accounting:read' },
     { id: 'reports', icon: BarChart3, label: t('nav.reports'), perm: 'reports:read' },
-    { id: 'settings', icon: Settings, label: t('nav.settings'), perm: ['company:manage', 'users:manage', 'backup:export'] }
+    { id: 'settings', icon: Settings, label: t('nav.settings'), perm: ['company:manage', 'users:manage', 'backup:export'] },
+    // The user guide is available to everybody (F1) — it contains no company data.
+    { id: 'help', icon: HelpCircle, label: t('nav.help'), perm: null }
   ];
   const menuItems = allItems.filter((item) =>
-    Array.isArray(item.perm) ? item.perm.some((p) => hasPermission(p)) : hasPermission(item.perm)
+    item.perm === null
+      ? true
+      : Array.isArray(item.perm) ? item.perm.some((p) => hasPermission(p)) : hasPermission(item.perm)
   );
 
   return (

@@ -1,11 +1,15 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { useEscapeLayer } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { Printer, X, Download } from 'lucide-react';
 
 export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }) {
   const { currentCompany, formatCurrency, formatDate } = useApp();
   const { t } = useI18n();
+
+  // Escape closes the print preview (the same document F3 prints).
+  useEscapeLayer({ id: 'print-modal', priority: 100, onEscape: () => { onClose(); return true; } });
 
   if (!invoice) return null;
 

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useEscapeLayer, useShortcutAction } from '../context/ShortcutsContext';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import { apiRequest, translateError, interpolateVars } from '../services/api';
@@ -42,6 +44,10 @@ export default function SalesView() {
   const [showNewQuoteModal, setShowNewQuoteModal] = useState(false);
   const [showNewCreditNoteModal, setShowNewCreditNoteModal] = useState(false);
   const [printInvoiceData, setPrintInvoiceData] = useState(null);
+  // Row selection drives the keyboard actions: F2 settles and F3 prints the
+  // selected document.
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState('');
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   // Invoice Form State
   const [invoiceForm, setInvoiceForm] = useState({
@@ -200,13 +206,22 @@ export default function SalesView() {
         currency_code: invoiceForm.currency_code || null,
         exchange_rate: invoiceForm.exchange_rate != null && invoiceForm.exchange_rate !== '' ? Number(invoiceForm.exchange_rate) : null,
         warehouse_id: invoiceForm.warehouse_id || null,
-        bank_account_id: invoiceForm.bank_account_id || null
+        bank_account_id: invoiceForm.bank_account_id || null,
+        // "Post now" means: post the document AND settle it (PAID).
+        settle: invoiceForm.autoPost === true
       };
       const res = await apiRequest('/api/sales/invoices', {
         method: 'POST',
         body: JSON.stringify(payload)
       });
-      showToast(`${t('sales.invoice_number')} ${res.invoiceNumber} — ${res.walkIn ? t('common.paid') : t('common.posted')}`, 'success');
+      // JENESIS records every new sales document as PAID (a real receipt is
+      // booked by the server); there is no PAID/UNPAID choice in the form.
+      showToast(
+        res.paid
+          ? t('sales.settled_toast', { number: res.invoiceNumber, payment: res.paymentNumber || '' })
+          : `${t('sales.invoice_number')} ${res.invoiceNumber} — ${t('common.posted')}`,
+        'success'
+      );
       setShowNewInvoiceModal(false);
       setInvoiceForm((f) => ({ ...f, walk_in: false, customer_id: '', lines: f.lines.map((l) => ({ ...l, product_id: '', description: '', quantity: 1, unit_price: 0 })) }));
       fetchData();
@@ -214,6 +229,76 @@ export default function SalesView() {
       showToast(translateError(t, err), 'error');
     }
   };
+
+  // Records the outstanding payment on an existing document and marks it PAID.
+  // Idempotent: the server refuses to create a second payment and reports
+  // alreadySettled, so pressing F2 twice never double-pays.
+  const handleSettle = async (invId) => {
+    try {
+      const res = await apiRequest(`/api/sales/invoices/${invId}/settle`, {
+        method: 'POST',
+        body: JSON.stringify({ payment_method: 'CASH' })
+      });
+      showToast(
+        res.alreadySettled
+          ? t('sales.already_paid', { number: res.invoiceNumber })
+          : t('sales.settled_toast', { number: res.invoiceNumber, payment: res.paymentNumber || '' }),
+        res.alreadySettled ? 'info' : 'success'
+      );
+      fetchData();
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  // Is anything worth keeping in the new-invoice form?
+  const invoiceFormDirty = () => {
+    const f = invoiceForm;
+    if (f.customer_id || f.notes.trim()) return true;
+    return f.lines.some((l) => l.product_id || (l.description || '').trim() || Number(l.quantity) !== 1 || Number(l.unit_price) !== 0);
+  };
+
+  // Escape on the "New Sales Invoice" dialog: warn before discarding work.
+  useEscapeLayer({
+    id: 'sales-new-invoice',
+    priority: 100,
+    active: showNewInvoiceModal,
+    onEscape: () => {
+      if (invoiceFormDirty()) {
+        setConfirmDiscard(true);
+        return true;
+      }
+      setShowNewInvoiceModal(false);
+      return true;
+    }
+  });
+
+  // F2 — settle (mark PAID) the selected document. Idempotent on the server.
+  useShortcutAction('F2', () => {
+    if (!selectedInvoiceId) {
+      showToast(t('shortcuts.settle_none'), 'info');
+      return true;
+    }
+    handleSettle(selectedInvoiceId);
+    return true;
+  }, { order: 10 });
+
+  // F3 — print the selected invoice.
+  useShortcutAction('F3', () => {
+    if (!selectedInvoiceId) return false; // falls through to "nothing to print"
+    handlePrint(selectedInvoiceId);
+    return true;
+  }, { order: 10 });
+
+  // Ctrl+N — new document on this screen.
+  useShortcutAction('Ctrl+N', () => {
+    if (!hasPermission('sales:write')) {
+      showToast(t('errors.FORBIDDEN'), 'error');
+      return true;
+    }
+    setShowNewInvoiceModal(true);
+    return true;
+  }, { order: 10 });
 
   const handlePostDraft = async (invId, inv) => {
     try {
@@ -386,7 +471,13 @@ export default function SalesView() {
                   </tr>
                 ) : invoices.length > 0 ? (
                   invoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50 transition">
+                    <tr
+                      key={inv.id}
+                      onClick={() => setSelectedInvoiceId((prev) => (prev === inv.id ? '' : inv.id))}
+                      className={`hover:bg-slate-50 transition cursor-pointer ${
+                        selectedInvoiceId === inv.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''
+                      }`}
+                    >
                       <td className="py-3 px-4 font-mono font-bold text-blue-600">{inv.invoice_number}</td>
                       <td className="py-3 px-4 text-slate-600">{formatDate(inv.date)}</td>
                       <td className="py-3 px-4 text-slate-500">{formatDate(inv.due_date)}</td>
@@ -442,15 +533,24 @@ export default function SalesView() {
                         <div className="flex items-center justify-center space-x-1.5">
                           {inv.status === 'DRAFT' && (
                             <button
-                              onClick={() => handlePostDraft(inv.id, inv)}
+                              onClick={(e) => { e.stopPropagation(); handlePostDraft(inv.id, inv); }}
                               title={t('sales.post_invoice')}
                               className="px-2 py-1 rounded text-[10px] font-bold bg-blue-600 text-white hover:bg-blue-500 transition"
                             >
                               {t('common.post')}
                             </button>
                           )}
+                          {inv.status !== 'PAID' && inv.status !== 'DRAFT' && inv.status !== 'CANCELLED' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleSettle(inv.id); }}
+                              title={t('sales.settle_hint')}
+                              className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition"
+                            >
+                              {t('sales.settle_action')}
+                            </button>
+                          )}
                           <button
-                            onClick={() => handlePrint(inv.id)}
+                            onClick={(e) => { e.stopPropagation(); handlePrint(inv.id); }}
                             title={t('common.print')}
                             className="p-1 rounded text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition"
                           >
@@ -714,7 +814,7 @@ export default function SalesView() {
                     className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono disabled:bg-slate-100"
                   />
                 </div>
-                {invoiceForm.walk_in && (
+                {true && (
                   <>
                     <div>
                       <label className="block text-slate-600 font-semibold mb-1">{t('banking.payment_method')}</label>
@@ -1093,6 +1193,20 @@ export default function SalesView() {
           onClose={() => setPrintInvoiceData(null)}
         />
       )}
+
+      {/* Escape on a half-filled form asks before discarding it */}
+      <ConfirmDialog
+        open={confirmDiscard}
+        title={t('sales.discard_title')}
+        message={t('sales.discard_message')}
+        confirmLabel={t('sales.discard_confirm')}
+        cancelLabel={t('common.cancel')}
+        onCancel={() => setConfirmDiscard(false)}
+        onConfirm={() => {
+          setConfirmDiscard(false);
+          setShowNewInvoiceModal(false);
+        }}
+      />
     </div>
   );
 }

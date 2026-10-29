@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useShortcutAction } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { apiRequest, translateError } from '../services/api';
 import {
@@ -82,6 +83,15 @@ export default function BankingView() {
   // Modals
   const [showAddBankModal, setShowAddBankModal] = useState(false);
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
+  // Ctrl+N — record a payment (server enforces banking:write).
+  useShortcutAction('Ctrl+N', () => {
+    if (!hasPermission('banking:write')) {
+      showToast(t('errors.FORBIDDEN'), 'error');
+      return true;
+    }
+    setShowRecordPaymentModal(true);
+    return true;
+  }, { order: 10 });
 
   // Bank Form
   const [bankForm, setBankForm] = useState({

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useShortcutAction } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { apiRequest } from '../services/api';
 import {
@@ -29,6 +30,11 @@ export default function AccountingView() {
 
   // Modals
   const [showNewEntryModal, setShowNewEntryModal] = useState(false);
+  // Ctrl+N — new journal entry (server enforces journal:post).
+  useShortcutAction('Ctrl+N', () => {
+    setShowNewEntryModal(true);
+    return true;
+  }, { order: 10 });
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
 
   // General Ledger state

@@ -371,6 +371,28 @@ const MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_fx_revaluation_lines_reval ON fx_revaluation_lines(revaluation_id);
       `);
     }
+  },
+  {
+    version: 5,
+    name: 'messenger: internal conversations, delivery and read receipts',
+    up(db) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id TEXT PRIMARY KEY,
+          company_id TEXT NOT NULL REFERENCES companies(id),
+          sender_id TEXT NOT NULL REFERENCES users(id),
+          recipient_id TEXT NOT NULL REFERENCES users(id),
+          body TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          delivered_at TEXT,
+          read_at TEXT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_messages_company_sender ON messages(company_id, sender_id);
+        CREATE INDEX IF NOT EXISTS idx_messages_company_recipient ON messages(company_id, recipient_id);
+        CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(company_id, sender_id, recipient_id, created_at);
+      `);
+    }
   }
 ];
 

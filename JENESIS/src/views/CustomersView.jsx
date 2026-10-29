@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useShortcutAction } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { apiRequest } from '../services/api';
 import StatementModal from '../components/StatementModal';
@@ -30,6 +31,11 @@ export default function CustomersView() {
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
+  // Ctrl+N — new customer.
+  useShortcutAction('Ctrl+N', () => {
+    setShowAddModal(true);
+    return true;
+  }, { order: 10 });
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [statementCustomer, setStatementCustomer] = useState(null);
 

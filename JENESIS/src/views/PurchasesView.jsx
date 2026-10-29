@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useEscapeLayer, useShortcutAction } from '../context/ShortcutsContext';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import { apiRequest, translateError } from '../services/api';
@@ -17,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function PurchasesView() {
-  const { currentCompany, formatCurrency, formatDate, showToast, refreshKey } = useApp();
+  const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, hasPermission } = useApp();
   const { t } = useI18n();
 
   const [activeTab, setActiveTab] = useState('bills'); // 'bills', 'orders', 'receipts', 'returns'
@@ -36,6 +38,10 @@ export default function PurchasesView() {
   const [showNewBillModal, setShowNewBillModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [printBillData, setPrintBillData] = useState(null);
+  const [bankAccounts, setBankAccounts] = useState([]);
+  // Row selection drives the keyboard actions: F2 settles and F3 prints.
+  const [selectedBillId, setSelectedBillId] = useState('');
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [receiptPo, setReceiptPo] = useState(null);
 
   // Goods receipt form (stock increases ONLY when this is posted)
@@ -58,6 +64,8 @@ export default function PurchasesView() {
     due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
     notes: '',
     autoPost: true,
+    payment_method: 'CASH',
+    bank_account_id: '',
     lines: [
       {
         product_id: '',
@@ -80,6 +88,9 @@ export default function PurchasesView() {
         apiRequest('/api/purchases/returns')
       ]);
       setBills(billsData);
+
+      // Optional reference data (some roles cannot read banking — ignore).
+      apiRequest('/api/payments/bank-accounts').then(setBankAccounts).catch(() => setBankAccounts([]));
       setSuppliers(suppData);
       setProducts(prodData);
       setOrders(orderData);
@@ -162,16 +173,94 @@ export default function PurchasesView() {
           ...billForm,
           goods_receipt_id: billForm.goods_receipt_id || null,
           currency_code: billForm.currency_code || null,
-          exchange_rate: billForm.exchange_rate != null && billForm.exchange_rate !== '' ? Number(billForm.exchange_rate) : null
+          exchange_rate: billForm.exchange_rate != null && billForm.exchange_rate !== '' ? Number(billForm.exchange_rate) : null,
+          bank_account_id: billForm.bank_account_id || null,
+          // JENESIS records every new purchase document as PAID (the server
+          // books a real supplier payment); there is no PAID/UNPAID choice.
+          settle: billForm.autoPost === true
         })
       });
-      showToast(`${t('purchases.bill_number')} ${res.billNumber} — ${billForm.autoPost ? t('common.posted') : t('common.draft')}`, 'success');
+      showToast(
+        res.paid
+          ? t('purchases.settled_toast', { number: res.billNumber, payment: res.paymentNumber || '' })
+          : `${t('purchases.bill_number')} ${res.billNumber} — ${billForm.autoPost ? t('common.posted') : t('common.draft')}`,
+        'success'
+      );
       setShowNewBillModal(false);
       fetchData();
     } catch (err) {
       showToast(translateError(t, err), 'error');
     }
   };
+
+  // Records the outstanding payment on an existing bill and marks it PAID.
+  // Idempotent — the server never creates a second payment for a settled bill.
+  const handleSettle = async (billId) => {
+    try {
+      const res = await apiRequest(`/api/purchases/bills/${billId}/settle`, {
+        method: 'POST',
+        body: JSON.stringify({ payment_method: 'CASH' })
+      });
+      showToast(
+        res.alreadySettled
+          ? t('purchases.already_paid', { number: res.billNumber })
+          : t('purchases.settled_toast', { number: res.billNumber, payment: res.paymentNumber || '' }),
+        res.alreadySettled ? 'info' : 'success'
+      );
+      fetchData();
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+  };
+
+  // Is anything worth keeping in the new-bill form?
+  const billFormDirty = () => {
+    const f = billForm;
+    if (f.supplier_id || f.vendor_invoice_number || (f.notes || '').trim()) return true;
+    return f.lines.some((l) => l.product_id || (l.description || '').trim() || Number(l.quantity) !== 1 || Number(l.unit_cost) !== 0);
+  };
+
+  // Escape on the "New Purchase Bill" dialog: warn before discarding work.
+  useEscapeLayer({
+    id: 'purchases-new-bill',
+    priority: 100,
+    active: showNewBillModal,
+    onEscape: () => {
+      if (billFormDirty()) {
+        setConfirmDiscard(true);
+        return true;
+      }
+      setShowNewBillModal(false);
+      return true;
+    }
+  });
+
+  // F2 — settle (mark PAID) the selected bill. Idempotent on the server.
+  useShortcutAction('F2', () => {
+    if (!selectedBillId) {
+      showToast(t('shortcuts.settle_none'), 'info');
+      return true;
+    }
+    handleSettle(selectedBillId);
+    return true;
+  }, { order: 10 });
+
+  // F3 — print the selected bill.
+  useShortcutAction('F3', () => {
+    if (!selectedBillId) return false; // falls through to "nothing to print"
+    handlePrint(selectedBillId);
+    return true;
+  }, { order: 10 });
+
+  // Ctrl+N — new document on this screen.
+  useShortcutAction('Ctrl+N', () => {
+    if (!hasPermission('purchases:write')) {
+      showToast(t('errors.FORBIDDEN'), 'error');
+      return true;
+    }
+    setShowNewBillModal(true);
+    return true;
+  }, { order: 10 });
 
   const handlePostDraft = async (billId) => {
     try {
@@ -359,7 +448,13 @@ export default function PurchasesView() {
                   </tr>
                 ) : bills.length > 0 ? (
                   bills.map((b) => (
-                    <tr key={b.id} className="hover:bg-slate-50 transition">
+                    <tr
+                      key={b.id}
+                      onClick={() => setSelectedBillId((prev) => (prev === b.id ? '' : b.id))}
+                      className={`hover:bg-slate-50 transition cursor-pointer ${
+                        selectedBillId === b.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''
+                      }`}
+                    >
                       <td className="py-3 px-4 font-mono font-bold text-indigo-600">{b.bill_number}</td>
                       <td className="py-3 px-4 text-slate-600">{formatDate(b.date)}</td>
                       <td className="py-3 px-4 font-semibold text-slate-800">{b.supplier_name}</td>
@@ -393,14 +488,23 @@ export default function PurchasesView() {
                         <div className="flex items-center justify-center space-x-1.5">
                           {b.status === 'DRAFT' && (
                             <button
-                              onClick={() => handlePostDraft(b.id)}
+                              onClick={(e) => { e.stopPropagation(); handlePostDraft(b.id); }}
                               className="px-2 py-1 rounded text-[10px] font-bold bg-blue-600 text-white hover:bg-blue-500 transition"
                             >
                               Post
                             </button>
                           )}
+                          {b.status !== 'PAID' && b.status !== 'DRAFT' && b.status !== 'CANCELLED' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleSettle(b.id); }}
+                              title={t('purchases.settle_hint')}
+                              className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition"
+                            >
+                              {t('purchases.settle_action')}
+                            </button>
+                          )}
                           <button
-                            onClick={() => handlePrint(b.id)}
+                            onClick={(e) => { e.stopPropagation(); handlePrint(b.id); }}
                             title={t('common.print')}
                             className="p-1 rounded text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition"
                           >
@@ -808,6 +912,39 @@ export default function PurchasesView() {
                       Post bill immediately (updates weighted-average cost & stock)
                     </label>
                   </div>
+
+                  {/* Settlement: a recorded bill is PAID — no PAID/UNPAID choice. */}
+                  <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
+                    <p className="text-[10px] text-emerald-800 font-semibold">{t('purchases.payment_section')}</p>
+                    <p className="text-[10px] text-emerald-700">{t('purchases.payment_on_creation_hint')}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-slate-600 font-semibold mb-1 text-[10px]">{t('banking.payment_method')}</label>
+                        <select
+                          value={billForm.payment_method}
+                          onChange={(e) => setBillForm({ ...billForm, payment_method: e.target.value })}
+                          className="w-full px-2 py-1 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                          <option value="CASH">{t('banking.method_cash')}</option>
+                          <option value="MOBILE_MONEY">{t('banking.method_momo')}</option>
+                          <option value="BANK_TRANSFER">{t('banking.method_bank')}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-slate-600 font-semibold mb-1 text-[10px]">{t('sales.settlement_account')}</label>
+                        <select
+                          value={billForm.bank_account_id}
+                          onChange={(e) => setBillForm({ ...billForm, bank_account_id: e.target.value })}
+                          className="w-full px-2 py-1 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                          <option value="">{t('banking.type_cash')}</option>
+                          {bankAccounts.filter((b) => b.active).map((b) => (
+                            <option key={b.id} value={b.id}>{b.bank_name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-1.5 text-xs">
@@ -1005,6 +1142,20 @@ export default function PurchasesView() {
           onClose={() => setPrintBillData(null)}
         />
       )}
+
+      {/* Escape on a half-filled form asks before discarding it */}
+      <ConfirmDialog
+        open={confirmDiscard}
+        title={t('purchases.discard_title')}
+        message={t('purchases.discard_message')}
+        confirmLabel={t('purchases.discard_confirm')}
+        cancelLabel={t('common.cancel')}
+        onCancel={() => setConfirmDiscard(false)}
+        onConfirm={() => {
+          setConfirmDiscard(false);
+          setShowNewBillModal(false);
+        }}
+      />
     </div>
   );
 }

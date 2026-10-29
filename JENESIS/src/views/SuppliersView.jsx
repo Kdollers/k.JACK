@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useShortcutAction } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { apiRequest } from '../services/api';
 import StatementModal from '../components/StatementModal';
@@ -27,6 +28,11 @@ export default function SuppliersView() {
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
+  // Ctrl+N — new supplier.
+  useShortcutAction('Ctrl+N', () => {
+    setShowAddModal(true);
+    return true;
+  }, { order: 10 });
   const [editingSupplier, setEditingSupplier] = useState(null);
   const [statementSupplier, setStatementSupplier] = useState(null);
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
+import { useShortcutAction } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { apiRequest, translateError } from '../services/api';
 import {
@@ -448,6 +449,15 @@ export default function InventoryView() {
   };
 
   const canAdjust = hasPermission('inventory:adjust');
+  // Ctrl+N — new product on this screen (only for users who may create one).
+  useShortcutAction('Ctrl+N', () => {
+    if (!hasPermission('inventory:write')) {
+      showToast(t('errors.FORBIDDEN'), 'error');
+      return true;
+    }
+    setShowAddProductModal(true);
+    return true;
+  }, { order: 10 });
   const canApprove = hasPermission('inventory:approve');
   const canManageStores = hasPermission('stores:manage');
   const canWriteStock = hasPermission('inventory:write');

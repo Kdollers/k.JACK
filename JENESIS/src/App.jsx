@@ -1,10 +1,12 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ShortcutsProvider } from './context/ShortcutsContext';
 import { I18nProvider } from './i18n';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Toast from './components/Toast';
+import AppOverlays from './components/AppOverlays';
 import { LoginScreen, SetupScreen, ChangePasswordScreen, BackendUnavailable } from './components/AuthScreens';
 
 import DashboardView from './views/DashboardView';
@@ -17,6 +19,7 @@ import BankingView from './views/BankingView';
 import AccountingView from './views/AccountingView';
 import ReportsView from './views/ReportsView';
 import SettingsView from './views/SettingsView';
+import HelpView from './views/HelpView';
 
 function AppContent() {
   const { activeView, loading, authState, authError } = useApp();
@@ -58,8 +61,13 @@ function AppContent() {
           {activeView === 'accounting' && <AccountingView />}
           {activeView === 'reports' && <ReportsView />}
           {activeView === 'settings' && <SettingsView />}
+          {activeView === 'help' && <HelpView />}
         </main>
       </div>
+
+      {/* Calculator, Messenger and the shortcut reference: opened by the header
+          buttons or by their keyboard shortcuts — one instance of each. */}
+      <AppOverlays />
 
       <Toast />
     </div>
@@ -73,7 +81,11 @@ export default function App() {
     <ThemeProvider>
       <I18nProvider>
         <AppProvider>
-          <AppContent />
+          {/* ShortcutsProvider sits inside AppProvider (it navigates and toasts)
+              and above AppContent so every screen can register shortcuts. */}
+          <ShortcutsProvider>
+            <AppContent />
+          </ShortcutsProvider>
         </AppProvider>
       </I18nProvider>
     </ThemeProvider>
