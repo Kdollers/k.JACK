@@ -3,10 +3,12 @@
 Date: 2026-10-29 · Branch `arena/a2c625e8-k-jack` · Sources: `JEN 0.2.zip` and `JAN 0.3.zip`
 (kept untouched at the repository root).
 
-**Result: one consolidated project, `JENESIS/`. 165 automated checks pass, 0 fail.
-The Windows installer has NOT been produced — the sandbox cannot build Windows
-binaries. A CI workflow that builds and smoke-tests it is included
-(`.github/workflows/windows-installer.yml`); it has not been executed yet.**
+**Result: one consolidated project, `JENESIS/`. 165 automated checks pass locally,
+0 fail, and the full suite also passes on Linux CI with the real SQLite driver.
+The Windows installer has been built and smoke-tested on a GitHub-hosted Windows
+runner (workflow run 40898212001): `release/JENESIS-Setup-1.0.0.exe`, 88 MB, all
+17 installed-application checks green. The installer is attached to that run as the
+`JENESIS-Windows-installer` artifact; it is not committed to the repository.**
 
 ---
 
@@ -107,6 +109,7 @@ nothing in JEN 0.2 was missing from JAN 0.3.
 | 8 | `settings.revaluation_history` translated but never used | untranslated-looking heading gap in Settings → Currencies | rendered as the history table heading |
 | 9 | `FINAL-REPORT-v2.md` shipped in the JENESIS build but describes the GENESIS 0.4 session | readers could not tell which report is current | marked historical, this report is the current one |
 | 10 | `scripts/add_i18n_v2.py` docstring still said GENESIS | cosmetic | docstring updated |
+| 11 | `smoke-test-installed.ps1` assumed the runner always exposes a window handle (`No JENESIS window found to close`) | the installed-app check aborted at "graceful shutdown" on a GitHub-hosted runner (run 40896463853), hiding the 5 remaining checks | `Wait-ForAppWindow` polls up to 90 s for the handle and, if the session never exposes one, stops the process directly; "all processes exit" is still asserted either way |
 
 Nothing was found that corrupted accounting data; the bundled `genesis.db` is
 byte-identical to both source archives (MD5 `f6a9690dbdabc6d4778c04c4dfcf0365`,
@@ -159,14 +162,40 @@ Two findings came out of building the adapter and are **not** application bugs:
 `stmt.run(array)` binds the array as the parameter list — both are documented
 better-sqlite3 behaviours the app relies on correctly.
 
+### Windows CI (executed — this is where the installer was built)
+
+`.github/workflows/windows-installer.yml`, run **40898212001**, branch
+`arena/a2c625e8-k-jack`, both jobs green:
+
+| Job | Steps | Result |
+|---|---|---|
+| Test suite (Linux, Node 20) | `npm ci` → `npm run test:all` → `npm run build` | **success** (165 checks with the real `better-sqlite3`) |
+| Windows installer (`windows-2022`) | `npm ci` → `npm run test:all` → `npm run desktop:dist` → `verify-package.cjs` → installed-app smoke test → artifact upload | **success** |
+
+Installed-application smoke test — **17/17 PASS** (transcript committed by the job as
+`ci-logs/smoke-test-output.txt` while diagnostics were enabled):
+
+silent install → desktop + Start-menu shortcuts → **application starts from the
+executable with no manual server or terminal** → backend on loopback only → no
+external browser → unauthenticated requests refused → first-run setup → sign-in →
+balanced journal entry → trial balance balanced → backup export → **graceful
+shutdown, all processes exit** → **relaunch: business data persists** → backup
+restore with a `pre-restore` copy → clean close → **silent uninstall keeps the
+business database**.
+
+Artifact: `JENESIS-Windows-installer` → `JENESIS-Setup-1.0.0.exe`, **88 MB**
+(92,564,673 bytes). One earlier run (40896463853) failed at "graceful shutdown"
+because the runner exposed no window handle — that is bug #11 above, now fixed and
+re-verified.
+
 ### Not run here (environment limits — not claimed as passing)
 
-- **Windows installer build, install, launch and persistence** — impossible in this
-  Linux sandbox (no Electron binary, no display, Windows-only downloads blocked).
-  Configured in CI (§4.5); **the installer does not exist yet** and must be built
-  and smoke-tested before it is distributed.
+- **The installer was never executed on a physical Windows PC** — it was verified on
+  a clean GitHub-hosted Windows Server 2022 VM (Defender, SmartScreen and real user
+  profiles differ).
 - **Electron GUI startup** — the desktop *backend* lifecycle is covered by
-  `test:desktop` (real process, real HTTP), but no window was ever rendered.
+  `test:desktop` (real process, real HTTP) and the CI smoke test drives the real
+  executable, but no human looked at the rendered window.
 - **Browser-visual review of every screen in fr/rw** — dictionary parity and
   key coverage are machine-checked; pixels are not.
 - `npm run test:e2e` (Python/Playwright UI test) — no browser available.
@@ -223,13 +252,16 @@ the first administrator; afterwards sign in with that account.
 
 ## 9. Remaining limitations
 
-1. **The Windows installer is not built or verified.** The CI workflow is
-   configured but has never run. Until a green Windows job produces
-   `JENESIS-Setup-1.0.0.exe` and the smoke test passes, the desktop application is
-   *implemented and unit-tested*, not *shipped*.
+1. **The installer is built and smoke-tested on a GitHub-hosted Windows runner, but
+   not on a physical Windows PC, and it is unsigned.** Windows SmartScreen will warn
+   until a code-signing certificate is configured (`CSC_LINK` / `CSC_KEY_PASSWORD`).
+   The installer exists only as a CI artifact (run 40898212001); it is not stored in
+   the repository and this sandbox cannot download artifacts from GitHub.
 2. **No live-Windows-database migration test.** v4 was exercised on copies of the
-   bundled database and on fresh installs (9 checks), never on a database created
-   by an installed Windows build.
+   bundled database and on fresh installs (9 checks), and the CI smoke test upgrades
+   nothing — it starts from an empty database. A database created by an *installed*
+   GENESIS build and adopted by the JENESIS data-directory migration has never been
+   exercised on Windows (only by 11 unit tests on temporary folders).
 3. **Electron GUI and the installer UI were never displayed** in this environment.
 4. **Code signing is not configured**: Windows SmartScreen will warn until
    `CSC_LINK` / `CSC_KEY_PASSWORD` are set in CI.

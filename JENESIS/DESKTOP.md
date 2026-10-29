@@ -87,26 +87,32 @@ if `%APPDATA%\JENESIS` already exists, so it cannot touch a real business databa
 the executable name, data folder, process name, shortcut names and uninstaller from its `-AppName`
 parameter (default `JENESIS`), so `-AppName GENESIS` still smoke-tests an old build.
 
-### Verified so far (this sandbox, 2026-10-29)
+### Verified on Windows CI (run 40898212001, branch `arena/a2c625e8-k-jack`)
 
-- `npm run test:all`: **165 checks, 0 failed** (accounting engine, authentication and
-  authorisation, security hardening, desktop backend lifecycle, operations, migrations,
-  i18n parity, FX settlement, FX revaluation integrity, data-directory migration, branding).
-- `npm run build`: production frontend builds (only the pre-existing >500 kB chunk warning).
-- Production server started from `dist/`: `/api/health` healthy, index served, protected
-  routes refuse anonymous access.
-- **The Windows installer has NOT been built or run.** The workflow above is committed
-  but has never executed, and `electron-builder` cannot produce a Windows target in this
-  Linux sandbox (no Electron/winCodeSign/nsis downloads, `better-sqlite3` cannot be
-  cross-compiled). Nothing here should be read as "the installer works" until a Windows
-  job has produced `release/JENESIS-Setup-1.0.0.exe` and the smoke test has passed.
-- An earlier report referenced a green GitHub Actions run (38092287331) on branch
-  `arena/f172e2ac-k-jack`. That branch is not part of this repository snapshot, so the
-  claim could not be re-verified and is not repeated as a result here.
+Both jobs of `.github/workflows/windows-installer.yml` are green:
+
+- `npm ci` on Windows Server 2022 (Python 3.11 present for node-gyp; `better-sqlite3`
+  is pinned to 12.x, which supports the Node 20 runtime used by Electron 33).
+- `npm run test:all` on the runner: 165 checks, 0 failed.
+- `npm run desktop:dist` produced **`release/JENESIS-Setup-1.0.0.exe`** (88 MB).
+- `node scripts/verify-package.cjs release/win-unpacked` passed.
+- `scripts/smoke-test-installed.ps1` — **17/17 installed-application checks**:
+  silent install, shortcuts, backend start on loopback, no external browser,
+  unauthenticated refusal, first-run setup, sign-in, journal entry, balanced trial
+  balance, backup export, graceful close, relaunch with data kept, backup restore
+  with a pre-restore copy, silent uninstall that keeps `%APPDATA%\JENESIS\genesis.db`.
+- The installer is uploaded as the `JENESIS-Windows-installer` artifact.
+
+Locally (development sandbox, 2026-10-29): the same 165 checks pass and
+`npm run build` succeeds; the production server serves the built UI and refuses
+anonymous API calls. The sandbox cannot produce Windows binaries — every Windows
+result above comes from CI.
 
 ### Limits of that verification
 - The runner is a fresh GitHub-hosted Windows Server 2022 VM, not a physical Windows 10/11 PC. Results on a
   consumer Windows machine (Defender, SmartScreen, user profile differences) are not yet confirmed.
+- The smoke test starts from an empty database; upgrading an existing installation on Windows (including the
+  GENESIS -> JENESIS database adoption) is covered by unit tests only.
 - The smoke test does not check offline operation (network disabled) or installer updates.
 - Installer updates are not implemented or tested. Updates must keep `%APPDATA%\JENESIS` untouched, which the
   NSIS settings do (`deleteAppDataOnUninstall: false`).

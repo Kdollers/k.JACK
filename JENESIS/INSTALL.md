@@ -54,8 +54,13 @@ Linux and, on Windows, builds the installer, verifies the packaged folder and
 smoke-tests the **installed** application (install → launch → setup → sign-in →
 accounting entry → backup → close → relaunch → data still present → uninstall keeps
 data). The installer is uploaded as the `JENESIS-Windows-installer` artifact.
-*This workflow has not been executed yet — the installer is not distributed with
-this repository until it has.*
+
+That pipeline has run green: CI run **40898212001** produced
+`JENESIS-Setup-1.0.0.exe` (88 MB) and passed **17/17** installed-application
+checks, including "data survives a relaunch" and "uninstall keeps the database".
+Download the artifact from that run (or from the latest green run) — it is the
+verified installer. It is unsigned, so SmartScreen will warn until a code-signing
+certificate is configured.
 
 ## 3. First launch
 

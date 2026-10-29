@@ -14,9 +14,13 @@ This is the **consolidated JENESIS application**: the features of the previous
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)
 
-Status: source, tests and frontend build are verified. **The Windows installer is
-produced by CI (`.github/workflows/windows-installer.yml`) and has not been built
-yet** — see `MERGE-REPORT.md` §6 and §9 for exactly what is and is not verified.
+Status: **165 automated checks pass** (locally and on Linux CI, with the real
+SQLite driver) and the **Windows installer is built and smoke-tested on a
+GitHub-hosted Windows runner** — `JENESIS-Setup-1.0.0.exe`, 88 MB, 17/17
+installed-application checks green (CI run 40898212001; the installer is attached
+to that run as the `JENESIS-Windows-installer` artifact). It is unsigned and has
+not been run on a physical PC. See `MERGE-REPORT.md` §6 and §9 for exactly what is
+and is not verified.
 
 ---
 
