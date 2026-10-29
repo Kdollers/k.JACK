@@ -32,9 +32,12 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
 ==> Backup restore protection: a restore first keeps a copy of the database
     PASS
 ==> Close again and confirm clean shutdown
-    PASS
-==> Silent uninstall removes the program but keeps business data
-    PASS
+    leftover pid 768 started 10/29/2026 15:19:59 window=0 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --field-trial-handle=2052,i,7995292046498815434,8429110179806660660,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=1884 /prefetch:3
+    leftover pid 1628 started 10/29/2026 15:20:00 window=0 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=renderer --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --app-path="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar" --enable-sandbox --disable-gpu-compositing --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=2 --enable-main-frame-before-activation --renderer-client-id=5 --time-ticks-at-unix-epoch=-1793286745981627 --launch-time-ticks=454077122 --field-trial-handle=3312,i,7995292046498815434,8429110179806660660,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=3308 /prefetch:1
+    leftover pid 2340 started 10/29/2026 15:19:59 window=0 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=gpu-process --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAAAAAABgAAEAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --field-trial-handle=1788,i,7995292046498815434,8429110179806660660,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=1764 /prefetch:2
+    leftover pid 4980 started 10/29/2026 15:19:59 window=655838 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" 
+    leftover pid 6220 started 10/29/2026 15:19:59 window=0 cmd=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\server\index.js
+    FAIL: JENESIS processes still running after the window was closed: 768, 1628, 2340, 4980, 6220
 
 Summary
 
@@ -55,8 +58,6 @@ Full backup export is produced and contains the transaction               PASS
 Graceful shutdown: window closes and all processes exit                   PASS
 Relaunch: business data persists after restart                            PASS
 Backup restore protection: a restore first keeps a copy of the database   PASS
-Close again and confirm clean shutdown                                    PASS
-Silent uninstall removes the program but keeps business data              PASS
+Close again and confirm clean shutdown                                    FAIL: JENESIS processes still running after t…
 
 
-All smoke-test checks passed.
