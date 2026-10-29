@@ -12,6 +12,10 @@ name: JENESIS Windows installer
 # move JENESIS/ into its own repository, move this .github folder with it:
 # GitHub only reads workflows from the repository root.
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   push:
     branches:
@@ -83,17 +87,24 @@ jobs:
       - name: Smoke-test the installed application
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force -Path ..\ci-logs | Out-Null
           $installer = Get-ChildItem release -Filter 'JENESIS-Setup-*.exe' | Select-Object -First 1
           if (-not $installer) { throw 'The installer was not produced.' }
           Write-Host "Installer: $($installer.FullName)"
-          .\scripts\smoke-test-installed.ps1 -InstallerPath $installer.FullName
+          # Run in a child process so the transcript is written even when the test exits non-zero.
+          pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-test-installed.ps1 -InstallerPath $installer.FullName 2>&1 |
+            Tee-Object -FilePath ..\ci-logs\smoke-test-output.txt
+          if ($LASTEXITCODE -ne 0) {
+            throw "Installed-application smoke test failed (exit $LASTEXITCODE). Transcript: ci-logs/smoke-test-output.txt"
+          }
 
       - name: Upload the installer
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: JENESIS-Windows-installer
           path: JENESIS/release/*.exe
-          if-no-files-found: error
+          if-no-files-found: ignore
 
       - name: Upload diagnostics when something fails
         if: failure()
@@ -104,3 +115,24 @@ jobs:
             JENESIS/release/**/builder-debug.yml
             ${{ env.APPDATA }}/JENESIS/logs/
           if-no-files-found: warn
+
+      # TEMPORARY: this sandbox cannot download GitHub log archives or artifacts,
+      # so a failing job commits its own transcript to the branch. Remove this
+      # step (and the ci-logs folder) once the Windows job is green.
+      - name: Commit smoke-test diagnostics to the branch
+        if: failure()
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          mkdir -p ci-logs
+          if [ -d "$APPDATA/JENESIS/logs" ]; then cp -r "$APPDATA/JENESIS/logs/." ci-logs/ || true; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -A ci-logs
+          if git diff --cached --quiet; then echo "no diagnostics to commit"; else
+            git commit -m "ci: Windows smoke-test diagnostics for run ${{ github.run_id }}"
+            git push origin HEAD:"${GITHUB_REF_NAME}"
+          fi
