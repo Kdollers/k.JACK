@@ -124,10 +124,13 @@ jobs:
           # Portable package: the very same unpacked application the installer
           # deploys, so JENESIS can be run from a folder or a USB stick without
           # installing anything. Data still goes to %APPDATA%\JENESIS.
-          if (-not (Test-Path 'dist\win-unpacked')) { throw 'dist\win-unpacked is missing: nothing to package.' }
+          # electron-builder writes the unpacked application next to the
+          # installer (directories.output = release).
+          $unpacked = 'release\win-unpacked'
+          if (-not (Test-Path $unpacked)) { throw "$unpacked is missing: nothing to package." }
           $zip = "release\JENESIS-Portable-$version.zip"
           if (Test-Path $zip) { Remove-Item $zip -Force }
-          Compress-Archive -Path 'dist\win-unpacked\*' -DestinationPath $zip -CompressionLevel Optimal
+          Compress-Archive -Path "$unpacked\*" -DestinationPath $zip -CompressionLevel Optimal
           $zipItem = Get-Item $zip
           $zipHash = (Get-FileHash $zipItem.FullName -Algorithm SHA256).Hash.ToLower()
           "$zipHash  $($zipItem.Name)" | Out-File -FilePath "$zip.sha256" -Encoding ascii
