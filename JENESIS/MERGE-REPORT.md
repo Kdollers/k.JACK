@@ -109,8 +109,10 @@ nothing in JEN 0.2 was missing from JAN 0.3.
 | 8 | `settings.revaluation_history` translated but never used | untranslated-looking heading gap in Settings → Currencies | rendered as the history table heading |
 | 9 | `FINAL-REPORT-v2.md` shipped in the JENESIS build but describes the GENESIS 0.4 session | readers could not tell which report is current | marked historical, this report is the current one |
 | 10 | `scripts/add_i18n_v2.py` docstring still said GENESIS | cosmetic | docstring updated |
-| 11 | `smoke-test-installed.ps1` assumed the runner always exposes a window handle (`No JENESIS window found to close`) | the installed-app check aborted at "graceful shutdown" on a GitHub-hosted runner (run 40896463853), hiding the 5 remaining checks | `Wait-ForAppWindow` polls up to 90 s for the handle and, if the session never exposes one, stops the process directly; "all processes exit" is still asserted either way |
-| 12 | **Desktop shutdown could hang**: `stopBackend()` awaited `backend.stop()` with no ceiling, and `before-quit` only called `app.quit()` after it resolved | on a second close (after relaunch) the window and the backend process stayed alive for more than 60 s (run 40899570266, "Close again and confirm clean shutdown") — a user closing JENESIS could be left with a dead window and a running backend | hard ceiling around the backend stop (8 s) plus a 20 s shutdown watchdog that forces `app.exit(0)`; the backend is always stopped first, so no data is at risk |
+| 11 | `smoke-test-installed.ps1` assumed the runner always exposes a window handle (`No JENESIS window found to close`) | the installed-app check aborted at "graceful shutdown" (run 40896463853), hiding the 5 remaining checks | `Wait-ForAppWindow` polls for the window and, if the session never exposes one, stops the process directly; "all processes exit" is still asserted either way |
+| 12 | **Desktop shutdown had no upper bound**: `stopBackend()` awaited `backend.stop()` with no ceiling and `before-quit` only called `app.quit()` once it resolved | if a backend child could not be reaped, the application would stay open indefinitely with a dead window | the backend stop is wrapped in an 8 s ceiling and a 20 s watchdog forces `app.exit(0)`; the backend is still stopped first, so no data is at risk |
+| 13 | The window gave no visibility into its load state and could stay invisible if `ready-to-show` never fired | a user closing JENESIS could be left with an empty, invisible frame; the condition was undiagnosable from the log | the shell now logs `did-finish-load` / `did-fail-load` / `render-process-gone` / `ready-to-show`, retries the load once when it fails or stalls for 15 s, and shows the window after 20 s regardless |
+| 14 | **The smoke test closed the wrong window** (test bug, found by CI): `Process.CloseMainWindow()` uses .NET's `MainWindowHandle`, which is whichever top-level window `EnumWindows` returns first — an Electron app owns several (the visible window plus hidden helpers) | 5 of 11 Windows CI runs failed "Close again and confirm clean shutdown": WM_CLOSE went to a helper window and was ignored, leaving the app and its backend running. The application was not at fault — its log shows `Window ready to show` immediately before each failed attempt | the smoke test enumerates the process's visible windows with Win32 `EnumWindows`/`GetWindowText` and posts WM_CLOSE to the one carrying the product name; still a user-style close, and "all processes exit" is still asserted |
 
 Nothing was found that corrupted accounting data; the bundled `genesis.db` is
 byte-identical to both source archives (MD5 `f6a9690dbdabc6d4778c04c4dfcf0365`,
@@ -185,9 +187,21 @@ restore with a `pre-restore` copy → clean close → **silent uninstall keeps t
 business database**.
 
 Artifact: `JENESIS-Windows-installer` → `JENESIS-Setup-1.0.0.exe`, **88 MB**
-(92,564,673 bytes). One earlier run (40896463853) failed at "graceful shutdown"
-because the runner exposed no window handle — that is bug #11 above, now fixed and
-re-verified.
+(92.5 MB). Runs since the window-close fix (bugs #11/#14) are green:
+40909845502, 40912939198, 40912949515 (and the final run listed below).
+
+Honest history of the Windows runs — the failures were found and fixed in the
+open, not hidden:
+
+| Run | Outcome |
+|---|---|
+| 40894176657 | failed: installer built and verified, smoke test failed (no diagnostics yet) |
+| 40896463853 | failed at "graceful shutdown": no window handle exposed → bug #11 |
+| 40898212001 | **green** (17/17) |
+| 40899570266, 40902377843, 40903844471, 40905140071 | failed at "Close again and confirm clean shutdown": WM_CLOSE sent to the wrong window → bug #14 (and #12/#13 hardening) |
+| 40906371950, 40907360663 | **green** (17/17) |
+| 40908215193, 40911107625 (run A), 40911086548 (run B) | failed with the same symptom — the diagnostic (window title `''`) that exposed bug #14 |
+| 40909845502, 40912939198, 40912949515 | **green** (17/17) after the fix |
 
 ### Not run here (environment limits — not claimed as passing)
 
