@@ -36,7 +36,10 @@ const PERMISSIONS = [
   'accounting:read', 'accounting:write', 'journal:post', 'journal:reverse',
   'fx:read', 'fx:write', 'fx:revalue',
   'company:manage', 'users:manage', 'backup:export', 'backup:restore', 'demo:reset',
-  'messaging:read', 'messaging:write'
+  'messaging:read', 'messaging:write',
+  // JENESIS Maintenance: allow other computers on the network to reach the
+  // service, and read the service log. Administrator and maintenance only.
+  'network:manage', 'logs:read'
 ];
 
 const READ_ALL = PERMISSIONS.filter((p) => p.endsWith(':read'));
@@ -74,7 +77,9 @@ const ROLE_PERMISSIONS = {
     'inventory:read', 'inventory:write', 'inventory:adjust',
     'stores:manage',
     'sales:read', 'purchases:read', 'contacts:read',
-    'messaging:read', 'messaging:write'
+    'messaging:read', 'messaging:write',
+    // The Maintenance application: the service, the network and the logs.
+    'network:manage', 'logs:read'
   ],
   // Managers have full visibility but cannot change or post anything.
   manager: [...READ_ALL]

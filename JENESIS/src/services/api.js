@@ -2,8 +2,50 @@
  * API client. Every request carries the session bearer token. The token is kept in
  * sessionStorage (cleared when the window closes) and is never trusted as identity by the
  * backend beyond its session lookup.
+ *
+ * By default it talks to the JENESIS service running on this computer (same
+ * origin). JENESIS Maintenance can point it at another computer on the network
+ * instead — that is how several computers share one company and one Messenger.
+ * When a remote address is set, requests are absolute and cross-origin; the
+ * server only answers for loopback origins and always requires a session token.
  */
 const TOKEN_KEY = 'genesis_session_token';
+const SERVER_URL_KEY = 'jenesis_server_url';
+
+/**
+ * The address of the JENESIS service, or '' for "the service on this computer".
+ * Stored per browser profile, so each window keeps its own choice.
+ */
+export function getServerUrl() {
+  try {
+    return (localStorage.getItem(SERVER_URL_KEY) || '').trim();
+  } catch (_) {
+    return '';
+  }
+}
+
+/** Sets (or clears, with '') the address of a JENESIS service on the network. */
+export function setServerUrl(url) {
+  const value = String(url || '').trim().replace(/\/+$/, '');
+  try {
+    if (value) localStorage.setItem(SERVER_URL_KEY, value);
+    else localStorage.removeItem(SERVER_URL_KEY);
+  } catch (_) { /* storage is optional */ }
+  return value;
+}
+
+/** True when this window is using another computer's service. */
+export function isRemoteServer() {
+  return getServerUrl() !== '';
+}
+
+/** Resolves a relative API path against the configured service. */
+export function apiUrl(path) {
+  const base = getServerUrl();
+  if (!base) return path;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 let unauthorizedHandler = null;
 
@@ -61,7 +103,7 @@ export async function apiRequest(url, options = {}) {
     ...(options.headers || {})
   };
 
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(apiUrl(url), { ...options, headers });
 
   const contentType = response.headers.get('content-type');
   let data;

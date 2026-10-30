@@ -164,20 +164,47 @@ export function formatCombo(combo) {
  * shortcuts handled by the application shell itself.
  */
 export const SHORTCUTS = [
+  // --- Function keys -------------------------------------------------------
   { id: 'help', combo: 'F1', group: 'app', key: 'help', builtin: true },
   { id: 'settle', combo: 'F2', group: 'document', key: 'settle', builtin: true },
   { id: 'print', combo: 'F3', group: 'document', key: 'print', builtin: true },
   { id: 'refresh', combo: 'F5', group: 'app', key: 'refresh', builtin: true },
+  { id: 'escape', combo: 'Escape', group: 'navigation', key: 'escape', builtin: true },
+
+  // --- Editing -------------------------------------------------------------
+  { id: 'save', combo: 'Ctrl+S', group: 'document', key: 'save', builtin: true },
   { id: 'new', combo: 'Ctrl+N', group: 'document', key: 'new', builtin: true },
+  { id: 'edit', combo: 'Ctrl+E', group: 'document', key: 'edit', builtin: true },
+  { id: 'search', combo: 'Ctrl+F', group: 'app', key: 'search', builtin: true },
   { id: 'printCtrl', combo: 'Ctrl+P', group: 'document', key: 'print', builtin: true },
-  { id: 'messenger', combo: 'Ctrl+K', group: 'app', key: 'messenger', builtin: true },
-  { id: 'calculator', combo: 'Ctrl+Shift+C', group: 'app', key: 'calculator', builtin: true },
-  { id: 'theme', combo: 'Ctrl+Shift+T', group: 'app', key: 'theme', builtin: true },
-  { id: 'language', combo: 'Ctrl+Shift+L', group: 'app', key: 'language', builtin: true },
-  { id: 'reference', combo: 'Ctrl+/', group: 'app', key: 'reference', builtin: true },
+  { id: 'duplicate', combo: 'Ctrl+D', group: 'document', key: 'duplicate', builtin: true },
+  { id: 'submit', combo: 'Ctrl+Enter', group: 'document', key: 'submit', builtin: true },
+
+  // --- Navigation ----------------------------------------------------------
   { id: 'back', combo: 'Alt+ArrowLeft', group: 'navigation', key: 'back', builtin: true },
   { id: 'forward', combo: 'Alt+ArrowRight', group: 'navigation', key: 'forward', builtin: true },
-  { id: 'escape', combo: 'Escape', group: 'navigation', key: 'escape', builtin: true }
+  { id: 'openSales', combo: 'Ctrl+Shift+S', group: 'navigation', key: 'open_sales', builtin: true },
+  { id: 'newReceipt', combo: 'Ctrl+Shift+R', group: 'document', key: 'new_receipt', builtin: true },
+  { id: 'searchCustomers', combo: 'Ctrl+Shift+C', group: 'navigation', key: 'search_customers', builtin: true },
+  { id: 'openPurchases', combo: 'Ctrl+Shift+P', group: 'navigation', key: 'open_purchases', builtin: true },
+  { id: 'searchSuppliers', combo: 'Ctrl+Shift+V', group: 'navigation', key: 'search_suppliers', builtin: true },
+  { id: 'newPurchase', combo: 'Ctrl+Shift+N', group: 'document', key: 'new_purchase', builtin: true },
+  { id: 'openInventory', combo: 'Ctrl+Shift+I', group: 'navigation', key: 'open_inventory', builtin: true },
+  { id: 'searchProducts', combo: 'Ctrl+Shift+F', group: 'navigation', key: 'search_products', builtin: true },
+  { id: 'stockTransfers', combo: 'Ctrl+Shift+T', group: 'navigation', key: 'stock_transfers', builtin: true },
+  { id: 'openAccounting', combo: 'Ctrl+Shift+A', group: 'navigation', key: 'open_accounting', builtin: true },
+  { id: 'openBanking', combo: 'Ctrl+Shift+B', group: 'navigation', key: 'open_banking', builtin: true },
+  { id: 'openLedger', combo: 'Ctrl+Shift+L', group: 'navigation', key: 'open_ledger', builtin: true },
+  { id: 'openReports', combo: 'Ctrl+Shift+G', group: 'navigation', key: 'open_reports', builtin: true },
+
+  // --- Application ---------------------------------------------------------
+  { id: 'calculator', combo: 'Ctrl+Shift+K', group: 'app', key: 'calculator', builtin: true },
+  { id: 'messenger', combo: 'Ctrl+Shift+M', group: 'app', key: 'messenger', builtin: true },
+  { id: 'reference', combo: 'Ctrl+/', group: 'app', key: 'reference', builtin: true },
+  // Theme and language keep Alt combinations: every Ctrl+Shift+letter above
+  // belongs to a screen or a document action.
+  { id: 'theme', combo: 'Alt+T', group: 'app', key: 'theme', builtin: true },
+  { id: 'language', combo: 'Alt+L', group: 'app', key: 'language', builtin: true }
 ];
 
 /** Case/blank-insensitive search over the reference list. */

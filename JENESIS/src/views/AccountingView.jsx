@@ -22,6 +22,15 @@ export default function AccountingView() {
   const { t } = useI18n();
 
   const [activeTab, setActiveTab] = useState('accounts'); // 'accounts', 'journal', 'ledger'
+
+  // Ctrl+Shift+L — the shell asks for the general ledger tab.
+  useEffect(() => {
+    const onOpenTab = (event) => {
+      if (event.detail === 'ledger') setActiveTab('ledger');
+    };
+    window.addEventListener('jenesis:open-tab', onOpenTab);
+    return () => window.removeEventListener('jenesis:open-tab', onOpenTab);
+  }, []);
   const [accounts, setAccounts] = useState([]);
   const [journalEntries, setJournalEntries] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);

@@ -170,7 +170,7 @@ test('the header switch moves between the two explicit themes', async () => {
 // ---------------------------------------------------------------------------
 // 2. First paint: the inline bootstrap in index.html
 // ---------------------------------------------------------------------------
-function runBootstrap({ stored, systemDark = false, storageThrows = false }) {
+function runBootstrap({ stored, systemDark = false, storageThrows = false, store = null }) {
   const html = read('index.html');
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   const bootstrap = scripts.find((code) => code.includes('jenesis_theme'));
@@ -186,7 +186,7 @@ function runBootstrap({ stored, systemDark = false, storageThrows = false }) {
             throw new Error('blocked');
           },
         }
-      : memoryStorage({ jenesis_theme: stored }),
+      : memoryStorage({ jenesis_theme: stored, ...(store || {}) }),
     document: { documentElement: element },
     window: {
       matchMedia: (query) => ({
@@ -210,6 +210,30 @@ test('System Default is honoured at first paint', () => {
   const lightOs = runBootstrap({ stored: 'system', systemDark: false });
   assert.ok(!lightOs.classes.has('dark'));
   assert.strictEqual(lightOs.element.getAttribute('data-theme'), 'light');
+});
+
+test('each application paints its own remembered theme', () => {
+  // Maintenance remembers Dark while Admin remembers Light: the bootstrap must
+  // read the key of the application this window belongs to.
+  const store = {
+    jenesis_app: 'maintenance',
+    'jenesis_theme:maintenance': 'dark',
+    'jenesis_theme:admin': 'light'
+  };
+  const dark = runBootstrap({ stored: 'light', store });
+  assert.ok(dark.classes.has('dark'), 'Maintenance must paint its own Dark Mode');
+  assert.strictEqual(dark.element.getAttribute('data-app'), 'maintenance');
+
+  const admin = runBootstrap({ stored: 'dark', store: { jenesis_app: 'admin', 'jenesis_theme:admin': 'light' } });
+  assert.ok(!admin.classes.has('dark'), 'Admin must paint its own Light Mode');
+  assert.strictEqual(admin.element.getAttribute('data-app'), 'admin');
+});
+
+test('an application without a preference of its own inherits the shared one', () => {
+  const inherited = runBootstrap({ stored: 'dark', store: { jenesis_app: 'seller' } });
+  assert.ok(inherited.classes.has('dark'), 'the legacy single key still applies');
+  const unknown = runBootstrap({ stored: 'dark', store: { jenesis_app: 'nonsense' } });
+  assert.ok(unknown.classes.has('dark'), 'an unknown application id falls back to the shared key');
 });
 
 test('an unreadable or empty preference falls back to Light Mode', () => {
@@ -784,17 +808,19 @@ test('cards, panels and shells stay distinguishable from their background', () =
 test('the theme provider is mounted above the whole application', () => {
   const app = read('src/App.jsx');
   assert.ok(/import\s+{\s*ThemeProvider\s*}\s+from\s+'\.\/context\/ThemeContext'/.test(app));
-  const providerIndex = app.indexOf('<ThemeProvider>');
+  const providerIndex = app.indexOf('<ThemeProvider');
   const i18nIndex = app.indexOf('<I18nProvider>');
   const appIndex = app.indexOf('<AppProvider>');
+  const modeIndex = app.indexOf('<AppModeProvider>');
   assert.ok(providerIndex > -1, 'ThemeProvider must wrap the application');
-  assert.ok(providerIndex < i18nIndex && i18nIndex < appIndex, 'ThemeProvider must be outermost');
+  assert.ok(providerIndex < i18nIndex && i18nIndex < appIndex, 'ThemeProvider must be above the screens');
+  assert.ok(modeIndex > -1 && modeIndex < providerIndex, 'AppModeProvider decides the app before the theme is read');
   assert.ok(/bg-canvas/.test(app), 'the application shell uses the canvas token');
 });
 
 test('the theme provider stores, resolves and paints the preference', () => {
   const context = read('src/context/ThemeContext.jsx');
-  assert.ok(/readThemePreference\(getStorage\(\)\)/.test(context), 'it reads the saved preference');
+  assert.ok(/readThemePreference\(getStorage\(\), appId\)/.test(context), 'it reads the preference saved for this application');
   assert.ok(/writeThemePreference\(getStorage\(\)/.test(context), 'it saves the preference');
   assert.ok(/applyTheme\(document\.documentElement, theme\)/.test(context), 'it paints the theme');
   assert.ok(/useLayoutEffect/.test(context), 'it paints before the browser draws');

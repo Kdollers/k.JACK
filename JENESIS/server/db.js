@@ -640,11 +640,11 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
   `).run(
     companyId,
     'GEN-001',
-    'Genesis Commercial Enterprise Ltd',
-    'Genesis Commercial Enterprise Limited',
+    'JENESIS Commercial Enterprise Ltd',
+    'JENESIS Commercial Enterprise Limited',
     'KG 7 Ave, Business District, Kigali, Rwanda',
     '+250 788 123 456',
-    'info@genesiserp.com',
+    'info@jenesis.app',
     'RW109876543',
     'USD', '$', 2, '01-01', '12-31',
     'en', 0, 'WEIGHTED_AVERAGE', now, now
@@ -652,12 +652,12 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
 
   // 2. Demo users (only when GENESIS_SEED_DEMO=1; never in production)
   const users = demo ? [
-    { id: 'usr-admin', username: 'admin', name: 'System Administrator', role: 'admin', email: 'admin@genesiserp.com' },
-    { id: 'usr-accountant', username: 'accountant', name: 'Jean-Paul Nsengiyumva', role: 'accountant', email: 'accountant@genesiserp.com' },
-    { id: 'usr-sales', username: 'sales', name: 'Claire Uwase', role: 'sales', email: 'sales@genesiserp.com' },
-    { id: 'usr-purchases', username: 'purchases', name: 'Patrick Mugisha', role: 'purchases', email: 'purchases@genesiserp.com' },
-    { id: 'usr-inventory', username: 'inventory', name: 'Eric Habimana', role: 'inventory', email: 'inventory@genesiserp.com' },
-    { id: 'usr-manager', username: 'manager', name: 'Grace Mutoni', role: 'manager', email: 'manager@genesiserp.com' }
+    { id: 'usr-admin', username: 'admin', name: 'System Administrator', role: 'admin', email: 'admin@jenesis.app' },
+    { id: 'usr-accountant', username: 'accountant', name: 'Jean-Paul Nsengiyumva', role: 'accountant', email: 'accountant@jenesis.app' },
+    { id: 'usr-sales', username: 'sales', name: 'Claire Uwase', role: 'sales', email: 'sales@jenesis.app' },
+    { id: 'usr-purchases', username: 'purchases', name: 'Patrick Mugisha', role: 'purchases', email: 'purchases@jenesis.app' },
+    { id: 'usr-inventory', username: 'inventory', name: 'Eric Habimana', role: 'inventory', email: 'inventory@jenesis.app' },
+    { id: 'usr-manager', username: 'manager', name: 'Grace Mutoni', role: 'manager', email: 'manager@jenesis.app' }
   ] : [];
 
   const defaultPasswordHash = hashPassword('admin123');
@@ -895,7 +895,7 @@ function seedDefaultData(database, { demo = process.env.GENESIS_SEED_DEMO === '1
   const jeInitId = 'je-opening-001';
   database.prepare(`
     INSERT INTO journal_entries (id, company_id, entry_number, date, reference, description, source_type, total_debit, total_credit, status, created_by, created_at)
-    VALUES (?, ?, 'JE-2026-0001', '2026-01-01', 'OPENING-BALANCE', 'Opening Balances for Genesis Commercial Enterprise Ltd', 'MANUAL', 105760.00, 105760.00, 'POSTED', 'usr-admin', ?)
+    VALUES (?, ?, 'JE-2026-0001', '2026-01-01', 'OPENING-BALANCE', 'Opening Balances for JENESIS Commercial Enterprise Ltd', 'MANUAL', 105760.00, 105760.00, 'POSTED', 'usr-admin', ?)
   `).run(jeInitId, companyId, now);
 
   const insertJELine = database.prepare(`

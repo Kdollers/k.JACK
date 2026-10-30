@@ -712,3 +712,123 @@
     padding: 0 !important;
   }
 }
+
+/* ==========================================================================
+   Application identity — JENESIS Seller (red), Maintenance (green), Admin (blue)
+   --------------------------------------------------------------------------
+   The three applications are one program with three identities. The accent
+   tokens below are re-bound per application (the launcher sets `data-app` on
+   <html> before the first paint) and the blue utilities the interface already
+   uses follow them, so buttons, links, highlights, focus rings and the active
+   menu item carry the application's colour on every screen.
+
+   The identity colour does NOT change between Light Mode and Dark Mode: only
+   the text tint is brightened in Dark Mode, which keeps the hue (red / green /
+   blue) identical while keeping text readable.
+   ========================================================================== */
+:root,
+[data-app='admin'] {
+  --j-accent: 37 99 235;        /* blue-600  — Admin */
+  --j-accent-strong: 29 78 216; /* blue-700 */
+  --j-accent-text: 29 78 216;
+  --j-accent-soft: 219 234 254; /* blue-100 */
+  --j-accent-line: 191 219 254; /* blue-200 */
+}
+
+[data-app='seller'] {
+  --j-accent: 220 38 38;        /* red-600   — Seller */
+  --j-accent-strong: 185 28 28; /* red-700 */
+  --j-accent-text: 185 28 28;
+  --j-accent-soft: 254 226 226; /* red-100 */
+  --j-accent-line: 254 202 202; /* red-200 */
+}
+
+[data-app='maintenance'] {
+  --j-accent: 22 163 74;        /* green-600 — Maintenance */
+  --j-accent-strong: 21 128 61; /* green-700 */
+  --j-accent-text: 21 128 61;
+  --j-accent-soft: 220 252 231; /* green-100 */
+  --j-accent-line: 187 247 208; /* green-200 */
+}
+
+.dark,
+.dark[data-app='admin'] {
+  --j-accent: 37 99 235;        /* same hue on dark surfaces */
+  --j-accent-strong: 29 78 216;
+  --j-accent-text: 147 197 253; /* blue-300  — readable on dark */
+  --j-accent-soft: 30 58 138;   /* blue-900 */
+  --j-accent-line: 30 64 175;   /* blue-800 */
+}
+
+.dark[data-app='seller'] {
+  --j-accent: 220 38 38;
+  --j-accent-strong: 185 28 28;
+  --j-accent-text: 252 165 165; /* red-300 */
+  --j-accent-soft: 69 10 10;    /* red-950 */
+  --j-accent-line: 127 29 29;   /* red-900 */
+}
+
+.dark[data-app='maintenance'] {
+  --j-accent: 22 163 74;
+  --j-accent-strong: 21 128 61;
+  --j-accent-text: 134 239 172; /* green-300 */
+  --j-accent-soft: 5 46 22;     /* green-950 */
+  --j-accent-line: 20 83 45;    /* green-900 */
+}
+
+/* Semantic helpers for new code — these always follow the application. */
+.j-bg { background-color: rgb(var(--j-accent)); }
+.j-bg-soft { background-color: rgb(var(--j-accent) / 0.14); }
+.j-text { color: rgb(var(--j-accent-text)); }
+.j-border { border-color: rgb(var(--j-accent)); }
+.j-ring:focus-visible { outline: 2px solid rgb(var(--j-accent)); outline-offset: 2px; }
+
+/* The interface was written with the blue palette; those utilities now resolve
+   to the application's accent instead, in both themes. */
+.bg-blue-500,
+.bg-blue-600,
+.bg-blue-700 { background-color: rgb(var(--j-accent)) !important; }
+
+.hover\:bg-blue-500:hover,
+.hover\:bg-blue-600:hover,
+.hover\:bg-blue-700:hover { background-color: rgb(var(--j-accent-strong)) !important; }
+
+.text-blue-500,
+.dark .text-blue-500,
+.text-blue-600,
+.dark .text-blue-600,
+.text-blue-700,
+.dark .text-blue-700,
+.text-blue-800,
+.dark .text-blue-800,
+.text-blue-900,
+.dark .text-blue-900 { color: rgb(var(--j-accent-text)) !important; }
+
+.hover\:text-blue-500:hover,
+.dark .hover\:text-blue-500:hover,
+.hover\:text-blue-600:hover,
+.dark .hover\:text-blue-600:hover,
+.hover\:text-blue-700:hover,
+.dark .hover\:text-blue-700:hover { color: rgb(var(--j-accent-text)) !important; }
+
+.bg-blue-50,
+.hover\:bg-blue-50:hover,
+.dark .bg-blue-50,
+.dark .hover\:bg-blue-50:hover { background-color: rgb(var(--j-accent) / 0.12) !important; }
+
+.bg-blue-100,
+.hover\:bg-blue-100:hover,
+.dark .bg-blue-100,
+.dark .hover\:bg-blue-100:hover { background-color: rgb(var(--j-accent) / 0.18) !important; }
+
+.border-blue-200,
+.border-blue-300,
+.dark .border-blue-200,
+.dark .border-blue-300 { border-color: rgb(var(--j-accent) / 0.4) !important; }
+
+.ring-blue-400,
+.ring-blue-500,
+.focus\:ring-blue-400:focus,
+.focus\:ring-blue-500:focus { --tw-ring-color: rgb(var(--j-accent) / 0.55) !important; }
+
+.focus\:border-blue-500:focus { border-color: rgb(var(--j-accent)) !important; }

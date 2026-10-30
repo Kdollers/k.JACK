@@ -131,22 +131,22 @@ export const HELP = {
       calculator: {
         title: 'The built-in calculator',
         purpose: 'Compute an amount (a total, a discount, a tax) without leaving the program. It is a calculator only: it never posts or stores anything.',
-        where: 'The "Calculator" button in the top bar, or Ctrl + Shift + C.',
+        where: 'The "Calculator" button in the top bar, or Ctrl + Shift + K.',
         steps: [
-          'Open the calculator with the header button or Ctrl + Shift + C.',
+          'Open the calculator with the header button or Ctrl + Shift + K.',
           'Type with the physical keyboard: digits 0–9, ".", +, −, *, /, Enter or "=" for the result, Backspace to delete a digit, "c" to clear, Esc to close. The keypad works too.',
           'Or click the buttons with the mouse; the panel can be dragged by its title bar and minimised with the "−" button.'
         ],
         expected: 'The result is shown with accounting precision (for example 0.1 + 0.2 gives 0.3, not 0.30000000000000004). You can then type that number into an amount field.',
         notes: [
           'Dividing by zero shows a clear message instead of an error code; press "C" and start again.',
-          'While the calculator is open the keys belong to it, so typing "5" never triggers an application shortcut. Ctrl combinations and function keys still work (Ctrl + Shift + C closes it, F1 opens this guide).'
+          'While the calculator is open the keys belong to it, so typing "5" never triggers an application shortcut. Ctrl combinations and function keys still work (Ctrl + Shift + K closes it, F1 opens this guide).'
         ]
       },
       messenger: {
         title: 'JENESIS Messenger',
         purpose: 'Talk with your colleagues inside JENESIS — ask about a price, a missing product, or a document — without leaving the program.',
-        where: 'The "Messenger" button in the top bar, immediately next to the calculator, or Ctrl + K.',
+        where: 'The "Messenger" button in the top bar, immediately next to the calculator, or Ctrl + Shift + M.',
         steps: [
           'Open the Messenger and choose a colleague in the left list (or search for a name).',
           'Type your message and press Enter (Shift + Enter for a new line), or click the send button.',
@@ -167,7 +167,7 @@ export const HELP = {
         steps: [
           'Click the theme button in the header to switch between Light and Dark.',
           'Or open Settings → Appearance and choose Light, Dark, or System Default.',
-          'Press Ctrl + Shift + T to cycle through the three choices.'
+          'Press Alt + T to cycle through the three choices.'
         ],
         expected: 'The whole program — screens, tables, dialogs and this guide — follows your choice immediately, and the choice is remembered for the next start.',
         notes: [
@@ -184,10 +184,32 @@ export const HELP = {
           'F2 — settle (mark PAID) the selected sales or purchase document.',
           'F3 — print the selected document (Ctrl + P does the same).',
           'F5 — reload the data on this screen.',
+          'Ctrl + S — save the record you are editing.',
           'Ctrl + N — create a new document on this screen.',
-          'Ctrl + K — open or close the Messenger. Ctrl + Shift + C — calculator. Ctrl + Shift + T — theme. Ctrl + Shift + L — language.',
+          'Ctrl + E — edit the selected record.',
+          'Ctrl + F — go to the search box on this screen.',
+          'Ctrl + D — duplicate the selected document (where the screen allows it).',
+          'Ctrl + Enter — confirm the dialog or submit the form.',
           'Alt + Left arrow — go back to the previous screen.',
           'Alt + Right arrow — go forward to the next screen.',
+          'Ctrl + Shift + S — open Sales.',
+          'Ctrl + Shift + R — create a new sales receipt.',
+          'Ctrl + Shift + C — open Customers and search.',
+          'Ctrl + Shift + P — open Purchases.',
+          'Ctrl + Shift + V — open Suppliers and search.',
+          'Ctrl + Shift + N — create a new purchase document.',
+          'Ctrl + Shift + I — open Inventory.',
+          'Ctrl + Shift + F — open Inventory and search product codes.',
+          'Ctrl + Shift + T — open stock transfers.',
+          'Ctrl + Shift + A — open Accounting.',
+          'Ctrl + Shift + B — open Banking & Cash.',
+          'Ctrl + Shift + L — open the General Ledger.',
+          'Ctrl + Shift + G — open Reports.',
+          'Ctrl + Shift + K — open or close the calculator.',
+          'Ctrl + Shift + M — open or close JENESIS Messenger.',
+          'Ctrl + / — show or hide the searchable list of shortcuts.',
+          'Alt + T — cycle the theme: Light → Dark → System.',
+          'Alt + L — switch the interface language.',
           'Escape — close the dialog, then the panel, then go back. Never quits the program.'
         ],
         expected: 'The action happens immediately, and a message tells you when there is nothing to do (for example F2 without a selected document, or F3 on a screen with nothing to print).',
@@ -392,22 +414,22 @@ export const HELP = {
       calculator: {
         title: 'La calculatrice intégrée',
         purpose: 'Calculer un montant (total, remise, taxe) sans quitter le programme. C\'est une calculatrice : elle ne comptabilise et n\'enregistre jamais rien.',
-        where: 'Le bouton « Calculatrice » dans la barre du haut, ou Ctrl + Maj + C.',
+        where: 'Le bouton « Calculatrice » dans la barre du haut, ou Ctrl + Maj + K.',
         steps: [
-          'Ouvrez la calculatrice avec le bouton de l\'en-tête ou Ctrl + Maj + C.',
+          'Ouvrez la calculatrice avec le bouton de l\'en-tête ou Ctrl + Maj + K.',
           'Tapez au clavier physique : chiffres 0–9, « . », +, −, *, /, Entrée ou « = » pour le résultat, Retour arrière pour effacer un chiffre, « c » pour tout effacer, Échap pour fermer. Le pavé numérique fonctionne aussi.',
           'Ou cliquez sur les boutons à la souris ; le panneau se déplace par sa barre de titre et se minimise avec le bouton « − ».'
         ],
         expected: 'Le résultat s\'affiche avec la précision comptable (par exemple 0,1 + 0,2 donne 0,3 et non 0,30000000000000004). Vous pouvez ensuite saisir ce nombre dans un champ de montant.',
         notes: [
           'Une division par zéro affiche un message clair au lieu d\'une erreur ; appuyez sur « C » et recommencez.',
-          'Tant que la calculatrice est ouverte, le clavier lui appartient : taper « 5 » ne déclenche jamais un raccourci du programme. Les combinaisons Ctrl et les touches de fonction restent actives (Ctrl + Maj + C la ferme, F1 ouvre ce guide).'
+          'Tant que la calculatrice est ouverte, le clavier lui appartient : taper « 5 » ne déclenche jamais un raccourci du programme. Les combinaisons Ctrl et les touches de fonction restent actives (Ctrl + Maj + K la ferme, F1 ouvre ce guide).'
         ]
       },
       messenger: {
         title: 'JENESIS Messenger',
         purpose: 'Discuter avec vos collègues dans JENESIS — demander un prix, un produit manquant ou un document — sans quitter le programme.',
-        where: 'Le bouton « Messenger » dans la barre du haut, juste à côté de la calculatrice, ou Ctrl + K.',
+        where: 'Le bouton « Messenger » dans la barre du haut, juste à côté de la calculatrice, ou Ctrl + Maj + M.',
         steps: [
           'Ouvrez le Messenger et choisissez un collègue dans la liste de gauche (ou recherchez un nom).',
           'Tapez votre message et appuyez sur Entrée (Maj + Entrée pour une nouvelle ligne), ou cliquez sur le bouton d\'envoi.',
@@ -428,7 +450,7 @@ export const HELP = {
         steps: [
           'Cliquez sur le bouton de thème de l\'en-tête pour passer de Clair à Sombre.',
           'Ou ouvrez Paramètres → Apparence et choisissez Clair, Sombre ou Système.',
-          'Appuyez sur Ctrl + Maj + T pour passer d\'un choix à l\'autre.'
+          'Appuyez sur Alt + T pour passer d\'un choix à l\'autre.'
         ],
         expected: 'Tout le programme — écrans, tableaux, boîtes de dialogue, ce guide — suit immédiatement votre choix, qui est mémorisé au prochain démarrage.',
         notes: [
@@ -442,13 +464,35 @@ export const HELP = {
         where: 'Appuyez sur Ctrl + / pour la liste recherchable, ou sur F1 pour ce guide et lisez la section des raccourcis.',
         steps: [
           'F1 — ouvrir ce guide.',
-          'F2 — régler (marquer PAYÉ) le document de vente ou d\'achat sélectionné.',
+          'F2 — régler (marquer PAYÉ) le document de vente ou d’achat sélectionné.',
           'F3 — imprimer le document sélectionné (Ctrl + P fait la même chose).',
           'F5 — recharger les données de cet écran.',
+          'Ctrl + S — enregistrer la fiche en cours.',
           'Ctrl + N — créer un nouveau document sur cet écran.',
-          'Ctrl + K — ouvrir ou fermer le Messenger. Ctrl + Maj + C — calculatrice. Ctrl + Maj + T — thème. Ctrl + Maj + L — langue.',
-          'Alt + Flèche gauche — revenir à l\'écran précédent.',
-          'Alt + Flèche droite — aller à l\'écran suivant.',
+          'Ctrl + E — modifier la fiche sélectionnée.',
+          'Ctrl + F — aller à la recherche de cet écran.',
+          'Ctrl + D — dupliquer le document sélectionné.',
+          'Ctrl + Entrée — valider la boîte de dialogue ou envoyer le formulaire.',
+          'Alt + Flèche gauche — revenir à l’écran précédent.',
+          'Alt + Flèche droite — aller à l’écran suivant.',
+          'Ctrl + Maj + S — ouvrir les Ventes.',
+          'Ctrl + Maj + R — créer un reçu de vente.',
+          'Ctrl + Maj + C — ouvrir les Clients et rechercher.',
+          'Ctrl + Maj + P — ouvrir les Achats.',
+          'Ctrl + Maj + V — ouvrir les Fournisseurs et rechercher.',
+          'Ctrl + Maj + N — créer un document d’achat.',
+          'Ctrl + Maj + I — ouvrir le Stock.',
+          'Ctrl + Maj + F — ouvrir le Stock et rechercher un code produit.',
+          'Ctrl + Maj + T — ouvrir les transferts de stock.',
+          'Ctrl + Maj + A — ouvrir la Comptabilité.',
+          'Ctrl + Maj + B — ouvrir Banque et Caisse.',
+          'Ctrl + Maj + L — ouvrir le Grand Livre.',
+          'Ctrl + Maj + G — ouvrir les Rapports.',
+          'Ctrl + Maj + K — ouvrir ou fermer la calculatrice.',
+          'Ctrl + Maj + M — ouvrir ou fermer JENESIS Messenger.',
+          'Ctrl + / — afficher ou masquer la liste recherchable des raccourcis.',
+          'Alt + T — changer de thème : Clair → Sombre → Système.',
+          'Alt + L — changer la langue de l’interface.',
           'Échap — ferme la boîte de dialogue, puis le panneau, puis revient en arrière. Ne quitte jamais le programme.'
         ],
         expected: 'L\'action se produit immédiatement, et un message vous prévient lorsqu\'il n\'y a rien à faire (par exemple F2 sans document sélectionné, ou F3 sur un écran sans impression).',
@@ -653,22 +697,22 @@ export const HELP = {
       calculator: {
         title: 'Kalikilateli yubatswemo',
         purpose: 'Kubara amafaranga (igiteranyo, igabanuro, umusoro) utavuye muri porogaramu. Ni kalikilateli gusa: ntabwo yinjiza cyangwa ngo ibike ikintu na kimwe.',
-        where: 'Buto « Kalikilateli » ku mugozi wo hejuru, cyangwa Ctrl + Shift + C.',
+        where: 'Buto « Kalikilateli » ku mugozi wo hejuru, cyangwa Ctrl + Shift + K.',
         steps: [
-          'Fungura kalikilateli ukoresheje buto yo hejuru cyangwa Ctrl + Shift + C.',
+          'Fungura kalikilateli ukoresheje buto yo hejuru cyangwa Ctrl + Shift + K.',
           'Andika ukoresheje clavier nyayo: imibare 0–9, « . », +, −, *, /, Enter cyangwa « = » ku gisubizo, Backspace kugira ngo usibe umubare, « c » kugira ngo usibe byose, Escape kugira ngo ufunge. Clavier y\'imibare nayo irakora.',
           'Cyangwa kanda utubuto ukoresheje imbeba; akanama gashobora gukururwa n\'umutwe wako kandi kagahishwa ukoresheje buto « − ».'
         ],
         expected: 'Igisubizo kigaragara gifite ubunyangamugayo bw\'ibaruramari (urugero 0.1 + 0.2 itanga 0.3, atari 0.30000000000000004). Ushobora kwinjiza uwo mubare mu gice cy\'amafaranga.',
         notes: [
           'Kugabanya na zeru byerekana ubutumwa busobanutse aho kwerekana ikosa; kanda « C » wongere utangire.',
-          'Igihe kalikilateli ifunguye, clavier iba iyayo: kwandika « 5 » ntibikora utubuto twa porogaramu. Gukomatanya Ctrl n\'utubuto tw\'imikorere biracyakora (Ctrl + Shift + C irayifunga, F1 ifungura iki gitabo).'
+          'Igihe kalikilateli ifunguye, clavier iba iyayo: kwandika « 5 » ntibikora utubuto twa porogaramu. Gukomatanya Ctrl n\'utubuto tw\'imikorere biracyakora (Ctrl + Shift + K irayifunga, F1 ifungura iki gitabo).'
         ]
       },
       messenger: {
         title: 'JENESIS Messenger',
         purpose: 'Kuganira n\'abo mukorana muri JENESIS — kubaza igiciro, igicuruzwa cyabuze cyangwa inyandiko — utavuye muri porogaramu.',
-        where: 'Buto « Messenger » ku mugozi wo hejuru, ikurikira kalikilateli, cyangwa Ctrl + K.',
+        where: 'Buto « Messenger » ku mugozi wo hejuru, ikurikira kalikilateli, cyangwa Ctrl + Shift + M.',
         steps: [
           'Fungura Messenger uhitemo mugenzi wawe mu rutonde rw\'ibumoso (cyangwa ushakisha izina).',
           'Andika ubutumwa bwawe wande Enter (Shift + Enter ku murongo mushya), cyangwa kanda buto yo kohereza.',
@@ -689,7 +733,7 @@ export const HELP = {
         steps: [
           'Kanda buto y\'insanganyamatsiko hejuru kugira ngo uhindure hagati y\'Urumuri n\'Umwijima.',
           'Cyangwa ufungure Igenamiterere → Isura uhitemo Urumuri, Umwijima cyangwa Sisitemu.',
-          'Kanda Ctrl + Shift + T kugira ngo uhinduranye ayo mahitamo atatu.'
+          'Kanda Alt + T kugira ngo uhinduranye ayo mahitamo atatu.'
         ],
         expected: 'Porogaramu yose — amapaji, imbonerahamwe, udusanduku tw\'ibiganiro, iki gitabo — ikurikira ako kanya icyo wahisemo, kandi kikibukwa igihe utangiye ubutaha.',
         notes: [
@@ -703,14 +747,36 @@ export const HELP = {
         where: 'Kanda Ctrl + / ku rutonde rushakishwa, cyangwa F1 kuri iki gitabo usome igice cy\'utubuto.',
         steps: [
           'F1 — fungura iki gitabo.',
-          'F2 — ishyura (erekana YISHYUWE) inyandiko y\'ubucuruzi cyangwa amagura yatoranyijwe.',
+          'F2 — ishyura (erekana YISHYUWE) inyandiko y’ubucuruzi cyangwa amagura yatoranyijwe.',
           'F3 — capa inyandiko yatoranyijwe (Ctrl + P ikora kimwe).',
-          'F5 — ongera upakire amakuru y\'iyi paji.',
+          'F5 — ongera upakire amakuru y’iyi paji.',
+          'Ctrl + S — bika ibyo urimo guhindura.',
           'Ctrl + N — kora inyandiko nshya kuri iyi paji.',
-          'Ctrl + K — fungura cyangwa ufunge Messenger. Ctrl + Shift + C — kalikilateli. Ctrl + Shift + T — insanganyamatsiko. Ctrl + Shift + L — ururimi.',
-          'Alt + Umwambi w\'ibumoso — subira ku ipaji yabanjirije.',
-          'Alt + Umwambi w\'iburyo — jya ku ipaji ikurikira.',
-          'Escape — ifunga agasanduku k\'ibiganiro, hanyuma akanama, hanyuma isubira inyuma. Ntizigera isohoka muri porogaramu.'
+          'Ctrl + E — hindura ibyo wahisemo.',
+          'Ctrl + F — jya mu gushakisha kuri iyi paji.',
+          'Ctrl + D — koporora inyandiko yatoranyijwe.',
+          'Ctrl + Entrée — emeza ikiganiro cyangwa ohereza ifishi.',
+          'Alt + Umwambi w’ibumoso — subira ku ipaji yabanjirije.',
+          'Alt + Umwambi w’iburyo — jya ku ipaji ikurikira.',
+          'Ctrl + Shift + S — fungura Ubucuruzi.',
+          'Ctrl + Shift + R — kora inyemezabwishyu nshya yo kugurisha.',
+          'Ctrl + Shift + C — fungura Abakiriya ushakishe.',
+          'Ctrl + Shift + P — fungura Kugura.',
+          'Ctrl + Shift + V — fungura Abaduha ibicuruzwa ushakishe.',
+          'Ctrl + Shift + N — kora inyandiko nshya yo kugura.',
+          'Ctrl + Shift + I — fungura Ububiko.',
+          'Ctrl + Shift + F — fungura Ububiko ushakishe kode y’igicuruzwa.',
+          'Ctrl + Shift + T — fungura imyimurire y’ububiko.',
+          'Ctrl + Shift + A — fungura Ibaruramari.',
+          'Ctrl + Shift + B — fungura Banki n’amafaranga.',
+          'Ctrl + Shift + L — fungura Igitabo kinini.',
+          'Ctrl + Shift + G — fungura Raporo.',
+          'Ctrl + Shift + K — fungura cyangwa ufunge imashini ibara.',
+          'Ctrl + Shift + M — fungura cyangwa ufunge JENESIS Messenger.',
+          'Ctrl + / — erekana cyangwa uhisha urutonde rw’utubuto dushakishwa.',
+          'Alt + T — hindura imiterere: Umucyo → Umwijima → Sisitemu.',
+          'Alt + L — hindura ururimi.',
+          'Escape — ifunga agasanduku k’ibiganiro, hanyuma akanama, hanyuma isubira inyuma. Ntizigera isohoka muri porogaramu.'
         ],
         expected: 'Igikorwa kiba ako kanya, kandi ubutumwa burakubwira igihe nta cyo gukora (urugero F2 nta nyandiko yatoranyijwe, cyangwa F3 ku ipaji idafite icyo icapa).',
         notes: [

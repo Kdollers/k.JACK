@@ -14,6 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const { BackendProcess, findFreePort, LOOPBACK } = require('./backend-manager.cjs');
 const { prepareDataDirectory } = require('./data-location.cjs');
+const { appIdFromArgv, appTitle, appUserModelId, iconFiles, windowUrl } = require('./app-mode.cjs');
 
 const APP_TITLE = 'JENESIS';
 const WINDOW_MIN_WIDTH = 1024;
@@ -21,6 +22,13 @@ const WINDOW_MIN_HEIGHT = 640;
 const MAX_START_ATTEMPTS = 3;
 
 let mainWindow = null;
+// One window per application: opening JENESIS Seller while JENESIS Admin is
+// running adds a second window instead of focusing the wrong application.
+const appWindows = new Map();
+// The application this process was started for (null = the launcher), and a
+// request remembered while the first window is still being prepared.
+let currentMode = appIdFromArgv(process.argv);
+let pendingMode = null;
 let backend = null;
 let backendUrl = null;
 let logStream = null;
@@ -144,6 +152,7 @@ function stopBackend() {
         ]);
         writeLog('Backend stopped.');
         backend = null;
+        backendUrl = null;
       }
       if (logStream) {
         logStream.end();
@@ -171,10 +180,14 @@ function darkWindowBackground() {
 function applyShellTheme(theme) {
   if (!ALLOWED_THEMES.includes(theme)) return null;
   if (nativeTheme) nativeTheme.themeSource = theme;
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setBackgroundColor(
-      nativeTheme && nativeTheme.shouldUseDarkColors ? THEME_BACKGROUNDS.dark : THEME_BACKGROUNDS.light
-    );
+  const background = nativeTheme && nativeTheme.shouldUseDarkColors
+    ? THEME_BACKGROUNDS.dark
+    : THEME_BACKGROUNDS.light;
+  // Every application window follows the theme of the window that changed it:
+  // the shell colour is a machine-wide appearance, not a per-application
+  // setting (the application colour itself is untouched by the theme).
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (win && !win.isDestroyed()) win.setBackgroundColor(background);
   }
   writeLog(`Appearance set to ${theme}.`);
   return theme;
@@ -193,9 +206,11 @@ if (nativeTheme && typeof nativeTheme.on === 'function') {
 // ---------------------------------------------------------------------------
 // Window
 // ---------------------------------------------------------------------------
-function createWindow() {
+function createWindow(mode) {
+  const appId = mode || null;
+  const identity = iconFiles(appId);
   mainWindow = new BrowserWindow({
-    title: APP_TITLE,
+    title: appId ? appTitle(appId) : APP_TITLE,
     width: 1366,
     height: 860,
     minWidth: WINDOW_MIN_WIDTH,
@@ -203,7 +218,7 @@ function createWindow() {
     show: false,
     backgroundColor: darkWindowBackground(),
     autoHideMenuBar: true,
-    icon: path.join(appRoot(), 'build', 'icon.ico'),
+    icon: path.join(appRoot(), identity.ico),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -216,6 +231,19 @@ function createWindow() {
     }
   });
 
+  // Give the window its own taskbar identity, so pinning JENESIS Seller does
+  // not pin JENESIS Admin (Windows groups windows by this id).
+  try {
+    if (process.platform === 'win32' && typeof mainWindow.setAppDetails === 'function') {
+      mainWindow.setAppDetails({ appId: appUserModelId(appId) });
+    }
+  } catch (err) {
+    writeLog(`Could not set the window identity: ${err && err.message ? err.message : err}`);
+  }
+
+  appWindows.set(appId || 'launcher', mainWindow);
+  writeLog(`Opening ${appId ? appTitle(appId) : 'the JENESIS launcher'}.`);
+
   // Window lifecycle is logged: a window that never finishes loading is the one
   // failure mode that leaves the user with an empty frame, so it must be visible
   // in desktop.log.
@@ -225,7 +253,7 @@ function createWindow() {
     if (loadRetried || pageLoaded) return;
     loadRetried = true;
     writeLog(`Window load ${reason}; reloading the interface once.`);
-    try { mainWindow.loadURL(backendUrl); } catch (err) { writeLog(`Reload failed: ${err.message}`); }
+    try { mainWindow.loadURL(windowUrl(backendUrl, appId)); } catch (err) { writeLog(`Reload failed: ${err.message}`); }
   };
   mainWindow.webContents.on('did-finish-load', () => {
     pageLoaded = true;
@@ -274,9 +302,34 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     writeLog('Window closed.');
+    appWindows.delete(appId || 'launcher');
     mainWindow = null;
   });
-  return mainWindow.loadURL(backendUrl);
+  return mainWindow.loadURL(windowUrl(backendUrl, appId));
+}
+
+/** Focuses the window of an application, or opens it when it is not running. */
+function focusOrOpenApp(mode) {
+  const key = mode || 'launcher';
+  const existing = appWindows.get(key);
+  if (existing && !existing.isDestroyed()) {
+    if (existing.isMinimized()) existing.restore();
+    existing.focus();
+    writeLog(`${mode ? appTitle(mode) : 'The launcher'} was already open; focusing it.`);
+    return existing;
+  }
+  // A second window must not inherit the quit flow of the first: only when the
+  // last window closes does the process (and the backend) stop.
+  const win = createWindow(mode || null);
+  return win;
+}
+
+/** The application a window was opened as (null for the launcher). */
+function modeOfWindow(win) {
+  for (const [mode, candidate] of appWindows.entries()) {
+    if (candidate === win) return mode === 'launcher' ? null : mode;
+  }
+  return null;
 }
 
 function showStartupError(err) {
@@ -297,10 +350,37 @@ const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
+  // A second launch is not a duplicate: the shortcut says WHICH application the
+  // user wants, so open (or focus) that application.
+  app.on('second-instance', (event, argv) => {
+    const mode = appIdFromArgv(argv) || null;
+    writeLog(`Another launch requested ${mode ? appTitle(mode) : 'the launcher'}.`);
+    if (!backendUrl) {
+      // The first window is still starting; it will honour the same mode.
+      pendingMode = mode;
+      return;
+    }
+    focusOrOpenApp(mode);
+  });
+
+  // Restarting the local service is the only way to rebind its network address
+  // after the Maintenance application changes it. It touches nothing else: the
+  // database is the same file, and no data is written.
+  ipcMain.handle('genesis:restart-backend', async () => {
+    if (!backendUrl) return false;
+    writeLog('Restarting the local service (requested by the interface).');
+    try {
+      await stopBackend();
+      shutdownPromise = null;
+      await startBackend();
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (win && !win.isDestroyed()) win.loadURL(windowUrl(backendUrl, modeOfWindow(win)));
+      }
+      writeLog(`Service restarted at ${backendUrl}.`);
+      return true;
+    } catch (err) {
+      writeLog(`Service restart failed: ${err && err.message ? err.message : err}`);
+      return false;
     }
   });
 
@@ -310,7 +390,11 @@ if (!gotLock) {
     version: app.getVersion(),
     platform: process.platform,
     dataDirectory: app.getPath('userData'),
-    packaged: app.isPackaged
+    packaged: app.isPackaged,
+    // Which application this window was opened as ('seller', 'maintenance',
+    // 'admin' or null for the launcher). Read-only, and only used to pick the
+    // identity of the interface.
+    app: currentMode
   }));
 
   app.whenReady().then(async () => {
@@ -328,7 +412,12 @@ if (!gotLock) {
 
     try {
       await startBackend();
-      await createWindow();
+      // A launch request that arrived while the backend was starting wins: it
+      // is the application the user most recently asked for.
+      const mode = pendingMode || currentMode;
+      pendingMode = null;
+      currentMode = mode;
+      await createWindow(mode || null);
     } catch (err) {
       showStartupError(err);
       quitting = true;
@@ -361,6 +450,7 @@ if (!gotLock) {
   });
 
   app.on('activate', () => {
-    if (!mainWindow && backendUrl) createWindow();
+    // macOS-style reactivation: re-open the last application that was used.
+    if (!mainWindow && backendUrl) focusOrOpenApp(currentMode);
   });
 }

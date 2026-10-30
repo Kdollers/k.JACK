@@ -51,6 +51,7 @@ const settlement = require('../settlement');
 const messenger = require('../messenger');
 
 const APP_VERSION = require('../../package.json').version;
+const APP_NAME = 'JENESIS Business Management & Accounting Software';
 
 // Rate limits for sensitive operations (see server/rateLimit.js).
 const loginLimiter = createLimiter({
@@ -2255,6 +2256,164 @@ router.post('/backup/reset-demo', requirePermission('demo:reset'), (req, res) =>
   return res.status(410).json({
     error: 'Resetting the database from the interface is disabled. Use a backup and restore instead.',
     code: 'RESET_DISABLED'
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Network access (JENESIS Maintenance)
+// ---------------------------------------------------------------------------
+// Off by default: the service answers on the loopback interface only, so the
+// accounting data cannot be reached from the network. Two computers can share
+// one company (and exchange Messenger messages) only after an administrator or
+// a maintenance user turns this on. Changing it rebinds the service, so the
+// desktop shell restarts it and the response says so.
+const fsSync = require('fs');
+const startedAt = new Date().toISOString();
+const networkConfig = require('../network-config');
+
+function networkDataDir() {
+  return networkConfig.dataDirectoryFromEnv() || (DB_PATH && DB_PATH !== ':memory:' ? path.dirname(DB_PATH) : null);
+}
+
+router.get('/system/network', requirePermission('dashboard:read'), (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const config = networkConfig.readNetworkConfig(dataDir);
+  const port = Number(process.env.GENESIS_PORT || process.env.PORT || 3000);
+  const addresses = networkConfig.lanAddresses();
+  res.json({
+    allowLan: config.allowLan,
+    host: networkConfig.bindHost(config),
+    port,
+    addresses,
+    serverUrl: config.allowLan && addresses.length ? `http://${addresses[0]}:${port}` : null,
+    thisComputer: addresses,
+    updatedAt: config.updatedAt || null,
+    restartRequired: false
+  });
+});
+
+router.post('/system/network', requirePermission('network:manage'), (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { user } = getSessionContext(req);
+  const allow = Boolean(req.body && req.body.allowLan === true);
+  const written = networkConfig.writeNetworkConfig(dataDir, { allowLan: allow });
+  const port = Number(process.env.GENESIS_PORT || process.env.PORT || 3000);
+  const addresses = networkConfig.lanAddresses();
+  logAudit(
+    getSessionContext(req).companyId,
+    user.id,
+    user.full_name,
+    'SYSTEM',
+    'NETWORK',
+    null,
+    allow
+      ? 'Allowed other computers on this network to reach the JENESIS service'
+      : 'Restricted the JENESIS service to this computer again'
+  );
+  res.json({
+    allowLan: written.allowLan,
+    host: networkConfig.bindHost(written),
+    port,
+    addresses,
+    serverUrl: written.allowLan && addresses.length ? `http://${addresses[0]}:${port}` : null,
+    updatedAt: written.updatedAt || null,
+    restartRequired: true
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Service information, file backups, logs and integrity (JENESIS Maintenance)
+// ---------------------------------------------------------------------------
+// Read-only diagnostics plus one safe, reversible action (a file copy of the
+// database). Nothing here deletes or rewrites business data.
+function dataDirectory() {
+  if (process.env.GENESIS_DATA_DIR) return process.env.GENESIS_DATA_DIR;
+  if (DB_PATH && DB_PATH !== ':memory:') return path.dirname(DB_PATH);
+  return null;
+}
+
+function backupFiles(dir) {
+  const backupDir = path.join(dir, 'backups');
+  if (!fsSync.existsSync(backupDir)) return [];
+  return fsSync
+    .readdirSync(backupDir)
+    .filter((name) => name.endsWith('.db'))
+    .map((name) => {
+      const full = path.join(backupDir, name);
+      const stat = fsSync.statSync(full);
+      return { name, size: stat.size, modifiedAt: stat.mtime.toISOString() };
+    })
+    .sort((a, b) => (a.modifiedAt < b.modifiedAt ? 1 : -1));
+}
+
+router.get('/system/info', requirePermission('dashboard:read'), (req, res) => {
+  const dir = dataDirectory();
+  const database = DB_PATH && DB_PATH !== ':memory:' && fsSync.existsSync(DB_PATH)
+    ? { path: DB_PATH, size: fsSync.statSync(DB_PATH).size }
+    : { path: DB_PATH, size: null };
+  res.json({
+    application: APP_NAME,
+    version: APP_VERSION,
+    startedAt: startedAt,
+    uptimeSeconds: Math.round((Date.now() - new Date(startedAt).getTime()) / 1000),
+    database,
+    dataDirectory: dir,
+    backups: dir ? backupFiles(dir).slice(0, 20) : [],
+    backupCount: dir ? backupFiles(dir).length : 0,
+    logDirectory: dir ? path.join(dir, 'logs') : null
+  });
+});
+
+// A verified file copy of the database: the kind of backup that can be put back
+// with a simple file copy, as well as the JSON export used for migration.
+router.post('/system/backup', requirePermission('backup:export'), (req, res) => {
+  const dir = dataDirectory();
+  const { companyId, user } = getSessionContext(req);
+  if (!dir || !DB_PATH || DB_PATH === ':memory:') {
+    return res.status(400).json({ error: 'This service has no database file to copy.' });
+  }
+  try {
+    const target = verifiedCopy(getDb(), DB_PATH, path.join(dir, 'backups'), 'maintenance');
+    logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'BACKUP', companyId,
+      `Maintenance backup: ${path.basename(target)}`);
+    res.json({ file: path.basename(target), size: fsSync.statSync(target).size, path: target });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/system/logs', requirePermission('logs:read'), (req, res) => {
+  const dir = dataDirectory();
+  const requested = Number(req.query.lines);
+  const lines = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), 500) : 100;
+  const logDir = dir ? path.join(dir, 'logs') : null;
+  const files = [];
+  if (logDir && fsSync.existsSync(logDir)) {
+    for (const name of fsSync.readdirSync(logDir)) {
+      const full = path.join(logDir, name);
+      if (!fsSync.statSync(full).isFile()) continue;
+      const content = fsSync.readFileSync(full, 'utf8').split(/\r?\n/).filter(Boolean);
+      files.push({ name, lines: content.slice(-lines), size: fsSync.statSync(full).size });
+    }
+  }
+  res.json({ logDirectory: logDir, files });
+});
+
+// SQLite's own consistency checks. Read-only and safe to run at any time.
+router.post('/system/integrity', requirePermission('logs:read'), (req, res) => {
+  const db = getDb();
+  const integrity = db.pragma('integrity_check').map((row) => row.integrity_check || row[Object.keys(row)[0]]);
+  const foreignKeys = db.pragma('foreign_key_check');
+  const unbalanced = db
+    .prepare("SELECT COUNT(*) AS n FROM journal_entries WHERE status = 'POSTED'")
+    .get();
+  res.json({
+    integrity: integrity.join(' '),
+    foreignKeyViolations: foreignKeys.length,
+    postedEntries: unbalanced.n,
+    ok: integrity.length === 1 && String(integrity[0]).toLowerCase() === 'ok' && foreignKeys.length === 0
   });
 });
 

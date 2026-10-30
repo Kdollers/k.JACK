@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AppModeProvider, useAppMode } from './context/AppModeContext';
 import { ShortcutsProvider } from './context/ShortcutsContext';
 import { I18nProvider } from './i18n';
 import Navbar from './components/Navbar';
@@ -20,9 +21,24 @@ import AccountingView from './views/AccountingView';
 import ReportsView from './views/ReportsView';
 import SettingsView from './views/SettingsView';
 import HelpView from './views/HelpView';
+import MaintenanceView from './views/MaintenanceView';
+import LauncherView from './views/LauncherView';
+import JenesisLogo from './components/JenesisLogo';
 
 function AppContent() {
-  const { activeView, loading, authState, authError } = useApp();
+  const { activeView, loading, authState, authError, setActiveView } = useApp();
+  const { appId, isLauncher, app, canOpen, landingView } = useAppMode();
+
+  // No application was requested: offer the three of them. The installed
+  // shortcuts never reach this screen — they name their application.
+  if (isLauncher) return <LauncherView />;
+
+  // An application never shows a screen that is not part of it. The backend
+  // enforces permissions as well; this is the second gate.
+  useEffect(() => {
+    if (!appId) return;
+    if (!canOpen(activeView)) setActiveView(landingView(activeView));
+  }, [appId, activeView, canOpen, landingView, setActiveView]);
 
   if (authState === 'setup') return <SetupScreen />;
   if (authState === 'login') return <LoginScreen />;
@@ -30,13 +46,14 @@ function AppContent() {
   if (authState === 'error') return <BackendUnavailable message={authError} />;
 
   if (loading) {
+    const tone = app ? app.tone : 'brand';
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-white space-y-4">
-        <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center font-black text-2xl shadow-lg animate-pulse">
-          G
-        </div>
+        <JenesisLogo tone={tone} size={56} className="animate-pulse" />
         <div className="text-center">
-          <div className="text-sm font-bold tracking-wider">JENESIS ERP & ACCOUNTING</div>
+          <div className="text-sm font-bold tracking-wider">
+            {app ? `JENESIS ${app.id.toUpperCase()}` : 'JENESIS ERP & ACCOUNTING'}
+          </div>
           <div className="text-xs text-slate-400 mt-1">Initializing ledger & database...</div>
         </div>
       </div>
@@ -61,6 +78,7 @@ function AppContent() {
           {activeView === 'accounting' && <AccountingView />}
           {activeView === 'reports' && <ReportsView />}
           {activeView === 'settings' && <SettingsView />}
+          {activeView === 'maintenance' && <MaintenanceView />}
           {activeView === 'help' && <HelpView />}
         </main>
       </div>
@@ -78,7 +96,18 @@ export default function App() {
   // ThemeProvider is outermost: the sign-in, first-run and error screens are
   // rendered by AppContent and must honour the saved theme too.
   return (
-    <ThemeProvider>
+    // AppModeProvider is outermost: it decides which application this window is,
+    // which the theme (per-application preference) and every screen depend on.
+    <AppModeProvider>
+      <ThemedProviders />
+    </AppModeProvider>
+  );
+}
+
+function ThemedProviders() {
+  const { appId } = useAppMode();
+  return (
+    <ThemeProvider appId={appId}>
       <I18nProvider>
         <AppProvider>
           {/* ShortcutsProvider sits inside AppProvider (it navigates and toasts)

@@ -12,9 +12,14 @@ import {
   FileSpreadsheet,
   AlertCircle
 } from 'lucide-react';
+import { useAppMode } from '../context/AppModeContext';
+import JenesisLogo from '../components/JenesisLogo';
 
 export default function ReportsView() {
   const { currentCompany, formatCurrency, formatDate, showToast, refreshKey } = useApp();
+  // Reports are printed on the letterhead of the application that ran them.
+  const { app } = useAppMode();
+  const markTone = app?.tone || 'brand';
   const { t } = useI18n();
 
   const [activeReport, setActiveReport] = useState('trial_balance'); // 'trial_balance', 'pnl', 'balance_sheet', 'cash_flow', 'tax'
@@ -212,9 +217,7 @@ export default function ReportsView() {
         <div className="border-b border-slate-200 pb-5 mb-6 flex justify-between items-start">
           <div>
             <div className="flex items-center space-x-2 mb-1">
-              <div className="w-6 h-6 rounded bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center">
-                G
-              </div>
+              <JenesisLogo tone={markTone} size={26} />
               <h2 className="text-base font-bold text-slate-900">{currentCompany?.name}</h2>
             </div>
             <p className="text-[11px] text-slate-500">

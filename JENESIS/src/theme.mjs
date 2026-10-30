@@ -20,6 +20,17 @@ export const DEFAULT_THEME_PREFERENCE = 'light';
 /** Where the choice is persisted (per user profile / browser storage). */
 export const THEME_STORAGE_KEY = 'jenesis_theme';
 
+/**
+ * Each of the three JENESIS applications remembers its own theme, so setting
+ * Dark Mode in JENESIS Seller never changes JENESIS Admin. The key is
+ * `jenesis_theme:<application>`; the plain `jenesis_theme` key stays valid and
+ * is used when an application has no key of its own yet (people who chose a
+ * theme before the three applications existed keep it).
+ */
+export function themeStorageKey(appId) {
+  return appId ? `${THEME_STORAGE_KEY}:${appId}` : THEME_STORAGE_KEY;
+}
+
 /** The class the CSS token layer hangs off. */
 export const DARK_CLASS = 'dark';
 
@@ -52,19 +63,30 @@ export function isDarkTheme(preference, systemPrefersDark = false) {
   return resolveTheme(preference, systemPrefersDark) === 'dark';
 }
 
-export function readThemePreference(storage) {
+/**
+ * Reads the preference of one application. Falls back to the shared key, so a
+ * theme chosen before the applications were split is not lost.
+ */
+export function readThemePreference(storage, appId = null) {
+  const key = themeStorageKey(appId);
   try {
-    return normalizeThemePreference(storage?.getItem(THEME_STORAGE_KEY));
+    const own = storage?.getItem(key);
+    if (own) return normalizeThemePreference(own);
+    if (appId) {
+      const legacy = storage?.getItem(THEME_STORAGE_KEY);
+      if (legacy) return normalizeThemePreference(legacy);
+    }
   } catch (_) {
     // Storage can be unavailable (private mode, disabled cookies, quota).
-    return DEFAULT_THEME_PREFERENCE;
   }
+  return DEFAULT_THEME_PREFERENCE;
 }
 
-export function writeThemePreference(storage, preference) {
+/** Writes the preference of one application under its own key. */
+export function writeThemePreference(storage, preference, appId = null) {
   const value = normalizeThemePreference(preference);
   try {
-    storage?.setItem(THEME_STORAGE_KEY, value);
+    storage?.setItem(themeStorageKey(appId), value);
   } catch (_) {
     /* the in-memory theme still applies for this session */
   }

@@ -264,6 +264,17 @@ export default function PurchasesView() {
     return true;
   }, { order: 10 });
 
+  // Ctrl+Shift+N — the shell asks for a new purchase document.
+  useEffect(() => {
+    const onNewDocument = (event) => {
+      if (event.detail !== 'purchase') return;
+      if (!hasPermission('purchases:write')) { showToast(t('errors.FORBIDDEN'), 'error'); return; }
+      setShowNewBillModal(true);
+    };
+    window.addEventListener('jenesis:new-document', onNewDocument);
+    return () => window.removeEventListener('jenesis:new-document', onNewDocument);
+  }, [hasPermission, showToast, t]);
+
   const handlePostDraft = async (billId) => {
     try {
       const res = await apiRequest(`/api/purchases/bills/${billId}/post`, { method: 'POST' });

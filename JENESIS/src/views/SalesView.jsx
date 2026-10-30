@@ -301,6 +301,59 @@ export default function SalesView() {
     return true;
   }, { order: 10 });
 
+  // Ctrl+D — duplicate the selected invoice: same customer, same lines, new
+  // document. Nothing is copied as a payment, so no money is invented.
+  useShortcutAction('Ctrl+D', async () => {  // Ctrl+Shift+R — the shell asks for a new receipt. Same gate as Ctrl+N: no
+  // sales:write, no form.
+  useEffect(() => {
+    const onNewDocument = (event) => {
+      if (event.detail !== 'sale') return;
+      if (!hasPermission('sales:write')) { showToast(t('errors.FORBIDDEN'), 'error'); return; }
+      setShowNewInvoiceModal(true);
+    };
+    window.addEventListener('jenesis:new-document', onNewDocument);
+    return () => window.removeEventListener('jenesis:new-document', onNewDocument);
+  }, [hasPermission, showToast, t]);
+
+
+    if (!selectedInvoiceId) {
+      showToast(t('shortcuts.duplicate_none'), 'info');
+      return true;
+    }
+    if (!hasPermission('sales:write')) {
+      showToast(t('errors.FORBIDDEN'), 'error');
+      return true;
+    }
+    try {
+      const inv = await apiRequest(`/api/sales/invoices/${selectedInvoiceId}`);
+      const lines = (inv.lines || []).map((l) => ({
+        product_id: l.product_id || '',
+        description: l.description || '',
+        quantity: Number(l.quantity) || 1,
+        unit_price: Number(l.unit_price) || 0,
+        discount_percent: Number(l.discount_percent) || 0,
+        tax_rate: Number(l.tax_rate) || 0
+      }));
+      setInvoiceForm((prev) => ({
+        ...prev,
+        customer_id: inv.customer_id || '',
+        walk_in: !!inv.walk_in,
+        currency_code: inv.currency_code || '',
+        exchange_rate: inv.exchange_rate ?? null,
+        warehouse_id: inv.warehouse_id || '',
+        payment_method: inv.payment_method || 'CASH',
+        bank_account_id: inv.bank_account_id || '',
+        notes: inv.notes || '',
+        lines: lines.length ? lines : prev.lines
+      }));
+      setShowNewInvoiceModal(true);
+      showToast(t('sales.duplicated_from', { number: inv.invoice_number || inv.number || '' }), 'success');
+    } catch (err) {
+      showToast(translateError(t, err), 'error');
+    }
+    return true;
+  }, { order: 10 });
+
   const handlePostDraft = async (invId, inv) => {
     try {
       let body;

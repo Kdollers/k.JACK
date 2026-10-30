@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function CustomersView() {
-  const { currentCompany, formatCurrency, showToast, refreshKey, setActiveView } = useApp();
+  const { currentCompany, formatCurrency, showToast, refreshKey, setActiveView, activeView } = useApp();
   const { t } = useI18n();
 
   const [customers, setCustomers] = useState([]);
@@ -117,6 +117,15 @@ export default function CustomersView() {
     });
   };
 
+  // Ctrl+E edits the row the keyboard is on (or the first one on screen).
+  useShortcutAction('Ctrl+E', () => {
+    const list = customers;
+    const rowId = document.activeElement?.closest?.('[data-j-row]')?.getAttribute('data-j-row');
+    const target = list.find((c) => String(c.id) === String(rowId)) || list[0];
+    if (!target) { showToast(t('shortcuts.edit_none'), 'info'); return false; }
+    openEdit(target);
+  }, { when: () => activeView === 'customers' });
+
   const openEdit = (cust) => {
     setEditingCustomer(cust);
     setFormData({
@@ -184,6 +193,7 @@ export default function CustomersView() {
             <div className="relative w-72">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
               <input
+                data-j-search
                 type="text"
                 placeholder={t('common.search')}
                 value={search}
@@ -217,7 +227,7 @@ export default function CustomersView() {
                   </tr>
                 ) : customers.length > 0 ? (
                   customers.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-50 transition">
+                    <tr key={c.id} data-j-row={c.id} className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none" tabIndex={0}>
                       <td className="py-3 px-4 font-mono font-semibold text-blue-600">{c.code}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">
                         <div>{c.name}</div>

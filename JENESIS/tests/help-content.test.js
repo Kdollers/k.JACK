@@ -172,6 +172,7 @@ const ALIASES = {
   'Ctrl+Shift+T': ['Ctrl+Maj+T', 'Ctrl+Shift+T'],
   'Ctrl+Shift+L': ['Ctrl+Maj+L', 'Ctrl+Shift+L'],
   'Ctrl+/': ['Ctrl+/'],
+  'Ctrl+Enter': ['Ctrl+Enter', 'Ctrl+Entrée', 'Ctrl+Injiza'],
   Escape: ['Escape', 'Esc', '\u00c9chap', '\u00c9CHAP']
 };
 
@@ -179,8 +180,10 @@ const normalizeText = (text) => text
   // Arrow keys are written as words in French and Kinyarwanda.
   .replace(/Fl[eè]che\s+gauche/gi, 'ArrowLeft')
   .replace(/Fl[eè]che\s+droite/gi, 'ArrowRight')
-  .replace(/Umwambi\s+w'ibumoso/gi, 'ArrowLeft')
-  .replace(/Umwambi\s+w'iburyo/gi, 'ArrowRight')
+  .replace(/Umwambi\s+w['’]ibumoso/gi, 'ArrowLeft')
+  .replace(/Umwambi\s+w['’]iburyo/gi, 'ArrowRight')
+  // French writes Shift as "Maj".
+  .replace(/\bMaj\b/g, 'Shift')
   .replace(/\s*\+\s*/g, '+');
 
 function canonical(combo) {
@@ -194,7 +197,7 @@ function canonical(combo) {
 
 function combosInText(text) {
   const normalized = normalizeText(text);
-  const matches = [...normalized.matchAll(/\b(?:F\d{1,2}|Escape|Esc|\u00c9chap|(?:Ctrl|Alt|Maj|Shift)(?:\+(?:Ctrl|Alt|Maj|Shift|[A-Za-z0-9/]+))*\+[A-Za-z0-9/]+)/g)]
+  const matches = [...normalized.matchAll(/\b(?:F\d{1,2}|Escape|Esc|\u00c9chap|(?:Ctrl|Alt|Maj|Shift)(?:\+(?:Ctrl|Alt|Maj|Shift|[A-Za-z0-9À-ÿ/]+))*\+[A-Za-z0-9À-ÿ/]+)/g)]
     .map((m) => m[0]);
   const withBare = matches.concat([...normalized.matchAll(/\bF\d{1,2}\b|\bEscape\b|\bEsc\b|\b\u00c9chap\b/gi)].map((m) => m[0]));
   return [...new Set(withBare.map((c) => canonical(c)))];

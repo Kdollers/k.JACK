@@ -1,12 +1,18 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { useAppMode } from '../context/AppModeContext';
 import { useEscapeLayer } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { Printer, X, Download } from 'lucide-react';
+import JenesisLogo from './JenesisLogo';
 
 export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }) {
   const { currentCompany, formatCurrency, formatDate } = useApp();
   const { t } = useI18n();
+  // Printed documents carry the mark of the application that issued them:
+  // red in JENESIS Seller, blue in JENESIS Admin.
+  const { app } = useAppMode();
+  const markTone = app?.tone || 'brand';
 
   // Escape closes the print preview (the same document F3 prints).
   useEscapeLayer({ id: 'print-modal', priority: 100, onEscape: () => { onClose(); return true; } });
@@ -60,12 +66,15 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
             <div className="flex justify-between items-start border-b border-slate-200 pb-6 mb-6">
               <div>
                 <div className="flex items-center space-x-2 mb-1">
-                  <div className="w-7 h-7 rounded bg-blue-600 text-white font-extrabold text-sm flex items-center justify-center">
-                    G
+                  <JenesisLogo tone={markTone} size={30} />
+                  <div className="leading-tight">
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                      {currentCompany?.name || 'JENESIS'}
+                    </h1>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      JENESIS
+                    </p>
                   </div>
-                  <h1 className="text-xl font-bold tracking-tight text-slate-900">
-                    {currentCompany?.name || 'Genesis Enterprise'}
-                  </h1>
                 </div>
                 <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
                   {currentCompany?.address || 'Kigali, Rwanda'}
@@ -227,7 +236,7 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
             <div>
               <p className="font-medium text-slate-600">Payment Instructions / Banking Details:</p>
               <p>Bank: Bank of Kigali • Account: 00040-01234567-USD</p>
-              <p>MTN Mobile Money Merchant: 788123456 (Genesis Enterprise)</p>
+              <p>MTN Mobile Money Merchant: 788123456 ({currentCompany?.name || 'JENESIS'})</p>
               <p className="text-[10px] text-slate-400 mt-1">Thank you for your business!</p>
             </div>
             <div className="text-right">

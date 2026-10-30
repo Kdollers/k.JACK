@@ -65,7 +65,7 @@ function StatusBadge({ status, map }) {
 }
 
 export default function InventoryView() {
-  const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, hasPermission } = useApp();
+  const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, hasPermission, activeView } = useApp();
   const { t } = useI18n();
 
   // 'products' | 'stores' | 'transfers' | 'adjust' | 'count' | 'movements' | 'valuation'
@@ -242,6 +242,15 @@ export default function InventoryView() {
       showToast(translateError(t, err), 'error');
     }
   };
+
+  // Ctrl+E edits the product row the keyboard is on (or the first one).
+  useShortcutAction('Ctrl+E', () => {
+    const list = products;
+    const rowId = document.activeElement?.closest?.('[data-j-row]')?.getAttribute('data-j-row');
+    const target = list.find((p) => String(p.id) === String(rowId)) || list[0];
+    if (!target) { showToast(t('shortcuts.edit_none'), 'info'); return false; }
+    openEditProduct(target);
+  }, { when: () => activeView === 'inventory' });
 
   const openEditProduct = (prod) => {
     setEditingProduct(prod);
@@ -458,6 +467,15 @@ export default function InventoryView() {
     setShowAddProductModal(true);
     return true;
   }, { order: 10 });
+
+  // Ctrl+Shift+T — the shell asks for the stock-transfers tab.
+  useEffect(() => {
+    const onOpenTab = (event) => {
+      if (event.detail === 'transfers') setActiveTab('transfers');
+    };
+    window.addEventListener('jenesis:open-tab', onOpenTab);
+    return () => window.removeEventListener('jenesis:open-tab', onOpenTab);
+  }, []);
   const canApprove = hasPermission('inventory:approve');
   const canManageStores = hasPermission('stores:manage');
   const canWriteStock = hasPermission('inventory:write');
@@ -521,6 +539,7 @@ export default function InventoryView() {
                 type="text"
                 placeholder={`${t('common.search')} (SKU / ${t('inventory.product_name')} / ${t('inventory.barcode')})`}
                 value={search}
+                data-j-search
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
@@ -551,7 +570,7 @@ export default function InventoryView() {
                     const isOut = isGoods && p.current_stock <= 0;
                     const isLow = isGoods && !isOut && p.current_stock <= p.min_stock_level;
                     return (
-                      <tr key={p.id} className="hover:bg-slate-50 transition">
+                      <tr key={p.id} data-j-row={p.id} className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none" tabIndex={0}>
                         <td className="py-3 px-4 font-mono font-semibold text-blue-600">{p.sku}</td>
                         <td className="py-3 px-4 font-bold text-slate-800">
                           <div>{p.name}</div>

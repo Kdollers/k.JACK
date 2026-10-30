@@ -6,6 +6,7 @@ trace('loading express');
 const express = require('express');
 trace('loading cors');
 const cors = require('cors');
+const networkConfig = require('./network-config');
 const path = require('path');
 trace('loading routes');
 const apiRoutes = require('./routes/api');
@@ -73,11 +74,19 @@ function createApp(options = {}) {
 }
 
 /**
- * Starts the HTTP server. Binds to the loopback interface by default.
+ * Starts the HTTP server.
+ *
+ * Binds the loopback interface by default: the accounting service is not
+ * reachable from the network unless an administrator or a maintenance user
+ * turned on "allow other computers to connect" in JENESIS Maintenance, which is
+ * recorded next to the database (server/network-config.js).
+ *
  * @returns {Promise<{ server: import('http').Server, port: number, host: string, close: () => Promise<void> }>}
  */
 function startServer(options = {}) {
-  const host = options.host || process.env.GENESIS_HOST || '127.0.0.1';
+  const networkDir = options.dataDir || networkConfig.dataDirectoryFromEnv();
+  const network = options.network || networkConfig.readNetworkConfig(networkDir);
+  const host = options.host || process.env.GENESIS_HOST || networkConfig.bindHost(network);
   const port = options.port !== undefined ? Number(options.port) : Number(process.env.GENESIS_PORT || process.env.PORT || 3000);
 
   // Ensure the database is opened and migrated before accepting requests.
@@ -111,7 +120,7 @@ function startServer(options = {}) {
   });
 }
 
-module.exports = { createApp, startServer, APP_NAME, APP_VERSION, DB_PATH };
+module.exports = { createApp, startServer, networkConfig, APP_NAME, APP_VERSION, DB_PATH };
 
 if (require.main === module) {
   // Optional startup trace for the desktop shell (GENESIS_CHILD_LOG). Helps diagnose

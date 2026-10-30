@@ -3,6 +3,8 @@ import { Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import ThemeToggle from './ThemeToggle';
+import JenesisLogo from './JenesisLogo';
+import { useAppMode } from '../context/AppModeContext';
 
 const inputClass =
   'w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white';
@@ -18,6 +20,10 @@ export function errorText(err, t) {
 
 function Shell({ title, intro, children }) {
   const { lang, setLang, t } = useI18n();
+  // The sign-in screen belongs to the application that was opened: its logo,
+  // its colour and its name.
+  const { app } = useAppMode();
+  const tone = app ? app.tone : 'brand';
   return (
     <div className="relative min-h-screen w-screen flex items-center justify-center bg-slate-900 p-4">
       {/* Appearance switch: the sign-in screens use the same theme manager. */}
@@ -26,16 +32,18 @@ function Shell({ title, intro, children }) {
       </div>
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center space-x-3 mb-6 text-white">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center font-black text-2xl shadow-lg">G</div>
+          <JenesisLogo tone={tone} size={48} />
           <div>
-            <div className="text-sm font-bold tracking-wider">JENESIS ERP & ACCOUNTING</div>
+            <div className="text-sm font-bold tracking-wider">
+              {app ? t(app.nameKey) : 'JENESIS ERP & ACCOUNTING'}
+            </div>
             <div className="text-xs text-slate-400">{t('auth.app_tagline', 'Business accounting & management')}</div>
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-xl p-6 space-y-4">
           <div>
             <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Lock className="w-4 h-4 text-blue-600" /> {title}
+              <Lock className="w-4 h-4 j-text" /> {title}
             </h1>
             {intro && <p className="text-xs text-slate-500 mt-1">{intro}</p>}
           </div>

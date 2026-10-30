@@ -10,6 +10,7 @@ import React, {
 import { useApp } from './AppContext';
 import { useTheme } from './ThemeContext';
 import { useI18n } from '../i18n';
+import { useAppMode } from './AppModeContext';
 import { apiRequest } from '../services/api';
 import {
   SHORTCUTS,
@@ -37,8 +38,27 @@ import {
  */
 const ShortcutsContext = createContext(null);
 
+/** The permission a screen needs before a shortcut may open it. */
+const VIEW_PERMISSION = {
+  dashboard: 'dashboard:read',
+  sales: 'sales:read',
+  purchases: 'purchases:read',
+  inventory: 'inventory:read',
+  customers: 'contacts:read',
+  suppliers: 'contacts:read',
+  banking: 'banking:read',
+  accounting: 'accounting:read',
+  reports: 'reports:read',
+  settings: null,
+  maintenance: null,
+  help: null
+};
+
 export function ShortcutsProvider({ children }) {
-  const { activeView, setActiveView, showToast, triggerRefresh, refreshKey } = useApp();
+  const { activeView, setActiveView, showToast, triggerRefresh, refreshKey, hasPermission } = useApp();
+  // Which application this window is: shortcuts never open a screen that does
+  // not belong to it (JENESIS Seller has no general ledger).
+  const mode = useAppMode();
   const { t, lang, setLang } = useI18n();
   const { preference, setPreference } = useTheme();
 
@@ -148,6 +168,64 @@ export function ShortcutsProvider({ children }) {
       const combo = comboFromEvent(event);
       const layers = layersSnapshot();
 
+      // --- helpers ------------------------------------------------------------
+      // Submits the form the user is typing in (Save / Confirm). Works on every
+      // dialog without each view having to register a handler.
+      const submitFocusedForm = () => {
+        const active = typeof document === 'undefined' ? null : document.activeElement;
+        const form = active && active.closest ? active.closest('form') : null;
+        if (!form) return false;
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        return true;
+      };
+
+      // Puts the cursor into this screen's search field, marked data-j-search.
+      const focusSearchBox = () => {
+        if (typeof document === 'undefined') return false;
+        const field = document.querySelector('[data-j-search]');
+        if (!field) return false;
+        field.focus();
+        if (typeof field.select === 'function') field.select();
+        return true;
+      };
+
+      // Opens a screen, but only inside the application that owns it and only
+      // for a user allowed to see it.
+      const gotoView = (viewId, options = {}) => {
+        const appName = mode.app ? t(mode.app.nameKey) : 'JENESIS';
+        if (mode.appId && !mode.canOpen(viewId)) {
+          showToast(t('shortcuts.unavailable_in_app', { app: appName }), 'info');
+          return false;
+        }
+        const required = VIEW_PERMISSION[viewId];
+        if (required && !hasPermission(required)) {
+          showToast(t('errors.FORBIDDEN'), 'info');
+          return false;
+        }
+        setActiveView(viewId);
+        if (options.tab) {
+          window.setTimeout(() => window.dispatchEvent(
+            new CustomEvent('jenesis:open-tab', { detail: options.tab })
+          ), 40);
+        }
+        if (options.focusSearch) {
+          window.setTimeout(() => focusSearchBox(), 80);
+        }
+        return true;
+      };
+
+      // Asks the current screen (or the screen that owns the document type) to
+      // open its "new record" form.
+      const newDocument = (kind) => {
+        const viewId = kind === 'purchase' ? 'purchases' : 'sales';
+        if (!gotoView(viewId)) return false;
+        window.setTimeout(() => window.dispatchEvent(
+          new CustomEvent('jenesis:new-document', { detail: kind })
+        ), 60);
+        return true;
+      };
+
       // 1. Escape is always handled by the top-most layer, never by the app shell.
       if (combo === 'Escape') {
         const layer = topEscapeLayer(layers);
@@ -200,15 +278,40 @@ export function ShortcutsProvider({ children }) {
         }
       }
 
-      // 4. Built-in application shortcuts.
+      // 4. Built-in application shortcuts: the whole map lives here, so a
+      //    shortcut can only be handled once. Screen actions (step 3) always
+      //    get the key first and may refuse it.
       const builtin = {
         F1: () => openHelp(),
         F5: () => { triggerRefresh(); showToast(t('shortcuts.refreshed'), 'info'); },
-        'Ctrl+Shift+C': () => setCalculatorOpen((v) => !v),
-        'Ctrl+Shift+T': () => cycleTheme(),
-        'Ctrl+Shift+L': () => cycleLanguage(),
+
+        // Saving and confirming: submit the form the user is working in.
+        'Ctrl+S': () => submitFocusedForm(),
+        'Ctrl+Enter': () => submitFocusedForm(),
+        // Search: put the cursor in this screen's search box.
+        'Ctrl+F': () => focusSearchBox(),
+
+        // Navigation between screens (only where the application offers them).
+        'Ctrl+Shift+S': () => gotoView('sales'),
+        'Ctrl+Shift+R': () => newDocument('sale'),
+        'Ctrl+Shift+C': () => gotoView('customers', { focusSearch: true }),
+        'Ctrl+Shift+P': () => gotoView('purchases'),
+        'Ctrl+Shift+V': () => gotoView('suppliers', { focusSearch: true }),
+        'Ctrl+Shift+N': () => newDocument('purchase'),
+        'Ctrl+Shift+I': () => gotoView('inventory'),
+        'Ctrl+Shift+F': () => gotoView('inventory', { focusSearch: true }),
+        'Ctrl+Shift+T': () => gotoView('inventory', { tab: 'transfers' }),
+        'Ctrl+Shift+A': () => gotoView('accounting'),
+        'Ctrl+Shift+B': () => gotoView('banking'),
+        'Ctrl+Shift+L': () => gotoView('accounting', { tab: 'ledger' }),
+        'Ctrl+Shift+G': () => gotoView('reports'),
+
+        // Application tools.
+        'Ctrl+Shift+K': () => setCalculatorOpen((v) => !v),
+        'Ctrl+Shift+M': () => setMessengerOpen((v) => !v),
         'Ctrl+/': () => setReferenceOpen((v) => !v),
-        'Ctrl+K': () => setMessengerOpen((v) => !v),
+        'Alt+T': () => cycleTheme(),
+        'Alt+L': () => cycleLanguage(),
         'Alt+ArrowLeft': () => { if (!goBack()) showToast(t('shortcuts.no_history_back'), 'info'); },
         'Alt+ArrowRight': () => { if (!goForward()) showToast(t('shortcuts.no_history_forward'), 'info'); }
       }[combo];
@@ -233,7 +336,8 @@ export function ShortcutsProvider({ children }) {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [goBack, openHelp, triggerRefresh, showToast, cycleLanguage, cycleTheme, t]);
+  }, [goBack, openHelp, triggerRefresh, showToast, cycleLanguage, cycleTheme, t,
+    hasPermission, mode.appId, mode.canOpen, mode.app, setActiveView, activeView]);
 
   const value = useMemo(() => ({
     registerLayer,

@@ -301,5 +301,87 @@ check('permission-aware: shortcuts check permissions before acting', () => {
   assert.ok(/hasPermission\('banking:write'\)/.test(readSrc('src/views/BankingView.jsx')));
 });
 
+// --- The user's shortcut table, verified key by key -------------------------
+// Every line of the delivered table must match the catalogue exactly.
+const USER_TABLE = [
+  ['F1', 'help'], ['F2', 'settle'], ['F3', 'print'], ['F5', 'refresh'],
+  ['Escape', 'escape'], ['Ctrl+S', 'save'], ['Ctrl+N', 'new'], ['Ctrl+E', 'edit'],
+  ['Ctrl+F', 'search'], ['Ctrl+P', 'printCtrl'], ['Ctrl+D', 'duplicate'],
+  ['Ctrl+Enter', 'submit'], ['Alt+ArrowLeft', 'back'],
+  ['Ctrl+Shift+S', 'openSales'], ['Ctrl+Shift+R', 'newReceipt'],
+  ['Ctrl+Shift+C', 'searchCustomers'], ['Ctrl+Shift+P', 'openPurchases'],
+  ['Ctrl+Shift+V', 'searchSuppliers'], ['Ctrl+Shift+N', 'newPurchase'],
+  ['Ctrl+Shift+I', 'openInventory'], ['Ctrl+Shift+F', 'searchProducts'],
+  ['Ctrl+Shift+T', 'stockTransfers'], ['Ctrl+Shift+A', 'openAccounting'],
+  ['Ctrl+Shift+B', 'openBanking'], ['Ctrl+Shift+L', 'openLedger'],
+  ['Ctrl+Shift+G', 'openReports'], ['Ctrl+Shift+K', 'calculator'],
+  ['Ctrl+Shift+M', 'messenger']
+];
+
+check("the catalogue matches the user's shortcut table exactly", () => {
+  for (const [combo, id] of USER_TABLE) {
+    const item = S.SHORTCUTS.find((x) => x.id === id);
+    assert.ok(item, `the catalogue must define ${id}`);
+    assert.strictEqual(
+      S.normalizeCombo(item.combo), S.normalizeCombo(combo),
+      `${id} must be ${combo} (found ${item.combo})`
+    );
+  }
+});
+
+check('no two shortcuts share the same key combination', () => {
+  const seen = new Map();
+  for (const item of S.SHORTCUTS) {
+    const combo = S.normalizeCombo(item.combo);
+    assert.ok(!seen.has(combo), `${combo} is used by both ${seen.get(combo)} and ${item.id}`);
+    seen.set(combo, item.id);
+  }
+});
+
+check('theme and language moved off the Ctrl+Shift+<letter> screen keys', () => {
+  const byId = new Map(S.SHORTCUTS.map((x) => [x.id, S.normalizeCombo(x.combo)]));
+  assert.strictEqual(byId.get('theme'), 'Alt+T', 'theme is Alt+T');
+  assert.strictEqual(byId.get('language'), 'Alt+L', 'language is Alt+L');
+  for (const id of ['stockTransfers', 'openLedger']) {
+    assert.ok(!['Alt+T', 'Alt+L'].includes(byId.get(id)), `${id} must not collide with theme/language`);
+  }
+});
+
+check('every screen navigation shortcut is guarded by the application and permissions', () => {
+  const provider = readSrc('src/context/ShortcutsContext.jsx');
+  assert.ok(provider.includes('VIEW_PERMISSION'), 'a permission map per screen');
+  assert.ok(provider.includes('mode.canOpen(viewId)'), 'a screen outside this application is refused');
+  assert.ok(provider.includes('hasPermission(required)'), 'a screen outside the role is refused');
+  for (const [combo, id] of USER_TABLE) {
+    if (!/^Ctrl\+Shift\+[A-Z]$/.test(combo)) continue;
+    assert.ok(
+      provider.includes(`'${combo}':`),
+      `${combo} (${id}) must be handled by the shortcut provider`
+    );
+  }
+});
+
+check('Ctrl+S and Ctrl+Enter save by submitting the form under the cursor', () => {
+  const provider = readSrc('src/context/ShortcutsContext.jsx');
+  assert.ok(provider.includes("'Ctrl+S': () => submitFocusedForm()"));
+  assert.ok(provider.includes("'Ctrl+Enter': () => submitFocusedForm()"));
+  assert.ok(provider.includes('requestSubmit'), 'the native form submission is used');
+  // Never while the user is typing in a field that needs the key.
+  assert.ok(
+    provider.includes('isTypingTarget'),
+    'plain-letter shortcuts stay suspended while typing'
+  );
+});
+
+check('Ctrl+F and the search shortcuts focus the search box of the screen', () => {
+  const provider = readSrc('src/context/ShortcutsContext.jsx');
+  assert.ok(provider.includes("'Ctrl+F': () => focusSearchBox()"));
+  assert.ok(provider.includes('data-j-search'), 'screens mark their search field');
+  const views = ['src/views/CustomersView.jsx', 'src/views/SuppliersView.jsx', 'src/views/InventoryView.jsx'];
+  for (const view of views) {
+    assert.ok(readSrc(view).includes('data-j-search'), `${view} must mark its search field`);
+  }
+});
+
 console.log(`--- ${passed} passed, ${failed} failed ---`);
 process.exit(failed === 0 ? 0 : 1);

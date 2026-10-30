@@ -1,6 +1,8 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
+import { useAppMode } from '../context/AppModeContext';
+import JenesisLogo from './JenesisLogo';
 import {
   LayoutDashboard,
   Users,
@@ -34,17 +36,23 @@ export default function Sidebar() {
     // The user guide is available to everybody (F1) — it contains no company data.
     { id: 'help', icon: HelpCircle, label: t('nav.help'), perm: null }
   ];
-  const menuItems = allItems.filter((item) =>
-    item.perm === null
-      ? true
-      : Array.isArray(item.perm) ? item.perm.some((p) => hasPermission(p)) : hasPermission(item.perm)
-  );
+  // Two filters: the application this window is (JENESIS Seller does not offer
+  // the general ledger) and the permissions of the signed-in user. The backend
+  // enforces the same permissions on every call.
+  const { app } = useAppMode();
+  const menuItems = allItems
+    .filter((item) => (app ? app.views.includes(item.id) : true))
+    .filter((item) =>
+      item.perm === null
+        ? true
+        : Array.isArray(item.perm) ? item.perm.some((p) => hasPermission(p)) : hasPermission(item.perm)
+    );
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 select-none">
       <div className="py-3">
         <div className="px-4 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-          Enterprise Modules
+          {app ? t(app.shortKey) : 'Enterprise Modules'}
         </div>
         <nav className="space-y-0.5 px-2">
           {menuItems.map((item) => {
@@ -56,7 +64,7 @@ export default function Sidebar() {
                 onClick={() => setActiveView(item.id)}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-medium transition-all ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                    ? 'j-bg text-white shadow-sm font-semibold'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
                 }`}
               >
@@ -70,7 +78,10 @@ export default function Sidebar() {
 
       <div className="p-3 border-t border-slate-800 text-[11px] text-slate-400 bg-slate-950/40">
         <div className="flex items-center justify-between mb-1">
-          <span className="font-semibold text-slate-300">JENESIS Software</span>
+          <span className="font-semibold text-slate-300 flex items-center space-x-1.5">
+            <JenesisLogo tone={app ? app.tone : 'brand'} size={16} />
+            <span>{app ? t(app.nameKey) : 'JENESIS Software'}</span>
+          </span>
           <span className="px-1 py-0.5 rounded text-[9px] bg-emerald-900/60 text-emerald-300 border border-emerald-700/60">
             Certified
           </span>

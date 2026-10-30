@@ -25,7 +25,7 @@
     "test:fxreval": "node tests/fx-revaluation-integrity.test.js",
     "test:datadir": "node tests/data-location-migration.test.js",
     "test:branding": "node tests/branding-consistency.test.js",
-    "test:all": "npm test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:messenger && npm run test:help && npm run test:datadir && npm run test:branding && npm run test:theme && npm run test:themeui",
+    "test:all": "npm run test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:threeapps && npm run test:messenger && npm run test:help && npm run test:datadir && npm run test:branding && npm run test:theme && npm run test:themeui",
     "desktop": "electron .",
     "desktop:pack": "npm run build && electron-builder --win --dir",
     "desktop:dist": "npm run build && electron-builder --win nsis",
@@ -34,7 +34,8 @@
     "test:e2e": "python3 tests/e2e/auth_ui_test.py",
     "test:theme": "node tests/theme.test.js",
     "test:themeui": "node tests/theme-render.test.js",
-    "test:count": "npm run test:all 2>&1 | node scripts/count-checks.mjs"
+    "test:count": "npm run test:all 2>&1 | node scripts/count-checks.mjs",
+    "test:threeapps": "node tests/three-apps.test.js"
   },
   "build": {
     "appId": "com.jenesis.accounting",
@@ -73,14 +74,24 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "allowElevation": true,
-      "createDesktopShortcut": true,
+      "createDesktopShortcut": false,
       "createStartMenuShortcut": true,
       "shortcutName": "JENESIS",
       "uninstallDisplayName": "JENESIS",
       "deleteAppDataOnUninstall": false,
       "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
-    }
+      "uninstallerIcon": "build/icon.ico",
+      "include": "build/installer.nsh"
+    },
+    "extraResources": [
+      {
+        "from": "build",
+        "to": "app-icons",
+        "filter": [
+          "icon-*.ico"
+        ]
+      }
+    ]
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
