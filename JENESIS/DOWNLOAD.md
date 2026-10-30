@@ -18,8 +18,8 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JENESIS-Setup-1.0.0.exe` | **Windows installer** (NSIS). Installs JENESIS, creates Desktop and Start-menu shortcuts, and an uninstaller. | see below | see below |
-| `JENESIS-Portable-1.0.0.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | see below | see below |
+| `JENESIS-Setup-1.0.0.exe` | **Windows installer** (NSIS). Installs JENESIS, creates Desktop and Start-menu shortcuts, and an uninstaller. | 92,602,567 bytes (88.3 MB) | `b01136c9…` (full value in §7) |
+| `JENESIS-Portable-1.0.0.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,142,706 bytes (127 MB) | `547473a0…` (full value in §7) |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 Both files are built by GitHub Actions from this exact commit and are the same
@@ -66,7 +66,7 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 If you prefer the files exactly as the build job produced them:
 
-1. Open <https://github.com/Kdollers/k.JACK/actions/runs/RUN_ID>
+1. Open <https://github.com/Kdollers/k.JACK/actions/runs/40979782662>
 2. Scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`) or
    **`JENESIS-Portable`** (the `.zip` and its `.sha256`)
@@ -172,7 +172,7 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 ## 6. What was tested on this build — and what was not
 
-**Executed and passed** (GitHub Actions, run RUN_ID):
+**Executed and passed** (GitHub Actions, run 40979782662):
 
 | Check | Result |
 |---|---|
@@ -180,10 +180,10 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 | Theme rules: Light/Dark/System, immediate switching, persistence, first-paint, tokens, contrast, Electron bridge | **32 checks passed** |
 | Theme UI rendered with React (options, icons, accessible names, en/fr/rw, stored preference, fallback) | **6 checks passed** |
 | Documents created PAID (settlement, idempotent F2, no duplicate payments) | **19 checks passed** |
-| Keyboard shortcuts (single listener, typing safety, Escape layering, destinations) | **17 checks passed** |
+| Keyboard shortcuts (single listener, typing safety, Escape layering, destinations) | **18 checks passed** |
 | Messenger (delivery, receipts, permissions, company isolation, live push, no text in logs) | **18 checks passed** |
 | User guide (en/fr/rw parity, completeness, agreement with the code) | **14 checks passed** |
-| Production build (Vite) | **success** (app 539 kB + React 135 kB + icons 32 kB) |
+| Production build (Vite) | **success** (app 539 kB + React 135 kB + icons 36 kB) |
 | Packaged-application verification (no test code, no bundled database, SQLite binary present) | **success** |
 | Installed-application smoke test on a clean Windows Server 2022 VM | **18/18 PASS** |
 
@@ -203,7 +203,7 @@ both themes** → silent uninstall keeps the business database.
   GPU/driver behaviour, user account control).
 - **Neither theme has been looked at by a human or a browser.** The build
   environment has no display, so the themes were verified by measurement
-  (122 text/background pairs, all ≥ 4.5:1 contrast in both themes; every colour
+  (128 text/background pairs, all ≥ 4.5:1 contrast in both themes; every colour
   class in the interface audited) and by checking that the installed package
   really contains the theme code — not by eye. Spend two minutes in both
   themes after installing.
@@ -230,8 +230,15 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JENESIS-Setup-1.0.0.exe` | SIZE_EXE | SHA_EXE |
-| `JENESIS-Portable-1.0.0.zip` | SIZE_ZIP | SHA_ZIP |
+| `JENESIS-Setup-1.0.0.exe` | 92,602,567 (88.3 MB) | `b01136c9a05cec5a2810410f804d34404244ecb769996cd8b9bc4a9c95d31070` |
+| `JENESIS-Portable-1.0.0.zip` | 133,142,706 (127 MB) | `547473a0845067ab15cebca7843d9200ccdd1202add0bfc8d8e2bd30a606ccc6` |
 
-Built by GitHub Actions run **RUN_ID** from commit COMMIT_SHA on branch
-`arena/a2c625e8-k-jack`.
+Built by GitHub Actions run **40979782662** from commit
+**`ea3935645a4b40ee8d73122b42b805ce87123a25`** on branch `arena/a2c625e8-k-jack`
+(269 automated checks and 18/18 installed-application checks on that build).
+
+Every push rebuilds and republishes these files, so a later build carries a
+different SHA-256. The numbers printed on
+<https://github.com/Kdollers/k.JACK/releases/tag/v1.0.0> are always the ones
+that belong to the file you are downloading now, and each `.sha256` file sits
+next to its download — compare with `certutil -hashfile <file> SHA256` (§3).
