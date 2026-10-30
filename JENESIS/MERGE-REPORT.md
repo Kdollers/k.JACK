@@ -418,7 +418,7 @@ better-sqlite3 behaviours the app relies on correctly.
 
 ### Windows CI (executed — this is where the installer was built)
 
-`.github/workflows/windows-installer.yml`, latest run **40980934323** (the build
+`.github/workflows/windows-installer.yml`, latest run **40982434513** (the build
 that ships with this report), branch `arena/a2c625e8-k-jack`, both jobs green:
 
 | Job | Steps | Result |
@@ -448,13 +448,13 @@ run 40957626626 is the run whose transcript was captured:
     PASS
 ```
 
-The published files of the delivered build (run 40980934323, commit
-`534bd4e1d68e552e58f13de9c451cde847ecf91f`):
+The published files of the delivered build (run 40982434513, commit
+`d6fa2e902d78ecdecc4ee05e5214413753f82236`):
 
 | File | Size | SHA-256 |
 |---|---|---|
-| `JENESIS-Setup-1.0.0.exe` | 92,603,146 bytes (88.3 MB) | `cc8c34ec2d3b966274080ae04569b50471f69bb7dea6c1dfa7309eebae972c59` |
-| `JENESIS-Portable-1.0.0.zip` | 133,142,773 bytes (127 MB) | `317bbac335029e45cc9a07b69fae3c689eb684297aa32aea03a9660935a2dfb6` |
+| `JENESIS-Setup-1.0.0.exe` | 92,603,492 bytes (88.3 MB) | `88fee985f50e813372819a1968ac54c381ad61c5c9fe170b1b5b47c19ac7eb2f` |
+| `JENESIS-Portable-1.0.0.zip` | 133,142,324 bytes (127 MB) | `ffa3ef116de327aecba8eea9d5e83bf2c099150777470d5e9772b9bc6eeeaba2` |
 
 Both are published with a `.sha256` file each as release **`v1.0.0`**, and every
 push rebuilds and republishes them — the release page always shows the checksums
@@ -492,7 +492,8 @@ open, not hidden:
 | **40973680804** | **green** (18/18) — **Parts B–F** (PAID documents, shortcuts, Messenger, calculator keyboard, user guide): 270 measured checks, release assets replaced |
 | 40975099606 | **failed** in "Build the frontend and the NSIS installer" (commit 5472dc7). The step failed and the run then stayed in GitHub's bookkeeping as *in progress* for an hour; its log archive could not be downloaded from this sandbox (`results-receiver.actions.githubusercontent.com` is not reachable here), so **the cause is not established**. The two runs after it, on the following commits, were green with the same code path |
 | **40979782662** | **green** (18/18) — measured check total wired into CI and the release notes; 269 checks at that point |
-| **40980934323** | **green** (18/18) — the documented state: release `v1.0.0` republished with the installer, portable package and checksums |
+| **40982434513** | **green** (18/18) — the documented state: release `v1.0.0` republished with the installer, portable package and checksums |
+| **40982434513** | **green** (18/18) — **the delivered build** (commit `d6fa2e9`): no PAID/UNPAID choice in the sales and purchase forms, 270 checks, release `v1.0.0` republished |
 
 ### Not run here (environment limits — not claimed as passing)
 
