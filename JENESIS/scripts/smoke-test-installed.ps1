@@ -336,6 +336,54 @@ function Get-WindowPixels([IntPtr] $Handle) {
   }
 }
 
+function Get-DesktopShortcuts {
+  $desktop = [Environment]::GetFolderPath('Desktop')
+  $shell = New-Object -ComObject WScript.Shell
+  return @(Get-ChildItem -Path $desktop -Filter "$AppName*.lnk" -ErrorAction SilentlyContinue | ForEach-Object {
+    $lnk = $shell.CreateShortcut($_.FullName)
+    [pscustomobject]@{
+      Name      = $_.BaseName
+      Path      = $_.FullName
+      Target    = $lnk.TargetPath
+      Arguments = $lnk.Arguments
+      Icon      = $lnk.IconLocation
+    }
+  })
+}
+
+function Wait-ForTitledWindow([string] $Pattern, [int] $TimeoutSec = 90) {
+  $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  while ((Get-Date) -lt $deadline) {
+    $hit = @(Get-AppWindows | Where-Object { $_.Title -like "*$Pattern*" })
+    if ($hit.Count -gt 0) { return $hit[0] }
+    Start-Sleep -Milliseconds 500
+  }
+  return $null
+}
+
+function Get-ReadyCount {
+  if (-not (Test-Path $LogFile)) { return 0 }
+  return @(Select-String -Path $LogFile -Pattern 'renderer: ready' -AllMatches).Count
+}
+
+function Wait-ForInterfaceStart([int] $MoreThan, [int] $TimeoutSec = 90) {
+  $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  while ((Get-Date) -lt $deadline) {
+    if ((Get-ReadyCount) -gt $MoreThan) { return $true }
+    Start-Sleep -Milliseconds 500
+  }
+  return $false
+}
+
+function Assert-WindowIsReal($Window, [string] $What) {
+  $pixels = Get-WindowPixels -Handle $Window.Handle
+  if (-not $pixels) { Start-Sleep -Seconds 5; $pixels = Get-WindowPixels -Handle $Window.Handle }
+  Assert ($null -ne $pixels) "The $What window could not be captured."
+  Write-Host ("    {0}: {1} sampled pixels, {2} distinct colours, {3}% pure white" -f $What, $pixels.Sampled, $pixels.Distinct, $pixels.White) -ForegroundColor DarkGray
+  Assert ($pixels.Distinct -ge 8) "The $What window shows only $($pixels.Distinct) colour(s): it is blank."
+  Assert ($pixels.White -lt 97) "The $What window is $($pixels.White)% pure white: the interface did not render."
+}
+
 function Invoke-Api([string] $Base, [string] $Method, [string] $Route, $Body = $null, [string] $Token = $null) {
   $headers = @{}
   if ($Token) { $headers['Authorization'] = "Bearer $Token" }
@@ -563,6 +611,80 @@ Step 'Both themes ship in the installed application' {
     Assert ($text.Contains($marker.needle)) "The installed application is missing $($marker.what)."
   }
   Write-Host '    installed build contains the theme bootstrap, the dark palette and the remapped utilities' -ForegroundColor DarkGray
+}
+
+Step 'The three applications have their own desktop shortcut, each naming its application' {
+  $script:shortcuts = Get-DesktopShortcuts
+  Assert ($script:shortcuts.Count -eq 3) "Expected three $AppName desktop shortcuts, found $($script:shortcuts.Count): $(($script:shortcuts.Name) -join ', ')"
+  $expected = @{ 'JENESIS Seller' = 'seller'; 'JENESIS Maintenance' = 'maintenance'; 'JENESIS Admin' = 'admin' }
+  foreach ($name in $expected.Keys) {
+    $hit = $script:shortcuts | Where-Object { $_.Name -eq $name } | Select-Object -First 1
+    Assert ($null -ne $hit) "No desktop shortcut named '$name' was created."
+    Assert ($hit.Arguments -match "--app=$($expected[$name])") "The '$name' shortcut does not name its application (arguments: '$($hit.Arguments)')."
+    Assert ($hit.Icon -match "$($expected[$name])\.ico") "The '$name' shortcut does not use its own icon ($($hit.Icon))."
+    Write-Host "    $name -> $($hit.Arguments) (icon $($hit.Icon))" -ForegroundColor DarkGray
+  }
+}
+
+Step 'JENESIS Seller opens from its own shortcut, with its own interface' {
+  $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=seller' } | Select-Object -First 1
+  Assert ($null -ne $shortcut) 'The Seller shortcut was not found.'
+  $before = Get-ReadyCount
+  Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
+  $window = Wait-ForTitledWindow 'JENESIS Seller' 90
+  Assert ($null -ne $window) 'No window titled "JENESIS Seller" appeared: the shortcut did not open Seller.'
+  Assert-WindowIsReal $window 'JENESIS Seller'
+  Assert (Wait-ForInterfaceStart $before 90) 'Seller did not report that its interface started.'
+  Close-AppGracefully
+}
+
+Step 'JENESIS Maintenance opens from its own shortcut, with its own interface' {
+  $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=maintenance' } | Select-Object -First 1
+  Assert ($null -ne $shortcut) 'The Maintenance shortcut was not found.'
+  $before = Get-ReadyCount
+  Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
+  $window = Wait-ForTitledWindow 'JENESIS Maintenance' 90
+  Assert ($null -ne $window) 'No window titled "JENESIS Maintenance" appeared: the shortcut did not open Maintenance.'
+  Assert-WindowIsReal $window 'JENESIS Maintenance'
+  Assert (Wait-ForInterfaceStart $before 90) 'Maintenance did not report that its interface started.'
+  Close-AppGracefully
+}
+
+Step 'JENESIS Admin opens from its own shortcut, with its own interface' {
+  $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=admin' } | Select-Object -First 1
+  Assert ($null -ne $shortcut) 'The Admin shortcut was not found.'
+  $before = Get-ReadyCount
+  Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
+  $window = Wait-ForTitledWindow 'JENESIS Admin' 90
+  Assert ($null -ne $window) 'No window titled "JENESIS Admin" appeared: the shortcut did not open Admin.'
+  Assert-WindowIsReal $window 'JENESIS Admin'
+  Assert (Wait-ForInterfaceStart $before 90) 'Admin did not report that its interface started.'
+  Close-AppGracefully
+}
+
+Step 'The three applications run side by side, each in its own window' {
+  # One process, three windows, three identities, one database.
+  $before = Get-ReadyCount
+  foreach ($id in @('seller', 'maintenance', 'admin')) {
+    $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match "--app=$id" } | Select-Object -First 1
+    Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
+    Start-Sleep -Seconds 6
+  }
+  $titles = @((Get-AppWindows | ForEach-Object { $_.Title }) | Sort-Object -Unique)
+  Write-Host ("    windows open: {0}" -f ($titles -join ' | ')) -ForegroundColor DarkGray
+  Assert (@($titles | Where-Object { $_ -like '*Seller*' }).Count -ge 1) 'Seller is not open.'
+  Assert (@($titles | Where-Object { $_ -like '*Maintenance*' }).Count -ge 1) 'Maintenance is not open.'
+  Assert (@($titles | Where-Object { $_ -like '*Admin*' }).Count -ge 1) 'Admin is not open.'
+  # Every window must have started its own interface.
+  $deadline = (Get-Date).AddSeconds(90)
+  while ((Get-Date) -lt $deadline -and ((Get-ReadyCount) -lt ($before + 3))) { Start-Sleep -Milliseconds 500 }
+  Assert ((Get-ReadyCount) -ge ($before + 3)) "Only $((Get-ReadyCount) - $before) of the three interfaces reported a start."
+  # They serve the same company: one database, not three.
+  $url = Get-BackendUrlFromLog
+  Assert ([bool]$url) 'The backend address of the running application was not found in the log.'
+  $status = Invoke-Api $url 'GET' '/setup/status'
+  Assert ($status.needsSetup -eq $false) 'The company created earlier is not the one the three windows see.'
+  Close-AppGracefully
 }
 
 Step 'Silent uninstall removes the program but keeps business data' {
