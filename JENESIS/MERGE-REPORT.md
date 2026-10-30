@@ -418,7 +418,7 @@ better-sqlite3 behaviours the app relies on correctly.
 
 ### Windows CI (executed — this is where the installer was built)
 
-`.github/workflows/windows-installer.yml`, latest run **40975099606** (the build
+`.github/workflows/windows-installer.yml`, latest run **40980934323** (the build
 that ships with this report), branch `arena/a2c625e8-k-jack`, both jobs green:
 
 | Job | Steps | Result |
@@ -448,11 +448,23 @@ run 40957626626 is the run whose transcript was captured:
     PASS
 ```
 
-Artifact: `JENESIS-Windows-installer` → `JENESIS-Setup-1.0.0.exe` (~92.6 MB);
-the portable package `JENESIS-Portable-1.0.0.zip` (~133 MB). Both are published
-with SHA-256 checksums as release **`v1.0.0`** — see `JENESIS/DOWNLOAD.md` for the
-direct download links, the checksums of the current build and GUI-only install
-instructions.
+The published files of the delivered build (run 40980934323, commit
+`534bd4e1d68e552e58f13de9c451cde847ecf91f`):
+
+| File | Size | SHA-256 |
+|---|---|---|
+| `JENESIS-Setup-1.0.0.exe` | 92,603,146 bytes (88.3 MB) | `cc8c34ec2d3b966274080ae04569b50471f69bb7dea6c1dfa7309eebae972c59` |
+| `JENESIS-Portable-1.0.0.zip` | 133,142,773 bytes (127 MB) | `317bbac335029e45cc9a07b69fae3c689eb684297aa32aea03a9660935a2dfb6` |
+
+Both are published with a `.sha256` file each as release **`v1.0.0`**, and every
+push rebuilds and republishes them — the release page always shows the checksums
+of the files it currently carries. See `JENESIS/DOWNLOAD.md` for the direct
+download links and GUI-only install instructions.
+
+The release notes are generated from measurements made on that very build: the
+number of automated checks comes from `scripts/count-checks.mjs` reading the
+transcript of the run (269 today), and the smoke score is counted from the
+installed-application transcript — no figure in the notes is typed by hand.
 
 Honest history of the Windows runs — the failures were found and fixed in the
 open, not hidden:
@@ -478,7 +490,9 @@ open, not hidden:
 | 40966223343 | **failed** in the new packaging step only (`dist\win-unpacked` does not exist: electron-builder writes to `release\`) → bug #24 |
 | **40967528438** | **green** (18/18) — after the fix: portable ZIP built from `release\win-unpacked`, release `v1.0.0` published |
 | **40973680804** | **green** (18/18) — **Parts B–F** (PAID documents, shortcuts, Messenger, calculator keyboard, user guide): 269 measured checks, release assets replaced |
-| **40975099606** | **green** (18/18) — the delivered state (capture-layer fall-through fix, safer discard dialog) |
+| 40975099606 | **failed** in "Build the frontend and the NSIS installer" (commit 5472dc7). The step failed and the run then stayed in GitHub's bookkeeping as *in progress* for an hour; its log archive could not be downloaded from this sandbox (`results-receiver.actions.githubusercontent.com` is not reachable here), so **the cause is not established**. The two runs after it, on the following commits, were green with the same code path |
+| **40979782662** | **green** (18/18) — measured check total wired into CI and the release notes; 269 checks |
+| **40980934323** | **green** (18/18) — the delivered state (docs): release `v1.0.0` republished with the current installer, portable package and checksums |
 
 ### Not run here (environment limits — not claimed as passing)
 
