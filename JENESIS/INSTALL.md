@@ -3,8 +3,8 @@
 > **Looking for the files to install?**
 > [`DOWNLOAD.md`](DOWNLOAD.md) has the direct download links for the Windows
 > installer and the portable package, their checksums, and the step-by-step
-> Windows instructions. This document covers installation and upgrade in
-> general., Upgrade and First Launch
+> Windows instructions. This document covers installation, upgrade and first
+> launch in general.
 
 JENESIS is a Windows desktop application. You install it once with a normal
 installer and then start it from a desktop or Start-menu shortcut. **No command
@@ -14,7 +14,9 @@ prompt, no terminal and no development server are needed to use it.**
 
 ## 1. Install on a Windows PC (10/11, 64-bit)
 
-1. Download **`JENESIS-Setup-1.0.0.exe`** (produced by the build/CI steps below).
+1. Download **`JENESIS-Setup-1.0.0.exe`** from the links in
+   [`DOWNLOAD.md`](DOWNLOAD.md) (GitHub release — no sign-in needed). If you
+   prefer to build it yourself, follow §2 below.
 2. Double-click it and follow the installer:
    - choose the installation folder (or accept the default),
    - tick "Create a desktop shortcut" if you want one.

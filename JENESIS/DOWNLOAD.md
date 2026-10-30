@@ -18,8 +18,8 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JENESIS-Setup-1.0.0.exe` | **Windows installer** (NSIS). Installs JENESIS, creates Desktop and Start-menu shortcuts, and an uninstaller. | 92,602,567 bytes (88.3 MB) | `b01136c9…` (full value in §7) |
-| `JENESIS-Portable-1.0.0.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,142,706 bytes (127 MB) | `547473a0…` (full value in §7) |
+| `JENESIS-Setup-1.0.0.exe` | **Windows installer** (NSIS). Installs JENESIS, creates Desktop and Start-menu shortcuts, and an uninstaller. | 92,603,146 bytes (88.3 MB) | `cc8c34ec…` (full value in §7) |
+| `JENESIS-Portable-1.0.0.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,142,773 bytes (127 MB) | `317bbac3…` (full value in §7) |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 Both files are built by GitHub Actions from this exact commit and are the same
@@ -66,7 +66,7 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 If you prefer the files exactly as the build job produced them:
 
-1. Open <https://github.com/Kdollers/k.JACK/actions/runs/40979782662>
+1. Open <https://github.com/Kdollers/k.JACK/actions/runs/40980934323>
 2. Scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`) or
    **`JENESIS-Portable`** (the `.zip` and its `.sha256`)
@@ -172,7 +172,7 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 ## 6. What was tested on this build — and what was not
 
-**Executed and passed** (GitHub Actions, run 40979782662):
+**Executed and passed** (GitHub Actions, run 40980934323):
 
 | Check | Result |
 |---|---|
@@ -230,11 +230,11 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JENESIS-Setup-1.0.0.exe` | 92,602,567 (88.3 MB) | `b01136c9a05cec5a2810410f804d34404244ecb769996cd8b9bc4a9c95d31070` |
-| `JENESIS-Portable-1.0.0.zip` | 133,142,706 (127 MB) | `547473a0845067ab15cebca7843d9200ccdd1202add0bfc8d8e2bd30a606ccc6` |
+| `JENESIS-Setup-1.0.0.exe` | 92,603,146 (88.3 MB) | `cc8c34ec2d3b966274080ae04569b50471f69bb7dea6c1dfa7309eebae972c59` |
+| `JENESIS-Portable-1.0.0.zip` | 133,142,773 (127 MB) | `317bbac335029e45cc9a07b69fae3c689eb684297aa32aea03a9660935a2dfb6` |
 
-Built by GitHub Actions run **40979782662** from commit
-**`ea3935645a4b40ee8d73122b42b805ce87123a25`** on branch `arena/a2c625e8-k-jack`
+Built by GitHub Actions run **40980934323** from commit
+**`534bd4e1d68e552e58f13de9c451cde847ecf91f`** on branch `arena/a2c625e8-k-jack`
 (269 automated checks and 18/18 installed-application checks on that build).
 
 Every push rebuilds and republishes these files, so a later build carries a
