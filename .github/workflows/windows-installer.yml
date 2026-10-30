@@ -187,7 +187,33 @@ jobs:
           Copy-Item 'release\JEN 0.5 Portable.zip' $folder -Force
           Get-ChildItem release -Filter '*.sha256' | ForEach-Object { Copy-Item $_.FullName $folder -Force }
           if (Test-Path 'release\download-table.md') { Copy-Item 'release\download-table.md' $folder -Force }
+          if (Test-Path 'release\JEN 0.5.zip') { Copy-Item 'release\JEN 0.5.zip' $folder -Force }
           Get-ChildItem $folder | ForEach-Object { Write-Host "release folder: $($_.Name)  $([math]::Round($_.Length / 1MB, 1)) MB" }
+
+      - name: Package the JEN 0.5 source backup
+        if: success()
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -e
+          mkdir -p JENESIS/release
+          # Tracked files only: node_modules, dist and release are not in git,
+          # so the archive is the real source of this release and nothing else.
+          git archive --format=zip -o "JENESIS/release/JEN 0.5.zip" HEAD ":(exclude)JENESIS/dist"
+          cd JENESIS/release
+          sha256sum "JEN 0.5.zip" > "JEN 0.5.zip.sha256"
+          ls -l "JEN 0.5.zip"
+          cat "JEN 0.5.zip.sha256"
+
+      - name: Upload the source backup
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: JEN 0.5 source backup
+          path: |
+            JENESIS/release/JEN 0.5.zip
+            JENESIS/release/JEN 0.5.zip.sha256
+          if-no-files-found: error
 
       - name: Upload the installer
         if: always()
