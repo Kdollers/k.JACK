@@ -10,18 +10,18 @@ This is the **consolidated JENESIS application**: the features of the previous
 `JEN 0.2` and `JAN 0.3` archives, merged into one project — plus a full
 **Light / Dark / System theme system**, a **keyboard layer**, **JENESIS
 Messenger**, documents that are **created PAID**, and a trilingual
-**user guide** — verified by **270 automated checks**.
+**user guide** — verified by **293 automated checks**.
 
 - **Download the Windows installer / portable package**: [`DOWNLOAD.md`](DOWNLOAD.md)
 - **Merge report** (what came from where, bugs fixed, test results): [`MERGE-REPORT.md`](MERGE-REPORT.md)
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)
 
-Status: **270 automated checks pass** (locally and on Linux CI, with the real
+Status: **293 automated checks pass** (locally and on Linux CI, with the real
 SQLite driver) and the **Windows installer is built and smoke-tested on a
-GitHub-hosted Windows runner** on every push — `JENESIS-Setup-1.0.0.exe`
+GitHub-hosted Windows runner** on every push — `JEN 0.5 Setup.exe`
 (~92.6 MB) is **published as a GitHub release** together with
-`JENESIS-Portable-1.0.0.zip` (~133 MB) and SHA-256 checksums. Get them from
+`JEN 0.5 Portable.zip` (~127 MB) and SHA-256 checksums. Get them from
 [`DOWNLOAD.md`](DOWNLOAD.md) or the release page. It is unsigned and has not
 been run on a physical PC, and **no human or browser engine has looked at the
 rendered interface** (the sandbox has no display; themes are verified by tests,
@@ -168,7 +168,7 @@ npm install
 npm test
 ```
 
-### 3. Run the Whole Suite (270 checks)
+### 3. Run the Whole Suite (293 checks)
 ```bash
 npm run test:all
 
@@ -194,7 +194,7 @@ The server will start on port `3000` (e.g., `http://localhost:3000`).
 ```bat
 build-installer.bat          :: or: npm ci && npm run desktop:dist
 ```
-Produces `release\JENESIS-Setup-1.0.0.exe`. See [`INSTALL.md`](INSTALL.md).
+Produces `release\JEN 0.5 Setup.exe`. See [`INSTALL.md`](INSTALL.md).
 
 ---
 

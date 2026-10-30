@@ -1,3 +1,9 @@
+> **Note (release JEN 0.5).** This report describes the work that produced
+> version 1.0.0. From release **JEN 0.5** onwards the installer file is
+> `JEN 0.5 Setup.exe`, the portable package is `JEN 0.5 Portable.zip` and the
+> source backup is `JEN 0.5.zip` (see `DOWNLOAD.md` and
+> `JEN 0.5 RELEASE NOTES.md`). The steps below still apply.
+
 > **Historical document.** This file describes the work of the session it names
 > (before the JEN 0.2 + JAN 0.3 merge) and is kept for traceability. The current
 > status of the consolidated application is in **[MERGE-REPORT.md](MERGE-REPORT.md)**.

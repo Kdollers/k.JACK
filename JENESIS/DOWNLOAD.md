@@ -18,9 +18,14 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JENESIS-Setup-1.0.0.exe` | **Windows installer** (NSIS). Installs JENESIS, creates Desktop and Start-menu shortcuts, and an uninstaller. | 92,603,492 bytes (88.3 MB) | `88fee985…` (full value in §7) |
-| `JENESIS-Portable-1.0.0.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,142,324 bytes (127 MB) | `ffa3ef11…` (full value in §7) |
+| `JEN 0.5 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,725,817 bytes (88.4 MB) | in `JEN 0.5 Setup.exe.sha256` |
+| `JEN 0.5 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,341,581 bytes (127.2 MB) | in `JEN 0.5 Portable.zip.sha256` |
+| `JEN 0.5.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,593,714 bytes (5.3 MB) | in `JEN 0.5.zip.sha256` |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
+
+> GitHub shows the download name with dots instead of spaces
+> (`JEN.0.5.Setup.exe`). It is the same file; rename it after downloading if
+> you prefer spaces.
 
 Both files are built by GitHub Actions from this exact commit and are the same
 build that was smoke-tested (see §6). Neither contains tests, source maps,
@@ -29,26 +34,36 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 ---
 
-### New in this build
+### New in this build — JEN 0.5
 
-- **Documents are created PAID.** A new sales receipt/invoice or purchase bill is
-  settled the moment it is saved: JENESIS posts it and records the real payment in
-  one operation. There is no PAID/UNPAID choice anywhere — no checkbox, no “save
-  as draft” for an invoice or a bill — and PAID is never just a label, it is backed
-  by a genuine payment and a balanced journal entry. Pressing **F2** twice settles
-  once.
-- **Keyboard shortcuts.** F1 guide, F2 settle, F3 print, F5 refresh, Ctrl+N new,
-  Ctrl+P print, Ctrl+K Messenger, Ctrl+Shift+C calculator, Ctrl+Shift+T theme,
-  Ctrl+Shift+L language, Ctrl+/ shortcut reference, Alt+←/→ previous/next screen,
-  and a layered **Esc** (dialog → panel → screen; it never quits JENESIS).
-- **The calculator works with the physical keyboard** (digits, keypad, operators,
-  Enter, Backspace, Esc), is clear about division by zero, moves and minimises.
-- **JENESIS Messenger** — the button sits next to the calculator in the header
-  (Ctrl+K): conversations with colleagues of your company, unread badge, delivery
-  and read receipts.
-- **Help & User Guide** in the sidebar or with F1: every-day steps in English,
-  French and Kinyarwanda, including what a Seller, an Administrator and
-  Maintenance can do.
+- **Three applications, three shortcuts.** JENESIS Seller (red), JENESIS
+  Maintenance (green) and JENESIS Admin (blue) each have their own desktop and
+  Start-menu shortcut, with their own icon, title, menu and landing screen, all
+  sharing one database — no duplicated and no conflicting records.
+- **The J identity everywhere**: the JENESIS J logo in the windows, on printed
+  invoices, bills and report letterheads, on the desktop shortcuts and in the
+  installer. The old G logo is gone. Internal names that existing installations
+  depend on (the database file, the desktop handshake id, the password salt and
+  the storage keys) were deliberately left untouched.
+- **Light / Dark / System per application.** Each application remembers its own
+  theme; `Alt + T` cycles it and Settings → Appearance offers all three.
+- **JENESIS Maintenance is a real application**: service and database
+  information, the opt-in “allow other computers on this network to connect”
+  switch, connecting to another computer (Test, then Apply), verified backups,
+  an integrity check and a log viewer.
+- **The complete keyboard shortcut table** (31 shortcuts): `F1` help, `F2`
+  settle, `F3` print, `F5` refresh, `Esc` close, `Ctrl+S` save, `Ctrl+N` new,
+  `Ctrl+E` edit, `Ctrl+F` search, `Ctrl+P` print, `Ctrl+D` duplicate,
+  `Ctrl+Enter` submit, `Alt+←/→` previous/next screen, one `Ctrl+Shift+…` key
+  per screen (Sales, Receipt, Customers, Purchases, Suppliers, Purchase
+  document, Inventory, Product search, Transfers, Accounting, Banking, General
+  Ledger, Reports), `Ctrl+Shift+K` calculator, `Ctrl+Shift+M` Messenger,
+  `Ctrl+/` shortcut reference, `Alt+T` theme, `Alt+L` language. Plain
+  shortcuts stay suspended while you type, and every one respects your
+  permissions.
+- **Help chapters** for the three applications, banking and cash, and
+  maintenance — in English, French and Kinyarwanda, with the credit
+  *Created and developed by KAYIGANWA JACQUES.*
 
 ---
 
@@ -57,20 +72,23 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 ### Recommended — GitHub release (permanent, no sign-in needed)
 
 - **Installer:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v1.0.0/JENESIS-Setup-1.0.0.exe>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.0/JEN.0.5.Setup.exe>
 - **Portable ZIP:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v1.0.0/JENESIS-Portable-1.0.0.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.0/JEN.0.5.Portable.zip>
+- **Source backup:**
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.0/JEN.0.5.zip>
 - **All files for this version:**
-  <https://github.com/Kdollers/k.JACK/releases/tag/v1.0.0>
+  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.0>
 
 ### Alternative — build artifacts of the workflow run
 
 If you prefer the files exactly as the build job produced them:
 
-1. Open <https://github.com/Kdollers/k.JACK/actions/runs/40982434513>
+1. Open <https://github.com/Kdollers/k.JACK/actions/runs/41015778589>
 2. Scroll to the bottom, **Artifacts** section
-3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`) or
-   **`JENESIS-Portable`** (the `.zip` and its `.sha256`)
+3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`),
+   **`JEN 0.5 Portable`** (the portable `.zip` and its `.sha256`) or
+   **`JEN 0.5 source backup`** (the source `.zip` and its `.sha256`)
 
 Artifacts require being signed in to GitHub and are kept for 90 days; the
 release above does not expire.
@@ -80,12 +98,12 @@ release above does not expire.
 ## 3. Verify what you downloaded (optional but recommended)
 
 The exact checksums of this build are printed in the table in §7 and are also
-attached to the release as `JENESIS-Setup-1.0.0.exe.sha256`. To check a file on
+attached to the release as `JEN 0.5 Setup.exe.sha256`. To check a file on
 Windows, open the folder in File Explorer, type `cmd` in the address bar… — or
 simply use PowerShell from the folder's context menu:
 
 ```powershell
-certutil -hashfile JENESIS-Setup-1.0.0.exe SHA256
+certutil -hashfile "JEN 0.5 Setup.exe" SHA256
 ```
 
 The value must match the SHA-256 in §7 / in the `.sha256` file.
@@ -94,7 +112,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ## 4. Installing on Windows (no command prompt, no code)
 
-1. Download `JENESIS-Setup-1.0.0.exe` from the link above.
+1. Download `JEN 0.5 Setup.exe` from the link above.
 2. **Double-click** the downloaded file.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the
    installer is not code-signed. Click **More info → Run anyway**.
@@ -104,12 +122,14 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
    - accept the license,
    - keep the proposed folder, or choose another one,
    - click through the remaining screens.
-5. When it finishes, **JENESIS** is on your Desktop and in the Start menu.
-   Tick "Run JENESIS" if you want it to start immediately.
+5. When it finishes, three shortcuts are on your Desktop and in the Start menu:
+   **JENESIS Seller**, **JENESIS Maintenance** and **JENESIS Admin**.
+   Tick “Run JENESIS” if you want the chooser to start immediately.
 
 ### First launch
 
-1. Start **JENESIS** from the Desktop shortcut.
+1. Start **JENESIS Admin** from its desktop shortcut (or open JENESIS and pick
+   the application you want).
 2. The **setup screen** appears once: company name, and the first
    administrator's name, username and password (at least 10 characters).
    There are no default accounts — the account you create is the only way in.
@@ -119,11 +139,27 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 5. Choose your language in the top bar (English / Français / Ikinyarwanda).
 6. Choose **Settings → Appearance**: **Light Mode**, **Dark Mode** or
    **System Default** (follows Windows). The sun/moon switch in the header
-   changes it at any time; it applies everywhere instantly and is remembered.
+   changes it at any time (`Alt + T` does the same); it applies everywhere
+   instantly and is remembered **per application**, so Seller can stay Light
+   while Admin is Dark.
+
+### The three applications
+
+| Shortcut | Colour | Opens on | What it is for |
+|---|---|---|---|
+| **JENESIS Seller** | red | Sales | selling: sales, receipts, customers, stock levels |
+| **JENESIS Maintenance** | green | Maintenance | upkeep: stock, the connection between computers, verified backups, integrity check, logs |
+| **JENESIS Admin** | blue | Dashboard | administration: accounting, purchases, reports, settings, users and permissions |
+
+Each one opens directly in its own environment and reads the same company data,
+so a sale recorded in Seller appears at once in the Admin reports.
 
 ### Portable package
 
-Unzip `JENESIS-Portable-1.0.0.zip` and double-click **`JENESIS.exe`**.
+Unzip `JEN 0.5 Portable.zip` and double-click **`JENESIS.exe`**. The portable
+build opens the chooser; to start one application directly, make your own
+shortcut to `JENESIS.exe --app=seller` (or `--app=maintenance` /
+`--app=admin`).
 Nothing is written to Program Files; your data still goes to
 `%APPDATA%\JENESIS` (see §5), so the portable build and the installed build
 share the same company data. To "uninstall", delete the folder.
@@ -173,18 +209,20 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 ## 6. What was tested on this build — and what was not
 
-**Executed and passed** (GitHub Actions, run 40982434513):
+**Executed and passed** (GitHub Actions, run 41015778589):
 
 | Check | Result |
 |---|---|
-| Full automated suite (Linux, real SQLite driver) | **270 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
-| Theme rules: Light/Dark/System, immediate switching, persistence, first-paint, tokens, contrast, Electron bridge | **32 checks passed** |
+| Full automated suite (Linux, real SQLite driver) | **293 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
+| Three applications (identity, colours, menus, landing screens, per-application themes, one shared database, installer shortcuts, packaging) | **12 checks passed** |
+| Branding and the J identity (no G logo anywhere, no stale GENESIS text, three different icons) | **12 checks passed** |
+| Theme rules: Light/Dark/System, immediate switching, persistence, first paint, tokens, contrast, Electron bridge, per-application keys | **34 checks passed** |
 | Theme UI rendered with React (options, icons, accessible names, en/fr/rw, stored preference, fallback) | **6 checks passed** |
 | Documents created PAID (settlement, idempotent F2, no duplicate payments, no PAID/UNPAID choice in the forms) | **20 checks passed** |
-| Keyboard shortcuts (single listener, typing safety, Escape layering, destinations) | **18 checks passed** |
+| Keyboard shortcuts (single listener, typing safety, Escape layering, the user's table, destinations) | **24 checks passed** |
 | Messenger (delivery, receipts, permissions, company isolation, live push, no text in logs) | **18 checks passed** |
 | User guide (en/fr/rw parity, completeness, agreement with the code) | **14 checks passed** |
-| Production build (Vite) | **success** (app 539 kB + React 135 kB + icons 36 kB) |
+| Production build (Vite) | **success** |
 | Packaged-application verification (no test code, no bundled database, SQLite binary present) | **success** |
 | Installed-application smoke test on a clean Windows Server 2022 VM | **18/18 PASS** |
 
@@ -214,9 +252,15 @@ both themes** → silent uninstall keeps the business database.
   the Messenger panel and the user guide are verified by tests, source
   assertions and a production build — not by clicking through them in the
   installed application. A short hands-on pass is recommended.
-- **Messenger between two different computers is not set up.** It uses the same
-  loopback backend as the desktop app; live delivery, receipts, permissions and
-  company isolation are all tested against one server with two sessions.
+- **Messenger has not been proven between two physical computers.** Live
+  delivery, receipts, permissions and company isolation are tested against one
+  service with two independent sessions (18 checks), and
+  `scripts/messenger-two-computers.cjs` repeated the whole exchange over HTTP
+  with two signed-in accounts: 8 steps passed, 0 failed — but both sessions ran
+  on the same machine. To prove the network: switch on "Allow other computers
+  on this network to connect" in JENESIS Maintenance, then run
+  `node scripts\messenger-two-computers.cjs --server http://<that PC>:3000
+  --user <name> --peer <name> --password <pw>` from a second computer.
 - Not covered: printing on a physical printer, Playwright end-to-end tests
   (no browser in the build environment), and a live upgrade of a database
   created by an installed GENESIS build on Windows (covered by 11 unit tests on
@@ -231,15 +275,17 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JENESIS-Setup-1.0.0.exe` | 92,603,492 (88.3 MB) | `88fee985f50e813372819a1968ac54c381ad61c5c9fe170b1b5b47c19ac7eb2f` |
-| `JENESIS-Portable-1.0.0.zip` | 133,142,324 (127 MB) | `ffa3ef116de327aecba8eea9d5e83bf2c099150777470d5e9772b9bc6eeeaba2` |
+| `JEN 0.5 Setup.exe` | 92,725,817 (88.4 MB) | `e895a567c770448bc9151290dd6059661785ac8ccf7665c0fa72f27e21108b83` |
+| `JEN 0.5 Portable.zip` | 133,341,581 (127.2 MB) | `109916574d9c832396c719f2af599012404b33a4b23007fbf27d44192fe15850` |
+| `JEN 0.5.zip` | 5,593,714 (5.3 MB) | in `JEN 0.5.zip.sha256`, next to the download |
 
-Built by GitHub Actions run **40982434513** from commit
-**`d6fa2e902d78ecdecc4ee05e5214413753f82236`** on branch `arena/a2c625e8-k-jack`
-(270 automated checks and 18/18 installed-application checks on that build).
+Built by GitHub Actions run **41015778589** from commit
+**`a7737376e98a4a86c3e7e1d9860803159d752d1d`** on branch `arena/a2c625e8-k-jack`
+(**293 automated checks** and **18/18 installed-application checks** on that
+build).
 
 Every push rebuilds and republishes these files, so a later build carries a
 different SHA-256. The numbers printed on
-<https://github.com/Kdollers/k.JACK/releases/tag/v1.0.0> are always the ones
+<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.0> are always the ones
 that belong to the file you are downloading now, and each `.sha256` file sits
 next to its download — compare with `certutil -hashfile <file> SHA256` (§3).

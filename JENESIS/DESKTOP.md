@@ -17,7 +17,7 @@ itself healthy, and then opens the JENESIS window. The browser is not needed.
 | Authentication and permission tests | `npm run test:auth` |
 | Run the desktop app from source | `npm run build` then `npm run desktop` |
 | Unpacked Windows build (test folder) | `npm run desktop:pack` → `release/win-unpacked/JENESIS.exe` |
-| Windows installer (NSIS) | `npm run desktop:dist` → `release/JENESIS-Setup-1.0.0.exe` |
+| Windows installer (NSIS) | `npm run desktop:dist` → `release/JEN 0.5 Setup.exe` |
 
 Run the Windows packaging commands on Windows 10/11 (x64) with Node.js 20 or newer.
 
@@ -92,7 +92,7 @@ the theme never touches accounting data.
 Workflow: `.github/workflows/windows-installer.yml` (repository root). It runs on pushes to `arena/**`
 and on manual dispatch, and performs:
 1. `npm ci` and `npm run test:all` (accounting, authentication, desktop backend lifecycle).
-2. `npm run desktop:dist`: builds the frontend and the NSIS installer `release/JENESIS-Setup-<version>.exe`.
+2. `npm run desktop:dist`: builds the frontend and the NSIS installer `release/JEN 0.5 Setup.exe` (the name comes from `build.win.artifactName`).
 3. `node scripts/verify-package.cjs release/win-unpacked`: checks the packaged app contains the
    required files and the unpacked SQLite native binary, and contains no tests, no Electron dev
    package and no database.
@@ -118,7 +118,7 @@ Both jobs of `.github/workflows/windows-installer.yml` are green:
 - `npm ci` on Windows Server 2022 (Python 3.11 present for node-gyp; `better-sqlite3`
   is pinned to 12.x, which supports the Node 20 runtime used by Electron 33).
 - `npm run test:all` on the runner: 165 checks, 0 failed.
-- `npm run desktop:dist` produced **`release/JENESIS-Setup-1.0.0.exe`** (88 MB).
+- `npm run desktop:dist` produced **`release/JEN 0.5 Setup.exe`** (88.4 MB).
 - `node scripts/verify-package.cjs release/win-unpacked` passed.
 - `scripts/smoke-test-installed.ps1` — **17/17 installed-application checks**:
   silent install, shortcuts, backend start on loopback, no external browser,
