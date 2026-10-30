@@ -65,12 +65,13 @@ and the storage keys are untouched.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5.1 Setup.exe` | **Windows installer** — installs JENESIS and creates the three shortcuts (Seller, Maintenance, Admin) | 92,919,111 bytes (88.6 MB) | `c57631f4ec9c62e3e039e8e7d6c06ef0fff5349adccaedb0396e632808e60664` |
-| `JEN 0.5.1 Portable.zip` | **Portable build** — unzip and double-click `JENESIS.exe`, nothing installed | 133,576,670 bytes (127.4 MB) | `090be0c1e67035b63884139b0a6771aa3c9f8eb72d8d2a562f3f67c59c1a1388` |
-| `JEN 0.5.1.zip` | **Source-code backup** — every tracked file of the project | 5,628,713 bytes (5.4 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
+| `JEN 0.5.1 Setup.exe` | **Windows installer** — installs JENESIS and creates the three shortcuts (Seller, Maintenance, Admin) | 92,919,376 bytes (88.6 MB) | `8dfa6e9f6a0de6a76aad06524862ac1621155896cb86a4c23b34e5a79d1ada26` |
+| `JEN 0.5.1 Portable.zip` | **Portable build** — unzip and double-click `JENESIS.exe`, nothing installed | 133,576,615 bytes (127.4 MB) | `5c892f8e58623acc96c80a197b874e05a3961bc1724ebfb290b0ec8b5c04787f` |
+| `JEN 0.5.1.zip` | **Source-code backup** — every tracked file of the project | 5,630,489 bytes (5.4 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
 
-These are the files of **GitHub Actions run 41121270446, commit
-`ac80a35d9b92126dcd276dffdf97336f0bff6139`**. Every later push republishes the
+These are the files of **GitHub Actions run 41124091931, commit
+`6bc7338e7afbe2f9abf8e0b36cd2b1c85e0f7de5`** — the build in which the three
+applications are also opened from their own desktop shortcuts. Every later push republishes the
 release with new checksums, so the `.sha256` file beside each download always
 carries the one that belongs to the file you are getting.
 
@@ -127,8 +128,8 @@ happened, and the window shows a message instead of a blank screen.
 
 ## 6. What was tested on this build
 
-Measured on GitHub Actions run **41121270446** (Ubuntu 22.04 and Windows
-Server 2022 runners), commit `ac80a35`:
+Measured on GitHub Actions run **41124091931** (Ubuntu 22.04 and Windows
+Server 2022 runners), commit `6bc7338`:
 
 | Check | Result |
 |---|---|
@@ -138,7 +139,7 @@ Server 2022 runners), commit `ac80a35`:
 | Installed application: **the start page and every file it references are served** | passed |
 | Installed application: **the window shows real content, not a blank screen** (its pixels are captured and counted) | passed |
 | Installed application: **the interface reports a successful start** and no start-up error is logged | passed |
-| Installed application: silent install, three shortcuts, launch from the executable, first-run setup, sign-in, balanced journal entry, backup and restore, clean shutdown, relaunch with data intact, uninstall keeping the database | all passed (21 of 21) |
+| Installed application: silent install, three shortcuts, launch from the executable, **each of the three shortcuts opening its own application with a real interface**, all three running side by side on one company, first-run setup, sign-in, balanced journal entry, backup and restore, clean shutdown, relaunch with data intact, uninstall keeping the database | all passed (26 of 26) |
 
 ## 7. What is NOT verified
 

@@ -18,9 +18,9 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,919,111 bytes (88.6 MB) | in `JEN 0.5.1 Setup.exe.sha256` |
-| `JEN 0.5.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,576,670 bytes (127.4 MB) | in `JEN 0.5.1 Portable.zip.sha256` |
-| `JEN 0.5.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,628,713 bytes (5.4 MB) | in `JEN 0.5.1.zip.sha256` |
+| `JEN 0.5.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,919,376 bytes (88.6 MB) | in `JEN 0.5.1 Setup.exe.sha256` |
+| `JEN 0.5.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,576,615 bytes (127.4 MB) | in `JEN 0.5.1 Portable.zip.sha256` |
+| `JEN 0.5.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,630,489 bytes (5.4 MB) | in `JEN 0.5.1.zip.sha256` |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
@@ -257,9 +257,9 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 | Production build (Vite) | **success** |
 | Packaged-application verification (no test code, no bundled database, SQLite binary present, **interface present as a real directory and complete**) | **success** |
 | Production start-up (start-up guard, CSP, packaged interface location, shell verification, diagnostics) | **19 checks passed** |
-| Installed-application smoke test on a clean Windows Server 2022 VM | **21/21 PASS** |
+| Installed-application smoke test on a clean Windows Server 2022 VM | **26/26 PASS** |
 
-The 21 installed-application checks: silent install → shortcuts → starts from
+The 26 installed-application checks: silent install → shortcuts → starts from
 the executable with no manual server or terminal → backend on loopback only →
 no external browser → **the installed application serves its start page and
 every file it references** → unauthenticated requests refused → first-run setup
@@ -268,8 +268,12 @@ are captured and counted)** → **the interface reports a successful start and n
 start-up error is logged** → balanced journal entry → trial balance balanced →
 backup export → graceful shutdown (all processes exit) → relaunch, data
 persists → backup restore keeps a pre-restore copy → clean close → **the
-installed build ships both themes** → silent uninstall keeps the business
-database.
+installed build ships both themes** → **three desktop shortcuts, each named for
+its application, each carrying its own `--app=` argument and its own icon** →
+**JENESIS Seller, JENESIS Maintenance and JENESIS Admin each opened from their
+own shortcut, each showing a real interface and reporting a start** → **the
+three running side by side on one shared company** → silent uninstall keeps the
+business database.
 
 **Not executed — please read:**
 
@@ -315,12 +319,12 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.1 Setup.exe` | 92,919,111 (88.6 MB) | in `JEN 0.5.1 Setup.exe.sha256`, next to the download |
-| `JEN 0.5.1 Portable.zip` | 133,576,670 (127.4 MB) | in `JEN 0.5.1 Portable.zip.sha256`, next to the download |
-| `JEN 0.5.1.zip` | 5,628,713 (5.4 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
+| `JEN 0.5.1 Setup.exe` | 92,919,376 (88.6 MB) | in `JEN 0.5.1 Setup.exe.sha256`, next to the download |
+| `JEN 0.5.1 Portable.zip` | 133,576,615 (127.4 MB) | in `JEN 0.5.1 Portable.zip.sha256`, next to the download |
+| `JEN 0.5.1.zip` | 5,630,489 (5.4 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**312 automated checks** and **21/21
+named on the release page (**312 automated checks** and **26/26
 installed-application checks** on that build).
 
 Every push rebuilds and republishes these files, so a later build carries a
