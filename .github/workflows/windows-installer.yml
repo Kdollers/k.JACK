@@ -350,7 +350,7 @@ jobs:
           name: windows-installer-diagnostics
           path: |
             JENESIS/release/**/builder-debug.yml
-            ${{ env.APPDATA }}/JENESIS/logs/
+            ci-logs/
           if-no-files-found: warn
 
       # A failing job publishes its transcript as a commit on this branch so the

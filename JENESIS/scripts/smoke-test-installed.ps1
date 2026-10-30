@@ -31,8 +31,9 @@ $DataDir = Join-Path $env:APPDATA $AppName
 $LogFile = Join-Path $DataDir 'logs\desktop.log'
 $ExePath = Join-Path $InstallDir "$AppName.exe"
 
-function Write-ApplicationLogTail([int] $Lines = 40) {
-  # The application log shows whether the close request reached the app at all.
+function Write-ApplicationLogTail([int] $Lines = 200) {
+  # The application log shows whether the close request reached the app at all,
+  # so on failure the whole story is printed, not the last few lines.
   try {
     if (Test-Path $LogFile) {
       Write-Host "    --- application log $LogFile (last $Lines lines) ---" -ForegroundColor DarkGray
@@ -42,6 +43,26 @@ function Write-ApplicationLogTail([int] $Lines = 40) {
     }
   } catch {
     Write-Host "    (application log could not be read: $($_.Exception.Message))" -ForegroundColor DarkGray
+  }
+}
+
+function Export-ApplicationLogs {
+  # Keep the application's own logs next to this transcript: the CI job commits
+  # them when a run fails, which is how a failure is diagnosed afterwards (log
+  # archives cannot be downloaded from this environment).
+  $target = Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..')).Path 'ci-logs'
+  try {
+    New-Item -ItemType Directory -Force -Path $target | Out-Null
+    if (Test-Path $LogFile) {
+      # Read and write rather than copy: the application still holds the file.
+      Get-Content $LogFile -Raw | Set-Content -Path (Join-Path $target 'desktop.log') -Encoding utf8 -Force
+    }
+    $childLog = Join-Path $DataDir 'logs\backend-child.log'
+    if (Test-Path $childLog) {
+      Get-Content $childLog -Raw | Set-Content -Path (Join-Path $target 'backend-child.log') -Encoding utf8 -Force
+    }
+  } catch {
+    Write-Host "    (application logs could not be exported: $($_.Exception.Message))" -ForegroundColor DarkGray
   }
 }
 
@@ -56,6 +77,7 @@ function Step([string] $Name, [scriptblock] $Body) {
     $script:Results += [pscustomobject]@{ Step = $Name; Result = "FAIL: $($_.Exception.Message)" }
     Write-Host "    FAIL: $($_.Exception.Message)" -ForegroundColor Red
     Write-ApplicationLogTail
+    Export-ApplicationLogs
     Write-Summary
     exit 1
   }

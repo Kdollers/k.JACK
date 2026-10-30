@@ -184,7 +184,9 @@ async function startBackend() {
 // ---------------------------------------------------------------------------
 function httpGetText(url, timeoutMs = 5000) {
   return new Promise((resolve) => {
-    const req = http.get(url, { timeout: timeoutMs }, (res) => {
+    // agent:false — this check must not leave a keep-alive socket behind: the
+    // backend waits for open connections when it shuts down.
+    const req = http.get(url, { timeout: timeoutMs, agent: false, headers: { Connection: 'close' } }, (res) => {
       let size = 0;
       let body = '';
       res.setEncoding('utf8');
@@ -280,6 +282,12 @@ function stopBackend() {
     shutdownPromise = (async () => {
       if (backend) {
         writeLog('Stopping backend...');
+        // A heartbeat while we wait: if these lines stop, the main process is
+        // blocked rather than waiting, which tells us where to look.
+        const heartbeat = setInterval(
+          () => writeLog(`Still waiting for the backend to stop (${backend && backend.exited ? 'exited' : 'running'})...`),
+          2000
+        );
         // stop() gives the backend 5 s to exit cleanly and then escalates. The
         // race adds a hard ceiling on top of it: a child that cannot be reaped
         // must never keep the desktop application open on shutdown.
@@ -287,6 +295,7 @@ function stopBackend() {
           backend.stop(5000).catch((err) => writeLog(`Backend stop error: ${err && err.message ? err.message : err}`)),
           new Promise((resolve) => setTimeout(resolve, 8000))
         ]);
+        clearInterval(heartbeat);
         writeLog('Backend stopped.');
         backend = null;
         backendUrl = null;
@@ -414,8 +423,12 @@ function createWindow(mode) {
   // A loaded page can still be blank: the interface tells us when it is really
   // up, and if that report never arrives the window is retried once and the
   // failure is recorded instead of leaving an empty frame on screen.
+  // Captured while the window is alive: once it is destroyed, touching
+  // webContents from a 'closed' listener throws, and an exception there stops
+  // the listeners registered after it - which is how a shutdown hangs.
+  const webContentsId = mainWindow.webContents.id;
   const readyWatchdog = setTimeout(() => {
-    if (!rendererReady.has(mainWindow.webContents.id)) {
+    if (!rendererReady.has(webContentsId)) {
       writeLog('The interface did not report that it started within 25s.');
       reloadOnce('did not report a working interface');
     }
@@ -444,10 +457,16 @@ function createWindow(mode) {
     }
   }, 20000);
   mainWindow.once('closed', () => {
-    clearTimeout(loadWatchdog);
-    clearTimeout(readyWatchdog);
-    clearTimeout(showWatchdog);
-    if (mainWindow && mainWindow.webContents) rendererReady.delete(mainWindow.webContents.id);
+    // Never throw in here: this listener runs first, and an exception would
+    // stop the listeners registered after it from cleaning up.
+    try {
+      clearTimeout(loadWatchdog);
+      clearTimeout(readyWatchdog);
+      clearTimeout(showWatchdog);
+      rendererReady.delete(webContentsId);
+    } catch (err) {
+      writeLog(`Window cleanup error: ${err && err.message ? err.message : err}`);
+    }
   });
 
   // Only the JENESIS backend origin may be displayed inside the window.
@@ -468,6 +487,9 @@ function createWindow(mode) {
     appWindows.delete(appId || 'launcher');
     mainWindow = null;
   });
+  // A window that stops answering is recorded: it is the other way a user can
+  // be left looking at a dead interface.
+  mainWindow.on('unresponsive', () => writeLog('The window stopped responding.'));
   return mainWindow.loadURL(windowUrl(backendUrl, appId));
 }
 
@@ -594,6 +616,7 @@ if (!gotLock) {
   });
 
   app.on('before-quit', (event) => {
+    writeLog('Quit requested.');
     if (!shutdownPromise) {
       quitting = true;
       event.preventDefault();
@@ -601,18 +624,26 @@ if (!gotLock) {
       // application must never stay open because shutdown took too long.
       quitWatchdog = setTimeout(() => {
         writeLog('Shutdown watchdog fired (20s): forcing exit.');
+        try {
+          if (backend && backend.child && !backend.exited) backend.child.kill('SIGKILL');
+        } catch (_) { /* nothing left to stop */ }
         app.exit(0);
       }, 20000);
       stopBackend().finally(() => {
         if (quitWatchdog) clearTimeout(quitWatchdog);
         quitWatchdog = null;
+        writeLog('Shutdown complete; quitting.');
         app.quit();
       });
     }
   });
 
   // Keep the process alive until quit so the backend is always stopped first.
+  app.on('will-quit', () => writeLog('The application is quitting.'));
+  app.on('quit', () => writeLog('The application has quit.'));
+
   app.on('window-all-closed', () => {
+    writeLog('All windows are closed.');
     app.quit();
   });
 
