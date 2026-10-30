@@ -49,6 +49,8 @@
       "electron/**/*",
       "server/**/*",
       "dist/**/*",
+      "build/icon-*.ico",
+      "build/icon-*.png",
       "package.json",
       "build/icon.ico",
       "!**/*.map",

@@ -204,6 +204,28 @@ check('the installer creates one shortcut per application, each with its own ico
   assert.ok(main.includes('appUserModelId(appId)'));
 });
 
+check('the installation package carries everything the three applications need', () => {
+  const pkg = JSON.parse(read('package.json'));
+  const files = JSON.stringify(pkg.build.files || []);
+  // The shortcuts read their icons from resources/app-icons (outside app.asar),
+  // and each window loads build/icon-<app>.ico from inside the package.
+  for (const id of appIdentity.APP_IDS) {
+    assert.ok(files.includes('build/icon-*.ico'), `the ${id} icon must be inside the package`);
+    assert.ok(files.includes('build/icon-*.png'), `the ${id} icon must be inside the package`);
+  }
+  const extra = JSON.stringify(pkg.build.extraResources || []);
+  assert.ok(extra.includes('icon-*.ico'), 'Windows must be able to read the shortcut icons');
+  // The three applications are the same program, so these never change.
+  assert.ok(files.includes('dist/**/*'), 'the built interface must be packaged');
+  assert.ok(files.includes('server/**/*'), 'the accounting service must be packaged');
+  assert.ok(files.includes('electron/**/*'), 'the desktop shell must be packaged');
+  assert.ok(JSON.stringify(pkg.build.asarUnpack || []).includes('*.node'),
+    'the native SQLite driver must be unpacked from the asar archive');
+  // No business data travels inside the installer, and no test material either.
+  assert.ok(!files.includes('genesis.db'), 'no database may be shipped inside the installer');
+  assert.ok(files.includes('!**/tests/**'), 'the test suite is not shipped');
+});
+
 check('the launcher offers the three applications and remembers the choice', () => {
   assert.ok(exists('src/views/LauncherView.jsx'), 'the chooser exists');
   const launcher = read('src/views/LauncherView.jsx');
