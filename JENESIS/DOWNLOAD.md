@@ -84,8 +84,9 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 If you prefer the files exactly as the build job produced them:
 
-1. Open <https://github.com/Kdollers/k.JACK/actions/runs/41015778589>
-2. Scroll to the bottom, **Artifacts** section
+1. Open <https://github.com/Kdollers/k.JACK/actions/workflows/windows-installer.yml>
+2. Click the **most recent completed (green) run** at the top of the list, then
+   scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`),
    **`JEN 0.5 Portable`** (the portable `.zip` and its `.sha256`) or
    **`JEN 0.5 source backup`** (the source `.zip` and its `.sha256`)
@@ -209,7 +210,8 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 ## 6. What was tested on this build — and what was not
 
-**Executed and passed** (GitHub Actions, run 41015778589):
+**Executed and passed** on GitHub Actions (Ubuntu 22.04 and Windows Server
+2022 runners, latest completed run of the *Windows installer* workflow):
 
 | Check | Result |
 |---|---|
@@ -275,14 +277,13 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5 Setup.exe` | 92,725,817 (88.4 MB) | `e895a567c770448bc9151290dd6059661785ac8ccf7665c0fa72f27e21108b83` |
-| `JEN 0.5 Portable.zip` | 133,341,581 (127.2 MB) | `109916574d9c832396c719f2af599012404b33a4b23007fbf27d44192fe15850` |
+| `JEN 0.5 Setup.exe` | 92,723,860 (88.4 MB) | in `JEN 0.5 Setup.exe.sha256`, next to the download |
+| `JEN 0.5 Portable.zip` | 133,341,677 (127.2 MB) | in `JEN 0.5 Portable.zip.sha256`, next to the download |
 | `JEN 0.5.zip` | 5,593,714 (5.3 MB) | in `JEN 0.5.zip.sha256`, next to the download |
 
-Built by GitHub Actions run **41015778589** from commit
-**`a7737376e98a4a86c3e7e1d9860803159d752d1d`** on branch `arena/a2c625e8-k-jack`
-(**293 automated checks** and **18/18 installed-application checks** on that
-build).
+Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
+named on the release page (**293 automated checks** and **18/18
+installed-application checks** on that build).
 
 Every push rebuilds and republishes these files, so a later build carries a
 different SHA-256. The numbers printed on

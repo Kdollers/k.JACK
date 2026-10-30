@@ -1,8 +1,11 @@
 # JEN 0.5 — Release notes
 
 **Release name:** JEN 0.5 &nbsp;·&nbsp; **Version:** 0.5.0 &nbsp;·&nbsp; **Git tag:** `v0.5.0`
-**Branch:** `arena/a2c625e8-k-jack` &nbsp;·&nbsp; **Commit:** `a7737376e98a4a86c3e7e1d9860803159d752d1d`
-**Built by:** GitHub Actions run **41015778589** (Windows Server 2022 runner)
+**Branch:** `arena/a2c625e8-k-jack` &nbsp;·&nbsp; **Built by:** GitHub Actions
+(Ubuntu 22.04 and Windows Server 2022 runners)
+**Provenance of the file you download:** the release page and the `.sha256`
+file beside each download name the exact workflow run and commit it was built
+from.
 **Date:** 30 October 2026
 
 JEN 0.5 is the same JENESIS program built up from JEN 0.2 — no rewrite, no new
@@ -15,8 +18,8 @@ sharing one set of records, with the **JENESIS J identity** everywhere.
 
 | File | Size | What it is | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5 Setup.exe` | 92,725,817 bytes (88.4 MB) | **Windows installer** — installs JENESIS and creates the three desktop shortcuts | `e895a567c770448bc9151290dd6059661785ac8ccf7665c0fa72f27e21108b83` |
-| `JEN 0.5 Portable.zip` | 133,341,581 bytes (127.2 MB) | **Portable build** — unzip and double-click `JENESIS.exe`, nothing installed | `109916574d9c832396c719f2af599012404b33a4b23007fbf27d44192fe15850` |
+| `JEN 0.5 Setup.exe` | 92,723,860 bytes (88.4 MB) | **Windows installer** — installs JENESIS and creates the three desktop shortcuts | in `JEN 0.5 Setup.exe.sha256`, next to the download |
+| `JEN 0.5 Portable.zip` | 133,341,677 bytes (127.2 MB) | **Portable build** — unzip and double-click `JENESIS.exe`, nothing installed | in `JEN 0.5 Portable.zip.sha256`, next to the download |
 | `JEN 0.5.zip` | 5,593,714 bytes (5.3 MB) | **Source-code backup** — every tracked file of the final project | in `JEN 0.5.zip.sha256`, next to the download |
 
 Direct links (GitHub writes the download name with dots instead of spaces — it
@@ -140,7 +143,8 @@ users, roles and currencies.
 
 ## 6. What was tested on this build
 
-Measured on GitHub Actions run **41015778589**, commit `a773737`:
+Measured on GitHub Actions (latest completed run of the *Windows installer*
+workflow):
 
 | Check | Result |
 |---|---|
