@@ -1,5 +1,5 @@
 JENESIS installed-application smoke test
-Installer: D:\a\k.JACK\k.JACK\JENESIS\release\JENESIS-Setup-1.0.0.exe
+Installer: D:\a\k.JACK\k.JACK\JENESIS\release\JEN 0.5.1 Setup.exe
 Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
 ==> Preconditions: no existing user data or running instance
     PASS
@@ -13,11 +13,19 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
     PASS
 ==> No external browser window was opened for JENESIS
     PASS
+==> The installed application serves its complete interface (no missing files)
+    interface files reachable from the installed application: 6
+    PASS
 ==> Unauthenticated API requests are refused
     PASS
 ==> First-run setup creates the company and administrator
     PASS
 ==> Sign in and reach the application (no forced password change)
+    PASS
+==> The application window shows the interface, not a blank white screen
+    window 'JENESIS — Professional Business Accounting & Management Software': 106496 sampled pixels, 1235 distinct colours, 34.4% pure white, 2.3% pure black
+    PASS
+==> The interface reports a successful start in the application log
     PASS
 ==> Accounting transaction: balanced journal entry is posted
     PASS
@@ -26,43 +34,45 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
 ==> Full backup export is produced and contains the transaction
     PASS
 ==> Graceful shutdown: window closes and all processes exit
-    WM_CLOSE posted to pid 1548 handle 131556 title 'JENESIS — Professional Business Accounting & Management Software': True
-    PASS
-==> Relaunch: business data persists after restart
-    PASS
-==> Backup restore protection: a restore first keeps a copy of the database
-    PASS
-==> Close again and confirm clean shutdown
-    WM_CLOSE posted to pid 7192 handle 197208 title 'JENESIS — Professional Business Accounting & Management Software': True
-    PASS
-==> Both themes ship in the installed application
-    installed build contains the theme bootstrap, the dark palette and the remapped utilities
-    PASS
-==> Silent uninstall removes the program but keeps business data
-    PASS
+    WM_CLOSE posted to pid 540 handle 131514 title 'JENESIS — Professional Business Accounting & Management Software': True
+    leftover pid 540 started 10/30/2026 20:01:34 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" 
+    leftover pid 6388 started 10/30/2026 20:01:35 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=renderer --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --app-path="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar" --enable-sandbox --disable-gpu-compositing --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=2 --enable-main-frame-before-activation --renderer-client-id=5 --time-ticks-at-unix-epoch=-1793390195141217 --launch-time-ticks=300250023 --field-trial-handle=3244,i,1500662093430493715,8001803861145919472,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=2936 /prefetch:1
+    leftover pid 7672 started 10/30/2026 20:01:34 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=gpu-process --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAAAAAABgAAEAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --field-trial-handle=1824,i,1500662093430493715,8001803861145919472,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=1816 /prefetch:2
+    leftover pid 7772 started 10/30/2026 20:01:34 cmd="C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe" --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir="C:\Users\runneradmin\AppData\Roaming\JENESIS" --field-trial-handle=1900,i,1500662093430493715,8001803861145919472,262144 --disable-features=SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit,WinRetrieveSuggestionsOnlyOnDemand --variations-seed-version --mojo-platform-channel-handle=1832 /prefetch:3
+    FAIL: JENESIS processes still running after the window was closed: 540, 6388, 7672, 7772
+    --- application log C:\Users\runneradmin\AppData\Roaming\JENESIS\logs\desktop.log (last 40 lines) ---
+    | 2026-10-30T20:01:34.257Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
+    | 2026-10-30T20:01:34.385Z Interface candidates: resources=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
+    | 2026-10-30T20:01:34.385Z Interface directory: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
+    | 2026-10-30T20:01:35.119Z JENESIS server running at http://127.0.0.1:58354
+    | 2026-10-30T20:01:35.216Z Backend ready at http://127.0.0.1:58354/ (attempt 1)
+    | 2026-10-30T20:01:35.232Z Interface check: 5 file(s) reachable from C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
+    | 2026-10-30T20:01:35.255Z Opening the JENESIS launcher.
+    | 2026-10-30T20:01:36.946Z Window finished loading.
+    | 2026-10-30T20:01:36.948Z Window ready to show.
+    | 2026-10-30T20:01:36.974Z Appearance set to light.
+    | 2026-10-30T20:01:37.048Z renderer: ready — the interface is mounted
+    | 2026-10-30T20:01:39.569Z Stopping backend...
 
 Summary
 
-Step                                                                      Result
-----                                                                      ------
-Preconditions: no existing user data or running instance                  PASS
-Silent install into a normal application folder                           PASS
-Desktop and Start menu shortcuts were created                             PASS
-Application starts from the executable, with no manual server or terminal PASS
-Backend listens on loopback only (not reachable on a LAN address)         PASS
-No external browser window was opened for JENESIS                         PASS
-Unauthenticated API requests are refused                                  PASS
-First-run setup creates the company and administrator                     PASS
-Sign in and reach the application (no forced password change)             PASS
-Accounting transaction: balanced journal entry is posted                  PASS
-Trial balance is balanced                                                 PASS
-Full backup export is produced and contains the transaction               PASS
-Graceful shutdown: window closes and all processes exit                   PASS
-Relaunch: business data persists after restart                            PASS
-Backup restore protection: a restore first keeps a copy of the database   PASS
-Close again and confirm clean shutdown                                    PASS
-Both themes ship in the installed application                             PASS
-Silent uninstall removes the program but keeps business data              PASS
+Step                                                                       Result
+----                                                                       ------
+Preconditions: no existing user data or running instance                   PASS
+Silent install into a normal application folder                            PASS
+Desktop and Start menu shortcuts were created                              PASS
+Application starts from the executable, with no manual server or terminal  PASS
+Backend listens on loopback only (not reachable on a LAN address)          PASS
+No external browser window was opened for JENESIS                          PASS
+The installed application serves its complete interface (no missing files) PASS
+Unauthenticated API requests are refused                                   PASS
+First-run setup creates the company and administrator                      PASS
+Sign in and reach the application (no forced password change)              PASS
+The application window shows the interface, not a blank white screen       PASS
+The interface reports a successful start in the application log            PASS
+Accounting transaction: balanced journal entry is posted                   PASS
+Trial balance is balanced                                                  PASS
+Full backup export is produced and contains the transaction                PASS
+Graceful shutdown: window closes and all processes exit                    FAIL: JENESIS processes still running after …
 
 
-All smoke-test checks passed.
