@@ -33,7 +33,8 @@
     "test:security": "node tests/security-hardening.test.js",
     "test:e2e": "python3 tests/e2e/auth_ui_test.py",
     "test:theme": "node tests/theme.test.js",
-    "test:themeui": "node tests/theme-render.test.js"
+    "test:themeui": "node tests/theme-render.test.js",
+    "test:count": "npm run test:all 2>&1 | node scripts/count-checks.mjs"
   },
   "build": {
     "appId": "com.jenesis.accounting",

@@ -351,6 +351,7 @@ A real screen (`src/views/HelpView.jsx`), reachable from the sidebar and from
 | 21 | "Add company" row in the header dropdown: `text-blue-400` on the `hover:bg-slate-700` row — **4.07:1** | the link dimmed when the pointer was over it | `hover:text-blue-300` added → **5.74:1** |
 | 22 | Service / inactive badges: `text-slate-500` on `bg-slate-100` — **4.34:1** in Light Mode | small uppercase labels just under the AA bar | text changed to `text-slate-600` → **6.91:1** light, **6.97:1** dark |
 | 23 | The interface shipped as one 605 kB JavaScript bundle, over Vite's 500 kB warning threshold | slower first load, warning on every build | `manualChunks` splits React (135 kB) and the icon set (32 kB) out; the app chunk is 437 kB and the warning is gone |
+| 24 | The portable-package step zipped `dist\win-unpacked\*`, a folder electron-builder never creates (`directories.output` is `release`) | the whole Windows job failed after a successful build and smoke test (run 40966223343) | the step now packages `release\win-unpacked` (and validates that the folder exists first) |
 
 Nothing was found that corrupted accounting data; the bundled `genesis.db` is
 byte-identical to both source archives (MD5 `f6a9690dbdabc6d4778c04c4dfcf0365`,
@@ -358,7 +359,12 @@ asserted by six suites).
 
 ## 6. Test results (executed, this sandbox, 2026-10-29)
 
-`npm run test:all` → **258 checks, 0 failed.**
+`npm run test:all` → **269 checks, 0 failed.**
+
+That total is not typed in by hand: `scripts/count-checks.mjs` reads the
+transcript of the run and adds up what each suite reported, so the number below
+is the number the suites actually printed on this code
+(`npm run test:all 2>&1 | node scripts/count-checks.mjs`).
 
 | Suite | Command | Result |
 |---|---|---|
@@ -370,7 +376,7 @@ asserted by six suites).
 | Migrations | `npm run test:migrations` | 9/9 (7 legacy upgrade + 2 fresh install) + repo DB MD5 unchanged |
 | i18n parity | `npm run test:i18n` | 10/10 — **752 keys × en/fr/rw**, no empties, placeholder parity, every `t()` key resolves |
 | **Settlement / PAID documents (new)** | `npm run test:settlement` | **19/19** — created PAID with one real payment, balanced entry, idempotent F2 (no second payment, no second entry), draft posted once, remainder-only on partial, cancelled refused, permission guard, trial balance balanced, audit row |
-| **Keyboard shortcuts (new)** | `npm run test:shortcuts` | **17/17** — combo normalisation, layout-independent key names, typing never interrupted, layered Escape, key capture, **exactly one keydown listener in `src/`**, every catalogue shortcut has a destination, calculator precision and divide-by-zero |
+| **Keyboard shortcuts (new)** | `npm run test:shortcuts` | **18/18** — combo normalisation, layout-independent key names, typing never interrupted, layered Escape, key capture, **exactly one keydown listener in `src/`**, every catalogue shortcut has a destination, calculator precision and divide-by-zero |
 | **Messenger (new)** | `npm run test:messenger` | **18/18** — migration v5, session identity, delivery and read receipts, unread counts, company isolation, validation before storing, manager read-only, **live SSE push to the right recipient only**, no message text in the audit log, one guard per route |
 | **User guide (new)** | `npm run test:help` | **14/14** — identical structure in en/fr/rw, every section has purpose/where/steps/expected/notes, translations are not copies, guide ↔ code agreement (shortcuts, PAID endpoints, F1, sidebar, route) |
 | FX settlement | `npm run test:fx` | 17/17 — 4800/5900 posting, revaluation, role guard, TB balanced |
@@ -382,8 +388,8 @@ asserted by six suites).
 
 Also executed:
 - `npm run build` (Vite production build) — **success**, three chunks:
-  `index.js` 437 kB, `react.js` 135 kB, `icons.js` 32 kB (the previous single
-  605 kB bundle triggered Vite's size warning; it is gone).
+  `index.js` 539 kB (118 kB gzipped), `react.js` 135 kB, `icons.js` 36 kB
+  (the previous single 605 kB bundle triggered Vite's size warning; it is gone).
 - Production server smoke test against the built `dist/`: `/api/health` →
   `{"status":"healthy","application":"JENESIS …","appId":"genesis-accounting"}`,
   `/` → 200 with the JENESIS title and the built bundle, `/api/setup/status` →
@@ -412,13 +418,13 @@ better-sqlite3 behaviours the app relies on correctly.
 
 ### Windows CI (executed — this is where the installer was built)
 
-`.github/workflows/windows-installer.yml`, latest run **40963360751** (transcript
-of run **40957626626** quoted below), branch `arena/a2c625e8-k-jack`, both jobs green:
+`.github/workflows/windows-installer.yml`, latest run **40975099606** (the build
+that ships with this report), branch `arena/a2c625e8-k-jack`, both jobs green:
 
 | Job | Steps | Result |
 |---|---|---|
-| Test suite (Linux, Node 20) | `npm ci` → `npm run test:all` → `npm run build` | **success** (203 checks with the real `better-sqlite3`, including 38 theme checks) |
-| Windows installer (`windows-2022`) | `npm ci` → `npm run test:all` → `npm run desktop:dist` → `verify-package.cjs` → installed-app smoke test → artifact upload | **success** |
+| Test suite (Linux, Node 20) | `npm ci` → `npm run test:all` → `npm run build` | **success** (258 checks with the real `better-sqlite3`, including the four new suites) |
+| Windows installer (`windows-2022`) | `npm ci` → `npm run test:all` → `npm run desktop:dist` → `verify-package.cjs` → installed-app smoke test → portable package + checksums → **release publish** | **success** |
 
 Installed-application smoke test — **18/18 PASS**:
 
@@ -442,9 +448,11 @@ run 40957626626 is the run whose transcript was captured:
     PASS
 ```
 
-Artifact: `JENESIS-Windows-installer` → `JENESIS-Setup-1.0.0.exe`, **88 MB**
-(92.5 MB). Runs since the window-close fix (bugs #11/#14) are green:
-40909845502, 40912939198, 40912949515 (and the final run listed below).
+Artifact: `JENESIS-Windows-installer` → `JENESIS-Setup-1.0.0.exe` (~92.6 MB);
+the portable package `JENESIS-Portable-1.0.0.zip` (~133 MB). Both are published
+with SHA-256 checksums as release **`v1.0.0`** — see `JENESIS/DOWNLOAD.md` for the
+direct download links, the checksums of the current build and GUI-only install
+instructions.
 
 Honest history of the Windows runs — the failures were found and fixed in the
 open, not hidden:
@@ -466,6 +474,11 @@ open, not hidden:
 | **40958446528** | **green** (18/18) — the delivered state: theme system, diagnostics back to failure-only |
 | **40962100209** | **green** (18/18) — the five contrast fixes and the split bundle |
 | **40963360751** | **green** (18/18) — 203 checks including the rendered theme UI |
+| **40964195928** | **green** (18/18) — installer published as a release with checksums |
+| 40966223343 | **failed** in the new packaging step only (`dist\win-unpacked` does not exist: electron-builder writes to `release\`) → bug #24 |
+| **40967528438** | **green** (18/18) — after the fix: portable ZIP built from `release\win-unpacked`, release `v1.0.0` published |
+| **40973680804** | **green** (18/18) — **Parts B–F** (PAID documents, shortcuts, Messenger, calculator keyboard, user guide): 269 measured checks, release assets replaced |
+| **40975099606** | **green** (18/18) — the delivered state (capture-layer fall-through fix, safer discard dialog) |
 
 ### Not run here (environment limits — not claimed as passing)
 

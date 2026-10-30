@@ -8,24 +8,25 @@
 
 This is the **consolidated JENESIS application**: the features of the previous
 `JEN 0.2` and `JAN 0.3` archives, merged into one project — plus a full
-**Light Mode / Dark Mode theme system** — and verified by
-**203 automated checks**.
+**Light / Dark / System theme system**, a **keyboard layer**, **JENESIS
+Messenger**, documents that are **created PAID**, and a trilingual
+**user guide** — verified by **269 automated checks**.
 
 - **Download the Windows installer / portable package**: [`DOWNLOAD.md`](DOWNLOAD.md)
 - **Merge report** (what came from where, bugs fixed, test results): [`MERGE-REPORT.md`](MERGE-REPORT.md)
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)
 
-Status: **203 automated checks pass** (locally and on Linux CI, with the real
+Status: **269 automated checks pass** (locally and on Linux CI, with the real
 SQLite driver) and the **Windows installer is built and smoke-tested on a
-GitHub-hosted Windows runner** — `JENESIS-Setup-1.0.0.exe`, 88 MB, installed-
-application checks green (see the latest CI run cited in `MERGE-REPORT.md` §6;
-the installer is attached to that run as the `JENESIS-Windows-installer`
-artifact). It is unsigned and has not been run on a physical PC, and **no human
-or browser engine has looked at the rendered themes** (the sandbox has no
-display; the themes are verified by tests, contrast maths and a check inside the
-installed package). See `MERGE-REPORT.md` §6 and §9 for exactly what is and is
-not verified.
+GitHub-hosted Windows runner** on every push — `JENESIS-Setup-1.0.0.exe`
+(~92.6 MB) is **published as a GitHub release** together with
+`JENESIS-Portable-1.0.0.zip` (~133 MB) and SHA-256 checksums. Get them from
+[`DOWNLOAD.md`](DOWNLOAD.md) or the release page. It is unsigned and has not
+been run on a physical PC, and **no human or browser engine has looked at the
+rendered interface** (the sandbox has no display; themes are verified by tests,
+contrast maths and a check inside the installed package). See
+`MERGE-REPORT.md` §6 and §9 for exactly what is and is not verified.
 
 ---
 
@@ -167,9 +168,12 @@ npm install
 npm test
 ```
 
-### 3. Run the Whole Suite (258 checks)
+### 3. Run the Whole Suite (269 checks)
 ```bash
 npm run test:all
+
+# or, to see one measured total for the whole suite:
+npm run test:all 2>&1 | node scripts/count-checks.mjs
 ```
 Individual suites: `npm run test:auth`, `npm run test:security`, `npm run test:desktop`,
 `npm run test:ops`, `npm run test:migrations`, `npm run test:i18n`, `npm run test:fx`

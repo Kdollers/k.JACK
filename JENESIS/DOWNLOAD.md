@@ -176,7 +176,7 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 | Check | Result |
 |---|---|
-| Full automated suite (Linux, real SQLite driver) | **258 checks, 0 failed** |
+| Full automated suite (Linux, real SQLite driver) | **269 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
 | Theme rules: Light/Dark/System, immediate switching, persistence, first-paint, tokens, contrast, Electron bridge | **32 checks passed** |
 | Theme UI rendered with React (options, icons, accessible names, en/fr/rw, stored preference, fallback) | **6 checks passed** |
 | Documents created PAID (settlement, idempotent F2, no duplicate payments) | **19 checks passed** |

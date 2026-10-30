@@ -44,7 +44,10 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Run the full test suite
-        run: npm run test:all
+        # The counter prints one measured total for the whole suite and exits
+        # non-zero if anything failed, so the log shows exactly how many checks
+        # this commit passed.
+        run: npm run test:all 2>&1 | node scripts/count-checks.mjs
 
       - name: Build the frontend
         run: npm run build
@@ -76,7 +79,21 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Run the full test suite
-        run: npm run test:all
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm run test:all 2>&1 | Tee-Object -FilePath test-all.log
+          $code = $LASTEXITCODE
+          $summary = (node scripts/count-checks.mjs test-all.log 2>&1 | Out-String).Trim()
+          Write-Host $summary
+          if ($code -ne 0) { throw "npm run test:all failed (exit $code)" }
+          # Remember how many checks really ran: the release notes must never
+          # quote a number that was not measured on this build.
+          $m = [regex]::Match($summary, '(\d+) checks? passed')
+          if (-not $m.Success) { throw 'the check counter produced no total' }
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Set-Content -Path release\checks.txt -Value $m.Groups[1].Value -Encoding ascii
+          Write-Host "checks recorded for the release notes: $($m.Groups[1].Value)"
 
       - name: Build the frontend and the NSIS installer
         run: npm run desktop:dist
@@ -108,6 +125,12 @@ jobs:
           if ($code -ne 0) {
             throw "Installed-application smoke test failed (exit $code). Transcript: ci-logs/smoke-test-output.txt"
           }
+          # Count the checks the smoke test actually printed and keep the score.
+          $smoke = Select-String -Path ..\ci-logs\smoke-test-output.txt -Pattern '(?i)^\s*PASS' | Measure-Object
+          $smokeFail = Select-String -Path ..\ci-logs\smoke-test-output.txt -Pattern '(?i)^\s*FAIL' | Measure-Object
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Set-Content -Path release\smoke.txt -Value "$($smoke.Count)/$($smoke.Count + $smokeFail.Count) PASS" -Encoding ascii
+          Write-Host "smoke score recorded: $($smoke.Count) passed, $($smokeFail.Count) failed"
 
       - name: Package the portable build and write checksums
         if: success()
@@ -138,14 +161,18 @@ jobs:
           Write-Host "installer : $($installer.Name)  $([math]::Round($installer.Length / 1MB, 1)) MB  sha256 $hash"
           Write-Host "portable  : $($zipItem.Name)  $([math]::Round($zipItem.Length / 1MB, 1)) MB  sha256 $zipHash"
 
-          # Show the download table on the run page as well.
+          # Show the download table on the run page, and keep it for the notes.
+          $table = @(
+            "| ``$($installer.Name)`` | $([math]::Round($installer.Length / 1MB, 1)) MB | ``$hash`` |",
+            "| ``$($zipItem.Name)`` | $([math]::Round($zipItem.Length / 1MB, 1)) MB | ``$zipHash`` |"
+          )
           $summary = $env:GITHUB_STEP_SUMMARY
           "### JENESIS $version — downloadable files" | Out-File -FilePath $summary -Encoding utf8
           '' | Out-File -FilePath $summary -Append -Encoding utf8
           '| File | Size | SHA-256 |' | Out-File -FilePath $summary -Append -Encoding utf8
           '|---|---|---|' | Out-File -FilePath $summary -Append -Encoding utf8
-          "| ``$($installer.Name)`` | $([math]::Round($installer.Length / 1MB, 1)) MB | ``$hash`` |" | Out-File -FilePath $summary -Append -Encoding utf8
-          "| ``$($zipItem.Name)`` | $([math]::Round($zipItem.Length / 1MB, 1)) MB | ``$zipHash`` |" | Out-File -FilePath $summary -Append -Encoding utf8
+          $table | Out-File -FilePath $summary -Append -Encoding utf8
+          $table | Out-File -FilePath release\download-table.md -Encoding utf8
 
       - name: Upload the installer
         if: always()
@@ -181,6 +208,12 @@ jobs:
             $assets += (Get-ChildItem release -Filter $pattern | ForEach-Object { $_.FullName })
           }
           if ($assets.Count -eq 0) { throw 'No downloadable files were produced.' }
+
+          # Every number in the notes is measured on this build, never typed in.
+          $checks = if (Test-Path release\checks.txt) { (Get-Content release\checks.txt -Raw).Trim() } else { 'unknown' }
+          $smoke  = if (Test-Path release\smoke.txt)  { (Get-Content release\smoke.txt -Raw).Trim() }  else { 'not recorded' }
+          $table  = if (Test-Path release\download-table.md) { (Get-Content release\download-table.md -Raw).Trim() } else { '' }
+
           $notes = @"
           JENESIS $version — Windows desktop accounting application.
 
@@ -193,18 +226,41 @@ jobs:
           **Portable:** ``JENESIS-Portable-$version.zip`` runs without installing
           (unzip, then double-click ``JENESIS.exe``).
 
+          ## What this build is
+
+          Built, verified and smoke-tested by GitHub Actions, run
+          ${{ github.run_id }}, commit ${{ github.sha }}.
+
+          * $checks automated checks pass (whole suite, real SQLite database).
+          * Installed-application smoke test: $smoke — silent install, desktop and
+            Start-menu shortcuts, the application starting on its own from the
+            executable, first-run setup, sign-in, a balanced journal entry,
+            backup and restore, clean shutdown, relaunch with the data intact,
+            and uninstall keeping the business database.
+
+          ## Checksums
+
+          | File | Size | SHA-256 |
+          |---|---|---|
+          $table
+
           Verify a download with ``certutil -hashfile <file> SHA256`` and compare with
           the ``.sha256`` file shipped next to it.
 
-          Built and smoke-tested by GitHub Actions (run ${{ github.run_id }}): 203
-          automated checks and 18/18 installed-application checks. The installer is
-          unsigned and has not been run on a physical Windows PC.
+          ## Not verified
+
+          The installer is **unsigned** (Windows SmartScreen will warn) and has not
+          been run on a physical Windows PC — it is verified on a GitHub-hosted
+          Windows runner only.
           "@
           $notes | Out-File -FilePath ..\release-notes.md -Encoding utf8
 
           gh release view $tag --repo ${{ github.repository }} *> $null
           if ($LASTEXITCODE -eq 0) {
-            Write-Host "release $tag exists: replacing its files"
+            Write-Host "release $tag exists: replacing its files and refreshing the notes"
+            # Refresh the notes first: the page must describe the files that are
+            # about to be attached, not those of an older build.
+            gh release edit $tag --notes-file ..\release-notes.md --repo ${{ github.repository }}
             gh release upload $tag $assets --clobber --repo ${{ github.repository }}
           } else {
             Write-Host "creating release $tag"
