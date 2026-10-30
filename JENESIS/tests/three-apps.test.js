@@ -156,9 +156,13 @@ check('each application remembers its own Light/Dark/System choice', () => {
   assert.ok(theme.includes("THEME_STORAGE_KEY = 'jenesis_theme'"),
     'the single key used before the split is still honoured');
   assert.ok(theme.includes('jenesis_theme:'), 'the preference is stored per application');
-  // And the choice is painted before the first frame, per application.
+  // And the choice is painted before the first frame, per application. The
+  // bootstrap lives in public/boot.js: an inline script in index.html is
+  // blocked by the production Content-Security-Policy, so it could not run.
+  const boot = read('public/boot.js');
+  assert.ok(boot.includes("'jenesis_theme:' + appId"), 'the bootstrap reads the per-application key');
   const html = read('index.html');
-  assert.ok(html.includes("'jenesis_theme:' + appId"), 'the bootstrap reads the per-application key');
+  assert.ok(html.includes('src="/boot.js"'), 'the start page must load the bootstrap');
 });
 
 check('every application ships its own icon, and none of them is the old G logo', () => {

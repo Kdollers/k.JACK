@@ -1,6 +1,14 @@
 {
   "app_name": "JENESIS",
   "app_tagline": "Professional Business Accounting & ERP",
+  "crash": {
+    "title": "JENESIS could not display this screen",
+    "subtitle": "The application is still running. Your accounting records have not been changed.",
+    "hint": "Choose Try again to carry on. If the message comes back, copy the details and send them with your report; they are also written to the JENESIS log folder (%APPDATA%\\JENESIS\\logs\\desktop.log).",
+    "retry": "Try again",
+    "copy": "Copy details",
+    "copied": "Copied"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "customers": "Customers",

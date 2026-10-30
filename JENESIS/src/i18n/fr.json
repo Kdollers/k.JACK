@@ -1,6 +1,14 @@
 {
   "app_name": "JENESIS",
   "app_tagline": "Comptabilité d'Entreprise et Gestion Commerciale",
+  "crash": {
+    "title": "JENESIS n’a pas pu afficher cet écran",
+    "subtitle": "L’application continue de fonctionner. Vos écritures comptables n’ont pas été modifiées.",
+    "hint": "Choisissez Réessayer pour continuer. Si le message revient, copiez les détails et envoyez-les avec votre rapport ; ils sont aussi écrits dans le dossier des journaux JENESIS (%APPDATA%\\JENESIS\\logs\\desktop.log).",
+    "retry": "Réessayer",
+    "copy": "Copier les détails",
+    "copied": "Copié"
+  },
   "nav": {
     "dashboard": "Tableau de bord",
     "customers": "Clients",

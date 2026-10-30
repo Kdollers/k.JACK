@@ -171,10 +171,11 @@ test('the header switch moves between the two explicit themes', async () => {
 // 2. First paint: the inline bootstrap in index.html
 // ---------------------------------------------------------------------------
 function runBootstrap({ stored, systemDark = false, storageThrows = false, store = null }) {
-  const html = read('index.html');
-  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
-  const bootstrap = scripts.find((code) => code.includes('jenesis_theme'));
-  assert.ok(bootstrap, 'index.html must apply the saved theme before the first paint');
+  // The theme is painted by public/boot.js, a script of its own: an inline
+  // script in index.html is blocked by the production Content-Security-Policy
+  // (script-src 'self'), so it could never run in the packaged application.
+  const bootstrap = read('public/boot.js');
+  assert.ok(bootstrap.includes('jenesis_theme'), 'public/boot.js must apply the saved theme before the first paint');
 
   const classes = new Set();
   const element = fakeElement();

@@ -3,7 +3,7 @@ name: JENESIS Windows installer
 # Builds and verifies the JENESIS desktop installer for Windows.
 #
 # Job 1 (tests) runs the whole suite on Linux on every push.
-# Job 2 (installer) produces release/JEN 0.5 Setup.exe on Windows,
+# Job 2 (installer) produces release/JEN <version> Setup.exe on Windows,
 # verifies the packaged folder and smoke-tests the INSTALLED application
 # (install -> launch -> first-run setup -> sign-in -> accounting entry ->
 # backup -> close -> relaunch -> data still there -> uninstall keeps data).
@@ -105,7 +105,11 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path ..\ci-logs | Out-Null
-          $installerName = 'JEN 0.5 Setup.exe'
+          # The file names follow the version in package.json, so a corrected
+          # release can never be published under the name of an earlier one.
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $releaseName = "JEN $version"
+          $installerName = "$releaseName Setup.exe"
           $installer = Get-ChildItem release -Filter $installerName | Select-Object -First 1
           if (-not $installer) { throw "The installer $installerName was not produced." }
           Write-Host "Installer: $($installer.FullName)"
@@ -139,7 +143,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $installerName = 'JEN 0.5 Setup.exe'
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $releaseName = "JEN $version"
+          $installerName = "$releaseName Setup.exe"
           $installer = Get-ChildItem release -Filter $installerName | Select-Object -First 1
           if (-not $installer) { throw "The installer $installerName was not produced." }
 
@@ -153,7 +159,7 @@ jobs:
           # installer (directories.output = release).
           $unpacked = 'release\win-unpacked'
           if (-not (Test-Path $unpacked)) { throw "$unpacked is missing: nothing to package." }
-          $zip = "release\JEN 0.5 Portable.zip"
+          $zip = "release\$releaseName Portable.zip"
           if (Test-Path $zip) { Remove-Item $zip -Force }
           Compress-Archive -Path "$unpacked\*" -DestinationPath $zip -CompressionLevel Optimal
           $zipItem = Get-Item $zip
@@ -169,28 +175,30 @@ jobs:
             "| ``$($zipItem.Name)`` | $([math]::Round($zipItem.Length / 1MB, 1)) MB | ``$zipHash`` |"
           )
           $summary = $env:GITHUB_STEP_SUMMARY
-          "### JEN 0.5 — downloadable files" | Out-File -FilePath $summary -Encoding utf8
+          "### $releaseName — downloadable files" | Out-File -FilePath $summary -Encoding utf8
           '' | Out-File -FilePath $summary -Append -Encoding utf8
           '| File | Size | SHA-256 |' | Out-File -FilePath $summary -Append -Encoding utf8
           '|---|---|---|' | Out-File -FilePath $summary -Append -Encoding utf8
           $table | Out-File -FilePath $summary -Append -Encoding utf8
           $table | Out-File -FilePath release\download-table.md -Encoding utf8
 
-      - name: Stage the JEN 0.5 release folder
+      - name: Stage the release folder
         if: success()
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $folder = 'release\JEN 0.5'
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $releaseName = "JEN $version"
+          $folder = "release\$releaseName"
           New-Item -ItemType Directory -Force -Path $folder | Out-Null
-          Copy-Item 'release\JEN 0.5 Setup.exe' $folder -Force
-          Copy-Item 'release\JEN 0.5 Portable.zip' $folder -Force
+          Copy-Item "release\$releaseName Setup.exe" $folder -Force
+          Copy-Item "release\$releaseName Portable.zip" $folder -Force
           Get-ChildItem release -Filter '*.sha256' | ForEach-Object { Copy-Item $_.FullName $folder -Force }
           if (Test-Path 'release\download-table.md') { Copy-Item 'release\download-table.md' $folder -Force }
-          if (Test-Path 'release\JEN 0.5.zip') { Copy-Item 'release\JEN 0.5.zip' $folder -Force }
+          if (Test-Path "release\$releaseName.zip") { Copy-Item "release\$releaseName.zip" $folder -Force }
           Get-ChildItem $folder | ForEach-Object { Write-Host "release folder: $($_.Name)  $([math]::Round($_.Length / 1MB, 1)) MB" }
 
-      - name: Package the JEN 0.5 source backup
+      - name: Package the source backup
         if: success()
         shell: bash
         working-directory: ${{ github.workspace }}
@@ -199,20 +207,22 @@ jobs:
           mkdir -p JENESIS/release
           # Tracked files only: node_modules, dist and release are not in git,
           # so the archive is the real source of this release and nothing else.
-          git archive --format=zip -o "JENESIS/release/JEN 0.5.zip" HEAD ":(exclude)JENESIS/dist"
+          release="JEN $(node -p "require('./JENESIS/package.json').version")"
+          echo "source backup: $release.zip"
+          git archive --format=zip -o "JENESIS/release/$release.zip" HEAD ":(exclude)JENESIS/dist"
           cd JENESIS/release
-          sha256sum "JEN 0.5.zip" > "JEN 0.5.zip.sha256"
-          ls -l "JEN 0.5.zip"
-          cat "JEN 0.5.zip.sha256"
+          sha256sum "$release.zip" > "$release.zip.sha256"
+          ls -l "$release.zip"
+          cat "$release.zip.sha256"
 
       - name: Upload the source backup
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JEN 0.5 source backup
+          name: JEN 0.5.1 source backup
           path: |
-            JENESIS/release/JEN 0.5.zip
-            JENESIS/release/JEN 0.5.zip.sha256
+            JENESIS/release/*.zip
+            JENESIS/release/*.zip.sha256
           if-no-files-found: error
 
       - name: Upload the installer
@@ -229,7 +239,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JEN 0.5 Portable
+          name: JEN 0.5.1 Portable
           path: |
             JENESIS/release/*.zip
             JENESIS/release/*.zip.sha256
@@ -255,17 +265,39 @@ jobs:
           $smoke  = if (Test-Path release\smoke.txt)  { (Get-Content release\smoke.txt -Raw).Trim() }  else { 'not recorded' }
           $table  = if (Test-Path release\download-table.md) { (Get-Content release\download-table.md -Raw).Trim() } else { '' }
 
+          $releaseName = "JEN $version"
           $notes = @"
-          JEN 0.5 — JENESIS desktop accounting application (Seller, Maintenance, Admin).
+          $releaseName — JENESIS desktop accounting application (Seller, Maintenance,
+          Admin). **This is the corrected build that repairs the white screen** the
+          previous release could show after installation.
 
-          **Install:** download ``JEN 0.5 Setup.exe``, double-click it, accept the
+          **Install:** download ``$releaseName Setup.exe``, double-click it, accept the
           SmartScreen prompt (More info -> Run anyway), and follow the installer.
           JENESIS then appears on the Desktop and in the Start menu — no command
           prompt needed. See ``DOWNLOAD.md`` in the repository for details, database
           location and backup instructions.
 
-          **Portable:** ``JEN 0.5 Portable.zip`` runs without installing
+          **Portable:** ``$releaseName Portable.zip`` runs without installing
           (unzip, then double-click ``JENESIS.exe``).
+
+          ## What was repaired
+
+          The three applications could open an **empty white window** after
+          installation, because the built interface (``index.html`` and its
+          JavaScript and CSS files) was served from inside ``app.asar`` only. When
+          that copy could not be read, nothing was drawn and nothing was logged.
+          This build:
+
+          * ships the interface twice — as a real directory the shell prefers and
+            as a fallback inside the archive — and switches automatically;
+          * checks, before the window is shown, that the start page and every file
+            it references are really served, and says which file is missing;
+          * shows a translated message (and writes it to
+            ``%APPDATA%\JENESIS\logs\desktop.log``) instead of a blank window if the
+            interface cannot start or crashes;
+          * paints the saved Light/Dark theme before the first frame again — the
+            bootstrap was an inline script, which the production
+            Content-Security-Policy blocks, so it is now a file of its own.
 
           ## What this build is
 
@@ -275,9 +307,11 @@ jobs:
           * $checks automated checks pass (whole suite, real SQLite database).
           * Installed-application smoke test: $smoke — silent install, desktop and
             Start-menu shortcuts, the application starting on its own from the
-            executable, first-run setup, sign-in, a balanced journal entry,
-            backup and restore, clean shutdown, relaunch with the data intact,
-            and uninstall keeping the business database.
+            executable, **the interface and all of its files being served**, the
+            window showing real content and not a blank screen, the interface
+            reporting a successful start, first-run setup, sign-in, a balanced
+            journal entry, backup and restore, clean shutdown, relaunch with the
+            data intact, and uninstall keeping the business database.
 
           ## Checksums
 
@@ -292,7 +326,8 @@ jobs:
 
           The installer is **unsigned** (Windows SmartScreen will warn) and has not
           been run on a physical Windows PC — it is verified on a GitHub-hosted
-          Windows runner only.
+          Windows runner only. No screenshots were produced: the runner has no
+          display, so the window is checked by capturing its pixels instead.
           "@
           $notes | Out-File -FilePath ..\release-notes.md -Encoding utf8
 
@@ -305,7 +340,7 @@ jobs:
             gh release upload $tag $assets --clobber --repo ${{ github.repository }}
           } else {
             Write-Host "creating release $tag"
-            gh release create $tag $assets --title "JEN 0.5" --notes-file ..\release-notes.md --repo ${{ github.repository }}
+            gh release create $tag $assets --title "$releaseName" --notes-file ..\release-notes.md --repo ${{ github.repository }}
           }
 
       - name: Upload diagnostics when something fails

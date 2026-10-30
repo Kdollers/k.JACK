@@ -15,6 +15,8 @@ const path = require('path');
 const { BackendProcess, findFreePort, LOOPBACK } = require('./backend-manager.cjs');
 const { prepareDataDirectory } = require('./data-location.cjs');
 const { appIdFromArgv, appTitle, appUserModelId, iconFiles, windowUrl } = require('./app-mode.cjs');
+const { resolveFrontendDir } = require('./dist-location.cjs');
+const http = require('http');
 
 const APP_TITLE = 'JENESIS';
 const WINDOW_MIN_WIDTH = 1024;
@@ -48,8 +50,41 @@ function serverEntry() {
   return path.join(appRoot(), 'server', 'index.js');
 }
 
+/**
+ * Where the built interface lives.
+ *
+ * The interface used to be read from inside app.asar only. When that copy
+ * cannot be read by the backend process the window has nothing to draw and the
+ * user sees an empty white screen, so the build now ships it twice: as a real
+ * directory under resources/ (preferred, readable by any process) and inside
+ * the archive (fallback). Both are logged, so a failed start says which one
+ * was used and which one was missing.
+ */
+function frontendLocation() {
+  return resolveFrontendDir({
+    packaged: app.isPackaged,
+    resourcesPath: process.resourcesPath,
+    appPath: appRoot()
+  });
+}
+
+let frontend = null;
+let frontendOverrideDir = null;
+
 function distDir() {
-  return path.join(appRoot(), 'dist');
+  if (frontendOverrideDir) return frontendOverrideDir;
+  if (!frontend) {
+    frontend = frontendLocation();
+    const seen = frontend.candidates
+      .map((candidate) => `${candidate.kind}=${candidate.dir}(${candidate.available ? 'present' : 'missing'})`)
+      .join(', ');
+    writeLog(`Interface candidates: ${seen}`);
+    writeLog(`Interface directory: ${frontend.dir} [${frontend.kind}]`);
+    if (frontend.kind === 'missing') {
+      writeLog('WARNING: no built interface was found in the application package.');
+    }
+  }
+  return frontend.dir || path.join(appRoot(), 'dist');
 }
 
 function seedDatabasePath() {
@@ -138,6 +173,108 @@ async function startBackend() {
   throw lastError || new Error('The JENESIS backend could not be started.');
 }
 
+// ---------------------------------------------------------------------------
+// Interface verification
+//
+// A packaged application can start its backend perfectly and still show an
+// empty window: if the built interface (index.html and its JavaScript and CSS
+// files) cannot be read, there is nothing to draw. That is the failure this
+// checks for, before the window is shown, and it is the difference between
+// "the build succeeded" and "the application opens".
+// ---------------------------------------------------------------------------
+function httpGetText(url, timeoutMs = 5000) {
+  return new Promise((resolve) => {
+    const req = http.get(url, { timeout: timeoutMs }, (res) => {
+      let size = 0;
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => {
+        size += Buffer.byteLength(chunk);
+        if (body.length < 400000) body += chunk;
+      });
+      res.on('end', () => resolve({ status: res.statusCode, size, body }));
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({ status: 0, size: 0, body: '', error: 'timed out' });
+    });
+    req.on('error', (err) => resolve({ status: 0, size: 0, body: '', error: err.message }));
+  });
+}
+
+/** Fetches the start page and every file it references; reports what is missing. */
+async function verifyInterface() {
+  const problems = [];
+  const home = await httpGetText(backendUrl);
+  if (home.status !== 200 || !home.body.includes('id="root"')) {
+    problems.push(`the start page answered HTTP ${home.status || home.error || 'no response'}`);
+    return { ok: false, problems, files: 0 };
+  }
+  const refs = new Set();
+  const pattern = /(?:src|href)="(\/[^"]+)"/g;
+  let match;
+  while ((match = pattern.exec(home.body)) !== null) refs.add(match[1]);
+  // boot.js is the start-up guard: without it a broken interface is silent.
+  if (!refs.has('/boot.js')) problems.push('boot.js is not referenced by the start page');
+  for (const ref of refs) {
+    const file = await httpGetText(new URL(ref, backendUrl).toString());
+    if (file.status !== 200 || file.size === 0) {
+      problems.push(`${ref} answered HTTP ${file.status || file.error || 'no response'} (${file.size} bytes)`);
+    }
+  }
+  return { ok: problems.length === 0, problems, files: refs.size };
+}
+
+/**
+ * Verifies the interface, retrying with the other packaged copy if the first
+ * one cannot be served. Never throws: the window still opens and reports the
+ * problem instead of leaving the user with a blank screen.
+ */
+async function ensureInterface() {
+  const first = await verifyInterface();
+  writeLog(
+    first.ok
+      ? `Interface check: ${first.files} file(s) reachable from ${distDir()}.`
+      : `Interface check FAILED: ${first.problems.join('; ')}`
+  );
+  if (first.ok) return first;
+
+  const alternatives = (frontend ? frontend.candidates : []).filter(
+    (candidate) => candidate.available && candidate.dir !== distDir()
+  );
+  for (const candidate of alternatives) {
+    writeLog(`Interface check: trying the ${candidate.kind} copy at ${candidate.dir}.`);
+    frontendOverrideDir = candidate.dir;
+    try {
+      await stopBackend();
+      shutdownPromise = null;
+      await startBackend();
+      const retry = await verifyInterface();
+      writeLog(
+        retry.ok
+          ? `Interface check: the ${candidate.kind} copy works (${retry.files} file(s) reachable).`
+          : `Interface check: the ${candidate.kind} copy failed too: ${retry.problems.join('; ')}`
+      );
+      if (retry.ok) return retry;
+    } catch (err) {
+      writeLog(`Interface check: restarting with the ${candidate.kind} copy failed: ${err.message}`);
+    }
+  }
+  return first;
+}
+
+function showInterfaceError(problems) {
+  dialog.showErrorBox(
+    APP_TITLE,
+    'JENESIS started, but its interface files could not be loaded, so the window\n' +
+      'would stay empty.\n\n' +
+      `${problems.slice(0, 4).join('\n')}\n\n` +
+      'Reinstalling JENESIS from the same installer repairs a damaged\n' +
+      'installation; your business data is kept.\n\n' +
+      `Details were written to:\n${logFilePath()}`
+  );
+}
+
 function stopBackend() {
   if (!shutdownPromise) {
     shutdownPromise = (async () => {
@@ -194,6 +331,21 @@ function applyShellTheme(theme) {
 }
 
 ipcMain.handle('genesis:set-theme', (event, requested) => applyShellTheme(requested));
+
+// Which windows have told us their interface is really up. A page can finish
+// loading and still draw nothing; the report below is proof that React mounted.
+const rendererReady = new Set();
+
+// Start-up diagnostics from the interface (public/boot.js and
+// src/components/AppCrashScreen.jsx). One stage and one short line, written to
+// desktop.log. No business data, no files, and nothing is returned.
+ipcMain.handle('genesis:startup-report', (event, payload) => {
+  const stage = payload && payload.stage ? String(payload.stage).slice(0, 40) : 'unknown';
+  const detail = payload && payload.detail ? String(payload.detail).slice(0, 400) : '';
+  writeLog(`renderer: ${stage}${detail ? ` — ${detail}` : ''}`);
+  if (stage === 'ready' && event && event.sender) rendererReady.add(event.sender.id);
+  return true;
+});
 
 // The operating system can change its appearance while JENESIS is running;
 // keep the window background in step when the user follows the system.
@@ -259,6 +411,15 @@ function createWindow(mode) {
     pageLoaded = true;
     writeLog('Window finished loading.');
   });
+  // A loaded page can still be blank: the interface tells us when it is really
+  // up, and if that report never arrives the window is retried once and the
+  // failure is recorded instead of leaving an empty frame on screen.
+  const readyWatchdog = setTimeout(() => {
+    if (!rendererReady.has(mainWindow.webContents.id)) {
+      writeLog('The interface did not report that it started within 25s.');
+      reloadOnce('did not report a working interface');
+    }
+  }, 25000);
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, url) => {
     writeLog(`Window failed to load: ${errorCode} ${errorDescription} (${url})`);
     reloadOnce('failed');
@@ -284,7 +445,9 @@ function createWindow(mode) {
   }, 20000);
   mainWindow.once('closed', () => {
     clearTimeout(loadWatchdog);
+    clearTimeout(readyWatchdog);
     clearTimeout(showWatchdog);
+    if (mainWindow && mainWindow.webContents) rendererReady.delete(mainWindow.webContents.id);
   });
 
   // Only the JENESIS backend origin may be displayed inside the window.
@@ -412,12 +575,16 @@ if (!gotLock) {
 
     try {
       await startBackend();
+      // Prove the interface can actually be served before the window opens:
+      // a successful build is not the same as a window that draws something.
+      const interfaceCheck = await ensureInterface();
       // A launch request that arrived while the backend was starting wins: it
       // is the application the user most recently asked for.
       const mode = pendingMode || currentMode;
       pendingMode = null;
       currentMode = mode;
       await createWindow(mode || null);
+      if (!interfaceCheck.ok) showInterfaceError(interfaceCheck.problems);
     } catch (err) {
       showStartupError(err);
       quitting = true;

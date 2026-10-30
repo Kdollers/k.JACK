@@ -29,5 +29,14 @@ contextBridge.exposeInMainWorld('genesisDesktop', {
   setTheme: (theme) => ipcRenderer.invoke('genesis:set-theme', theme),
   // Maintenance only: restarts the local service so a network change takes
   // effect. No arguments, no data, and it is refused outside the desktop shell.
-  restartBackend: () => ipcRenderer.invoke('genesis:restart-backend')
+  restartBackend: () => ipcRenderer.invoke('genesis:restart-backend'),
+  // Start-up diagnostics only: the interface reports the stage it reached
+  // ('ready', 'asset-error', 'render-error', ...) and one short line of detail.
+  // The main process writes it to desktop.log so a failed start can always be
+  // explained afterwards. It grants no capability and returns nothing.
+  reportStartup: (stage, detail) =>
+    ipcRenderer.invoke('genesis:startup-report', {
+      stage: String(stage || '').slice(0, 40),
+      detail: String(detail || '').slice(0, 400)
+    })
 });

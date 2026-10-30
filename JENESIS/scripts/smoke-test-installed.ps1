@@ -204,6 +204,116 @@ function Close-AppGracefully {
   }
 }
 
+# ---------------------------------------------------------------------------
+# Window capture.
+#
+# "The build succeeded" is not the same as "the window shows the application".
+# A packaged build whose interface files cannot be read opens an EMPTY WHITE
+# WINDOW while the backend answers perfectly, so the smoke test looks at the
+# window itself: it is captured the way a composited window is rendered
+# (PrintWindow with PW_RENDERFULLCONTENT, which works even when the window is
+# covered or not focused) and analysed. A real interface has thousands of
+# colours; a blank window has one.
+# ---------------------------------------------------------------------------
+if (-not ('Win32.Capture' -as [type])) {
+  Add-Type -Namespace Win32 -Name Capture -MemberDefinition @'
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BITMAPINFOHEADER {
+      public uint biSize; public int biWidth; public int biHeight; public ushort biPlanes;
+      public ushort biBitCount; public uint biCompression; public uint biSizeImage;
+      public int biXPelsPerMeter; public int biYPelsPerMeter; public uint biClrUsed; public uint biClrImportant;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BITMAPINFO {
+      public BITMAPINFOHEADER bmiHeader;
+      [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public uint[] bmiColors;
+    }
+
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+    [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, uint nFlags);
+    [DllImport("user32.dll")] public static extern IntPtr GetWindowDC(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern IntPtr GetDC(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+    [DllImport("gdi32.dll")] public static extern IntPtr CreateCompatibleDC(IntPtr hdc);
+    [DllImport("gdi32.dll")] public static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int cx, int cy);
+    [DllImport("gdi32.dll")] public static extern IntPtr SelectObject(IntPtr hdc, IntPtr h);
+    [DllImport("gdi32.dll")] public static extern bool DeleteObject(IntPtr hObject);
+    [DllImport("gdi32.dll")] public static extern bool DeleteDC(IntPtr hdc);
+    [DllImport("gdi32.dll")] public static extern bool BitBlt(IntPtr hdcDest, int x, int y, int w, int h, IntPtr hdcSrc, int x1, int y1, uint rop);
+    [DllImport("gdi32.dll")] public static extern int GetDIBits(IntPtr hdc, IntPtr hbmp, uint uStartScan, uint cScanLines, byte[] lpvBits, ref BITMAPINFO lpbmi, uint uUsage);
+
+    public const uint PW_RENDERFULLCONTENT = 0x00000002;
+    public const uint SRCCOPY = 0x00CC0020;
+
+    /** Renders the window into a 32-bit buffer. Returns null when it cannot. */
+    public static byte[] Grab(IntPtr hWnd) {
+      RECT r;
+      if (!GetWindowRect(hWnd, out r)) return null;
+      int w = r.Right - r.Left;
+      int h = r.Bottom - r.Top;
+      if (w <= 0 || h <= 0) return null;
+      IntPtr screen = GetDC(IntPtr.Zero);
+      IntPtr mem = CreateCompatibleDC(screen);
+      IntPtr bmp = CreateCompatibleBitmap(screen, w, h);
+      IntPtr old = SelectObject(mem, bmp);
+      bool ok = PrintWindow(hWnd, mem, PW_RENDERFULLCONTENT);
+      if (!ok) {
+        IntPtr winDc = GetWindowDC(hWnd);
+        ok = BitBlt(mem, 0, 0, w, h, winDc, 0, 0, SRCCOPY);
+        ReleaseDC(hWnd, winDc);
+      }
+      byte[] bits = null;
+      if (ok) {
+        BITMAPINFO info = new BITMAPINFO();
+        info.bmiHeader = new BITMAPINFOHEADER();
+        info.bmiHeader.biSize = (uint)Marshal.SizeOf(typeof(BITMAPINFOHEADER));
+        info.bmiHeader.biWidth = w;
+        info.bmiHeader.biHeight = -h;
+        info.bmiHeader.biPlanes = 1;
+        info.bmiHeader.biBitCount = 32;
+        info.bmiHeader.biCompression = 0;
+        info.bmiColors = new uint[3];
+        bits = new byte[w * h * 4];
+        int rows = GetDIBits(mem, bmp, 0, (uint)h, bits, ref info, 0);
+        if (rows == 0) bits = null;
+      }
+      SelectObject(mem, old);
+      DeleteObject(bmp);
+      DeleteDC(mem);
+      ReleaseDC(IntPtr.Zero, screen);
+      return bits;
+    }
+'@
+}
+
+function Get-WindowPixels([IntPtr] $Handle) {
+  $bits = [Win32.Capture]::Grab($Handle)
+  if (-not $bits) { return $null }
+  $distinct = New-Object 'System.Collections.Generic.HashSet[string]'
+  $sampled = 0
+  $white = 0
+  $black = 0
+  # Sample every seventh pixel: a full 1366x860 window is 1.2 million pixels.
+  for ($i = 0; $i -lt $bits.Length; $i += 28) {
+    $b = $bits[$i]; $g = $bits[$i + 1]; $r = $bits[$i + 2]
+    $sampled++
+    if ($r -ge 250 -and $g -ge 250 -and $b -ge 250) { $white++ }
+    if ($r -eq 0 -and $g -eq 0 -and $b -eq 0) { $black++ }
+    [void]$distinct.Add("$r,$g,$b")
+  }
+  if ($sampled -eq 0) { return $null }
+  return [pscustomobject]@{
+    Sampled  = $sampled
+    Distinct = $distinct.Count
+    White    = [math]::Round(100.0 * $white / $sampled, 1)
+    Black    = [math]::Round(100.0 * $black / $sampled, 1)
+  }
+}
+
 function Invoke-Api([string] $Base, [string] $Method, [string] $Route, $Body = $null, [string] $Token = $null) {
   $headers = @{}
   if ($Token) { $headers['Authorization'] = "Bearer $Token" }
@@ -265,6 +375,24 @@ Step "No external browser window was opened for $AppName" {
   Assert (-not $hit) "An external browser was opened on the $AppName backend address." 
 }
 
+Step 'The installed application serves its complete interface (no missing files)' {
+  # The white-screen failure: the backend answers, the window opens, but the
+  # page and its JavaScript and CSS files are not all reachable, so nothing is
+  # drawn. Every file the start page references is fetched here.
+  $page = Invoke-WebRequest -Uri "$baseUrl/" -UseBasicParsing -TimeoutSec 15
+  Assert ($page.StatusCode -eq 200) "The start page answered HTTP $($page.StatusCode)."
+  Assert ($page.Content -match 'id="root"') 'The start page does not contain the application mount point.'
+  Assert ($page.Content -match '/boot.js') 'The start page does not load the start-up guard.'
+  $refs = [regex]::Matches($page.Content, '(?:src|href)="(/[^"]+)"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
+  Assert ($refs.Count -ge 3) "The start page references only $($refs.Count) file(s)."
+  foreach ($ref in $refs) {
+    $file = Invoke-WebRequest -Uri "$baseUrl$ref" -UseBasicParsing -TimeoutSec 15
+    Assert ($file.StatusCode -eq 200) "$ref answered HTTP $($file.StatusCode)."
+    Assert ($file.RawContentLength -gt 0) "$ref was served empty."
+  }
+  Write-Host "    interface files reachable from the installed application: $($refs.Count + 1)"
+}
+
 Step 'Unauthenticated API requests are refused' {
   try {
     Invoke-Api $baseUrl 'GET' '/accounts' | Out-Null
@@ -291,6 +419,43 @@ Step 'Sign in and reach the application (no forced password change)' {
   $script:Token = $login.token
   $me = Invoke-Api $baseUrl 'GET' '/auth/me' $null $script:Token
   Assert ($me.user.role -eq 'admin') 'Signed-in user is not the administrator.'
+}
+
+Step 'The application window shows the interface, not a blank white screen' {
+  # Proving the fix for the reported failure: look at the pixels of the running
+  # window. A blank window is one colour; a real interface is not.
+  $windows = @(Wait-ForAppWindow -TimeoutSec 60)
+  Assert ($windows.Count -gt 0) "No visible $AppName window was found to inspect."
+  $window = $windows | Sort-Object { -not ($_.Title -like "*$AppName*") } | Select-Object -First 1
+  $pixels = Get-WindowPixels -Handle $window.Handle
+  if (-not $pixels) {
+    Start-Sleep -Seconds 5
+    $pixels = Get-WindowPixels -Handle $window.Handle
+  }
+  Assert ($null -ne $pixels) "The $AppName window could not be captured (handle $($window.Handle))."
+  Write-Host ("    window '{0}': {1} sampled pixels, {2} distinct colours, {3}% pure white, {4}% pure black" -f $window.Title, $pixels.Sampled, $pixels.Distinct, $pixels.White, $pixels.Black)
+  Assert ($pixels.Distinct -ge 8) "The window shows only $($pixels.Distinct) colour(s): it is blank."
+  Assert ($pixels.White -lt 97) "The window is $($pixels.White)% pure white: the interface did not render."
+}
+
+Step 'The interface reports a successful start in the application log' {
+  # The renderer tells the desktop shell when it is mounted; the shell writes it
+  # to desktop.log. A window that loads but never starts is caught here too.
+  $deadline = (Get-Date).AddSeconds(60)
+  $found = $false
+  while ((Get-Date) -lt $deadline -and -not $found) {
+    if (Test-Path $LogFile) {
+      $found = [bool](Select-String -Path $LogFile -Pattern 'renderer: ready' -Quiet)
+    }
+    if (-not $found) { Start-Sleep -Milliseconds 500 }
+  }
+  Assert ($found) "The interface never reported that it started. Log: $LogFile"
+  $failures = @()
+  if (Test-Path $LogFile) {
+    $failures = @(Select-String -Path $LogFile -Pattern 'renderer: (asset-error|script-error|boot-timeout|render-error)' | ForEach-Object { $_.Line })
+    $failures += @(Select-String -Path $LogFile -Pattern 'Window failed to load|did not report that it started|Interface check FAILED' | ForEach-Object { $_.Line })
+  }
+  Assert ($failures.Count -eq 0) "The application reported a start-up failure: $($failures -join ' | ')"
 }
 
 Step 'Accounting transaction: balanced journal entry is posted' {

@@ -1,6 +1,14 @@
 {
   "app_name": "JENESIS",
   "app_tagline": "Gahunda y'Ubucuruzi n'Ibaruramari ry'Ubucuruzi Buto n'Uburinganiye",
+  "crash": {
+    "title": "JENESIS ntibashije kwerekana uru rupapuro",
+    "subtitle": "Porogaramu iracyakora. Inyandiko z’ibaruramari nta cyo zahindutse.",
+    "hint": "Hitamo Ongera ugerageze kugira ngo ukomeze. Butumwa bwasubira, kopiya amakuru y’ikosa uyohereze hamwe na raporo yawe; anandikwa mu bubiko bw’amakosa bwa JENESIS (%APPDATA%\\JENESIS\\logs\\desktop.log).",
+    "retry": "Ongera ugerageze",
+    "copy": "Kopiya amakuru",
+    "copied": "Byakopuwe"
+  },
   "nav": {
     "dashboard": "Imbonerahamwe y'Ibanze",
     "customers": "Abakiriya",

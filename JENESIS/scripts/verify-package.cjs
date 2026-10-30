@@ -128,6 +128,30 @@ function run(unpackedDir) {
     need(dbs.length === 0, `app does not contain database files (${dbs.length} found)`);
   }
 
+  // The interface is shipped twice on purpose.
+  //
+  // Serving it only from inside app.asar is the failure that produced an empty
+  // white window: if the backend process cannot read the archive, index.html and
+  // every JavaScript and CSS file are missing, nothing is drawn and nothing is
+  // logged. The copy at resources/app-frontend is a real directory that any
+  // process can read, and it is what the desktop shell uses first.
+  const frontendDir = path.join(unpackedDir, 'resources', 'app-frontend');
+  const frontendIndex = path.join(frontendDir, 'index.html');
+  need(fs.existsSync(frontendIndex), 'resources/app-frontend/index.html present (interface outside the archive)');
+  if (fs.existsSync(frontendIndex)) {
+    const html = fs.readFileSync(frontendIndex, 'utf8');
+    const refs = [...html.matchAll(/(?:src|href)="(\/[^"]+)"/g)].map((m) => m[1]);
+    need(refs.includes('/boot.js'), 'the packaged start page loads the start-up guard');
+    need(html.includes('id="jenesis-boot"'), 'the packaged start page shows a start-up card, never a blank screen');
+    need(refs.length >= 3, `the packaged start page references its files (${refs.length} found)`);
+    for (const ref of refs) {
+      const file = path.join(frontendDir, ref.replace(/^\//, '').split('/').join(path.sep));
+      const present = fs.existsSync(file) && fs.statSync(file).size > 0;
+      need(present, `packaged interface file ${ref} is present and not empty`);
+    }
+    console.log(`Interface files verified in resources/app-frontend: ${refs.length + 1}`);
+  }
+
   ok.forEach((m) => console.log(`PASS  ${m}`));
   problems.forEach((m) => console.log(`FAIL  ${m}`));
   if (problems.length > 0 && fs.existsSync(unpackedDir)) {

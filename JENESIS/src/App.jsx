@@ -24,6 +24,10 @@ import HelpView from './views/HelpView';
 import MaintenanceView from './views/MaintenanceView';
 import LauncherView from './views/LauncherView';
 import JenesisLogo from './components/JenesisLogo';
+// Last line of defence: an error thrown while rendering used to leave an empty
+// document behind (a blank window with no explanation). The boundary shows a
+// translated message instead and writes the error to the desktop log.
+import { AppErrorBoundary } from './components/AppCrashScreen';
 
 function AppContent() {
   const { activeView, loading, authState, authError, setActiveView } = useApp();
@@ -109,13 +113,17 @@ function ThemedProviders() {
   return (
     <ThemeProvider appId={appId}>
       <I18nProvider>
-        <AppProvider>
-          {/* ShortcutsProvider sits inside AppProvider (it navigates and toasts)
-              and above AppContent so every screen can register shortcuts. */}
-          <ShortcutsProvider>
-            <AppContent />
-          </ShortcutsProvider>
-        </AppProvider>
+        {/* Inside the language provider, so the failure screen is translated
+            like the rest of the interface. */}
+        <AppErrorBoundary>
+          <AppProvider>
+            {/* ShortcutsProvider sits inside AppProvider (it navigates and toasts)
+                and above AppContent so every screen can register shortcuts. */}
+            <ShortcutsProvider>
+              <AppContent />
+            </ShortcutsProvider>
+          </AppProvider>
+        </AppErrorBoundary>
       </I18nProvider>
     </ThemeProvider>
   );

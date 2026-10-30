@@ -14,7 +14,7 @@ prompt, no terminal and no development server are needed to use it.**
 
 ## 1. Install on a Windows PC (10/11, 64-bit)
 
-1. Download **`JEN 0.5 Setup.exe`** from the links in
+1. Download **`JEN 0.5.1 Setup.exe`** from the links in
    [`DOWNLOAD.md`](DOWNLOAD.md) (GitHub release — no sign-in needed). If you
    prefer to build it yourself, follow §2 below.
 2. Double-click it and follow the installer:
@@ -32,7 +32,7 @@ prompt, no terminal and no development server are needed to use it.**
 
 ## 2. Building the installer yourself (Windows 10/11 x64, Node.js 20 or newer)
 
-Two ways, both produce `release\JEN 0.5 Setup.exe` (about 88 MB):
+Two ways, both produce `release\JEN 0.5.1 Setup.exe` (about 88 MB):
 
 **A. One click**
 
@@ -65,7 +65,7 @@ data). The installer is uploaded as the `JENESIS-Windows-installer` artifact.
 
 That pipeline has run green repeatedly; the most recent verification was CI run
 **40963360751** (18/18 installed-application checks), which produced
-`JEN 0.5 Setup.exe` (88.4 MB) and passed **18/18** installed-application
+`JEN 0.5.1 Setup.exe` (88.4 MB) and passed **18/18** installed-application
 checks, including "data survives a relaunch" and "uninstall keeps the database".
 Download the artifact from that run (or from the latest green run) — it is the
 verified installer. It is unsigned, so SmartScreen will warn until a code-signing

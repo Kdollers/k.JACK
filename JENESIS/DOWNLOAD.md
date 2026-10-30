@@ -18,13 +18,13 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,725,817 bytes (88.4 MB) | in `JEN 0.5 Setup.exe.sha256` |
-| `JEN 0.5 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,341,581 bytes (127.2 MB) | in `JEN 0.5 Portable.zip.sha256` |
-| `JEN 0.5.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,593,714 bytes (5.3 MB) | in `JEN 0.5.zip.sha256` |
+| `JEN 0.5.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,725,817 bytes (88.4 MB) | in `JEN 0.5.1 Setup.exe.sha256` |
+| `JEN 0.5.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,341,581 bytes (127.2 MB) | in `JEN 0.5.1 Portable.zip.sha256` |
+| `JEN 0.5.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,593,714 bytes (5.3 MB) | in `JEN 0.5.1.zip.sha256` |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
-> (`JEN.0.5.Setup.exe`). It is the same file; rename it after downloading if
+> (`JEN.0.5.1.Setup.exe`). It is the same file; rename it after downloading if
 > you prefer spaces.
 
 Both files are built by GitHub Actions from this exact commit and are the same
@@ -34,7 +34,37 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 ---
 
-### New in this build — JEN 0.5
+### Repaired in this build — JEN 0.5.1
+
+**The white screen is fixed.** The previous build could install correctly,
+start its service correctly and still open an **empty white window** in all
+three applications, because the built interface was served from inside
+`app.asar` only: when that copy could not be read, no HTML, JavaScript or CSS
+reached the window and nothing was written to any log. This build:
+
+- ships the interface **twice** — a real `resources\app-frontend` directory
+  (preferred, readable by every process) and the copy inside `app.asar`
+  (fallback) — and switches to the other one automatically if the first cannot
+  be served;
+- **verifies the interface before the window appears**: the start page and every
+  file it references are fetched from the running application, and the log names
+  any file that is missing (`%APPDATA%\JENESIS\logs\desktop.log`);
+- **never leaves a blank window**: a start-up guard (`boot.js`) keeps a visible
+  “Starting JENESIS…” card on screen, catches a file that fails to load, a
+  script error and a stalled start, and shows a translated message with the
+  reason, a *Try again* button and *Copy details*;
+- **paints your saved Light/Dark theme again** — the bootstrap used to be an
+  inline script, which the production Content-Security-Policy blocks, so it is
+  now a file of its own;
+- is **tested the way the failure looked**: the installed application is asked
+  for its interface files, the window is captured and its pixels are inspected
+  (a blank window has one colour, a real interface has thousands), and the
+  interface must report a successful start in the log.
+
+Nothing else was removed, renamed or replaced: the database, the internal
+identifiers, the accounting engine and every existing feature are unchanged.
+
+### New in JEN 0.5
 
 - **Three applications, three shortcuts.** JENESIS Seller (red), JENESIS
   Maintenance (green) and JENESIS Admin (blue) each have their own desktop and
@@ -72,13 +102,13 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 ### Recommended — GitHub release (permanent, no sign-in needed)
 
 - **Installer:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.0/JEN.0.5.Setup.exe>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.1/JEN.0.5.1.Setup.exe>
 - **Portable ZIP:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.0/JEN.0.5.Portable.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.1/JEN.0.5.1.Portable.zip>
 - **Source backup:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.0/JEN.0.5.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.1/JEN.0.5.1.zip>
 - **All files for this version:**
-  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.0>
+  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.1>
 
 ### Alternative — build artifacts of the workflow run
 
@@ -88,8 +118,8 @@ If you prefer the files exactly as the build job produced them:
 2. Click the **most recent completed (green) run** at the top of the list, then
    scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`),
-   **`JEN 0.5 Portable`** (the portable `.zip` and its `.sha256`) or
-   **`JEN 0.5 source backup`** (the source `.zip` and its `.sha256`)
+   **`JEN 0.5.1 Portable`** (the portable `.zip` and its `.sha256`) or
+   **`JEN 0.5.1 source backup`** (the source `.zip` and its `.sha256`)
 
 Artifacts require being signed in to GitHub and are kept for 90 days; the
 release above does not expire.
@@ -99,12 +129,12 @@ release above does not expire.
 ## 3. Verify what you downloaded (optional but recommended)
 
 The exact checksums of this build are printed in the table in §7 and are also
-attached to the release as `JEN 0.5 Setup.exe.sha256`. To check a file on
+attached to the release as `JEN 0.5.1 Setup.exe.sha256`. To check a file on
 Windows, open the folder in File Explorer, type `cmd` in the address bar… — or
 simply use PowerShell from the folder's context menu:
 
 ```powershell
-certutil -hashfile "JEN 0.5 Setup.exe" SHA256
+certutil -hashfile "JEN 0.5.1 Setup.exe" SHA256
 ```
 
 The value must match the SHA-256 in §7 / in the `.sha256` file.
@@ -113,7 +143,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ## 4. Installing on Windows (no command prompt, no code)
 
-1. Download `JEN 0.5 Setup.exe` from the link above.
+1. Download `JEN 0.5.1 Setup.exe` from the link above.
 2. **Double-click** the downloaded file.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the
    installer is not code-signed. Click **More info → Run anyway**.
@@ -157,7 +187,7 @@ so a sale recorded in Seller appears at once in the Admin reports.
 
 ### Portable package
 
-Unzip `JEN 0.5 Portable.zip` and double-click **`JENESIS.exe`**. The portable
+Unzip `JEN 0.5.1 Portable.zip` and double-click **`JENESIS.exe`**. The portable
 build opens the chooser; to start one application directly, make your own
 shortcut to `JENESIS.exe --app=seller` (or `--app=maintenance` /
 `--app=admin`).
@@ -277,9 +307,9 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5 Setup.exe` | 92,723,860 (88.4 MB) | in `JEN 0.5 Setup.exe.sha256`, next to the download |
-| `JEN 0.5 Portable.zip` | 133,341,677 (127.2 MB) | in `JEN 0.5 Portable.zip.sha256`, next to the download |
-| `JEN 0.5.zip` | 5,593,714 (5.3 MB) | in `JEN 0.5.zip.sha256`, next to the download |
+| `JEN 0.5.1 Setup.exe` | 92,723,860 (88.4 MB) | in `JEN 0.5.1 Setup.exe.sha256`, next to the download |
+| `JEN 0.5.1 Portable.zip` | 133,341,677 (127.2 MB) | in `JEN 0.5.1 Portable.zip.sha256`, next to the download |
+| `JEN 0.5.1.zip` | 5,593,714 (5.3 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
 named on the release page (**293 automated checks** and **18/18
@@ -287,6 +317,6 @@ installed-application checks** on that build).
 
 Every push rebuilds and republishes these files, so a later build carries a
 different SHA-256. The numbers printed on
-<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.0> are always the ones
+<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.1> are always the ones
 that belong to the file you are downloading now, and each `.sha256` file sits
 next to its download — compare with `certutil -hashfile <file> SHA256` (§3).
