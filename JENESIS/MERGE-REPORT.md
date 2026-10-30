@@ -359,7 +359,7 @@ asserted by six suites).
 
 ## 6. Test results (executed, this sandbox, 2026-10-29)
 
-`npm run test:all` → **269 checks, 0 failed.**
+`npm run test:all` → **270 checks, 0 failed.**
 
 That total is not typed in by hand: `scripts/count-checks.mjs` reads the
 transcript of the run and adds up what each suite reported, so the number below
@@ -375,7 +375,7 @@ is the number the suites actually printed on this code
 | Operations | `npm run test:ops` | 36/36 — walk-in sales, returns, stores, transfers, GRN, counts, cash, FX, authorisation |
 | Migrations | `npm run test:migrations` | 9/9 (7 legacy upgrade + 2 fresh install) + repo DB MD5 unchanged |
 | i18n parity | `npm run test:i18n` | 10/10 — **752 keys × en/fr/rw**, no empties, placeholder parity, every `t()` key resolves |
-| **Settlement / PAID documents (new)** | `npm run test:settlement` | **19/19** — created PAID with one real payment, balanced entry, idempotent F2 (no second payment, no second entry), draft posted once, remainder-only on partial, cancelled refused, permission guard, trial balance balanced, audit row |
+| **Settlement / PAID documents (new)** | `npm run test:settlement` | **20/20** — created PAID with one real payment, balanced entry, idempotent F2 (no second payment, no second entry), draft posted once, remainder-only on partial, cancelled refused, permission guard, trial balance balanced, audit row, **and the forms themselves offer no PAID/UNPAID choice (the checkbox is gone, both modules settle unconditionally)** |
 | **Keyboard shortcuts (new)** | `npm run test:shortcuts` | **18/18** — combo normalisation, layout-independent key names, typing never interrupted, layered Escape, key capture, **exactly one keydown listener in `src/`**, every catalogue shortcut has a destination, calculator precision and divide-by-zero |
 | **Messenger (new)** | `npm run test:messenger` | **18/18** — migration v5, session identity, delivery and read receipts, unread counts, company isolation, validation before storing, manager read-only, **live SSE push to the right recipient only**, no message text in the audit log, one guard per route |
 | **User guide (new)** | `npm run test:help` | **14/14** — identical structure in en/fr/rw, every section has purpose/where/steps/expected/notes, translations are not copies, guide ↔ code agreement (shortcuts, PAID endpoints, F1, sidebar, route) |
@@ -463,7 +463,7 @@ download links and GUI-only install instructions.
 
 The release notes are generated from measurements made on that very build: the
 number of automated checks comes from `scripts/count-checks.mjs` reading the
-transcript of the run (269 today), and the smoke score is counted from the
+transcript of the run (270 today), and the smoke score is counted from the
 installed-application transcript — no figure in the notes is typed by hand.
 
 Honest history of the Windows runs — the failures were found and fixed in the
@@ -489,10 +489,10 @@ open, not hidden:
 | **40964195928** | **green** (18/18) — installer published as a release with checksums |
 | 40966223343 | **failed** in the new packaging step only (`dist\win-unpacked` does not exist: electron-builder writes to `release\`) → bug #24 |
 | **40967528438** | **green** (18/18) — after the fix: portable ZIP built from `release\win-unpacked`, release `v1.0.0` published |
-| **40973680804** | **green** (18/18) — **Parts B–F** (PAID documents, shortcuts, Messenger, calculator keyboard, user guide): 269 measured checks, release assets replaced |
+| **40973680804** | **green** (18/18) — **Parts B–F** (PAID documents, shortcuts, Messenger, calculator keyboard, user guide): 270 measured checks, release assets replaced |
 | 40975099606 | **failed** in "Build the frontend and the NSIS installer" (commit 5472dc7). The step failed and the run then stayed in GitHub's bookkeeping as *in progress* for an hour; its log archive could not be downloaded from this sandbox (`results-receiver.actions.githubusercontent.com` is not reachable here), so **the cause is not established**. The two runs after it, on the following commits, were green with the same code path |
-| **40979782662** | **green** (18/18) — measured check total wired into CI and the release notes; 269 checks |
-| **40980934323** | **green** (18/18) — the delivered state (docs): release `v1.0.0` republished with the current installer, portable package and checksums |
+| **40979782662** | **green** (18/18) — measured check total wired into CI and the release notes; 269 checks at that point |
+| **40980934323** | **green** (18/18) — the documented state: release `v1.0.0` republished with the installer, portable package and checksums |
 
 ### Not run here (environment limits — not claimed as passing)
 

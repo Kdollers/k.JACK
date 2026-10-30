@@ -311,7 +311,7 @@
     "settlement_account": "Konti Yakirirwaho Amafaranga",
     "filter_walk_in": "Walk-in gusa",
     "search_invoices": "Shakisha nimero, umukiriya…",
-    "auto_post_hint": "Kwinjiza ako kanya mu ibaruramari no gukuraho ububiko bw'iduka",
+    "auto_post_hint": "Ibyanditswe nk'ibyishyuwe: JENESIS yandika iyogurisha n'inyemezabwishyu nyayo ako kanya, igakuraho n'ububiko bw'iduka.",
     "choose_customer": "Hitamo Umukiriya",
     "settled_toast": "Fagitire {number} yanditswe nk'iyishyuwe — inyemezabwishyu {payment}",
     "already_paid": "Fagitire {number} yishyuwe. Nta cyanditswe.",

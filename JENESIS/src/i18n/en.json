@@ -311,7 +311,7 @@
     "settlement_account": "Settlement Account",
     "filter_walk_in": "Walk-in only",
     "search_invoices": "Search number, customer…",
-    "auto_post_hint": "Post immediately to the General Ledger and deduct store inventory",
+    "auto_post_hint": "Saved as PAID: JENESIS posts the sale and records the real receipt at once, and deducts store stock.",
     "choose_customer": "Choose Customer",
     "settled_toast": "Invoice {number} recorded as PAID — receipt {payment}",
     "already_paid": "Invoice {number} is already paid. Nothing was recorded.",

@@ -391,6 +391,41 @@ async function main() {
       'both sales and purchase settlements are audited');
   });
 
+  // The interface itself must not reintroduce a PAID/UNPAID choice: the forms
+  // settle unconditionally and no checkbox controls settlement any more.
+  await check('the sales and purchase forms offer no PAID/UNPAID choice', async () => {
+    const sales = fs.readFileSync(path.join(ROOT, 'src', 'views', 'SalesView.jsx'), 'utf8');
+    const purchases = fs.readFileSync(path.join(ROOT, 'src', 'views', 'PurchasesView.jsx'), 'utf8');
+    for (const [name, src] of [['SalesView', sales], ['PurchasesView', purchases]]) {
+      assert.ok(
+        /settle:\s*true/.test(src),
+        `${name} must create documents settled (PAID), unconditionally`
+      );
+      assert.ok(
+        !/settle:\s*\w+\.autoPost/.test(src),
+        `${name} must not let a checkbox decide whether a document is PAID`
+      );
+      assert.ok(
+        !/id="(autoPost|billAutoPost)"/.test(src),
+        `${name} must no longer render a settlement checkbox`
+      );
+      // The submit button must say "post" unconditionally, not "save as draft".
+      const button = name === 'SalesView' ? 'sales.post_invoice' : 'purchases.post_bill';
+      assert.ok(
+        !new RegExp(`autoPost \\? t\\('${button.replace('.', '\\.')}'\\)`).test(src),
+        `${name} must not offer "save as draft" instead of the PAID document`
+      );
+    }
+    // The explanation shown instead is translated, like every other string.
+    for (const lang of ['en', 'fr', 'rw']) {
+      const dict = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'i18n', `${lang}.json`), 'utf8'));
+      assert.ok(dict.sales.auto_post_hint && dict.sales.auto_post_hint.length > 20,
+        `sales.auto_post_hint must exist in ${lang}`);
+      assert.ok(dict.sales.payment_on_creation_hint && dict.purchases.payment_on_creation_hint,
+        `the PAID creation note must exist in ${lang} for both modules`);
+    }
+  });
+
   await check('repository genesis.db unchanged', async () => {
     if (!sourceMd5Before) return;
     const after = crypto.createHash('md5').update(fs.readFileSync(SOURCE_DB)).digest('hex');

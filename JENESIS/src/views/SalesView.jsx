@@ -61,7 +61,7 @@ export default function SalesView() {
     date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
     notes: '',
-    autoPost: true,
+    autoPost: true, // kept for the server's POSTED fallback; the form no longer offers the choice
     lines: [
       {
         product_id: '',
@@ -207,8 +207,9 @@ export default function SalesView() {
         exchange_rate: invoiceForm.exchange_rate != null && invoiceForm.exchange_rate !== '' ? Number(invoiceForm.exchange_rate) : null,
         warehouse_id: invoiceForm.warehouse_id || null,
         bank_account_id: invoiceForm.bank_account_id || null,
-        // "Post now" means: post the document AND settle it (PAID).
-        settle: invoiceForm.autoPost === true
+        // A sales document is created PAID: JENESIS posts it and records the
+        // real receipt in the same operation. There is no PAID/UNPAID choice.
+        settle: true
       };
       const res = await apiRequest('/api/sales/invoices', {
         method: 'POST',
@@ -717,8 +718,7 @@ export default function SalesView() {
                     onChange={(e) => setInvoiceForm({
                       ...invoiceForm,
                       walk_in: e.target.checked,
-                      customer_id: e.target.checked ? '' : invoiceForm.customer_id,
-                      autoPost: e.target.checked ? true : invoiceForm.autoPost
+                      customer_id: e.target.checked ? '' : invoiceForm.customer_id
                     })}
                     className="rounded border-slate-300 text-violet-600"
                   />
@@ -976,17 +976,10 @@ export default function SalesView() {
                     onChange={(e) => setInvoiceForm({ ...invoiceForm, notes: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                  <div className="mt-2 flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="autoPost"
-                      checked={invoiceForm.autoPost}
-                      onChange={(e) => setInvoiceForm({ ...invoiceForm, autoPost: e.target.checked })}
-                      className="rounded border-slate-300 text-blue-600"
-                    />
-                    <label htmlFor="autoPost" className="text-slate-700 font-medium">
-                      {t('sales.auto_post_hint')}
-                    </label>
+                  {/* Settlement: a recorded sale is PAID — no PAID/UNPAID choice. */}
+                  <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">
+                    <p className="text-[10px] text-emerald-800 font-semibold">{t('sales.payment_section')}</p>
+                    <p className="text-[10px] text-emerald-700">{t('sales.auto_post_hint')}</p>
                   </div>
                 </div>
 
@@ -1040,7 +1033,7 @@ export default function SalesView() {
                   type="submit"
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-semibold transition shadow"
                 >
-                  {invoiceForm.autoPost ? t('sales.post_invoice') : `${t('common.save')} (${t('common.draft')})`}
+                  {t('sales.post_invoice')}
                 </button>
               </div>
             </form>

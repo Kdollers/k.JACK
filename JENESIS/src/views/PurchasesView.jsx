@@ -63,7 +63,7 @@ export default function PurchasesView() {
     date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
     notes: '',
-    autoPost: true,
+    autoPost: true, // kept for the server's POSTED fallback; the form no longer offers the choice
     payment_method: 'CASH',
     bank_account_id: '',
     lines: [
@@ -177,13 +177,15 @@ export default function PurchasesView() {
           bank_account_id: billForm.bank_account_id || null,
           // JENESIS records every new purchase document as PAID (the server
           // books a real supplier payment); there is no PAID/UNPAID choice.
-          settle: billForm.autoPost === true
+          // A purchase document is created PAID: the bill is posted and the
+          // real supplier payment is recorded in the same operation.
+          settle: true
         })
       });
       showToast(
         res.paid
           ? t('purchases.settled_toast', { number: res.billNumber, payment: res.paymentNumber || '' })
-          : `${t('purchases.bill_number')} ${res.billNumber} — ${billForm.autoPost ? t('common.posted') : t('common.draft')}`,
+          : `${t('purchases.bill_number')} ${res.billNumber} — ${t('common.posted')}`,
         'success'
       );
       setShowNewBillModal(false);
@@ -900,19 +902,6 @@ export default function PurchasesView() {
                     onChange={(e) => setBillForm({ ...billForm, notes: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                  <div className="mt-2 flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="billAutoPost"
-                      checked={billForm.autoPost}
-                      onChange={(e) => setBillForm({ ...billForm, autoPost: e.target.checked })}
-                      className="rounded border-slate-300 text-blue-600"
-                    />
-                    <label htmlFor="billAutoPost" className="text-slate-700 font-medium">
-                      Post bill immediately (updates weighted-average cost & stock)
-                    </label>
-                  </div>
-
                   {/* Settlement: a recorded bill is PAID — no PAID/UNPAID choice. */}
                   <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
                     <p className="text-[10px] text-emerald-800 font-semibold">{t('purchases.payment_section')}</p>
@@ -988,7 +977,7 @@ export default function PurchasesView() {
                   type="submit"
                   className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md font-semibold transition shadow"
                 >
-                  {billForm.autoPost ? t('purchases.post_bill') : `${t('common.save')} (${t('common.draft')})`}
+                  {t('purchases.post_bill')}
                 </button>
               </div>
             </form>

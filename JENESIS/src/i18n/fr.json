@@ -311,7 +311,7 @@
     "settlement_account": "Compte d’encaissement",
     "filter_walk_in": "Comptoir uniquement",
     "search_invoices": "Rechercher numéro, client…",
-    "auto_post_hint": "Comptabiliser immédiatement au grand livre et déduire le stock du magasin",
+    "auto_post_hint": "Enregistrée comme PAYÉE : JENESIS comptabilise la vente et enregistre le reçu réel immédiatement, et déduit le stock du magasin.",
     "choose_customer": "Choisir un client",
     "settled_toast": "Facture {number} enregistrée comme PAYÉE — reçu {payment}",
     "already_paid": "La facture {number} est déjà payée. Rien n'a été enregistré.",

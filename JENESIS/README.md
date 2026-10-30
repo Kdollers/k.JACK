@@ -10,14 +10,14 @@ This is the **consolidated JENESIS application**: the features of the previous
 `JEN 0.2` and `JAN 0.3` archives, merged into one project — plus a full
 **Light / Dark / System theme system**, a **keyboard layer**, **JENESIS
 Messenger**, documents that are **created PAID**, and a trilingual
-**user guide** — verified by **269 automated checks**.
+**user guide** — verified by **270 automated checks**.
 
 - **Download the Windows installer / portable package**: [`DOWNLOAD.md`](DOWNLOAD.md)
 - **Merge report** (what came from where, bugs fixed, test results): [`MERGE-REPORT.md`](MERGE-REPORT.md)
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)
 
-Status: **269 automated checks pass** (locally and on Linux CI, with the real
+Status: **270 automated checks pass** (locally and on Linux CI, with the real
 SQLite driver) and the **Windows installer is built and smoke-tested on a
 GitHub-hosted Windows runner** on every push — `JENESIS-Setup-1.0.0.exe`
 (~92.6 MB) is **published as a GitHub release** together with
@@ -168,7 +168,7 @@ npm install
 npm test
 ```
 
-### 3. Run the Whole Suite (269 checks)
+### 3. Run the Whole Suite (270 checks)
 ```bash
 npm run test:all
 

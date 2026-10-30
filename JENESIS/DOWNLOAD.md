@@ -33,9 +33,10 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 - **Documents are created PAID.** A new sales receipt/invoice or purchase bill is
   settled the moment it is saved: JENESIS posts it and records the real payment in
-  one operation. There is no PAID/UNPAID choice anywhere — and PAID is never just a
-  label, it is backed by a genuine payment and a balanced journal entry. Pressing
-  **F2** twice settles once.
+  one operation. There is no PAID/UNPAID choice anywhere — no checkbox, no “save
+  as draft” for an invoice or a bill — and PAID is never just a label, it is backed
+  by a genuine payment and a balanced journal entry. Pressing **F2** twice settles
+  once.
 - **Keyboard shortcuts.** F1 guide, F2 settle, F3 print, F5 refresh, Ctrl+N new,
   Ctrl+P print, Ctrl+K Messenger, Ctrl+Shift+C calculator, Ctrl+Shift+T theme,
   Ctrl+Shift+L language, Ctrl+/ shortcut reference, Alt+←/→ previous/next screen,
@@ -176,10 +177,10 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 | Check | Result |
 |---|---|
-| Full automated suite (Linux, real SQLite driver) | **269 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
+| Full automated suite (Linux, real SQLite driver) | **270 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
 | Theme rules: Light/Dark/System, immediate switching, persistence, first-paint, tokens, contrast, Electron bridge | **32 checks passed** |
 | Theme UI rendered with React (options, icons, accessible names, en/fr/rw, stored preference, fallback) | **6 checks passed** |
-| Documents created PAID (settlement, idempotent F2, no duplicate payments) | **19 checks passed** |
+| Documents created PAID (settlement, idempotent F2, no duplicate payments, no PAID/UNPAID choice in the forms) | **20 checks passed** |
 | Keyboard shortcuts (single listener, typing safety, Escape layering, destinations) | **18 checks passed** |
 | Messenger (delivery, receipts, permissions, company isolation, live push, no text in logs) | **18 checks passed** |
 | User guide (en/fr/rw parity, completeness, agreement with the code) | **14 checks passed** |
@@ -235,7 +236,7 @@ is the first place to look.
 
 Built by GitHub Actions run **40980934323** from commit
 **`534bd4e1d68e552e58f13de9c451cde847ecf91f`** on branch `arena/a2c625e8-k-jack`
-(269 automated checks and 18/18 installed-application checks on that build).
+(270 automated checks and 18/18 installed-application checks on that build).
 
 Every push rebuilds and republishes these files, so a later build carries a
 different SHA-256. The numbers printed on
