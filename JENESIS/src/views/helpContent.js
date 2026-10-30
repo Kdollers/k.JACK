@@ -62,6 +62,24 @@ export const HELP = {
           'Sign out (top right) when you leave the computer, so nobody uses your name.'
         ]
       },
+      applications: {
+        title: 'The three JENESIS applications',
+        purpose: 'Each member of the team opens the application that matches their work, and everybody works on the same company data.',
+        where: 'The JENESIS Seller, JENESIS Maintenance and JENESIS Admin shortcuts on the desktop or in the Start Menu. Opening JENESIS without a shortcut shows the chooser.',
+        steps: [
+          'JENESIS Seller (red) — selling: sales, receipts, customers, stock levels. It opens on Sales.',
+          'JENESIS Maintenance (green) — upkeep: stock, the connection between the computers, verified backups, integrity check and logs. It opens on Maintenance.',
+          'JENESIS Admin (blue) — administration: accounting, purchases, reports, settings, users and permissions. It opens on the Dashboard.',
+          'Each application remembers its own Light or Dark choice: changing the theme in Seller does not change Maintenance or Admin.',
+          'All three read and write the same company database, so a sale recorded in Seller appears at once in the Admin reports.'
+        ],
+        expected: 'Each shortcut opens its own window, with its own title, colour and menu. Nothing is duplicated: there is one set of records.',
+        notes: [
+          'A screen that does not belong to the application is not offered: JENESIS Seller has no general ledger, JENESIS Maintenance has no sales screen.',
+          'Your permissions still apply inside every application: a user who may not post an entry sees the same refusal as anywhere else.',
+          'Created and developed by KAYIGANWA JACQUES.'
+        ],
+      },
       navigation: {
         title: 'Moving around the program',
         purpose: 'Reach any screen quickly with the mouse or the keyboard, and come back to where you were.',
@@ -127,6 +145,21 @@ export const HELP = {
           'The person who counts cannot approve their own count: this separation is deliberate.',
           'A sale or a purchase also moves stock automatically; you do not post anything by hand.'
         ]
+      },
+      banking: {
+        title: 'Banking and cash',
+        purpose: 'Follow the money in your bank accounts and in the till.',
+        where: 'The Banking module (Ctrl + Shift + B), with three tabs: Accounts, Payments and Cash.',
+        steps: [
+          'Accounts — the bank and cash accounts of the company with their balances.',
+          'Payments — the money movements recorded against those accounts.',
+          'Cash — open a cash session at the start of the day, count the till, then close the session; a supervisor approves the closing.'
+        ],
+        expected: 'Every movement is an accounting entry, so the cash and bank balances always agree with the general ledger.',
+        notes: [
+          'Sales and purchases are recorded PAID when they are posted, so no extra payment has to be invented for them.',
+          'Counting the till needs the cash:count permission; approving a closing needs its own permission.'
+        ],
       },
       calculator: {
         title: 'The built-in calculator',
@@ -264,6 +297,24 @@ export const HELP = {
           'Your data lives in the JENESIS application folder of your Windows user profile; back up that folder as well if you want a complete copy.'
         ]
       },
+      maintenance: {
+        title: 'Maintenance: service, network, backups and logs',
+        purpose: 'Keep JENESIS healthy, let the other computers of the office connect, and prove the data is intact.',
+        where: 'JENESIS Maintenance → Maintenance (the screen it opens on), or JENESIS Admin → Maintenance.',
+        steps: [
+          'Service — shows the version, when the service started, how long it has been running, and where the database and the data folder are.',
+          'Network — off by default: the service answers this computer only. Switch it on to let the other computers of the network connect; the address is shown and Windows asks about the firewall.',
+          'Connect to another computer — type the address of the computer that holds the data, press Test, then Apply. Every request still needs your user name, password and permissions.',
+          'Backup — creates a verified copy of the database in the backups folder of the data directory and lists the previous ones.',
+          'Integrity — runs the SQLite integrity and foreign-key checks and counts the posted entries.',
+          'Logs — shows the last lines of the service log.'
+        ],
+        expected: 'The Maintenance screen never guesses: it reports what it found and tells you when the service has to be restarted.',
+        notes: [
+          'Opening the service to the network is a choice, never automatic: keep it off when you work alone on one computer.',
+          'A backup made here is a copy of the database file. Settings → Backup exports a portable file you can keep outside the computer.'
+        ],
+      },
       troubleshooting: {
         title: 'Troubleshooting',
         purpose: 'Solve the most common situations without calling for help.',
@@ -345,6 +396,24 @@ export const HELP = {
           'Déconnectez-vous (en haut à droite) en quittant l\'ordinateur, afin que personne n\'agisse en votre nom.'
         ]
       },
+      applications: {
+        title: 'Les trois applications JENESIS',
+        purpose: 'Chacun ouvre l’application qui correspond à son travail, et tout le monde travaille sur les mêmes données.',
+        where: 'Les raccourcis JENESIS Seller, JENESIS Maintenance et JENESIS Admin sur le bureau ou dans le menu Démarrer. Ouvrir JENESIS sans raccourci affiche le choix.',
+        steps: [
+          'JENESIS Seller (rouge) — la vente : ventes, reçus, clients, niveaux de stock. Il s’ouvre sur Ventes.',
+          'JENESIS Maintenance (vert) — l’entretien : stock, la connexion entre les ordinateurs, sauvegardes vérifiées, contrôle d’intégrité et journaux. Il s’ouvre sur Maintenance.',
+          'JENESIS Admin (bleu) — l’administration : comptabilité, achats, rapports, paramètres, utilisateurs et permissions. Il s’ouvre sur le Tableau de bord.',
+          'Chaque application retient son propre choix Clair ou Sombre : changer le thème dans Seller ne change pas Maintenance ni Admin.',
+          'Les trois lisent et écrivent la même base, donc une vente enregistrée dans Seller apparaît aussitôt dans les rapports d’Admin.'
+        ],
+        expected: 'Chaque raccourci ouvre sa propre fenêtre, avec son titre, sa couleur et son menu. Rien n’est dupliqué : il n’y a qu’un seul jeu d’enregistrements.',
+        notes: [
+          'Un écran qui n’appartient pas à l’application n’est pas proposé : JENESIS Seller n’a pas de grand livre, JENESIS Maintenance n’a pas d’écran de vente.',
+          'Vos permissions s’appliquent dans chaque application : un utilisateur qui ne peut pas valider une écriture voit le même refus partout.',
+          'Créé et développé par KAYIGANWA JACQUES.'
+        ],
+      },
       navigation: {
         title: 'Se déplacer dans le programme',
         purpose: 'Atteindre rapidement n\'importe quel écran à la souris ou au clavier, et revenir là où vous étiez.',
@@ -410,6 +479,21 @@ export const HELP = {
           'La personne qui compte ne peut pas approuver son propre comptage : cette séparation est volontaire.',
           'Une vente ou un achat déplace aussi le stock automatiquement ; vous n\'avez rien à comptabiliser à la main.'
         ]
+      },
+      banking: {
+        title: 'Banque et caisse',
+        purpose: 'Suivre l’argent de vos comptes bancaires et de votre caisse.',
+        where: 'Le module Banque (Ctrl + Maj + B), avec trois onglets : Comptes, Paiements et Caisse.',
+        steps: [
+          'Comptes — les comptes bancaires et la caisse de l’entreprise avec leurs soldes.',
+          'Paiements — les mouvements d’argent enregistrés sur ces comptes.',
+          'Caisse — ouvrez une session de caisse en début de journée, comptez la caisse, puis fermez la session ; un responsable approuve la fermeture.'
+        ],
+        expected: 'Chaque mouvement est une écriture comptable : les soldes de caisse et de banque correspondent toujours au grand livre.',
+        notes: [
+          'Les ventes et les achats sont enregistrés PAYÉS lors de leur validation : aucun paiement supplémentaire n’est inventé.',
+          'Compter la caisse demande la permission cash:count ; approuver une fermeture demande sa propre permission.'
+        ],
       },
       calculator: {
         title: 'La calculatrice intégrée',
@@ -547,6 +631,24 @@ export const HELP = {
           'Vos données se trouvent dans le dossier JENESIS de votre profil Windows ; sauvegardez aussi ce dossier si vous voulez une copie complète.'
         ]
       },
+      maintenance: {
+        title: 'Maintenance : service, réseau, sauvegardes et journaux',
+        purpose: 'Garder JENESIS en bonne santé, laisser les autres ordinateurs du bureau se connecter, et prouver que les données sont intactes.',
+        where: 'JENESIS Maintenance → Maintenance (l’écran sur lequel il s’ouvre), ou JENESIS Admin → Maintenance.',
+        steps: [
+          'Service — affiche la version, le démarrage du service, sa durée de fonctionnement, et l’emplacement de la base et du dossier de données.',
+          'Réseau — désactivé par défaut : le service ne répond qu’à cet ordinateur. Activez-le pour laisser les autres ordinateurs du réseau se connecter ; l’adresse est affichée et Windows demande l’autorisation du pare-feu.',
+          'Se connecter à un autre ordinateur — saisissez l’adresse de l’ordinateur qui héberge les données, puis Testez, puis Appliquez. Chaque requête exige toujours votre nom d’utilisateur, votre mot de passe et vos permissions.',
+          'Sauvegarde — crée une copie vérifiée de la base dans le dossier des sauvegardes et liste les précédentes.',
+          'Intégrité — lance les contrôles d’intégrité et de clés étrangères de SQLite et compte les écritures validées.',
+          'Journaux — affiche les dernières lignes du journal du service.'
+        ],
+        expected: 'L’écran de maintenance ne devine rien : il rapporte ce qu’il a trouvé et vous dit quand le service doit être redémarré.',
+        notes: [
+          'Ouvrir le service au réseau est un choix, jamais automatique : laissez-le désactivé si vous travaillez seul sur un ordinateur.',
+          'Une sauvegarde faite ici est une copie du fichier de la base. Paramètres → Sauvegarde exporte un fichier portable à conserver hors de l’ordinateur.'
+        ],
+      },
       troubleshooting: {
         title: 'Résolution des problèmes',
         purpose: 'Résoudre les situations les plus courantes sans demander de l\'aide.',
@@ -628,6 +730,24 @@ export const HELP = {
           'Sohoka (hejuru ku ruhande rw\'iburyo) igihe uvuye kuri mudasobwa, kugira ngo ntihagire ukoresha izina ryawe.'
         ]
       },
+      applications: {
+        title: 'Porogaramu eshatu za JENESIS',
+        purpose: 'Buri wese afungura porogaramu ijyanye n’akazi ke, kandi bose bakoresha amakuru amwe.',
+        where: 'Utubuto twa JENESIS Seller, JENESIS Maintenance na JENESIS Admin kuri desktop cyangwa muri menu yo gutangira. Gufungura JENESIS nta buto bigaragaza ihitamo.',
+        steps: [
+          'JENESIS Seller (umutuku) — ubucuruzi: kugurisha, inyemezabwishyu, abakiriya, ububiko. Ifungura ku Bucuruzi.',
+          'JENESIS Maintenance (icyatsi) — kubungabunga: ububiko, ihuzwa ry’amaorudinate, kopi zagenzuwe, isuzuma ry’ubusugire n’ibitabo by’ibyabaye. Ifungura kuri Maintenance.',
+          'JENESIS Admin (ubururu) — ubuyobozi: ibaramuramari, kugura, raporo, amagenamiterere, abakoresha n’uburenganzira. Ifungura ku Mbonerahamwe.',
+          'Buri porogaramu yibuka imiterere yayo bwite: guhindura imiterere muri Seller ntibihindura Maintenance cyangwa Admin.',
+          'Zose eshatu zisoma kandi zandika muri base imwe, bityo igurisha ryanditswe muri Seller rigaragara ako kanya muri raporo za Admin.'
+        ],
+        expected: 'Buri buto bufungura idirishya ryabwo, rifite umutwe, ibara na menu yaryo. Nta gusubiramo kabiri: hari inyandiko imwe gusa.',
+        notes: [
+          'Ipaji idakwiye iyo porogaramu ntitangwa: JENESIS Seller nta gitabo kinini, JENESIS Maintenance nta paji yo kugurisha.',
+          'Uburenganzira bwawe buracyakurikizwa muri buri porogaramu: ukoresha udashobora kwemeza inyandiko abona ubwanga bumwe hose.',
+          'Byakozwe na KAYIGANWA JACQUES.'
+        ],
+      },
       navigation: {
         title: 'Kugenda muri porogaramu',
         purpose: 'Kugera ku ipaji iyo ari yo yose vuba ukoresheje imbeba cyangwa clavier, no gusubira aho wari uri.',
@@ -693,6 +813,21 @@ export const HELP = {
           'Uwabaze ntashobora kwemeza ibarura rye: uku gutandukanya ni ubushake bw\'umushinga.',
           'Igurisha cyangwa amagura na byo bimura ububiko byonyine; nta cyo wandika mu ibaruramari ukoresheje intoki.'
         ]
+      },
+      banking: {
+        title: 'Banki n’amafaranga',
+        purpose: 'Gukurikirana amafaranga yo muri banki no mu isanduku.',
+        where: 'Igice cya Banki (Ctrl + Shift + B), gifite utwanya dutatu: Konti, Ubwishyu n’Isanduku.',
+        steps: [
+          'Konti — konti za banki n’isanduku by’ikigo hamwe n’ubusaguke bwabyo.',
+          'Ubwishyu — imyigire y’amafaranga yanditswe kuri izo konti.',
+          'Isanduku — fungura igihe cy’isanduku mu gitondo, bara amafaranga, hanyuma ufunge icyo gihe; umuyobozi yemeza ifungwa.'
+        ],
+        expected: 'Buri myigire ni inyandiko y’ibaramuramari, bityo ubusaguke bw’isanduku na banki buhora buhuye n’igitabo kinini.',
+        notes: [
+          'Kugurisha no kugura byandikwa nk’IBYISHYUWE iyo byemejwe, bityo nta bwishyu bw’inyongera buhimba.',
+          'Kubara isanduku bisaba uburenganzira cash:count; kwemeza ifungwa bisaba uburenganzira bwabyo.'
+        ],
       },
       calculator: {
         title: 'Kalikilateli yubatswemo',
@@ -829,6 +964,24 @@ export const HELP = {
           'Gusubiza bisimbuza amakuru ariho ya sosiyete — ni cyo gituma icyemezo n\'ijambo ry\'ibanga bisabwa.',
           'Amakuru yawe aba mu bubiko bwa JENESIS mu mwirondoro wawe wa Windows; ujye ubika na bwo niba ushaka kopi yuzuye.'
         ]
+      },
+      maintenance: {
+        title: 'Kubungabunga: serivisi, urusobe, kopi z’ububiko n’ibitabo',
+        purpose: 'Kubungabunga JENESIS, kwemerera andi maorudinate yo mu biro guhuzwa, no kugaragaza ko amakuru ari meza.',
+        where: 'JENESIS Maintenance → Maintenance (ipaji ifunguraho), cyangwa JENESIS Admin → Maintenance.',
+        steps: [
+          'Serivisi — yerekana verisiyo, igihe serivisi yatangiye, igihe imaze ikora, n’aho base n’ububiko bw’amakuru biri.',
+          'Urusobe — ntibikora nk’ibisanzwe: serivisi isubiza iyi orudinate gusa. Bikoreshe kugira ngo andi maorudinate yo ku rusobe ahuzwe; aderesi irerekanwa na Windows ikabaza ku rukuta rw’umutekano.',
+          'Kwihuza na orudinate yindi — andika aderesi ya orudinate ifite amakuru, kanda Gerageza, hanyuma Shyira mu bikorwa. Buri cyifuzo kiracyasaba izina ryawe, ijambo ry’ibanga n’uburenganzira.',
+          'Kopi y’ububiko — ikora kopi yagenzuwe ya base mu bubiko bw’amakopi kandi ikanerekana izabanjirije.',
+          'Isuzuma ry’ubusugire — rikoresha isuzuma rya SQLite ry’ubusugire n’imfunguzo z’amahanga kandi rikabara inyandiko zemejwe.',
+          'Ibitabo — byerekana imirongo ya nyuma y’igitabo cya serivisi.'
+        ],
+        expected: 'Ipaji yo kubungabunga ntikeka: ivuga ibyo yasanze kandi ikakubwira igihe serivisi igomba kongera gutangizwa.',
+        notes: [
+          'Gufungura serivisi ku rusobe ni ihitamo, ntibiba byikora: siga bizimye iyo ukorera wenyine kuri orudinate imwe.',
+          'Kopi ikorerwa hano ni kopi ya dosiye ya base. Amagenamiterere → Kopi yohereza dosiye ishyirwa ahandi ushobora kubika hanze ya orudinate.'
+        ],
       },
       troubleshooting: {
         title: 'Gukemura ibibazo',
