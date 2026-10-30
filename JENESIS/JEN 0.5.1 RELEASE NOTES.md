@@ -63,11 +63,16 @@ and the storage keys are untouched.
 
 ## 3. What you can download
 
-| File | What it is | Size |
-|---|---|---|
-| `JEN 0.5.1 Setup.exe` | **Windows installer** — installs JENESIS and creates the three shortcuts (Seller, Maintenance, Admin) | see below |
-| `JEN 0.5.1 Portable.zip` | **Portable build** — unzip and double-click `JENESIS.exe`, nothing installed | see below |
-| `JEN 0.5.1.zip` | **Source-code backup** — every tracked file of the project | see below |
+| File | What it is | Size | SHA-256 |
+|---|---|---|---|
+| `JEN 0.5.1 Setup.exe` | **Windows installer** — installs JENESIS and creates the three shortcuts (Seller, Maintenance, Admin) | 92,919,111 bytes (88.6 MB) | `c57631f4ec9c62e3e039e8e7d6c06ef0fff5349adccaedb0396e632808e60664` |
+| `JEN 0.5.1 Portable.zip` | **Portable build** — unzip and double-click `JENESIS.exe`, nothing installed | 133,576,670 bytes (127.4 MB) | `090be0c1e67035b63884139b0a6771aa3c9f8eb72d8d2a562f3f67c59c1a1388` |
+| `JEN 0.5.1.zip` | **Source-code backup** — every tracked file of the project | 5,628,713 bytes (5.4 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
+
+These are the files of **GitHub Actions run 41121270446, commit
+`ac80a35d9b92126dcd276dffdf97336f0bff6139`**. Every later push republishes the
+release with new checksums, so the `.sha256` file beside each download always
+carries the one that belongs to the file you are getting.
 
 Direct links:
 
@@ -122,17 +127,18 @@ happened, and the window shows a message instead of a blank screen.
 
 ## 6. What was tested on this build
 
-Measured on GitHub Actions (Ubuntu 22.04 and Windows Server 2022 runners):
+Measured on GitHub Actions run **41121270446** (Ubuntu 22.04 and Windows
+Server 2022 runners), commit `ac80a35`:
 
 | Check | Result |
 |---|---|
-| Full automated suite (real SQLite, whole project) | see the release page — every check passed |
+| Full automated suite (real SQLite, whole project) | **312 checks, 0 failed** |
 | New production start-up suite (start-up guard, CSP, packaged interface location, shell verification, diagnostics) | 19 checks passed |
 | Package verification (interface present twice, files non-empty, no tests or tooling inside the package) | passed |
 | Installed application: **the start page and every file it references are served** | passed |
 | Installed application: **the window shows real content, not a blank screen** (its pixels are captured and counted) | passed |
 | Installed application: **the interface reports a successful start** and no start-up error is logged | passed |
-| Installed application: silent install, three shortcuts, launch from the executable, first-run setup, sign-in, balanced journal entry, backup and restore, clean shutdown, relaunch with data intact, uninstall keeping the database | all passed |
+| Installed application: silent install, three shortcuts, launch from the executable, first-run setup, sign-in, balanced journal entry, backup and restore, clean shutdown, relaunch with data intact, uninstall keeping the database | all passed (21 of 21) |
 
 ## 7. What is NOT verified
 

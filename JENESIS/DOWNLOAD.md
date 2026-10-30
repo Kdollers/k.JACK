@@ -18,9 +18,9 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,725,817 bytes (88.4 MB) | in `JEN 0.5.1 Setup.exe.sha256` |
-| `JEN 0.5.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,341,581 bytes (127.2 MB) | in `JEN 0.5.1 Portable.zip.sha256` |
-| `JEN 0.5.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,593,714 bytes (5.3 MB) | in `JEN 0.5.1.zip.sha256` |
+| `JEN 0.5.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,919,111 bytes (88.6 MB) | in `JEN 0.5.1 Setup.exe.sha256` |
+| `JEN 0.5.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,576,670 bytes (127.4 MB) | in `JEN 0.5.1 Portable.zip.sha256` |
+| `JEN 0.5.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,628,713 bytes (5.4 MB) | in `JEN 0.5.1.zip.sha256` |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
@@ -245,7 +245,7 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 | Check | Result |
 |---|---|
-| Full automated suite (Linux, real SQLite driver) | **293 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
+| Full automated suite (Linux, real SQLite driver) | **312 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
 | Three applications (identity, colours, menus, landing screens, per-application themes, one shared database, installer shortcuts, packaging) | **12 checks passed** |
 | Branding and the J identity (no G logo anywhere, no stale GENESIS text, three different icons) | **12 checks passed** |
 | Theme rules: Light/Dark/System, immediate switching, persistence, first paint, tokens, contrast, Electron bridge, per-application keys | **34 checks passed** |
@@ -255,23 +255,31 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 | Messenger (delivery, receipts, permissions, company isolation, live push, no text in logs) | **18 checks passed** |
 | User guide (en/fr/rw parity, completeness, agreement with the code) | **14 checks passed** |
 | Production build (Vite) | **success** |
-| Packaged-application verification (no test code, no bundled database, SQLite binary present) | **success** |
-| Installed-application smoke test on a clean Windows Server 2022 VM | **18/18 PASS** |
+| Packaged-application verification (no test code, no bundled database, SQLite binary present, **interface present as a real directory and complete**) | **success** |
+| Production start-up (start-up guard, CSP, packaged interface location, shell verification, diagnostics) | **19 checks passed** |
+| Installed-application smoke test on a clean Windows Server 2022 VM | **21/21 PASS** |
 
-The 18 installed-application checks: silent install → shortcuts → starts from
+The 21 installed-application checks: silent install → shortcuts → starts from
 the executable with no manual server or terminal → backend on loopback only →
-no external browser → unauthenticated requests refused → first-run setup →
-sign-in → balanced journal entry → trial balance balanced → backup export →
-graceful shutdown (all processes exit) → relaunch, data persists → backup
-restore keeps a pre-restore copy → clean close → **the installed build ships
-both themes** → silent uninstall keeps the business database.
+no external browser → **the installed application serves its start page and
+every file it references** → unauthenticated requests refused → first-run setup
+→ sign-in → **the window shows real content and not a blank screen (its pixels
+are captured and counted)** → **the interface reports a successful start and no
+start-up error is logged** → balanced journal entry → trial balance balanced →
+backup export → graceful shutdown (all processes exit) → relaunch, data
+persists → backup restore keeps a pre-restore copy → clean close → **the
+installed build ships both themes** → silent uninstall keeps the business
+database.
 
 **Not executed — please read:**
 
 - **The installer has never been run on a physical Windows PC.** It was
   installed, launched and used by an automated script on a GitHub-hosted
   Windows Server 2022 virtual machine. Real PCs differ (antivirus, SmartScreen,
-  GPU/driver behaviour, user account control).
+  GPU/driver behaviour, user account control). The white screen reported on a
+  real HP computer could not be reproduced there, which is why the application
+  now checks itself at start-up and shows a diagnosis instead of a blank
+  window.
 - **Neither theme has been looked at by a human or a browser.** The build
   environment has no display, so the themes were verified by measurement
   (128 text/background pairs, all ≥ 4.5:1 contrast in both themes; every colour
@@ -307,12 +315,12 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.1 Setup.exe` | 92,723,860 (88.4 MB) | in `JEN 0.5.1 Setup.exe.sha256`, next to the download |
-| `JEN 0.5.1 Portable.zip` | 133,341,677 (127.2 MB) | in `JEN 0.5.1 Portable.zip.sha256`, next to the download |
-| `JEN 0.5.1.zip` | 5,593,714 (5.3 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
+| `JEN 0.5.1 Setup.exe` | 92,919,111 (88.6 MB) | in `JEN 0.5.1 Setup.exe.sha256`, next to the download |
+| `JEN 0.5.1 Portable.zip` | 133,576,670 (127.4 MB) | in `JEN 0.5.1 Portable.zip.sha256`, next to the download |
+| `JEN 0.5.1.zip` | 5,628,713 (5.4 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**293 automated checks** and **18/18
+named on the release page (**312 automated checks** and **21/21
 installed-application checks** on that build).
 
 Every push rebuilds and republishes these files, so a later build carries a

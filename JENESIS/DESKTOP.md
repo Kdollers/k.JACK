@@ -118,7 +118,7 @@ Both jobs of `.github/workflows/windows-installer.yml` are green:
 - `npm ci` on Windows Server 2022 (Python 3.11 present for node-gyp; `better-sqlite3`
   is pinned to 12.x, which supports the Node 20 runtime used by Electron 33).
 - `npm run test:all` on the runner: 165 checks, 0 failed.
-- `npm run desktop:dist` produced **`release/JEN 0.5.1 Setup.exe`** (88.4 MB).
+- `npm run desktop:dist` produced **`release/JEN 0.5.1 Setup.exe`** (88.6 MB).
 - `node scripts/verify-package.cjs release/win-unpacked` passed.
 - `scripts/smoke-test-installed.ps1` — **17/17 installed-application checks**:
   silent install, shortcuts, backend start on loopback, no external browser,

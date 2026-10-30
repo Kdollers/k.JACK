@@ -65,7 +65,7 @@ data). The installer is uploaded as the `JENESIS-Windows-installer` artifact.
 
 That pipeline has run green repeatedly; the most recent verification was CI run
 **40963360751** (18/18 installed-application checks), which produced
-`JEN 0.5.1 Setup.exe` (88.4 MB) and passed **18/18** installed-application
+`JEN 0.5.1 Setup.exe` (88.6 MB) and passed **21/21** installed-application
 checks, including "data survives a relaunch" and "uninstall keeps the database".
 Download the artifact from that run (or from the latest green run) — it is the
 verified installer. It is unsigned, so SmartScreen will warn until a code-signing
