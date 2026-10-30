@@ -3,7 +3,7 @@ name: JENESIS Windows installer
 # Builds and verifies the JENESIS desktop installer for Windows.
 #
 # Job 1 (tests) runs the whole suite on Linux on every push.
-# Job 2 (installer) produces release/JENESIS-Setup-<version>.exe on Windows,
+# Job 2 (installer) produces release/JEN 0.5 Setup.exe on Windows,
 # verifies the packaged folder and smoke-tests the INSTALLED application
 # (install -> launch -> first-run setup -> sign-in -> accounting entry ->
 # backup -> close -> relaunch -> data still there -> uninstall keeps data).
@@ -105,8 +105,9 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path ..\ci-logs | Out-Null
-          $installer = Get-ChildItem release -Filter 'JENESIS-Setup-*.exe' | Select-Object -First 1
-          if (-not $installer) { throw 'The installer was not produced.' }
+          $installerName = 'JEN 0.5 Setup.exe'
+          $installer = Get-ChildItem release -Filter $installerName | Select-Object -First 1
+          if (-not $installer) { throw "The installer $installerName was not produced." }
           Write-Host "Installer: $($installer.FullName)"
           # Run in a child process so the transcript is written even when the test exits non-zero.
           pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-test-installed.ps1 -InstallerPath $installer.FullName 2>&1 |
@@ -138,8 +139,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $installer = Get-ChildItem release -Filter 'JENESIS-Setup-*.exe' | Select-Object -First 1
-          if (-not $installer) { throw 'The installer was not produced.' }
+          $installerName = 'JEN 0.5 Setup.exe'
+          $installer = Get-ChildItem release -Filter $installerName | Select-Object -First 1
+          if (-not $installer) { throw "The installer $installerName was not produced." }
 
           $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
           "$hash  $($installer.Name)" | Out-File -FilePath "release\$($installer.Name).sha256" -Encoding ascii
@@ -151,7 +153,7 @@ jobs:
           # installer (directories.output = release).
           $unpacked = 'release\win-unpacked'
           if (-not (Test-Path $unpacked)) { throw "$unpacked is missing: nothing to package." }
-          $zip = "release\JENESIS-Portable-$version.zip"
+          $zip = "release\JEN 0.5 Portable.zip"
           if (Test-Path $zip) { Remove-Item $zip -Force }
           Compress-Archive -Path "$unpacked\*" -DestinationPath $zip -CompressionLevel Optimal
           $zipItem = Get-Item $zip
@@ -167,12 +169,25 @@ jobs:
             "| ``$($zipItem.Name)`` | $([math]::Round($zipItem.Length / 1MB, 1)) MB | ``$zipHash`` |"
           )
           $summary = $env:GITHUB_STEP_SUMMARY
-          "### JENESIS $version — downloadable files" | Out-File -FilePath $summary -Encoding utf8
+          "### JEN 0.5 — downloadable files" | Out-File -FilePath $summary -Encoding utf8
           '' | Out-File -FilePath $summary -Append -Encoding utf8
           '| File | Size | SHA-256 |' | Out-File -FilePath $summary -Append -Encoding utf8
           '|---|---|---|' | Out-File -FilePath $summary -Append -Encoding utf8
           $table | Out-File -FilePath $summary -Append -Encoding utf8
           $table | Out-File -FilePath release\download-table.md -Encoding utf8
+
+      - name: Stage the JEN 0.5 release folder
+        if: success()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $folder = 'release\JEN 0.5'
+          New-Item -ItemType Directory -Force -Path $folder | Out-Null
+          Copy-Item 'release\JEN 0.5 Setup.exe' $folder -Force
+          Copy-Item 'release\JEN 0.5 Portable.zip' $folder -Force
+          Get-ChildItem release -Filter '*.sha256' | ForEach-Object { Copy-Item $_.FullName $folder -Force }
+          if (Test-Path 'release\download-table.md') { Copy-Item 'release\download-table.md' $folder -Force }
+          Get-ChildItem $folder | ForEach-Object { Write-Host "release folder: $($_.Name)  $([math]::Round($_.Length / 1MB, 1)) MB" }
 
       - name: Upload the installer
         if: always()
@@ -188,7 +203,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JENESIS-Portable
+          name: JEN 0.5 Portable
           path: |
             JENESIS/release/*.zip
             JENESIS/release/*.zip.sha256
@@ -215,15 +230,15 @@ jobs:
           $table  = if (Test-Path release\download-table.md) { (Get-Content release\download-table.md -Raw).Trim() } else { '' }
 
           $notes = @"
-          JENESIS $version — Windows desktop accounting application.
+          JEN 0.5 — JENESIS desktop accounting application (Seller, Maintenance, Admin).
 
-          **Install:** download ``JENESIS-Setup-$version.exe``, double-click it, accept the
+          **Install:** download ``JEN 0.5 Setup.exe``, double-click it, accept the
           SmartScreen prompt (More info -> Run anyway), and follow the installer.
           JENESIS then appears on the Desktop and in the Start menu — no command
           prompt needed. See ``DOWNLOAD.md`` in the repository for details, database
           location and backup instructions.
 
-          **Portable:** ``JENESIS-Portable-$version.zip`` runs without installing
+          **Portable:** ``JEN 0.5 Portable.zip`` runs without installing
           (unzip, then double-click ``JENESIS.exe``).
 
           ## What this build is
@@ -264,7 +279,7 @@ jobs:
             gh release upload $tag $assets --clobber --repo ${{ github.repository }}
           } else {
             Write-Host "creating release $tag"
-            gh release create $tag $assets --title "JENESIS $version" --notes-file ..\release-notes.md --repo ${{ github.repository }}
+            gh release create $tag $assets --title "JEN 0.5" --notes-file ..\release-notes.md --repo ${{ github.repository }}
           }
 
       - name: Upload diagnostics when something fails

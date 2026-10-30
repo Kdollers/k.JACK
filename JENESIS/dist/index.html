@@ -10,10 +10,30 @@
        * Theme bootstrap: runs before the first paint so the saved theme is
        * already applied and the interface never flashes the wrong colours.
        * Kept in sync with src/theme.mjs (tests/theme.test.js executes it).
+       *
+       * Each application remembers its own theme: the key is
+       * jenesis_theme:<app>, with the old single-key jenesys_theme value as a
+       * fallback so nobody loses the setting they chose before the split.
        */
       (function () {
         try {
-          var pref = localStorage.getItem('jenesis_theme');
+          var appId = '';
+          try {
+            if (window.genesisDesktop && window.genesisDesktop.app) {
+              appId = window.genesisDesktop.app;
+            }
+            if (!appId && typeof location !== 'undefined' && location.search) {
+              var match = /[?&]app=([a-z]+)/.exec(location.search);
+              if (match) appId = match[1];
+            }
+            if (!appId) appId = localStorage.getItem('jenesis_app') || '';
+          } catch (appErr) { /* no application hint: the launcher is used */ }
+          if (appId !== 'seller' && appId !== 'maintenance' && appId !== 'admin') appId = '';
+
+          var pref = appId ? localStorage.getItem('jenesis_theme:' + appId) : null;
+          if (pref !== 'light' && pref !== 'dark' && pref !== 'system') {
+            pref = localStorage.getItem('jenesis_theme');
+          }
           if (pref !== 'light' && pref !== 'dark' && pref !== 'system') {
             pref = 'light';
           }
@@ -28,15 +48,21 @@
           }
           root.setAttribute('data-theme', dark ? 'dark' : 'light');
           root.style.colorScheme = dark ? 'dark' : 'light';
+          if (appId) {
+            root.setAttribute('data-app', appId);
+            // The right icon before the first paint as well.
+            var icon = document.head && document.querySelector && document.querySelector('link[rel="icon"]');
+            if (icon) icon.setAttribute('href', '/favicon-' + appId + '.png');
+          }
         } catch (err) {
           /* storage unavailable: Light Mode is used */
         }
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-ws7hI9Np.js"></script>
+    <script type="module" crossorigin src="/assets/index-VryQn_Sv.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/icons-DACbyBbO.js">
     <link rel="modulepreload" crossorigin href="/assets/react-jMHtK33S.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-DXPlN5SC.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-XeLKajCd.css">
   </head>
   <body class="bg-canvas text-ink overflow-x-hidden antialiased">
     <div id="root"></div>

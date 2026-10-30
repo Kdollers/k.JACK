@@ -58,7 +58,15 @@ test('the product is called JENESIS everywhere a user can see it', () => {
   assert.strictEqual(pkg.build.copyright, 'Copyright (c) JENESIS');
   assert.strictEqual(pkg.author, 'JENESIS');
   assert.strictEqual(pkg.description, 'JENESIS - Professional Business Accounting & Management Software');
-  assert.strictEqual(pkg.build.win.artifactName, 'JENESIS-Setup-${version}.${ext}');
+  // The installer file is named after the release: "JEN 0.5 Setup.exe".
+  assert.ok(
+    /^JEN \d+\.\d+ Setup\.\$\{ext\}$/.test(pkg.build.win.artifactName),
+    `the installer file must be named "JEN <release> Setup.exe" (found ${pkg.build.win.artifactName})`
+  );
+  assert.ok(
+    pkg.build.win.artifactName.includes(pkg.version.split('.').slice(0, 2).join('.')),
+    `the installer name (${pkg.build.win.artifactName}) and the version (${pkg.version}) must agree`
+  );
   assert.strictEqual(pkg.build.nsis.shortcutName, 'JENESIS');
   assert.strictEqual(pkg.build.nsis.uninstallDisplayName, 'JENESIS');
 });
