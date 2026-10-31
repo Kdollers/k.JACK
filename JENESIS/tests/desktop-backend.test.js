@@ -59,14 +59,28 @@ function startBackend(dbPath, port, extraEnv = {}) {
   return proc.start(port).then(() => proc);
 }
 
-function getJson(url) {
+function getJson(url, timeoutMs = 8000) {
   return new Promise((resolve, reject) => {
-    http.get(url, (res) => {
+    const req = http.get(url, (res) => {
       let data = '';
       res.on('data', (c) => { data += c; });
       res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, text: data }));
-    }).on('error', reject);
+    });
+    // A request that is never answered must not stop the suite: it is a failed
+    // request, and the test that made it says which one.
+    req.setTimeout(timeoutMs, () => req.destroy(new Error(`no answer within ${timeoutMs} ms: ${url}`)));
+    req.on('error', reject);
   });
+}
+
+/** True only when the answer really comes from JENESIS. */
+function isJenesis(res) {
+  if (!res) return false;
+  try {
+    return JSON.parse(res.text).appId === 'genesis-accounting';
+  } catch (_) {
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -112,10 +126,43 @@ test('backend binds only to the loopback interface', async () => {
     const nets = os.networkInterfaces();
     const lan = Object.values(nets).flat().find((i) => i && i.family === 'IPv4' && !i.internal);
     if (lan) {
-      await assert.rejects(
-        () => getJson(`http://${lan.address}:${port}/api/health`),
-        'backend must not listen on a LAN address'
-      );
+      // The address must not reach THIS backend. An unrelated service can own
+      // the port in a shared network namespace, so a reply only matters when it
+      // is JENESIS that answers.
+      let reached = false;
+      let detail = '';
+      try {
+        const res = await getJson(`http://${lan.address}:${port}/api/health`);
+        reached = isJenesis(res);
+        detail = `status ${res.status}`;
+      } catch (err) {
+        reached = false;
+        detail = err && err.code ? err.code : String(err && err.message);
+      }
+      if (reached) {
+        // Before failing, prove the address really is a network path and not a
+        // host that delivers its own addresses to loopback (containers and some
+        // CI images do): a server bound to 127.0.0.1 only must be unreachable
+        // through that address too.
+        const controlPort = await findFreePort();
+        const control = http.createServer((req, res) => res.end('{"appId":"genesis-accounting"}'));
+        await new Promise((resolve) => control.listen(controlPort, '127.0.0.1', resolve));
+        let loopbackReachable = false;
+        try {
+          loopbackReachable = isJenesis(await getJson(`http://${lan.address}:${controlPort}/api/health`));
+        } catch (_) {
+          loopbackReachable = false;
+        }
+        await new Promise((resolve) => control.close(resolve));
+        if (loopbackReachable) {
+          console.log(`    note: ${lan.address} is delivered to loopback on this host, so it cannot prove where the backend listens`);
+        }
+        assert.strictEqual(
+          loopbackReachable,
+          true,
+          `the backend answered on the LAN address ${lan.address}:${port} while a loopback-only server on the same address did not (${detail})`
+        );
+      }
     }
     const res = await getJson(`http://127.0.0.1:${port}/api/health`);
     assert.strictEqual(res.status, 200);
