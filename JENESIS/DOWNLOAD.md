@@ -18,13 +18,13 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,919,376 bytes (88.6 MB) | in `JEN 0.5.1 Setup.exe.sha256` |
-| `JEN 0.5.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,576,615 bytes (127.4 MB) | in `JEN 0.5.1 Portable.zip.sha256` |
-| `JEN 0.5.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,630,489 bytes (5.4 MB) | in `JEN 0.5.1.zip.sha256` |
+| `JEN 0.5.2 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,918,784 bytes (88.6 MB) | `2bf5f400e65f55d6f99495b440633692cb4f6ea08404db5bab61e8dbd2a52797` |
+| `JEN 0.5.2 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,576,919 bytes (127.4 MB) | `cf32eaa38118fecce52dcd0e08ed5539ad883f70b7e934760e90d6c17f52a032` |
+| `JEN 0.5.2.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,636,662 bytes (5.4 MB) | `b9b977509c552da17cc3a480ec7c1530712b3f29c98af07f8a4b828eb5a42db5` |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
-> (`JEN.0.5.1.Setup.exe`). It is the same file; rename it after downloading if
+> (`JEN.0.5.2.Setup.exe`). It is the same file; rename it after downloading if
 > you prefer spaces.
 
 Both files are built by GitHub Actions from this exact commit and are the same
@@ -34,35 +34,43 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 ---
 
-### Repaired in this build — JEN 0.5.1
+### Repaired in this build — JEN 0.5.2
 
-**The white screen is fixed.** The previous build could install correctly,
-start its service correctly and still open an **empty white window** in all
-three applications, because the built interface was served from inside
-`app.asar` only: when that copy could not be read, no HTML, JavaScript or CSS
-reached the window and nothing was written to any log. This build:
+**The crash that appeared as soon as you signed in is fixed.** In JEN 0.5.1 the
+three applications could stop on *“JENESIS could not display this screen”* the
+moment a user signed in — no accounting record was changed, but the interface
+was gone, in all three applications at once.
 
-- ships the interface **twice** — a real `resources\app-frontend` directory
-  (preferred, readable by every process) and the copy inside `app.asar`
-  (fallback) — and switches to the other one automatically if the first cannot
-  be served;
-- **verifies the interface before the window appears**: the start page and every
-  file it references are fetched from the running application, and the log names
-  any file that is missing (`%APPDATA%\JENESIS\logs\desktop.log`);
-- **never leaves a blank window**: a start-up guard (`boot.js`) keeps a visible
-  “Starting JENESIS…” card on screen, catches a file that fails to load, a
-  script error and a stalled start, and shows a translated message with the
-  reason, a *Try again* button and *Copy details*;
-- **paints your saved Light/Dark theme again** — the bootstrap used to be an
-  inline script, which the production Content-Security-Policy blocks, so it is
-  now a file of its own;
-- is **tested the way the failure looked**: the installed application is asked
-  for its interface files, the window is captured and its pixels are inspected
-  (a blank window has one colour, a real interface has thousands), and the
-  interface must report a successful start in the log.
+The cause: the header (the same one in Seller, Maintenance and Admin) draws the
+JENESIS Messenger button, and that file drew the icon **without importing it**,
+so the interface threw `ReferenceError: MessageSquare is not defined` the first
+time it rendered the signed-in window. A missing import does not break a build —
+an unknown name is treated as a global — so the installer was produced and the
+failure appeared only on your screen. This build:
 
-Nothing else was removed, renamed or replaced: the database, the internal
-identifiers, the accounting engine and every existing feature are unchanged.
+- **imports the icon the header draws**;
+- **adds an automated check that no interface file may draw a component it does
+  not import** — every screen of the three applications and all of their icons
+  are scanned — and **runs it before every production build**, so this class of
+  defect can no longer be packaged at all (`tests/ui-imports.test.js`, then
+  `npm run build`);
+- **answers `genesis:get-app-info` with the application of the window that
+  asks**, instead of the one that was opened last, so a second window is no
+  longer told it is a different application than the one it is showing;
+- **records the signed-in screen in the log**
+  (`%APPDATA%\JENESIS\logs\desktop.log`, `renderer: signed-in`), so the exact
+  moment a failure happens can always be read afterwards.
+
+Carried over from JEN 0.5.1: the interface ships twice (a real
+`resources\app-frontend` directory, preferred, and the copy inside `app.asar` as
+a fallback) and switches automatically; it is verified before the window is
+shown; it reports a translated message instead of a blank window when it cannot
+start or crashes; and it paints your saved Light/Dark theme before the first
+frame.
+
+Nothing was removed, renamed or replaced to make this possible: the database,
+the internal identifiers, the accounting engine and every existing feature are
+unchanged.
 
 ### New in JEN 0.5
 
@@ -102,13 +110,13 @@ identifiers, the accounting engine and every existing feature are unchanged.
 ### Recommended — GitHub release (permanent, no sign-in needed)
 
 - **Installer:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.1/JEN.0.5.1.Setup.exe>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.2/JEN.0.5.2.Setup.exe>
 - **Portable ZIP:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.1/JEN.0.5.1.Portable.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.2/JEN.0.5.2.Portable.zip>
 - **Source backup:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.1/JEN.0.5.1.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.2/JEN.0.5.2.zip>
 - **All files for this version:**
-  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.1>
+  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.2>
 
 ### Alternative — build artifacts of the workflow run
 
@@ -118,8 +126,8 @@ If you prefer the files exactly as the build job produced them:
 2. Click the **most recent completed (green) run** at the top of the list, then
    scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`),
-   **`JEN 0.5.1 Portable`** (the portable `.zip` and its `.sha256`) or
-   **`JEN 0.5.1 source backup`** (the source `.zip` and its `.sha256`)
+   **`JEN 0.5.2 Portable`** (the portable `.zip` and its `.sha256`) or
+   **`JEN 0.5.2 source backup`** (the source `.zip` and its `.sha256`)
 
 Artifacts require being signed in to GitHub and are kept for 90 days; the
 release above does not expire.
@@ -129,12 +137,12 @@ release above does not expire.
 ## 3. Verify what you downloaded (optional but recommended)
 
 The exact checksums of this build are printed in the table in §7 and are also
-attached to the release as `JEN 0.5.1 Setup.exe.sha256`. To check a file on
+attached to the release as `JEN 0.5.2 Setup.exe.sha256`. To check a file on
 Windows, open the folder in File Explorer, type `cmd` in the address bar… — or
 simply use PowerShell from the folder's context menu:
 
 ```powershell
-certutil -hashfile "JEN 0.5.1 Setup.exe" SHA256
+certutil -hashfile "JEN 0.5.2 Setup.exe" SHA256
 ```
 
 The value must match the SHA-256 in §7 / in the `.sha256` file.
@@ -143,7 +151,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ## 4. Installing on Windows (no command prompt, no code)
 
-1. Download `JEN 0.5.1 Setup.exe` from the link above.
+1. Download `JEN 0.5.2 Setup.exe` from the link above.
 2. **Double-click** the downloaded file.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the
    installer is not code-signed. Click **More info → Run anyway**.
@@ -187,7 +195,7 @@ so a sale recorded in Seller appears at once in the Admin reports.
 
 ### Portable package
 
-Unzip `JEN 0.5.1 Portable.zip` and double-click **`JENESIS.exe`**. The portable
+Unzip `JEN 0.5.2 Portable.zip` and double-click **`JENESIS.exe`**. The portable
 build opens the chooser; to start one application directly, make your own
 shortcut to `JENESIS.exe --app=seller` (or `--app=maintenance` /
 `--app=admin`).
@@ -245,7 +253,7 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 | Check | Result |
 |---|---|
-| Full automated suite (Linux, real SQLite driver) | **312 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
+| Full automated suite (Linux, real SQLite driver) | **321 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
 | Three applications (identity, colours, menus, landing screens, per-application themes, one shared database, installer shortcuts, packaging) | **12 checks passed** |
 | Branding and the J identity (no G logo anywhere, no stale GENESIS text, three different icons) | **12 checks passed** |
 | Theme rules: Light/Dark/System, immediate switching, persistence, first paint, tokens, contrast, Electron bridge, per-application keys | **34 checks passed** |
@@ -256,10 +264,11 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 | User guide (en/fr/rw parity, completeness, agreement with the code) | **14 checks passed** |
 | Production build (Vite) | **success** |
 | Packaged-application verification (no test code, no bundled database, SQLite binary present, **interface present as a real directory and complete**) | **success** |
-| Production start-up (start-up guard, CSP, packaged interface location, shell verification, diagnostics) | **19 checks passed** |
-| Installed-application smoke test on a clean Windows Server 2022 VM | **26/26 PASS** |
+| Production start-up (start-up guard, CSP, packaged interface location, shell verification, diagnostics, per-window identity, signed-in report) | **21 checks passed** |
+| Interface import gate (nothing is drawn that is not imported, every icon exists, every import resolves and is exported, the three applications share the rules) | **7 checks passed** |
+| Installed-application smoke test on a clean Windows Server 2022 VM | **27/27 PASS** |
 
-The 26 installed-application checks: silent install → shortcuts → starts from
+The 27 installed-application checks: silent install → shortcuts → starts from
 the executable with no manual server or terminal → backend on loopback only →
 no external browser → **the installed application serves its start page and
 every file it references** → unauthenticated requests refused → first-run setup
@@ -272,8 +281,21 @@ installed build ships both themes** → **three desktop shortcuts, each named fo
 its application, each carrying its own `--app=` argument and its own icon** →
 **JENESIS Seller, JENESIS Maintenance and JENESIS Admin each opened from their
 own shortcut, each showing a real interface and reporting a start** → **the
-three running side by side on one shared company** → silent uninstall keeps the
-business database.
+three running side by side on one shared company** → **the credentials are
+typed into the window with the keyboard, the way a user signs in, and any error
+the interface reports fails the run** → silent uninstall keeps the business
+database.
+
+> **What the typed sign-in does and does not prove.** The step opens JENESIS
+> Admin, types the username, the password and `Enter` into the window, then
+> fails on any `renderer: render-error`, `ReferenceError` or `is not defined`
+> line in `desktop.log` — the failure this release repairs, and it is written to
+> the log whenever it happens. Whether the keys actually reach the interface
+> depends on the machine: the GitHub runner reported **NOT confirmed**, meaning
+> the interface did not confirm that it reached the signed-in screen there, so
+> the signed-in interface is **not** claimed to have been exercised on that
+> runner. Every build prints the value its own run recorded (`confirmed` /
+> `NOT confirmed`) in the release notes.
 
 **Not executed — please read:**
 
@@ -319,16 +341,16 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.1 Setup.exe` | 92,919,376 (88.6 MB) | in `JEN 0.5.1 Setup.exe.sha256`, next to the download |
-| `JEN 0.5.1 Portable.zip` | 133,576,615 (127.4 MB) | in `JEN 0.5.1 Portable.zip.sha256`, next to the download |
-| `JEN 0.5.1.zip` | 5,630,489 (5.4 MB) | in `JEN 0.5.1.zip.sha256`, next to the download |
+| `JEN 0.5.2 Setup.exe` | 92,918,784 (88.6 MB) | `2bf5f400e65f55d6f99495b440633692cb4f6ea08404db5bab61e8dbd2a52797` |
+| `JEN 0.5.2 Portable.zip` | 133,576,919 (127.4 MB) | `cf32eaa38118fecce52dcd0e08ed5539ad883f70b7e934760e90d6c17f52a032` |
+| `JEN 0.5.2.zip` | 5,636,662 (5.4 MB) | `b9b977509c552da17cc3a480ec7c1530712b3f29c98af07f8a4b828eb5a42db5` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**312 automated checks** and **26/26
+named on the release page (**321 automated checks** and **27/27
 installed-application checks** on that build).
 
 Every push rebuilds and republishes these files, so a later build carries a
 different SHA-256. The numbers printed on
-<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.1> are always the ones
+<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.2> are always the ones
 that belong to the file you are downloading now, and each `.sha256` file sits
 next to its download — compare with `certutil -hashfile <file> SHA256` (§3).

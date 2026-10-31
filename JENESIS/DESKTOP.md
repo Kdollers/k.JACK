@@ -17,7 +17,7 @@ itself healthy, and then opens the JENESIS window. The browser is not needed.
 | Authentication and permission tests | `npm run test:auth` |
 | Run the desktop app from source | `npm run build` then `npm run desktop` |
 | Unpacked Windows build (test folder) | `npm run desktop:pack` → `release/win-unpacked/JENESIS.exe` |
-| Windows installer (NSIS) | `npm run desktop:dist` → `release/JEN 0.5.1 Setup.exe` |
+| Windows installer (NSIS) | `npm run desktop:dist` → `release/JEN 0.5.2 Setup.exe` |
 
 Run the Windows packaging commands on Windows 10/11 (x64) with Node.js 20 or newer.
 
@@ -92,7 +92,7 @@ the theme never touches accounting data.
 Workflow: `.github/workflows/windows-installer.yml` (repository root). It runs on pushes to `arena/**`
 and on manual dispatch, and performs:
 1. `npm ci` and `npm run test:all` (accounting, authentication, desktop backend lifecycle).
-2. `npm run desktop:dist`: builds the frontend and the NSIS installer `release/JEN 0.5.1 Setup.exe` (the name comes from `build.win.artifactName`).
+2. `npm run desktop:dist`: builds the frontend and the NSIS installer `release/JEN 0.5.2 Setup.exe` (the name comes from `build.win.artifactName`).
 3. `node scripts/verify-package.cjs release/win-unpacked`: checks the packaged app contains the
    required files and the unpacked SQLite native binary, and contains no tests, no Electron dev
    package and no database.
@@ -111,23 +111,32 @@ if `%APPDATA%\JENESIS` already exists, so it cannot touch a real business databa
 the executable name, data folder, process name, shortcut names and uninstaller from its `-AppName`
 parameter (default `JENESIS`), so `-AppName GENESIS` still smoke-tests an old build.
 
-### Verified on Windows CI (run 40963360751, branch `arena/a2c625e8-k-jack`)
+### Verified on Windows CI (run 41231907095, branch `arena/a2c625e8-k-jack`)
 
 Both jobs of `.github/workflows/windows-installer.yml` are green:
 
 - `npm ci` on Windows Server 2022 (Python 3.11 present for node-gyp; `better-sqlite3`
   is pinned to 12.x, which supports the Node 20 runtime used by Electron 33).
-- `npm run test:all` on the runner: 165 checks, 0 failed.
-- `npm run desktop:dist` produced **`release/JEN 0.5.1 Setup.exe`** (88.6 MB).
+- `npm run test:all` on the runner: 321 checks, 0 failed.
+- `npm run desktop:dist` produced **`release/JEN 0.5.2 Setup.exe`** (88.6 MB).
 - `node scripts/verify-package.cjs release/win-unpacked` passed.
-- `scripts/smoke-test-installed.ps1` — **17/17 installed-application checks**:
+- `scripts/smoke-test-installed.ps1` — **27/27 installed-application checks**:
   silent install, shortcuts, backend start on loopback, no external browser,
-  unauthenticated refusal, first-run setup, sign-in, journal entry, balanced trial
-  balance, backup export, graceful close, relaunch with data kept, backup restore
-  with a pre-restore copy, silent uninstall that keeps `%APPDATA%\JENESIS\genesis.db`.
+  **the installed application serves its start page and every file it
+  references**, unauthenticated refusal, first-run setup, sign-in, **the window
+  showing real content and not a blank screen (its pixels are captured and
+  counted)**, **the interface reporting a successful start and no start-up
+  error**, journal entry, balanced trial balance, backup export, graceful close,
+  relaunch with data kept, backup restore with a pre-restore copy, **both themes
+  present in the installed package**, **each of the three shortcuts opening its
+  own application with a real interface**, **the three running side by side on
+  one company**, **the credentials typed into the window with the keyboard (any
+  error the interface reports fails the run — on this runner the interface did
+  not confirm the keys arrived, and the release notes print that)**, and silent
+  uninstall that keeps `%APPDATA%\JENESIS\genesis.db`.
 - The installer is uploaded as the `JENESIS-Windows-installer` artifact.
 
-Locally (development sandbox, 2026-10-29): the same 165 checks pass and
+Locally (development sandbox): the same 321 checks pass and
 `npm run build` succeeds; the production server serves the built UI and refuses
 anonymous API calls. The sandbox cannot produce Windows binaries — every Windows
 result above comes from CI.

@@ -10,18 +10,18 @@ This is the **consolidated JENESIS application**: the features of the previous
 `JEN 0.2` and `JAN 0.3` archives, merged into one project — plus a full
 **Light / Dark / System theme system**, a **keyboard layer**, **JENESIS
 Messenger**, documents that are **created PAID**, and a trilingual
-**user guide** — verified by **312 automated checks**.
+**user guide** — verified by **321 automated checks**.
 
 - **Download the Windows installer / portable package**: [`DOWNLOAD.md`](DOWNLOAD.md)
 - **Merge report** (what came from where, bugs fixed, test results): [`MERGE-REPORT.md`](MERGE-REPORT.md)
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)
 
-Status: **312 automated checks pass** (locally and on Linux CI, with the real
+Status: **321 automated checks pass** (locally and on Linux CI, with the real
 SQLite driver) and the **Windows installer is built and smoke-tested on a
-GitHub-hosted Windows runner** on every push — `JEN 0.5.1 Setup.exe`
+GitHub-hosted Windows runner** on every push — `JEN 0.5.2 Setup.exe`
 (~92.6 MB) is **published as a GitHub release** together with
-`JEN 0.5.1 Portable.zip` (~127 MB) and SHA-256 checksums. Get them from
+`JEN 0.5.2 Portable.zip` (~127 MB) and SHA-256 checksums. Get them from
 [`DOWNLOAD.md`](DOWNLOAD.md) or the release page. It is unsigned and has not
 been run on a physical PC, and **no human or browser engine has looked at the
 rendered interface** (the sandbox has no display; themes are verified by tests,
@@ -168,7 +168,7 @@ npm install
 npm test
 ```
 
-### 3. Run the Whole Suite (312 checks)
+### 3. Run the Whole Suite (321 checks)
 ```bash
 npm run test:all
 
@@ -176,7 +176,7 @@ npm run test:all
 npm run test:all 2>&1 | node scripts/count-checks.mjs
 ```
 Individual suites: `npm run test:auth`, `npm run test:security`, `npm run test:desktop`,
-`npm run test:ops`, `npm run test:migrations`, `npm run test:i18n`, `npm run test:fx`
+`npm run test:ops`, `npm run test:migrations`, `npm run test:i18n`, `npm run test:ui-imports` (no component is drawn without being imported, every icon exists — this also runs before every production build), `npm run test:fx`
 (FX settlement), `npm run test:fxreval` (FX revaluation integrity),
 `npm run test:settlement` (documents created PAID), `npm run test:shortcuts`
 (keyboard layer), `npm run test:messenger` (Messenger), `npm run test:help`
@@ -194,7 +194,7 @@ The server will start on port `3000` (e.g., `http://localhost:3000`).
 ```bat
 build-installer.bat          :: or: npm ci && npm run desktop:dist
 ```
-Produces `release\JEN 0.5.1 Setup.exe`. See [`INSTALL.md`](INSTALL.md).
+Produces `release\JEN 0.5.2 Setup.exe`. See [`INSTALL.md`](INSTALL.md).
 
 ---
 
