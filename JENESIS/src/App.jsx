@@ -44,6 +44,18 @@ function AppContent() {
     if (!canOpen(activeView)) setActiveView(landingView(activeView));
   }, [appId, activeView, canOpen, landingView, setActiveView]);
 
+  // Diagnostic only: tell the desktop shell that the signed-in interface is on
+  // screen. The shared header is drawn from this moment on, so this is the
+  // stage a signed-in failure stops at. No business data and no name is sent —
+  // only the fact that the interface got there.
+  useEffect(() => {
+    if (authState !== 'ready') return;
+    const bridge = typeof window === 'undefined' ? null : (window.genesisDesktop || window.jenesisDesktop);
+    if (bridge && typeof bridge.reportStartup === 'function') {
+      bridge.reportStartup('signed-in', 'the signed-in interface is displayed');
+    }
+  }, [authState]);
+
   if (authState === 'setup') return <SetupScreen />;
   if (authState === 'login') return <LoginScreen />;
   if (authState === 'change-password') return <ChangePasswordScreen />;

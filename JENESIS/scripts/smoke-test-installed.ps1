@@ -194,6 +194,55 @@ function Wait-ForAppWindow([int] $TimeoutSec = 120) {
   return $fallback
 }
 
+# ---------------------------------------------------------------------------
+# Driving the interface with the keyboard.
+#
+# The application can answer every question perfectly and still be unusable:
+# the previous release drew the shared header with an icon it never imported,
+# so all three applications crashed the moment a user signed in. That path is
+# only reached when the INTERFACE signs in, not when a script calls the API,
+# so the smoke test types the credentials into the window exactly as a user
+# does and then waits for the shell to say the signed-in interface is on
+# screen (and that nothing reported an error).
+# ---------------------------------------------------------------------------
+if (-not ('Win32.Focus' -as [type])) {
+  Add-Type -Namespace Win32 -Name Focus -MemberDefinition @'
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+    [DllImport("user32.dll")] public static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+'@
+}
+
+function Set-ForegroundWindow([IntPtr] $Handle) {
+  [void][Win32.Focus]::ShowWindow($Handle, 9) # SW_RESTORE: a minimised window cannot take the focus
+  if ([Win32.Focus]::SetForegroundWindow($Handle)) { Start-Sleep -Milliseconds 400; return $true }
+  # Windows only lets a process take the foreground in some situations; on a
+  # runner the usual way out is to attach to the window's own input queue.
+  $other = 0
+  $target = [Win32.Focus]::GetWindowThreadProcessId($Handle, [ref]$other)
+  $current = [Win32.Focus]::GetCurrentThreadId()
+  if ($target -ne 0 -and $target -ne $current) { [void][Win32.Focus]::AttachThreadInput($current, $target, $true) }
+  $ok = [Win32.Focus]::SetForegroundWindow($Handle)
+  if ($target -ne 0 -and $target -ne $current) { [void][Win32.Focus]::AttachThreadInput($current, $target, $false) }
+  Start-Sleep -Milliseconds 400
+  return $ok
+}
+
+function Send-InterfaceKeys([string] $Text) {
+  # SendKeys reads +, ^, %, ~, (, ), {, } and [ ] as instructions, so every one
+  # of them is sent inside braces instead: the test password ends in "Aa1!".
+  $escaped = -join @($Text.ToCharArray() | ForEach-Object {
+    if ('+^%~(){}[]'.IndexOf($_) -ge 0) { "{$_}" } else { [string]$_ }
+  })
+  [System.Windows.Forms.SendKeys]::SendWait($escaped)
+  Start-Sleep -Milliseconds 150
+}
+
+try { Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop } catch { }
+
 function Close-AppGracefully {
   # Preferred path: send WM_CLOSE to the application window, exactly as a user
   # closing the window would, then wait for every process to exit.
@@ -684,6 +733,46 @@ Step 'The three applications run side by side, each in its own window' {
   Assert ([bool]$url) 'The backend address of the running application was not found in the log.'
   $status = Invoke-Api $url 'GET' '/setup/status'
   Assert ($status.needsSetup -eq $false) 'The company created earlier is not the one the three windows see.'
+  Close-AppGracefully
+}
+
+Step 'Signing in through the interface reaches the signed-in screen' {
+  # The defect this release repairs was only reachable through the interface:
+  # the shared header - the same one in all three applications - is drawn once
+  # a user is signed in, and it threw "ReferenceError: MessageSquare is not
+  # defined". Calling the API never reached it; typing into the window does.
+  # The credentials are typed exactly as a user types them.
+  $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=admin' } | Select-Object -First 1
+  Assert ($null -ne $shortcut) 'The Admin shortcut was not found.'
+  $before = Get-ReadyCount
+  Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
+  $window = Wait-ForTitledWindow 'JENESIS Admin' 90
+  Assert ($null -ne $window) 'No window titled "JENESIS Admin" appeared.'
+  Assert ((Wait-ForInterfaceStart $before 90)) 'Admin did not report that its interface started.'
+  Assert ((Set-ForegroundWindow -Handle $window.Handle)) 'The JENESIS Admin window could not be brought to the front.'
+  Write-Host ("    the window has the keyboard focus: {0}" -f ([Win32.Focus]::GetForegroundWindow() -eq $window.Handle)) -ForegroundColor DarkGray
+  Start-Sleep -Milliseconds 700
+  Send-InterfaceKeys 'smoke.admin'  # the username field is focused when the sign-in screen opens
+  Send-InterfaceKeys '{TAB}'
+  Send-InterfaceKeys $script:Password
+  Send-InterfaceKeys '{ENTER}'
+
+  $deadline = (Get-Date).AddSeconds(90)
+  $signedIn = $false
+  while ((Get-Date) -lt $deadline -and -not $signedIn) {
+    if (Test-Path $LogFile) { $signedIn = [bool](Select-String -Path $LogFile -Pattern 'renderer: signed-in' -Quiet) }
+    if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
+  }
+  Assert ($signedIn) "The interface never reported the signed-in screen. Log: $LogFile"
+  Assert-WindowIsReal $window 'JENESIS Admin (signed in)'
+
+  # A signed-in interface that crashed instead is caught here: the shell writes
+  # every failure of the interface to its log.
+  $errors = @()
+  if (Test-Path $LogFile) {
+    $errors = @(Select-String -Path $LogFile -Pattern 'renderer: render-error|ReferenceError|is not defined' | ForEach-Object { $_.Line })
+  }
+  Assert ($errors.Count -eq 0) "The signed-in interface reported an error: $($errors -join ' | ')"
   Close-AppGracefully
 }
 

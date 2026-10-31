@@ -268,8 +268,8 @@ jobs:
           $releaseName = "JEN $version"
           $notes = @"
           $releaseName — JENESIS desktop accounting application (Seller, Maintenance,
-          Admin). **This is the corrected build that repairs the white screen** the
-          previous release could show after installation.
+          Admin). **This is the corrected build that repairs the crash that appeared
+          as soon as a user signed in** in the previous release.
 
           **Install:** download ``$releaseName Setup.exe``, double-click it, accept the
           SmartScreen prompt (More info -> Run anyway), and follow the installer.

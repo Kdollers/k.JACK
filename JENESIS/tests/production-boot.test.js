@@ -324,6 +324,21 @@ check('each window is told which application it is, not which one opened last', 
   assert.ok(!/\bapp:\s*currentMode\b/.test(handler[0]), 'the answer must not be the shared current mode');
 });
 
+check('the interface reports when the signed-in screen is really on screen', () => {
+  // The shared header is only drawn once a user is signed in, so the installed
+  // application test needs a signal that the interface got that far. The report
+  // carries the fact and nothing else: no name, no company, no record.
+  const appSource = read('src/App.jsx');
+  assert.ok(/reportStartup\(\s*'signed-in'/.test(appSource), 'the signed-in interface must be reported');
+  assert.ok(/authState\s*!==\s*'ready'/.test(appSource), 'the report must only be sent once the session is ready');
+  const report = /reportStartup\(\s*'signed-in',([^)]*)\)/.exec(appSource);
+  assert.ok(report, 'the report must carry a short explanation');
+  assert.ok(
+    !/(currentUser|username|company|token|password)/i.test(report[1]),
+    'the report must not carry business data or credentials'
+  );
+});
+
 check('the shell never shows a window it already knows is empty', () => {
   assert.ok(/reloadOnce\(/.test(mainSource), 'a failed or stalled load must be retried');
   assert.ok(/did not finish within/.test(mainSource), 'a stalled load must have a timeout');
