@@ -264,6 +264,9 @@ jobs:
           $checks = if (Test-Path release\checks.txt) { (Get-Content release\checks.txt -Raw).Trim() } else { 'unknown' }
           $smoke  = if (Test-Path release\smoke.txt)  { (Get-Content release\smoke.txt -Raw).Trim() }  else { 'not recorded' }
           $table  = if (Test-Path release\download-table.md) { (Get-Content release\download-table.md -Raw).Trim() } else { '' }
+          # Did the credentials typed into the window really reach the interface?
+          # The smoke test records it; the notes must never imply more than that.
+          $signin = if (Test-Path release\interface-signin.txt) { (Get-Content release\interface-signin.txt -Raw).Trim() } else { 'not recorded' }
 
           $releaseName = "JEN $version"
           $notes = @"
@@ -324,6 +327,9 @@ jobs:
             reporting a successful start, first-run setup, sign-in, a balanced
             journal entry, backup and restore, clean shutdown, relaunch with the
             data intact, and uninstall keeping the business database.
+          * Credentials typed into the window the way a user signs in: the
+            interface **$signin** it reached the signed-in screen (the run fails
+            on any error the interface reports, whether or not the keys arrive).
 
           ## Checksums
 

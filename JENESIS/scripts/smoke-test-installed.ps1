@@ -771,6 +771,13 @@ Step 'Signing in through the interface reports no error in the interface' {
     if (Test-Path $LogFile) { $signedIn = [bool](Select-String -Path $LogFile -Pattern 'renderer: signed-in' -Quiet) }
     if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
   }
+  # Record the outcome where the release notes can read it: every build must
+  # say whether the typed sign-in really reached the interface, never assume it.
+  try {
+    $releaseDir = Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..')).Path 'release'
+    New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+    Set-Content -Path (Join-Path $releaseDir 'interface-signin.txt') -Value $(if ($signedIn) { 'confirmed' } else { 'NOT confirmed' }) -Encoding ascii
+  } catch { }
   if ($signedIn) {
     Write-Host '    the interface reported the signed-in screen: the shared header is drawn' -ForegroundColor DarkGray
   } else {
