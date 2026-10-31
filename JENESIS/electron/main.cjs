@@ -570,17 +570,27 @@ if (!gotLock) {
   });
 
   // Renderer may only ask for read-only application information.
-  ipcMain.handle('genesis:get-app-info', () => ({
-    name: APP_TITLE,
-    version: app.getVersion(),
-    platform: process.platform,
-    dataDirectory: app.getPath('userData'),
-    packaged: app.isPackaged,
-    // Which application this window was opened as ('seller', 'maintenance',
-    // 'admin' or null for the launcher). Read-only, and only used to pick the
-    // identity of the interface.
-    app: currentMode
-  }));
+  ipcMain.handle('genesis:get-app-info', (event) => {
+    // Which application THIS window was opened as ('seller', 'maintenance',
+    // 'admin' or null for the launcher). It used to answer with the mode of
+    // whichever application was opened last, so a second window was told it
+    // was a different application than the one it is showing.
+    let mode = null;
+    try {
+      const sender = event && event.sender;
+      if (sender) mode = modeOfWindow(BrowserWindow.fromWebContents(sender));
+    } catch (err) {
+      writeLog(`Could not resolve the window for a request: ${err && err.message ? err.message : err}`);
+    }
+    return {
+      name: APP_TITLE,
+      version: app.getVersion(),
+      platform: process.platform,
+      dataDirectory: app.getPath('userData'),
+      packaged: app.isPackaged,
+      app: mode
+    };
+  });
 
   app.whenReady().then(async () => {
     // Deny every browser permission request (camera, geolocation, notifications, ...).

@@ -313,6 +313,17 @@ check('the start-up is logged well enough to diagnose it afterwards', () => {
   assert.ok(mainSource.includes('did-fail-load'), 'a failed load must be recorded');
 });
 
+check('each window is told which application it is, not which one opened last', () => {
+  // A second window used to be told the identity of the last application that
+  // was launched (the shared `currentMode`), so the shell could describe a
+  // window as a different application than the one it was showing.
+  const handler = /ipcMain\.handle\(\s*'genesis:get-app-info'[\s\S]*?\n\s*\}\);/.exec(mainSource);
+  assert.ok(handler, 'the shell must answer genesis:get-app-info');
+  assert.ok(/modeOfWindow\(/.test(handler[0]), 'the answer must come from the window that asked');
+  assert.ok(/BrowserWindow\.fromWebContents\(/.test(handler[0]), 'the asking window must be resolved from the sender');
+  assert.ok(!/\bapp:\s*currentMode\b/.test(handler[0]), 'the answer must not be the shared current mode');
+});
+
 check('the shell never shows a window it already knows is empty', () => {
   assert.ok(/reloadOnce\(/.test(mainSource), 'a failed or stalled load must be retried');
   assert.ok(/did not finish within/.test(mainSource), 'a stalled load must have a timeout');
@@ -321,8 +332,15 @@ check('the shell never shows a window it already knows is empty', () => {
 
 check('the packaged version identifies this corrected build', () => {
   const pkg = readJson('package.json');
-  assert.strictEqual(pkg.version, '0.5.1');
-  assert.strictEqual(pkg.build.win.artifactName, 'JEN 0.5.1 Setup.${ext}');
+  assert.ok(
+    /^0\.5\.\d+$/.test(pkg.version),
+    `this corrected build must keep the JEN 0.5 series (found ${pkg.version})`
+  );
+  assert.strictEqual(
+    pkg.build.win.artifactName,
+    `JEN ${pkg.version} Setup.${'${ext}'}`,
+    `the installer file must be named after the version (${pkg.version})`
+  );
 });
 
 console.log(`--- ${passed} passed, ${failed} failed ---`);

@@ -219,7 +219,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JEN 0.5.1 source backup
+          name: JEN 0.5.2 source backup
           path: |
             JENESIS/release/*.zip
             JENESIS/release/*.zip.sha256
@@ -239,7 +239,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JEN 0.5.1 Portable
+          name: JEN 0.5.2 Portable
           path: |
             JENESIS/release/*.zip
             JENESIS/release/*.zip.sha256
@@ -282,22 +282,34 @@ jobs:
 
           ## What was repaired
 
-          The three applications could open an **empty white window** after
-          installation, because the built interface (``index.html`` and its
-          JavaScript and CSS files) was served from inside ``app.asar`` only. When
-          that copy could not be read, nothing was drawn and nothing was logged.
+          **The three applications could stop on "JENESIS could not display this
+          screen" as soon as a user signed in.** No accounting record was ever
+          changed, but the interface was gone, in all three applications at once.
+
+          Cause: the header — the same one in Seller, Maintenance and Admin —
+          drew the Messenger button with an icon that the file never imported, so
+          the interface threw ``ReferenceError: MessageSquare is not defined``
+          the first time it rendered the signed-in window. A missing import does
+          not break a build: an unknown name is treated as a global reference, so
+          the installer was produced and the failure only appeared on screen.
+
           This build:
 
-          * ships the interface twice — as a real directory the shell prefers and
-            as a fallback inside the archive — and switches automatically;
-          * checks, before the window is shown, that the start page and every file
-            it references are really served, and says which file is missing;
-          * shows a translated message (and writes it to
-            ``%APPDATA%\JENESIS\logs\desktop.log``) instead of a blank window if the
-            interface cannot start or crashes;
-          * paints the saved Light/Dark theme before the first frame again — the
-            bootstrap was an inline script, which the production
-            Content-Security-Policy blocks, so it is now a file of its own.
+          * imports the icon the header draws;
+          * **adds an automated check that no interface file may draw a component
+            it does not import** — every screen of the three applications and all
+            of their icons are scanned — and runs it **before every production
+            build**, so this class of defect can no longer be packaged at all;
+          * answers ``genesis:get-app-info`` with the application of the window
+            that asked, instead of the one that was opened last, so a second
+            window is no longer told it is a different application than the one
+            it is showing.
+
+          Carried over from the previous build: the interface ships twice (a real
+          directory the shell prefers, and a fallback inside the archive), is
+          verified before the window is shown, reports a translated message
+          instead of a blank window when it cannot start, and paints the saved
+          Light/Dark theme before the first frame.
 
           ## What this build is
 

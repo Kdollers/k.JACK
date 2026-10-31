@@ -1,7 +1,7 @@
 {
   "name": "genesis-accounting",
   "productName": "JENESIS",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "JENESIS - Professional Business Accounting & Management Software",
   "author": "JENESIS",
   "license": "UNLICENSED",
@@ -11,7 +11,7 @@
     "start": "node server/index.js",
     "dev:server": "node server/index.js",
     "build:client": "vite build",
-    "build": "vite build",
+    "build": "npm run test:ui-imports && vite build",
     "test": "node tests/accounting-engine.test.js",
     "test:desktop": "node tests/desktop-backend.test.js",
     "test:ops": "node tests/operations.test.js",
@@ -25,7 +25,7 @@
     "test:fxreval": "node tests/fx-revaluation-integrity.test.js",
     "test:datadir": "node tests/data-location-migration.test.js",
     "test:branding": "node tests/branding-consistency.test.js",
-    "test:all": "npm run test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:threeapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:datadir && npm run test:branding && npm run test:theme && npm run test:themeui",
+    "test:all": "npm run test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:threeapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:datadir && npm run test:branding && npm run test:theme && npm run test:themeui && npm run test:ui-imports",
     "desktop": "electron .",
     "desktop:pack": "npm run build && electron-builder --win --dir",
     "desktop:dist": "npm run build && electron-builder --win nsis",
@@ -36,7 +36,8 @@
     "test:themeui": "node tests/theme-render.test.js",
     "test:count": "npm run test:all 2>&1 | node scripts/count-checks.mjs",
     "test:threeapps": "node tests/three-apps.test.js",
-    "test:prod": "node tests/production-boot.test.js"
+    "test:prod": "node tests/production-boot.test.js",
+    "test:ui-imports": "node tests/ui-imports.test.js"
   },
   "build": {
     "appId": "com.jenesis.accounting",
@@ -70,7 +71,7 @@
         }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "JEN 0.5.1 Setup.${ext}"
+      "artifactName": "JEN 0.5.2 Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,

@@ -15,7 +15,11 @@ import {
   Check,
   ShieldCheck,
   Layers,
-  Calculator
+  Calculator,
+  // The Messenger button in the header: it used to be drawn without being
+  // imported, which threw "ReferenceError: MessageSquare is not defined" and
+  // took the whole interface down with it as soon as a user signed in.
+  MessageSquare
 } from 'lucide-react';
 
 export default function Navbar() {
