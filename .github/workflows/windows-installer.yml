@@ -93,6 +93,10 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          # This step judges external commands (npm, gh) by their exit code,
+          # so a non-zero exit must be reported, not turned into a
+          # terminating error by PowerShell 7.4 and later.
+          $PSNativeCommandUseErrorActionPreference = $false
           npm run test:all 2>&1 | Tee-Object -FilePath test-all.log
           $code = $LASTEXITCODE
           $summary = (node scripts/count-checks.mjs test-all.log 2>&1 | Out-String).Trim()
@@ -153,6 +157,10 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          # This step judges external commands (npm, gh) by their exit code,
+          # so a non-zero exit must be reported, not turned into a
+          # terminating error by PowerShell 7.4 and later.
+          $PSNativeCommandUseErrorActionPreference = $false
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $releaseName = "JEN $version"
@@ -198,6 +206,10 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          # This step judges external commands (npm, gh) by their exit code,
+          # so a non-zero exit must be reported, not turned into a
+          # terminating error by PowerShell 7.4 and later.
+          $PSNativeCommandUseErrorActionPreference = $false
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $releaseName = "JEN $version"
           $folder = "release\$releaseName"
@@ -263,6 +275,17 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          # This step judges external commands (npm, gh) by their exit code,
+          # so a non-zero exit must be reported, not turned into a
+          # terminating error by PowerShell 7.4 and later.
+          $PSNativeCommandUseErrorActionPreference = $false
+          # From PowerShell 7.4 a native command that exits non-zero becomes a
+          # terminating error when $ErrorActionPreference is 'Stop'. This step
+          # asks `gh` whether the release already exists and judges the answer
+          # by its exit code — "no" is an expected answer, not a failure — so
+          # native commands must report their exit code instead of throwing.
+          $PSNativeCommandUseErrorActionPreference = $false
+          Write-Host "PowerShell $($PSVersionTable.PSVersion); gh $(gh --version | Select-Object -First 1)"
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $tag = "v$version"
           $assets = @()
@@ -387,7 +410,8 @@ jobs:
 
           $notes | Out-File -FilePath ..\release-notes.md -Encoding utf8
 
-          gh release view $tag --repo ${{ github.repository }} *> $null
+          gh release view $tag --repo ${{ github.repository }}
+          Write-Host "gh release view exit code: $LASTEXITCODE"
           if ($LASTEXITCODE -eq 0) {
             Write-Host "release $tag exists: replacing its files and refreshing the notes"
             # Refresh the notes first: the page must describe the files that are
