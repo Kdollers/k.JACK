@@ -346,7 +346,24 @@ export const HELP = {
           'If a person needs two jobs, give them the role that fits and ask an administrator before widening permissions.',
           'A read-only manager is deliberate: control and execution are kept separate.'
         ]
+      },
+      developers: {
+        title: 'About the Developers',
+        purpose: 'Know who created and develops JENESIS, so you know who stands behind the program you run your business on.',
+        where: 'Help → About the Developers. The same credit is written at the bottom of the left column of every application.',
+        steps: [
+          'Open Help (press F1, or choose Help in the left column).',
+          'Scroll to the section “About the Developers”.',
+          'The name of the creator and developer of JENESIS is shown there: KAYIGANWA JACQUES.'
+        ],
+        expected: 'You see the developer/creator credit: Created and developed by KAYIGANWA JACQUES.',
+        notes: [
+          'KAYIGANWA JACQUES is the developer/creator of JENESIS.',
+          'The same credit appears at the bottom of the left column in JENESIS Admin, JENESIS Seller and JENESIS Maintenance, in English, French and Kinyarwanda.',
+          'Support, changes and new versions of JENESIS come from the developer named here.'
+        ]
       }
+
     }
   },
 
@@ -680,7 +697,24 @@ export const HELP = {
           'Si une personne occupe deux fonctions, donnez-lui le rôle correspondant et demandez à un administrateur avant d\'élargir les permissions.',
           'Le gestionnaire en lecture seule est volontaire : le contrôle et l\'exécution sont séparés.'
         ]
+      },
+      developers: {
+        title: 'À propos des développeurs',
+        purpose: 'Savoir qui a créé et qui développe JENESIS, pour connaître la personne qui se tient derrière le programme qui fait tourner votre entreprise.',
+        where: 'Aide → À propos des développeurs. La même mention figure en bas de la colonne de gauche de chaque application.',
+        steps: [
+          'Ouvrez l’Aide (appuyez sur F1, ou choisissez Aide dans la colonne de gauche).',
+          'Descendez jusqu’à la section « À propos des développeurs ».',
+          'Le nom du créateur et développeur de JENESIS y est indiqué : KAYIGANWA JACQUES.'
+        ],
+        expected: 'Vous voyez la mention du développeur : Créé et développé par KAYIGANWA JACQUES.',
+        notes: [
+          'KAYIGANWA JACQUES est le développeur/créateur de JENESIS.',
+          'La même mention apparaît en bas de la colonne de gauche de JENESIS Admin, JENESIS Vendeur et JENESIS Maintenance, en anglais, français et kinyarwanda.',
+          'L’assistance, les modifications et les nouvelles versions de JENESIS viennent du développeur nommé ici.'
+        ]
       }
+
     }
   },
 
@@ -1014,7 +1048,24 @@ export const HELP = {
           'Niba umuntu akora imirimo ibiri, muhe uruhare ruhuye kandi babaze umuyobozi mbere yo kwagura uburenganzira.',
           'Umucungamutungo usoma gusa ni ubushake: kugenzura no gukora biratandukanye.'
         ]
+      },
+      developers: {
+        title: 'Ku baremye porogaramu',
+        purpose: 'Kumenya uwakoze kandi uteza imbere JENESIS, kugira ngo umenye uhagarariye porogaramu ukoresha mu bucuruzi bwawe.',
+        where: 'Ubufasha → Ku baremye porogaramu. Iyo nyandiko kandi iri hasi ku ruhande rw’ibumoso muri buri porogaramu.',
+        steps: [
+          'Fungura Ubufasha (kanda F1, cyangwa hitamo Ubufasha ku ruhande rw’ibumoso).',
+          'Manuka ugere ku gice « Ku baremye porogaramu ».',
+          'Izina ry’uwakoze kandi uteza imbere JENESIS rirahagaragara: KAYIGANWA JACQUES.'
+        ],
+        expected: 'Ubona izina ry’uwakoze porogaramu: Byakozwe na KAYIGANWA JACQUES.',
+        notes: [
+          'KAYIGANWA JACQUES ni we wakoze kandi uteza imbere JENESIS.',
+          'Iyo nyandiko inagaragara hasi ku ruhande rw’ibumoso muri JENESIS Admin, JENESIS Umucuruzi na JENESIS Kubungabunga, mu Cyongereza, Igifaransa n’Ikinyarwanda.',
+          'Ubufasha, impinduka n’amavugururwa ya JENESIS bituruka ku wakoze porogaramu uvugwa hano.'
+        ]
       }
+
     }
   }
 };
@@ -1035,5 +1086,6 @@ export const HELP_ORDER = [
   'settings',
   'backup',
   'troubleshooting',
-  'roles'
+  'roles',
+  'developers'
 ];

@@ -62,7 +62,7 @@ const S = loadShortcuts();
 const REQUIRED_SECTIONS = [
   'welcome', 'signin', 'navigation', 'sales', 'purchases', 'inventory',
   'calculator', 'messenger', 'appearance', 'shortcuts', 'accounting',
-  'settings', 'backup', 'troubleshooting', 'roles'
+  'settings', 'backup', 'troubleshooting', 'roles', 'developers'
 ];
 
 /** Deep list of the "shape" of one language, used for parity checks. */
@@ -103,6 +103,17 @@ check('every required topic is present in every language', () => {
     }
   }
   assert.deepStrictEqual([...HELP_ORDER], REQUIRED_SECTIONS, 'HELP_ORDER lists every section exactly once');
+});
+
+check('the guide names the developer, in every language', () => {
+  // "About the Developers" must credit KAYIGANWA JACQUES as the creator, and
+  // the name is never translated.
+  for (const lang of LANGUAGES) {
+    const section = HELP[lang].sections.developers;
+    assert.ok(section, `${lang} must have a developer section`);
+    const text = [section.title, section.purpose, section.where, section.expected, ...section.steps, ...section.notes].join(' ');
+    assert.ok(/KAYIGANWA JACQUES/.test(text), `${lang}.developers must name KAYIGANWA JACQUES`);
+  }
 });
 
 check('every section has purpose, location, steps, expected result and notes', () => {

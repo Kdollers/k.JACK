@@ -86,8 +86,12 @@ export default function Sidebar() {
             Certified
           </span>
         </div>
-        <div className="text-[10px] text-slate-500">
-          Double-Entry Accounting Standard
+        {/* The credit line: what JENESIS is, and who made it. The name is never
+            translated — it is the author's name. */}
+        <div className="text-[10px] text-slate-500 leading-tight">
+          {t('identity.footer_standard')}
+          <span className="mx-1 text-slate-600">|</span>
+          {t('identity.footer_developed')}
         </div>
       </div>
     </aside>

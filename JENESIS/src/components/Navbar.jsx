@@ -39,10 +39,13 @@ export default function Navbar() {
     refreshMessengerUnread
   } = useShortcuts();
 
+  // The language is named by its code, not by a country flag: English is EN,
+  // French is FR and Kinyarwanda is RW. A flag would say "United Kingdom",
+  // which is a country and not the English language.
   const languages = [
-    { code: 'en', label: 'English', flag: '🇬🇧' },
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-    { code: 'rw', label: 'Ikinyarwanda', flag: '🇷🇼' }
+    { code: 'en', label: 'English', flag: 'EN' },
+    { code: 'fr', label: 'Français', flag: 'FR' },
+    { code: 'rw', label: 'Ikinyarwanda', flag: 'RW' }
   ];
 
   const currentLang = languages.find((l) => l.code === lang) || languages[0];

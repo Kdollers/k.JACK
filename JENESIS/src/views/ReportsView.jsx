@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAppMode } from '../context/AppModeContext';
 import JenesisLogo from '../components/JenesisLogo';
+import { amountOf, payloadBelongsTo, rowsOf } from '../reportShapes';
 
 export default function ReportsView() {
   const { currentCompany, formatCurrency, formatDate, showToast, refreshKey } = useApp();
@@ -32,6 +33,12 @@ export default function ReportsView() {
 
   const fetchReport = async () => {
     setLoading(true);
+    // The report on screen must never be drawn with the figures of another
+    // one: a screen that reads `revenueRows` while the payload is still a
+    // trial balance stops the whole interface. The data is cleared first, and
+    // every block below checks that the answer belongs to the report asked
+    // for before it draws a single row.
+    setData(null);
     try {
       let endpoint = '';
       if (activeReport === 'trial_balance') {
@@ -47,7 +54,12 @@ export default function ReportsView() {
       }
 
       const res = await apiRequest(endpoint);
-      setData(res);
+      // Guards against an answer for another report (a slow reply that
+      // arrives after the user changed tab) and against a payload without a
+      // marker at all.
+      if (!res || typeof res !== 'object') throw new Error(t('errors.GENERIC', 'The report could not be read.'));
+      if (res.report && res.report !== activeReport) return;
+      setData(flatten(res));
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -59,6 +71,26 @@ export default function ReportsView() {
     fetchReport();
   }, [currentCompany?.id, activeReport, asOfDate, startDate, endDate, refreshKey]);
 
+  /**
+   * The balance sheet nests its lists (assets.current, liabilities.longTerm…).
+   * The row readers take one level, so the answer is flattened once, here —
+   * and only for the report it really is.
+   */
+  const flatten = (payload) => {
+    if (!payload || payload.report !== 'balance_sheet') return payload;
+    return {
+      ...payload,
+      current: payload.assets?.current || [],
+      fixed: payload.assets?.fixed || [],
+      liabCurrent: payload.liabilities?.current || [],
+      liabLongTerm: payload.liabilities?.longTerm || [],
+      equityRows: payload.equity?.rows || []
+    };
+  };
+
+  // A report is only drawn with an answer that belongs to it (src/reportShapes.js).
+  const isPayload = (reportId) => payloadBelongsTo(data, reportId);
+
   const handlePrint = () => {
     window.print();
   };
@@ -68,7 +100,7 @@ export default function ReportsView() {
   useShortcutAction('Ctrl+P', () => { handlePrint(); return true; }, { order: 10 });
 
   const handleExportCSV = () => {
-    if (!data) return;
+    if (!data || !isPayload(activeReport)) return;
     let csvRows = [];
 
     if (activeReport === 'trial_balance') {
@@ -82,6 +114,9 @@ export default function ReportsView() {
       csvRows.push(['COGS', 'Total Cost of Goods Sold', data.totalCogs]);
       csvRows.push(['GROSS_PROFIT', 'Gross Profit', data.grossProfit]);
       csvRows.push(['EXPENSES', 'Total Operating Expenses', data.totalExpenses]);
+      csvRows.push(['OPERATING_PROFIT', 'Operating Profit', data.operatingProfit]);
+      csvRows.push(['OTHER_INCOME', 'Other Income', data.totalOtherIncome]);
+      csvRows.push(['OTHER_EXPENSES', 'Other Expenses', data.totalOtherExpenses]);
       csvRows.push(['NET_PROFIT', 'Net Income', data.netProfit]);
     } else if (activeReport === 'balance_sheet') {
       csvRows.push(['Section', 'Account', 'Amount']);
@@ -241,8 +276,16 @@ export default function ReportsView() {
           </div>
         </div>
 
+        {/* Nothing to draw: say so, instead of leaving an empty page (which
+            looks exactly like a broken screen). */}
+        {!isPayload(activeReport) && (
+          <div className="py-10 text-center text-xs text-slate-500">
+            {loading ? t('reports.loading') : t('reports.no_data')}
+          </div>
+        )}
+
         {/* 1. Trial Balance Content */}
-        {activeReport === 'trial_balance' && data && (
+        {activeReport === 'trial_balance' && isPayload('trial_balance') && (
           <div className="space-y-4">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b-2 border-slate-300">
@@ -255,7 +298,7 @@ export default function ReportsView() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
-                {data.rows.map((row) => (
+                {rowsOf(data, 'trial_balance', 'rows').map((row) => (
                   <tr key={row.id} className="hover:bg-slate-50">
                     <td className="py-2 px-3 font-bold text-blue-600">{row.code}</td>
                     <td className="py-2 px-3 font-sans font-medium text-slate-800">{row.name}</td>
@@ -305,16 +348,16 @@ export default function ReportsView() {
         )}
 
         {/* 2. Profit & Loss Content */}
-        {activeReport === 'pnl' && data && (
+        {activeReport === 'pnl' && isPayload('pnl') && (
           <div className="max-w-2xl mx-auto space-y-6 text-xs">
             {/* Revenue */}
             <div>
               <div className="flex justify-between font-bold text-sm text-slate-900 border-b border-slate-300 pb-1 mb-2 uppercase">
                 <span>{t('reports.operating_revenue')}</span>
-                <span className="font-mono text-blue-700">{formatCurrency(data.totalRevenue)}</span>
+                <span className="font-mono text-blue-700">{formatCurrency(amountOf(data, 'pnl', 'totalRevenue'))}</span>
               </div>
               <div className="space-y-1 pl-4">
-                {data.revenueRows.map((r, i) => (
+                {rowsOf(data, 'pnl', 'revenueRows').map((r, i) => (
                   <div key={i} className="flex justify-between text-slate-700 py-1">
                     <span>{r.name}</span>
                     <span className="font-mono font-medium">{formatCurrency(r.amount)}</span>
@@ -327,10 +370,10 @@ export default function ReportsView() {
             <div>
               <div className="flex justify-between font-bold text-sm text-slate-900 border-b border-slate-300 pb-1 mb-2 uppercase">
                 <span>{t('reports.cost_of_sales')}</span>
-                <span className="font-mono text-rose-600">({formatCurrency(data.totalCogs)})</span>
+                <span className="font-mono text-rose-600">({formatCurrency(amountOf(data, 'pnl', 'totalCogs'))})</span>
               </div>
               <div className="space-y-1 pl-4">
-                {data.cogsRows.map((r, i) => (
+                {rowsOf(data, 'pnl', 'cogsRows').map((r, i) => (
                   <div key={i} className="flex justify-between text-slate-700 py-1">
                     <span>{r.name}</span>
                     <span className="font-mono font-medium">{formatCurrency(r.amount)}</span>
@@ -342,17 +385,17 @@ export default function ReportsView() {
             {/* Gross Profit */}
             <div className="bg-slate-100 p-3 rounded-lg flex justify-between font-extrabold text-sm text-slate-900 border border-slate-300">
               <span>{t('reports.gross_profit')}</span>
-              <span className="font-mono text-blue-800">{formatCurrency(data.grossProfit)}</span>
+              <span className="font-mono text-blue-800">{formatCurrency(amountOf(data, 'pnl', 'grossProfit'))}</span>
             </div>
 
             {/* Expenses */}
             <div>
               <div className="flex justify-between font-bold text-sm text-slate-900 border-b border-slate-300 pb-1 mb-2 uppercase">
                 <span>{t('reports.operating_expenses')}</span>
-                <span className="font-mono text-rose-600">({formatCurrency(data.totalExpenses)})</span>
+                <span className="font-mono text-rose-600">({formatCurrency(amountOf(data, 'pnl', 'totalExpenses'))})</span>
               </div>
               <div className="space-y-1 pl-4">
-                {data.expenseRows.map((r, i) => (
+                {rowsOf(data, 'pnl', 'expenseRows').map((r, i) => (
                   <div key={i} className="flex justify-between text-slate-700 py-1">
                     <span>{r.name}</span>
                     <span className="font-mono font-medium">{formatCurrency(r.amount)}</span>
@@ -360,6 +403,51 @@ export default function ReportsView() {
                 ))}
               </div>
             </div>
+
+            {/* Operating profit: the result of the business itself, before
+                other income and other expenses. */}
+            <div className="flex justify-between font-bold text-sm text-slate-800 border-b border-slate-300 pb-1 mb-2 uppercase">
+              <span>{t('reports.operating_profit')}</span>
+              <span className={`font-mono ${data.operatingProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                {formatCurrency(amountOf(data, 'pnl', 'operatingProfit'))}
+              </span>
+            </div>
+
+            {/* Other income */}
+            {rowsOf(data, 'pnl', 'otherIncomeRows').length > 0 && (
+              <div>
+                <div className="flex justify-between font-bold text-sm text-slate-900 border-b border-slate-300 pb-1 mb-2 uppercase">
+                  <span>{t('reports.other_income')}</span>
+                  <span className="font-mono text-emerald-700">{formatCurrency(amountOf(data, 'pnl', 'totalOtherIncome'))}</span>
+                </div>
+                <div className="space-y-1 pl-4">
+                  {rowsOf(data, 'pnl', 'otherIncomeRows').map((r, i) => (
+                    <div key={i} className="flex justify-between text-slate-700 py-1">
+                      <span>{r.name}</span>
+                      <span className="font-mono font-medium">{formatCurrency(r.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Other expenses */}
+            {rowsOf(data, 'pnl', 'otherExpenseRows').length > 0 && (
+              <div>
+                <div className="flex justify-between font-bold text-sm text-slate-900 border-b border-slate-300 pb-1 mb-2 uppercase">
+                  <span>{t('reports.other_expenses')}</span>
+                  <span className="font-mono text-rose-600">({formatCurrency(amountOf(data, 'pnl', 'totalOtherExpenses'))})</span>
+                </div>
+                <div className="space-y-1 pl-4">
+                  {rowsOf(data, 'pnl', 'otherExpenseRows').map((r, i) => (
+                    <div key={i} className="flex justify-between text-slate-700 py-1">
+                      <span>{r.name}</span>
+                      <span className="font-mono font-medium">{formatCurrency(r.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Net Income */}
             <div className="bg-blue-50 border-2 border-blue-600 p-4 rounded-xl flex justify-between font-black text-base text-slate-900 shadow-sm">
@@ -369,14 +457,14 @@ export default function ReportsView() {
                   data.netProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'
                 }`}
               >
-                {formatCurrency(data.netProfit)}
+                {formatCurrency(amountOf(data, 'pnl', 'netProfit'))}
               </span>
             </div>
           </div>
         )}
 
         {/* 3. Balance Sheet Content */}
-        {activeReport === 'balance_sheet' && data && (
+        {activeReport === 'balance_sheet' && isPayload('balance_sheet') && (
           <div className="max-w-3xl mx-auto space-y-6 text-xs">
             {/* Assets */}
             <div>
@@ -391,7 +479,7 @@ export default function ReportsView() {
                   {t('reports.current_assets')}
                 </div>
                 <div className="space-y-1 pl-4">
-                  {data.assets.current.map((a, i) => (
+                  {rowsOf(data, 'balance_sheet', 'current').map((a, i) => (
                     <div key={i} className="flex justify-between py-1 text-slate-700 border-b border-slate-100">
                       <span>
                         {a.code} - {a.name}
@@ -403,13 +491,13 @@ export default function ReportsView() {
               </div>
 
               {/* Fixed Assets */}
-              {data.assets.fixed.length > 0 && (
+              {rowsOf(data, 'balance_sheet', 'fixed').length > 0 && (
                 <div>
                   <div className="font-bold text-slate-600 uppercase text-[10px] mb-1 pl-2">
                     {t('reports.fixed_assets')}
                   </div>
                   <div className="space-y-1 pl-4">
-                    {data.assets.fixed.map((a, i) => (
+                    {rowsOf(data, 'balance_sheet', 'fixed').map((a, i) => (
                       <div key={i} className="flex justify-between py-1 text-slate-700 border-b border-slate-100">
                         <span>
                           {a.code} - {a.name}
@@ -429,13 +517,13 @@ export default function ReportsView() {
                 <span className="font-mono text-slate-800">{formatCurrency(data.liabilities.total)}</span>
               </div>
 
-              {data.liabilities.current.length > 0 && (
+              {rowsOf(data, 'balance_sheet', 'liabCurrent').length > 0 && (
                 <div className="mb-4">
                   <div className="font-bold text-slate-600 uppercase text-[10px] mb-1 pl-2">
                     {t('reports.current_liabilities')}
                   </div>
                   <div className="space-y-1 pl-4">
-                    {data.liabilities.current.map((l, i) => (
+                    {rowsOf(data, 'balance_sheet', 'liabCurrent').map((l, i) => (
                       <div key={i} className="flex justify-between py-1 text-slate-700 border-b border-slate-100">
                         <span>
                           {l.code} - {l.name}
@@ -447,13 +535,13 @@ export default function ReportsView() {
                 </div>
               )}
 
-              {data.liabilities.longTerm.length > 0 && (
+              {rowsOf(data, 'balance_sheet', 'liabLongTerm').length > 0 && (
                 <div>
                   <div className="font-bold text-slate-600 uppercase text-[10px] mb-1 pl-2">
                     {t('reports.long_term_liabilities')}
                   </div>
                   <div className="space-y-1 pl-4">
-                    {data.liabilities.longTerm.map((l, i) => (
+                    {rowsOf(data, 'balance_sheet', 'liabLongTerm').map((l, i) => (
                       <div key={i} className="flex justify-between py-1 text-slate-700 border-b border-slate-100">
                         <span>
                           {l.code} - {l.name}
@@ -473,7 +561,7 @@ export default function ReportsView() {
                 <span className="font-mono text-indigo-700">{formatCurrency(data.equity.total)}</span>
               </div>
               <div className="space-y-1 pl-4">
-                {data.equity.rows.map((eq, i) => (
+                {rowsOf(data, 'balance_sheet', 'equityRows').map((eq, i) => (
                   <div key={i} className="flex justify-between py-1 text-slate-700 border-b border-slate-100">
                     <span className="font-medium">{eq.name}</span>
                     <span className="font-mono font-bold">{formatCurrency(eq.amount)}</span>
@@ -509,7 +597,7 @@ export default function ReportsView() {
         )}
 
         {/* 4. Cash Flow Statement Content */}
-        {activeReport === 'cash_flow' && data && (
+        {activeReport === 'cash_flow' && isPayload('cash_flow') && (
           <div className="max-w-2xl mx-auto space-y-4 text-xs">
             <div className="space-y-3">
               <div className="flex justify-between py-2 border-b border-slate-200">
@@ -554,7 +642,7 @@ export default function ReportsView() {
         )}
 
         {/* 5. Tax Report Content */}
-        {activeReport === 'tax' && data && (
+        {activeReport === 'tax' && isPayload('tax') && (
           <div className="max-w-2xl mx-auto space-y-4 text-xs">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">

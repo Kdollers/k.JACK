@@ -177,6 +177,7 @@ function getTrialBalance(companyId, asOfDate) {
   }).filter(r => r.totalDebit !== 0 || r.totalCredit !== 0);
 
   return {
+    report: 'trial_balance',
     asOfDate: dateCutoff,
     rows,
     grandDebit,
@@ -209,10 +210,14 @@ function getProfitAndLoss(companyId, startDate, endDate) {
   const revenueRows = [];
   const cogsRows = [];
   const expenseRows = [];
+  const otherIncomeRows = [];
+  const otherExpenseRows = [];
 
   let totalRevenue = 0;
   let totalCogs = 0;
   let totalExpenses = 0;
+  let totalOtherIncome = 0;
+  let totalOtherExpenses = 0;
 
   for (const acc of accounts) {
     const debit = roundTo(acc.total_debit, 2);
@@ -222,8 +227,16 @@ function getProfitAndLoss(companyId, startDate, endDate) {
       // Normal balance: Credit (Credit - Debit)
       const amount = roundTo(credit - debit, 2);
       if (amount !== 0) {
-        revenueRows.push({ code: acc.code, name: acc.name, amount });
-        totalRevenue = roundTo(totalRevenue + amount, 2);
+        // Operating revenue is what the business sells; anything else
+        // (interest received, a gain on disposal…) is other income and is
+        // reported below the operating result, never inside it.
+        if (acc.subtype === 'OTHER_REVENUE') {
+          otherIncomeRows.push({ code: acc.code, name: acc.name, amount });
+          totalOtherIncome = roundTo(totalOtherIncome + amount, 2);
+        } else {
+          revenueRows.push({ code: acc.code, name: acc.name, amount });
+          totalRevenue = roundTo(totalRevenue + amount, 2);
+        }
       }
     } else if (acc.type === 'COGS') {
       // Normal balance: Debit (Debit - Credit)
@@ -236,16 +249,25 @@ function getProfitAndLoss(companyId, startDate, endDate) {
       // Normal balance: Debit (Debit - Credit)
       const amount = roundTo(debit - credit, 2);
       if (amount !== 0) {
-        expenseRows.push({ code: acc.code, name: acc.name, amount });
-        totalExpenses = roundTo(totalExpenses + amount, 2);
+        if (acc.subtype === 'OTHER_EXPENSE') {
+          otherExpenseRows.push({ code: acc.code, name: acc.name, amount });
+          totalOtherExpenses = roundTo(totalOtherExpenses + amount, 2);
+        } else {
+          expenseRows.push({ code: acc.code, name: acc.name, amount });
+          totalExpenses = roundTo(totalExpenses + amount, 2);
+        }
       }
     }
   }
 
   const grossProfit = roundTo(totalRevenue - totalCogs, 2);
-  const netProfit = roundTo(grossProfit - totalExpenses, 2);
+  // Operating profit is what the business earned before other income and
+  // other expenses; the net profit below is the final result.
+  const operatingProfit = roundTo(grossProfit - totalExpenses, 2);
+  const netProfit = roundTo(operatingProfit + totalOtherIncome - totalOtherExpenses, 2);
 
   return {
+    report: 'pnl',
     startDate: start,
     endDate: end,
     revenueRows,
@@ -255,6 +277,11 @@ function getProfitAndLoss(companyId, startDate, endDate) {
     grossProfit,
     expenseRows,
     totalExpenses,
+    operatingProfit,
+    otherIncomeRows,
+    totalOtherIncome,
+    otherExpenseRows,
+    totalOtherExpenses,
     netProfit
   };
 }
@@ -342,6 +369,7 @@ function getBalanceSheet(companyId, asOfDate) {
   const diff = roundTo(totalAssets - totalLiabilitiesAndEquity, 2);
 
   return {
+    report: 'balance_sheet',
     asOfDate: dateCutoff,
     assets: {
       current: assetsCurrent,
@@ -417,6 +445,7 @@ function getCashFlowStatement(companyId, startDate, endDate) {
   }
 
   return {
+    report: 'cash_flow',
     startDate: start,
     endDate: end,
     netIncome,
@@ -770,6 +799,7 @@ function getTaxReport(companyId, startDate, endDate) {
   const netTaxPayable = roundTo(salesTax.output_tax - purchaseTax.input_tax, 2);
 
   return {
+    report: 'tax',
     startDate: start,
     endDate: end,
     taxableSales: roundTo(salesTax.taxable_sales, 2),

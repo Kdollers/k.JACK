@@ -586,9 +586,9 @@ export default function SettingsView() {
                   onChange={(e) => setLang(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
                 >
-                  <option value="en">English (UK / US)</option>
-                  <option value="fr">Français</option>
-                  <option value="rw">Ikinyarwanda</option>
+                  <option value="en">English (EN)</option>
+                  <option value="fr">Français (FR)</option>
+                  <option value="rw">Ikinyarwanda (RW)</option>
                 </select>
               </div>
             </div>
