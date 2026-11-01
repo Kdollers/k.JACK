@@ -71,7 +71,8 @@ jobs:
         id: version
         shell: bash
         run: |
-          version=$(node -p "require('./JENESIS/package.json').version")
+          # This job runs with working-directory: JENESIS, so package.json is here.
+          version=$(node -p "require('./package.json').version")
           echo "value=$version" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
