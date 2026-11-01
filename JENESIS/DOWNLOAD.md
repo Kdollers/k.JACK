@@ -18,13 +18,13 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5.2 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | 92,918,784 bytes (88.6 MB) | `2bf5f400e65f55d6f99495b440633692cb4f6ea08404db5bab61e8dbd2a52797` |
-| `JEN 0.5.2 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | 133,576,919 bytes (127.4 MB) | `cf32eaa38118fecce52dcd0e08ed5539ad883f70b7e934760e90d6c17f52a032` |
-| `JEN 0.5.2.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | 5,636,662 bytes (5.4 MB) | `b9b977509c552da17cc3a480ec7c1530712b3f29c98af07f8a4b828eb5a42db5` |
+| `JEN 0.5.3 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.3 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.3.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
-> (`JEN.0.5.2.Setup.exe`). It is the same file; rename it after downloading if
+> (`JEN.0.5.3.Setup.exe`). It is the same file; rename it after downloading if
 > you prefer spaces.
 
 Both files are built by GitHub Actions from this exact commit and are the same
@@ -34,32 +34,53 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 ---
 
-### Repaired in this build — JEN 0.5.2
+### Repaired in this build — JEN 0.5.3
 
-**The crash that appeared as soon as you signed in is fixed.** In JEN 0.5.1 the
-three applications could stop on *“JENESIS could not display this screen”* the
-moment a user signed in — no accounting record was changed, but the interface
-was gone, in all three applications at once.
+**1. Profit & Loss and Balance Sheet no longer stop the interface.** In JEN
+0.5.2, opening either report left the report area blank or replaced the whole
+window with *“JENESIS could not display this screen”* — and because that screen
+replaces the **entire interface**, every other screen looked broken at the same
+time until the application was restarted.
 
-The cause: the header (the same one in Seller, Maintenance and Admin) draws the
-JENESIS Messenger button, and that file drew the icon **without importing it**,
-so the interface threw `ReferenceError: MessageSquare is not defined` the first
-time it rendered the signed-in window. A missing import does not break a build —
-an unknown name is treated as a global — so the installer was produced and the
-failure appeared only on your screen. This build:
+Cause: the screen kept the answer of the report that was open before it (the
+trial balance) while the new one was loading, then read `revenueRows` and
+`assets.current` from a payload that does not have them, and threw. A slow
+answer, or a quick click on the tab, was enough. This build:
 
-- **imports the icon the header draws**;
-- **adds an automated check that no interface file may draw a component it does
-  not import** — every screen of the three applications and all of their icons
-  are scanned — and **runs it before every production build**, so this class of
-  defect can no longer be packaged at all (`tests/ui-imports.test.js`, then
-  `npm run build`);
-- **answers `genesis:get-app-info` with the application of the window that
-  asks**, instead of the one that was opened last, so a second window is no
-  longer told it is a different application than the one it is showing;
-- **records the signed-in screen in the log**
-  (`%APPDATA%\JENESIS\logs\desktop.log`, `renderer: signed-in`), so the exact
-  moment a failure happens can always be read afterwards.
+- **clears the previous answer before asking for a new one**, so the screen can
+  never be drawn with another report's figures;
+- **tags every report answer** with the report it belongs to, and refuses an
+  answer that arrives for a report you have left;
+- **shows “no figures for this period”** when a period really is empty, instead
+  of a blank page that looks like a failure;
+- tests it: **13 checks** on the rule that decides what may be drawn, and on
+  the figures themselves against a real database with posted entries.
+
+**2. The Profit & Loss figure is right when other income exists.** Revenue of
+the “other” kind (interest received, a gain on a disposal) was counted as
+operating revenue, and other expenses as operating expenses. They are now
+separate lines, and the report shows the **operating profit** earned before
+them: net profit = operating profit + other income − other expenses.
+
+**3. The header advertises the keys that really work.** The calculator button
+was labelled `Ctrl+Shift+C` — those keys open **Customers**, and they also
+close an open calculator — while the calculator is `Ctrl+Shift+K`. The
+Messenger button was labelled `Ctrl+K` instead of `Ctrl+Shift+M`. Both labels
+are now read out of the single shortcut list, so a label can no longer drift
+away from the keys that work, and a test fails on any header tooltip that
+spells out its own key combination.
+
+**4. Every screen is now drawn by a test.** All twelve screens, plus the shared
+header, sidebar, calculator and shortcut reference, are rendered with React
+itself and must not throw — **20 checks**. That is the class of defect that
+makes a screen “not work” and that a production build cannot see.
+
+**Inventory** was reported as faulty on 0.5.2 and **no fault was found in it**:
+all seven of its endpoints answer 200 against a real database, and the screen
+renders without error. The most likely explanation is the report crash above,
+whose error screen covers every screen at once. That is an explanation, not a
+proof — if Inventory still shows an error on this build, the message and the
+diagnostic reference on the screen identify it exactly.
 
 Carried over from JEN 0.5.1: the interface ships twice (a real
 `resources\app-frontend` directory, preferred, and the copy inside `app.asar` as
@@ -110,13 +131,13 @@ unchanged.
 ### Recommended — GitHub release (permanent, no sign-in needed)
 
 - **Installer:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.2/JEN.0.5.2.Setup.exe>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.3/JEN.0.5.3.Setup.exe>
 - **Portable ZIP:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.2/JEN.0.5.2.Portable.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.3/JEN.0.5.3.Portable.zip>
 - **Source backup:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.2/JEN.0.5.2.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.3/JEN.0.5.3.zip>
 - **All files for this version:**
-  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.2>
+  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.3>
 
 ### Alternative — build artifacts of the workflow run
 
@@ -126,8 +147,8 @@ If you prefer the files exactly as the build job produced them:
 2. Click the **most recent completed (green) run** at the top of the list, then
    scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`),
-   **`JEN 0.5.2 Portable`** (the portable `.zip` and its `.sha256`) or
-   **`JEN 0.5.2 source backup`** (the source `.zip` and its `.sha256`)
+   **`JEN 0.5.3 Portable`** (the portable `.zip` and its `.sha256`) or
+   **`JEN 0.5.3 source backup`** (the source `.zip` and its `.sha256`)
 
 Artifacts require being signed in to GitHub and are kept for 90 days; the
 release above does not expire.
@@ -137,12 +158,12 @@ release above does not expire.
 ## 3. Verify what you downloaded (optional but recommended)
 
 The exact checksums of this build are printed in the table in §7 and are also
-attached to the release as `JEN 0.5.2 Setup.exe.sha256`. To check a file on
+attached to the release as `JEN 0.5.3 Setup.exe.sha256`. To check a file on
 Windows, open the folder in File Explorer, type `cmd` in the address bar… — or
 simply use PowerShell from the folder's context menu:
 
 ```powershell
-certutil -hashfile "JEN 0.5.2 Setup.exe" SHA256
+certutil -hashfile "JEN 0.5.3 Setup.exe" SHA256
 ```
 
 The value must match the SHA-256 in §7 / in the `.sha256` file.
@@ -151,7 +172,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ## 4. Installing on Windows (no command prompt, no code)
 
-1. Download `JEN 0.5.2 Setup.exe` from the link above.
+1. Download `JEN 0.5.3 Setup.exe` from the link above.
 2. **Double-click** the downloaded file.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the
    installer is not code-signed. Click **More info → Run anyway**.
@@ -195,7 +216,7 @@ so a sale recorded in Seller appears at once in the Admin reports.
 
 ### Portable package
 
-Unzip `JEN 0.5.2 Portable.zip` and double-click **`JENESIS.exe`**. The portable
+Unzip `JEN 0.5.3 Portable.zip` and double-click **`JENESIS.exe`**. The portable
 build opens the chooser; to start one application directly, make your own
 shortcut to `JENESIS.exe --app=seller` (or `--app=maintenance` /
 `--app=admin`).
@@ -253,13 +274,15 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 
 | Check | Result |
 |---|---|
-| Full automated suite (Linux, real SQLite driver) | **321 checks, 0 failed** (counted by `scripts/count-checks.mjs` from the run transcript) |
+| Full automated suite (Linux, real SQLite driver) | **356 checks, 0 failed, 22 suites** (counted by `scripts/count-checks.mjs` from the run transcript) |
 | Three applications (identity, colours, menus, landing screens, per-application themes, one shared database, installer shortcuts, packaging) | **12 checks passed** |
 | Branding and the J identity (no G logo anywhere, no stale GENESIS text, three different icons) | **12 checks passed** |
 | Theme rules: Light/Dark/System, immediate switching, persistence, first paint, tokens, contrast, Electron bridge, per-application keys | **34 checks passed** |
 | Theme UI rendered with React (options, icons, accessible names, en/fr/rw, stored preference, fallback) | **6 checks passed** |
 | Documents created PAID (settlement, idempotent F2, no duplicate payments, no PAID/UNPAID choice in the forms) | **20 checks passed** |
-| Keyboard shortcuts (single listener, typing safety, Escape layering, the user's table, destinations) | **24 checks passed** |
+| Keyboard shortcuts (single listener, typing safety, Escape layering, the user's table, destinations, labels that match the real keys) | **25 checks passed** |
+| Reports screens (an answer is only drawn by the report it belongs to; the figures against a real database) | **13 checks passed** |
+| Every screen drawn with React (twelve screens, header, sidebar, calculator, shortcut reference) | **20 checks passed** |
 | Messenger (delivery, receipts, permissions, company isolation, live push, no text in logs) | **18 checks passed** |
 | User guide (en/fr/rw parity, completeness, agreement with the code) | **14 checks passed** |
 | Production build (Vite) | **success** |
@@ -341,16 +364,16 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.2 Setup.exe` | 92,918,784 (88.6 MB) | `2bf5f400e65f55d6f99495b440633692cb4f6ea08404db5bab61e8dbd2a52797` |
-| `JEN 0.5.2 Portable.zip` | 133,576,919 (127.4 MB) | `cf32eaa38118fecce52dcd0e08ed5539ad883f70b7e934760e90d6c17f52a032` |
-| `JEN 0.5.2.zip` | 5,636,662 (5.4 MB) | `b9b977509c552da17cc3a480ec7c1530712b3f29c98af07f8a4b828eb5a42db5` |
+| `JEN 0.5.3 Setup.exe` | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.3 Portable.zip` | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.3.zip` | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**321 automated checks** and **27/27
-installed-application checks** on that build).
+named on the release page (**356 automated checks** on that build, and the
+installed-application smoke test recorded on the release page).
 
 Every push rebuilds and republishes these files, so a later build carries a
 different SHA-256. The numbers printed on
-<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.2> are always the ones
+<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.3> are always the ones
 that belong to the file you are downloading now, and each `.sha256` file sits
 next to its download — compare with `certutil -hashfile <file> SHA256` (§3).

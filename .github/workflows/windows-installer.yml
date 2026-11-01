@@ -64,6 +64,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The version is read once, here, and used by every file name and every
+      # artefact name below. It used to be typed into three places, so a
+      # corrected release could still be published under an older number.
+      - name: Read the version
+        id: version
+        shell: bash
+        run: |
+          version=$(node -p "require('./JENESIS/package.json').version")
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -219,7 +229,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JEN 0.5.2 source backup
+          name: JEN ${{ steps.version.outputs.value }} source backup
           path: |
             JENESIS/release/*.zip
             JENESIS/release/*.zip.sha256
@@ -239,7 +249,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JEN 0.5.2 Portable
+          name: JEN ${{ steps.version.outputs.value }} Portable
           path: |
             JENESIS/release/*.zip
             JENESIS/release/*.zip.sha256
@@ -270,49 +280,66 @@ jobs:
 
           $releaseName = "JEN $version"
           $notes = @"
-          $releaseName — JENESIS desktop accounting application (Seller, Maintenance,
-          Admin). **This is the corrected build that repairs the crash that appeared
-          as soon as a user signed in** in the previous release.
+          $releaseName — JENESIS desktop accounting application (Seller,
+          Maintenance, Admin). **This is the corrected build that repairs the
+          Profit & Loss and Balance Sheet screens and the keys the header
+          advertised for the calculator and Messenger.**
 
-          **Install:** download ``$releaseName Setup.exe``, double-click it, accept the
-          SmartScreen prompt (More info -> Run anyway), and follow the installer.
-          JENESIS then appears on the Desktop and in the Start menu — no command
-          prompt needed. See ``DOWNLOAD.md`` in the repository for details, database
-          location and backup instructions.
+          **Install:** download ``$releaseName Setup.exe``, double-click it, accept
+          the SmartScreen prompt (More info -> Run anyway), and follow the
+          installer. JENESIS then appears on the Desktop and in the Start menu —
+          no command prompt needed. See ``DOWNLOAD.md`` in the repository for
+          details, database location and backup instructions.
 
           **Portable:** ``$releaseName Portable.zip`` runs without installing
           (unzip, then double-click ``JENESIS.exe``).
 
           ## What was repaired
 
-          **The three applications could stop on "JENESIS could not display this
-          screen" as soon as a user signed in.** No accounting record was ever
-          changed, but the interface was gone, in all three applications at once.
+          **1. Profit & Loss and Balance Sheet stopped the whole interface.**
+          Opening either report left the screen blank or replaced the whole
+          window with "JENESIS could not display this screen" — and because the
+          error screen covers the entire interface, every other screen looked
+          broken too until the window was restarted.
 
-          Cause: the header — the same one in Seller, Maintenance and Admin —
-          drew the Messenger button with an icon that the file never imported, so
-          the interface threw ``ReferenceError: MessageSquare is not defined``
-          the first time it rendered the signed-in window. A missing import does
-          not break a build: an unknown name is treated as a global reference, so
-          the installer was produced and the failure only appeared on screen.
+          Cause: the screen kept the answer of the report that was open before it
+          (the trial balance) while the new one was loading, then read
+          ``revenueRows`` and ``assets.current`` from a payload that does not
+          have them, and threw. A slow answer or a quick click on the tab was
+          enough.
 
           This build:
 
-          * imports the icon the header draws;
-          * **adds an automated check that no interface file may draw a component
-            it does not import** — every screen of the three applications and all
-            of their icons are scanned — and runs it **before every production
-            build**, so this class of defect can no longer be packaged at all;
-          * answers ``genesis:get-app-info`` with the application of the window
-            that asked, instead of the one that was opened last, so a second
-            window is no longer told it is a different application than the one
-            it is showing.
+          * **clears the previous answer before asking for a new one**, so the
+            screen can never be drawn with another report's figures;
+          * **tags every report answer** with the report it belongs to, and
+            refuses an answer that arrives for a report the user has left;
+          * **shows "no figures for this period"** when a period really is empty,
+            instead of a blank page that looks like a failure;
+          * tests it: 13 checks on the rule that decides what may be drawn, and
+            on the figures themselves against a real database with posted
+            entries.
 
-          Carried over from the previous build: the interface ships twice (a real
-          directory the shell prefers, and a fallback inside the archive), is
-          verified before the window is shown, reports a translated message
-          instead of a blank window when it cannot start, and paints the saved
-          Light/Dark theme before the first frame.
+          **2. The Profit & Loss figure was wrong when other income existed.**
+          Revenue of the "other" kind (interest received, a gain on a disposal)
+          was reported as operating revenue, and other expenses as operating
+          expenses. They are now separate lines, and the report shows the
+          **operating profit** the business earned before them:
+
+          net profit = operating profit + other income − other expenses.
+
+          **3. The header advertised the wrong keys.** The calculator button was
+          labelled ``Ctrl+Shift+C`` — those keys open **Customers**, and they also
+          close an open calculator — while the calculator is ``Ctrl+Shift+K``.
+          The Messenger button was labelled ``Ctrl+K`` instead of
+          ``Ctrl+Shift+M``. Both labels are now read out of the single shortcut
+          list, so a label cannot drift away from the keys that really work.
+
+          Carried over from the previous build: the signed-in crash
+          (``ReferenceError: MessageSquare is not defined``) is repaired, no
+          interface file may draw a component it does not import (checked before
+          every production build), and ``genesis:get-app-info`` answers with the
+          application of the window that asked.
 
           ## What this build is
 
@@ -320,6 +347,9 @@ jobs:
           ${{ github.run_id }}, commit ${{ github.sha }}.
 
           * $checks automated checks pass (whole suite, real SQLite database).
+            Every screen is drawn by a test as well: the twelve screens and the
+            shared header, sidebar, calculator and shortcut reference are
+            rendered with React and must not throw.
           * Installed-application smoke test: $smoke — silent install, desktop and
             Start-menu shortcuts, the application starting on its own from the
             executable, **the interface and all of its files being served**, the
@@ -346,7 +376,14 @@ jobs:
           been run on a physical Windows PC — it is verified on a GitHub-hosted
           Windows runner only. No screenshots were produced: the runner has no
           display, so the window is checked by capturing its pixels instead.
-          "@
+
+          Inventory was reported as "not working" on the previous build. Its
+          endpoints and its screen were tested here and no fault was found; the
+          most likely explanation is the report crash above, whose error screen
+          covers every screen at once. It remains **unconfirmed**: if Inventory
+          still shows an error on this build, the message and the diagnostic
+          reference on the screen identify it exactly.
+
           $notes | Out-File -FilePath ..\release-notes.md -Encoding utf8
 
           gh release view $tag --repo ${{ github.repository }} *> $null

@@ -1,7 +1,7 @@
 {
   "name": "genesis-accounting",
   "productName": "JENESIS",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "JENESIS - Professional Business Accounting & Management Software",
   "author": "JENESIS",
   "license": "UNLICENSED",
@@ -73,7 +73,7 @@
         }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "JEN 0.5.2 Setup.${ext}"
+      "artifactName": "JEN 0.5.3 Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
