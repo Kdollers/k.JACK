@@ -5,6 +5,7 @@ import { useI18n } from '../i18n';
 import { useAppMode } from '../context/AppModeContext';
 import JenesisLogo from './JenesisLogo';
 import ThemeToggle from './ThemeToggle';
+import { comboFor } from '../shortcuts';
 import {
   Building2,
   Globe2,
@@ -155,7 +156,7 @@ export default function Navbar() {
         {/* Built-in Calculator (computes amounts only — never posts transactions) */}
         <button
           onClick={toggleCalculator}
-          title={`${t('calculator.title')} (Ctrl+Shift+C)`}
+          title={`${t('calculator.title')} (${comboFor('calculator')})`}
           aria-label={t('calculator.title')}
           className="flex items-center space-x-1.5 text-xs font-medium text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-800 px-2.5 py-1.5 rounded border border-slate-700 transition"
         >
@@ -163,10 +164,11 @@ export default function Navbar() {
           <span className="hidden sm:inline">{t('calculator.title')}</span>
         </button>
 
-        {/* JENESIS Messenger — internal chat with colleagues (Ctrl+K) */}
+        {/* JENESIS Messenger — internal chat with colleagues. The keys are
+            read from the shortcut list, never written here again. */}
         <button
           onClick={toggleMessenger}
-          title={`${t('messenger.title')} (Ctrl+K)`}
+          title={`${t('messenger.title')} (${comboFor('messenger')})`}
           aria-label={t('messenger.title')}
           aria-haspopup="dialog"
           aria-expanded={messengerOpen}

@@ -207,6 +207,19 @@ export const SHORTCUTS = [
   { id: 'language', combo: 'Alt+L', group: 'app', key: 'language', builtin: true }
 ];
 
+/**
+ * The combination a shortcut really uses, read out of the single list above.
+ * A button that names its shortcut must ask here instead of writing the keys
+ * down a second time: the calculator button used to advertise
+ * "Ctrl+Shift+C" — which opens Customers — while the calculator is
+ * Ctrl+Shift+K, and the Messenger button advertised "Ctrl+K" instead of
+ * Ctrl+Shift+M. Both labels are now whatever the list says.
+ */
+export function comboFor(id) {
+  const entry = SHORTCUTS.find((s) => s.id === id);
+  return entry ? entry.combo : '';
+}
+
 /** Case/blank-insensitive search over the reference list. */
 export function searchShortcuts(entries, query) {
   const q = String(query || '').trim().toLowerCase();

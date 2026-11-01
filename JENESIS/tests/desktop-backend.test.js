@@ -140,28 +140,61 @@ test('backend binds only to the loopback interface', async () => {
         detail = err && err.code ? err.code : String(err && err.message);
       }
       if (reached) {
-        // Before failing, prove the address really is a network path and not a
-        // host that delivers its own addresses to loopback (containers and some
-        // CI images do): a server bound to 127.0.0.1 only must be unreachable
-        // through that address too.
-        const controlPort = await findFreePort();
-        const control = http.createServer((req, res) => res.end('{"appId":"genesis-accounting"}'));
-        await new Promise((resolve) => control.listen(controlPort, '127.0.0.1', resolve));
-        let loopbackReachable = false;
-        try {
-          loopbackReachable = isJenesis(await getJson(`http://${lan.address}:${controlPort}/api/health`));
-        } catch (_) {
-          loopbackReachable = false;
-        }
-        await new Promise((resolve) => control.close(resolve));
-        if (loopbackReachable) {
+        // Before failing, prove that this address can actually tell the two
+        // bindings apart on this host. Two control servers decide it:
+        //   A bound to 127.0.0.1 only — must NOT be reachable through the
+        //     address, otherwise the host delivers its own addresses to
+        //     loopback (containers, and some CI images, do exactly that);
+        //   B bound to every interface — MUST be reachable, otherwise the host
+        //     is forwarding ports some other way (a sandbox or a preview proxy
+        //     that exposes listening ports) and the address proves nothing.
+        // Only when A is unreachable AND B is reachable does the test judge.
+        const control = (bindHost) => new Promise((resolve) => {
+          const server = http.createServer((req, res) => res.end('{"appId":"genesis-accounting"}'));
+          server.on('error', () => resolve({ server: null, port: 0 }));
+          server.listen(0, bindHost, () => resolve({ server, port: server.address().port }));
+        });
+        // A host that exposes listening ports through a proxy (a container or a
+        // preview sandbox does this) needs a moment before the address starts
+        // answering, while the backend has been up for a second or more by now.
+        // The control is therefore polled for as long as the backend has had to
+        // be discovered, so both are judged on the same footing.
+        const probe = async (bindHost, waitMs = 3000) => {
+          const { server, port: controlPort } = await control(bindHost);
+          if (!server) return null; // the host refused this binding
+          try {
+            const deadline = Date.now() + waitMs;
+            for (;;) {
+              try {
+                if (isJenesis(await getJson(`http://${lan.address}:${controlPort}/api/health`))) return true;
+              } catch (_) {
+                /* not yet, try again */
+              }
+              if (Date.now() >= deadline) return false;
+              await new Promise((resolve) => setTimeout(resolve, 200));
+            }
+          } finally {
+            await new Promise((resolve) => server.close(resolve));
+          }
+        };
+
+        const loopbackReachable = await probe('127.0.0.1');
+        const anyReachable = await probe('0.0.0.0');
+
+        if (loopbackReachable === null || anyReachable === null) {
+          console.log(`    note: this host would not let the control servers bind, so ${lan.address} cannot prove where the backend listens`);
+        } else if (loopbackReachable) {
           console.log(`    note: ${lan.address} is delivered to loopback on this host, so it cannot prove where the backend listens`);
+        } else if (!anyReachable) {
+          console.log(`    note: a server bound to every interface is not reachable through ${lan.address} on this host either (a port-forwarding sandbox), so the address cannot prove where the backend listens`);
+        } else {
+          // The address really does discriminate: judge the backend on it.
+          assert.strictEqual(
+            reached,
+            false,
+            `the backend answered on the LAN address ${lan.address}:${port}, but it must listen on loopback only (${detail})`
+          );
         }
-        assert.strictEqual(
-          loopbackReachable,
-          true,
-          `the backend answered on the LAN address ${lan.address}:${port} while a loopback-only server on the same address did not (${detail})`
-        );
       }
     }
     const res = await getJson(`http://127.0.0.1:${port}/api/health`);

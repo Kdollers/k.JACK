@@ -383,5 +383,48 @@ check('Ctrl+F and the search shortcuts focus the search box of the screen', () =
   }
 });
 
+check('a button that names its shortcut names the one the list really uses', () => {
+  // The calculator button advertised "Ctrl+Shift+C" while the calculator is
+  // Ctrl+Shift+K and Ctrl+Shift+C opens Customers — so the keys the user was
+  // told to press took them somewhere else and the calculator looked broken.
+  // The Messenger button advertised "Ctrl+K" instead of Ctrl+Shift+M.
+  // A label is now read out of the catalogue with comboFor(), never written
+  // down twice; this check keeps it that way.
+  const navbar = readSrc('src/components/Navbar.jsx');
+  const shortcutsSrc = readSrc('src/shortcuts.js');
+
+  assert.ok(/export function comboFor\(/.test(shortcutsSrc), 'the catalogue must expose comboFor()');
+  const byId = new Map(S.SHORTCUTS.map((entry) => [entry.id, entry.combo]));
+
+  // A hardcoded key combination in a tooltip is what drifted before.
+  const hardcoded = [
+    ...navbar.matchAll(/title=\{?[^\n]*?\((Ctrl\+[^)\n`]*|Alt\+[^)\n`]*|F\d{1,2})\)/g)
+  ].map((m) => m[1]);
+  assert.deepStrictEqual(
+    hardcoded,
+    [],
+    'the header must read its shortcut keys from the catalogue, not spell them out'
+  );
+
+  for (const id of ['calculator', 'messenger']) {
+    const combo = byId.get(id);
+    assert.ok(combo, `the catalogue must define the ${id} shortcut`);
+    assert.strictEqual(S.comboFor(id), combo, `comboFor('${id}') must return ${combo}`);
+    assert.ok(
+      navbar.includes(`comboFor('${id}')`),
+      `the ${id} button must show comboFor('${id}') as its keys`
+    );
+  }
+
+  // And the two shortcuts must not collide with anything else.
+  assert.notStrictEqual(
+    S.comboFor('calculator'),
+    S.comboFor('searchCustomers'),
+    'the calculator must not share the keys of the Customers screen'
+  );
+  assert.strictEqual(S.comboFor('calculator'), 'Ctrl+Shift+K');
+  assert.strictEqual(S.comboFor('messenger'), 'Ctrl+Shift+M');
+});
+
 console.log(`--- ${passed} passed, ${failed} failed ---`);
 process.exit(failed === 0 ? 0 : 1);
