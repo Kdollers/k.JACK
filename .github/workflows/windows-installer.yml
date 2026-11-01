@@ -285,6 +285,22 @@ jobs:
           # by its exit code — "no" is an expected answer, not a failure — so
           # native commands must report their exit code instead of throwing.
           $PSNativeCommandUseErrorActionPreference = $false
+          New-Item -ItemType Directory -Force -Path ..\ci-logs | Out-Null
+          # This step runs last and its own log is the hardest to reach, so any
+          # terminating error is written to the branch by the diagnostics step
+          # below: the failure then says what it was instead of only "exit 1".
+          trap {
+            $report = @(
+              'PUBLISH STEP FAILED'
+              "message:  $($_.Exception.Message)"
+              "position: $($_.InvocationInfo.PositionMessage)"
+              "assets:   $($assets -join ', ')"
+              'stack:'
+              $_.ScriptStackTrace
+            ) -join "\n"
+            Set-Content -Path ..\ci-logs\publish-error.txt -Value $report -Encoding utf8
+            exit 1
+          }
           Write-Host "PowerShell $($PSVersionTable.PSVersion); gh $(gh --version | Select-Object -First 1)"
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $tag = "v$version"
@@ -408,6 +424,7 @@ jobs:
           still shows an error on this build, the message and the diagnostic
           reference on the screen identify it exactly.
 
+          "@
           $notes | Out-File -FilePath ..\release-notes.md -Encoding utf8
 
           gh release view $tag --repo ${{ github.repository }}
