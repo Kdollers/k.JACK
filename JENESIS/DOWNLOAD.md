@@ -364,9 +364,9 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.3 Setup.exe` | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JEN 0.5.3 Portable.zip` | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JEN 0.5.3.zip` | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.3 Setup.exe` | 92,925,018 bytes (88.6 MB) | `977a822b855b3582715c7744f10c6b1908125100b31209cf894428cc588ac8a2` |
+| `JEN 0.5.3 Portable.zip` | 133,580,903 bytes (127.4 MB) | `2049bec8526256532fa1a2558ddc1256ec8cdbc9717a9d09adb6d0e2e2d82501` |
+| `JEN 0.5.3.zip` | 5,665,338 bytes (5.4 MB) | `633cd27ddc28ed7ee129b86c7a81b1a24df7b41c2401d3accff427df0fbba876` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
 named on the release page (**356 automated checks** on that build, and the

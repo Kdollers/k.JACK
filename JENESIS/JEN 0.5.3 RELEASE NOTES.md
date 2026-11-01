@@ -119,8 +119,22 @@ Suite before this work: 321 checks, 0 failed, 20 suites.
 | `JEN 0.5.3.zip` | The complete source code of this release (tracked files only). |
 | `*.sha256` | One checksum file next to each download. |
 
-Exact sizes and checksums are on the release page and in `DOWNLOAD.md`; they
-are measured on the built files, never typed in.
+| File | Size | SHA-256 |
+|---|---|---|
+| `JEN 0.5.3 Setup.exe` | 92,925,018 bytes (88.6 MB) | `977a822b855b3582715c7744f10c6b1908125100b31209cf894428cc588ac8a2` |
+| `JEN 0.5.3 Portable.zip` | 133,580,903 bytes (127.4 MB) | `2049bec8526256532fa1a2558ddc1256ec8cdbc9717a9d09adb6d0e2e2d82501` |
+| `JEN 0.5.3.zip` | 5,665,338 bytes (5.4 MB) | `633cd27ddc28ed7ee129b86c7a81b1a24df7b41c2401d3accff427df0fbba876` |
+
+Built by GitHub Actions run **41278315678**, commit `199012d`, on the
+`arena/a2c625e8-k-jack` branch: **356 automated checks passed**, and the
+installed-application smoke test **27/27 PASS**.
+
+The first two checksums are the ones the build wrote into its own
+`download-table.md` and printed on the release page. The third (the source
+backup) is reproduced here from the same commit with
+`git -c core.autocrlf=true archive --format=zip HEAD ":(exclude)JENESIS/dist"`,
+which produced a file of exactly the published size; the authoritative value
+is the `JEN 0.5.3.zip.sha256` file shipped next to the download.
 
 ---
 
