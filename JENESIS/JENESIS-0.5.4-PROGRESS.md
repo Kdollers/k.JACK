@@ -23,7 +23,7 @@ Version is **0.5.4** (`package.json`, and the installer filename with it).
 | 3 | Delete / deactivate / reactivate | **DONE** — backend + all five screens |
 | 4 | Split into four sub-applications | **DONE** — four apps, four colours, four icon sets, four installer shortcuts |
 | 5 | Strict separation (UI, routing, API, DB, auth) | **DONE** — enforced in the route guard, refusals recorded |
-| 6 | Network & Maintenance overhaul | NOT STARTED |
+| 6 | Network & Maintenance overhaul | **PART ONE DONE** (backend + 16 tests; screens pending) |
 | — | Rename Admin → Accounting & Business | **DONE** — identity, shell, installer, help, en/fr/rw |
 | — | QA regression, installer, delivery | NOT STARTED |
 
@@ -171,6 +171,50 @@ not an attempt and is deliberately not logged, so health probes cannot flood it.
 
 `tests/app-separation.test.js` runs this over real HTTP against a real server
 process: 18 checks, proven by disabling the scope check, which fails four.
+
+---
+
+## Modification 6 — Network & Maintenance (part one)
+
+`server/network-discovery.js` adds what the application was missing.
+
+**Discovery.** A service allowed on the network announces itself by UDP
+broadcast every 15 s and answers a probe with the same announcement; a service
+looking for neighbours broadcasts one probe and collects the answers. The
+announcement carries only a name, an address, a port and a version — no token,
+no user, no company, no database path. With the switch off the service neither
+announces nor answers.
+
+**Registration.** Known computers live in `<data>/computers.json`, written
+atomically. Adding the same address twice renames it instead of duplicating it;
+forgetting one removes it; only ever one is connected at a time.
+
+**Status and diagnoses.** Each registered computer is probed over HTTP and the
+result recorded with a message a person can act on:
+
+| code | what it means |
+|------|---------------|
+| ONLINE | it answered, and it is JENESIS |
+| UNREACHABLE | nothing answered — off, asleep, or not on this network |
+| REFUSED | the computer is there but JENESIS is not running |
+| NOT_JENESIS | something answered at that address, but it is not JENESIS |
+| VERSION_MISMATCH | the other computer runs a different version |
+| TIMEOUT | no answer in time |
+| BAD_ADDRESS | the address is not one a computer can be reached at |
+| LAN_DISABLED | this computer is not allowed on the network yet |
+
+Connecting to a computer that does not answer is refused with the reason.
+
+`tests/network-maintenance.test.js` runs two real services, each with its own
+database copy, and proves one finds the other: 16 checks, including reading the
+raw announcement off the wire and asserting its field list is exactly what it
+should be and none of it is a secret.
+
+**Still to come:** the Network & Maintenance screens that use this, and their
+en/fr/rw translations.
+
+**Not proven here:** two services on one machine is not two computers. That
+proof is `scripts/messenger-two-computers.cjs`, run on the user's network.
 
 ---
 
