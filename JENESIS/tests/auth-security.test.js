@@ -55,7 +55,7 @@ const dbPath = path.join(workDir, 'genesis.db');
 // reports confusing count mismatches instead of testing anything. Refuse to
 // run in that state and say exactly how to fix it.
 if (scenario === 'legacy') {
-  const probe = new (require('node:sqlite').DatabaseSync)(SOURCE_DB, { readOnly: true });
+  const probe = require('./open-database.cjs').openReadonly(SOURCE_DB);
   const migrated = probe
     .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_migrations'")
     .all();

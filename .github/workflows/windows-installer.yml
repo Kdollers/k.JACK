@@ -44,10 +44,14 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Run the full test suite
-        # The counter prints one measured total for the whole suite and exits
-        # non-zero if anything failed, so the log shows exactly how many checks
-        # this commit passed.
-        run: npm run test:all 2>&1 | node scripts/count-checks.mjs
+        # The counter prints one measured total for the whole suite, so the log
+        # shows exactly how many checks this commit passed. It counts the
+        # results each suite *printed*, which means a suite that crashed before
+        # printing anything would leave the total looking clean. `pipefail`
+        # keeps npm's own exit code, so such a crash still fails the build.
+        run: |
+          set -o pipefail
+          npm run test:all 2>&1 | tee test-all.log | node scripts/count-checks.mjs
 
       - name: Build the frontend
         run: npm run build
