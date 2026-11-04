@@ -1,0 +1,19 @@
+{
+  "identity": {
+    "no_access_title": {
+      "en": "This application is not open to your account",
+      "fr": "Cette application n'est pas ouverte à votre compte",
+      "rw": "Iyi porogaramu ntibereye konti yawe"
+    },
+    "no_access_body": {
+      "en": "{app} changes the company record, the users and their permissions, so it is open to administrators and managers only. Ask an administrator if your work needs it.",
+      "fr": "{app} modifie le dossier de l'entreprise, les utilisateurs et leurs permissions ; elle est donc réservée aux administrateurs et aux gestionnaires. Demandez à un administrateur si votre travail le nécessite.",
+      "rw": "{app} ihindura idosiye y'ikigo, abakoresha n'uburenganzira bwabo, bityo ikorerwa n'abayobozi n'abacungezi gusa. Baza umuyobozi niba akazi kawe gakeneye."
+    },
+    "open_another": {
+      "en": "Open another JENESIS application",
+      "fr": "Ouvrir une autre application JENESIS",
+      "rw": "Fungura indi porogaramu ya JENESIS"
+    }
+  }
+}

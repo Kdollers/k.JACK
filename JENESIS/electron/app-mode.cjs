@@ -1,19 +1,32 @@
 'use strict';
 /**
- * app-mode.cjs — which of the three JENESIS applications a window is.
+ * app-mode.cjs — which of the four JENESIS applications a window is.
  *
  * The Electron main process is CommonJS, so it cannot import the ES module the
  * renderer uses (src/appIdentity.js). This file mirrors exactly the rules that
- * matter to the desktop shell; tests/three-apps.test.js asserts the two
+ * matter to the desktop shell; tests/four-apps.test.js asserts the two
  * implementations agree, so a change in one that forgets the other fails the
  * suite.
  *
- * The three applications:
- *   seller      -> JENESIS Seller      (red)
- *   maintenance -> JENESIS Maintenance (green)
- *   admin       -> JENESIS Admin       (blue)
+ * The four applications:
+ *   seller      -> JENESIS Seller                  (red)
+ *   maintenance -> JENESIS Network & Maintenance   (green)
+ *   admin       -> JENESIS Accounting & Business   (blue)
+ *   settings    -> JENESIS Settings & Access Point (yellow)
  */
-const APP_IDS = ['seller', 'maintenance', 'admin'];
+const APP_IDS = ['seller', 'maintenance', 'admin', 'settings'];
+
+/**
+ * The full application names, in the shape Windows shows them: the title bar,
+ * the desktop shortcut and the Start Menu entry. Mirrors APP_TITLES in
+ * src/appIdentity.js — the test suite compares the two.
+ */
+const APP_TITLES = {
+  seller: 'JENESIS Seller',
+  maintenance: 'JENESIS Network & Maintenance',
+  admin: 'JENESIS Accounting & Business',
+  settings: 'JENESIS Settings & Access Point'
+};
 
 function isAppId(value) {
   return APP_IDS.includes(value);
@@ -50,13 +63,11 @@ function appIdFromArgv(argv) {
   return null;
 }
 
-/** "seller" -> "JENESIS Seller" (also the window title and shortcut name). */
 function appTitle(appId) {
-  if (!isAppId(appId)) return 'JENESIS';
-  return `JENESIS ${appId.charAt(0).toUpperCase()}${appId.slice(1)}`;
+  return APP_TITLES[appId] || 'JENESIS';
 }
 
-/** Windows keeps the three applications apart in the taskbar by this id. */
+/** Windows keeps the four applications apart in the taskbar by this id. */
 function appUserModelId(appId) {
   return `com.jenesis.accounting.${appId || 'launcher'}`;
 }
@@ -75,6 +86,7 @@ function windowUrl(baseUrl, appId) {
 
 module.exports = {
   APP_IDS,
+  APP_TITLES,
   isAppId,
   resolveAppId,
   appIdFromArgv,

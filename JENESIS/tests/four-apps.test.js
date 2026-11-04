@@ -1,11 +1,12 @@
 'use strict';
 /**
- * THREE APPLICATIONS TESTS.
+ * FOUR APPLICATIONS TESTS.
  *
- * JENESIS is three applications — Seller, Maintenance and Admin — not one
- * program with three modes. Each one is opened by its own shortcut, opens
- * directly in its own environment, has its own name, colour, menu, Windows
- * identity and remembered theme, and all of them share one database.
+ * JENESIS is four applications — Seller, Network & Maintenance, Accounting &
+ * Business and Settings & Access Point — not one program with four modes.
+ * Each one is opened by its own shortcut, opens directly in its own
+ * environment, has its own name, colour, menu, Windows identity and remembered
+ * theme, and all four share ONE database.
  *
  * These tests run without a browser: src/appIdentity.js is pure logic and
  * electron/app-mode.cjs is the CommonJS twin the desktop shell uses, so the
@@ -56,14 +57,15 @@ function loadAppIdentity() {
 const appIdentity = loadAppIdentity();
 const appMode = require(path.join(ROOT, 'electron', 'app-mode.cjs'));
 
-console.log('--- THREE APPLICATIONS TESTS (Seller / Maintenance / Admin) ---');
+console.log('--- FOUR APPLICATIONS TESTS (Seller / Network & Maintenance / Accounting & Business / Settings & Access Point) ---');
 
-check('there are exactly three applications, and they are Seller, Maintenance and Admin', () => {
+check('there are exactly four applications', () => {
   // Compared as JSON: the module is loaded in a sandbox, so its array is not
   // reference-equal to one built here.
-  assert.strictEqual(JSON.stringify(appIdentity.APP_IDS), JSON.stringify(['seller', 'maintenance', 'admin']));
-  assert.strictEqual(JSON.stringify(appMode.APP_IDS), JSON.stringify(['seller', 'maintenance', 'admin']),
-    'the desktop shell must know the same three applications');
+  const FOUR = ['seller', 'maintenance', 'admin', 'settings'];
+  assert.strictEqual(JSON.stringify(appIdentity.APP_IDS), JSON.stringify(FOUR));
+  assert.strictEqual(JSON.stringify(appMode.APP_IDS), JSON.stringify(FOUR),
+    'the desktop shell must know the same four applications');
   for (const id of appIdentity.APP_IDS) {
     assert.ok(appIdentity.APPS[id], `the catalogue must define ${id}`);
     assert.ok(appIdentity.isAppId(id));
@@ -72,14 +74,15 @@ check('there are exactly three applications, and they are Seller, Maintenance an
   assert.strictEqual(appIdentity.resolveAppId('nonsense'), null);
 });
 
-check('each application has its own colour: Seller red, Maintenance green, Admin blue', () => {
+check('each application has its own colour: Seller red, Maintenance green, Accounting blue, Settings yellow', () => {
   assert.strictEqual(appIdentity.APPS.seller.colour, 'red');
   assert.strictEqual(appIdentity.APPS.maintenance.colour, 'green');
   assert.strictEqual(appIdentity.APPS.admin.colour, 'blue');
+  assert.strictEqual(appIdentity.APPS.settings.colour, 'yellow');
   const colours = appIdentity.APP_IDS.map((id) => appIdentity.APPS[id].colour);
-  assert.strictEqual(new Set(colours).size, 3, 'the three applications must never share a colour');
+  assert.strictEqual(new Set(colours).size, 4, 'the four applications must never share a colour');
   const accents = appIdentity.APP_IDS.map((id) => appIdentity.APPS[id].accent.light);
-  assert.strictEqual(new Set(accents).size, 3, 'the three identity colours must be different');
+  assert.strictEqual(new Set(accents).size, 4, 'the four identity colours must be different');
   // The colour is bound in CSS per application, and the logo reads the same tone.
   const css = read('src/index.css');
   for (const id of appIdentity.APP_IDS) {
@@ -94,7 +97,7 @@ check('each application has its own colour: Seller red, Maintenance green, Admin
   }
 });
 
-check('the renderer and the desktop shell describe the same three applications', () => {
+check('the renderer and the desktop shell describe the same four applications', () => {
   for (const id of appIdentity.APP_IDS) {
     assert.strictEqual(appIdentity.appTitle(id), appMode.appTitle(id), `title of ${id}`);
     assert.strictEqual(
@@ -109,17 +112,42 @@ check('the renderer and the desktop shell describe the same three applications',
   assert.strictEqual(appMode.resolveAppId('--app=Seller'), 'seller');
   assert.strictEqual(appMode.resolveAppId('JENESIS-Maintenance'), 'maintenance');
   assert.strictEqual(appMode.resolveAppId('admin.exe'), 'admin');
+  assert.strictEqual(appMode.resolveAppId('--app=settings'), 'settings');
+});
+
+check('the applications carry their full names, and Admin has been renamed', () => {
+  // "JENESIS Admin" became "JENESIS Accounting & Business" and "JENESIS
+  // Maintenance" became "JENESIS Network & Maintenance". A shortcut left with
+  // the old name would open the right program under the wrong title.
+  assert.strictEqual(appIdentity.appTitle('seller'), 'JENESIS Seller');
+  assert.strictEqual(appIdentity.appTitle('maintenance'), 'JENESIS Network & Maintenance');
+  assert.strictEqual(appIdentity.appTitle('admin'), 'JENESIS Accounting & Business');
+  assert.strictEqual(appIdentity.appTitle('settings'), 'JENESIS Settings & Access Point');
+  for (const id of appIdentity.APP_IDS) {
+    assert.strictEqual(appIdentity.appTitle(id), appMode.APP_TITLES[id],
+      `the desktop shell must use the same title for ${id}`);
+  }
+  // No leftover of the old short names in the titles actually installed.
+  const nsis = read('build/installer.nsh');
+  assert.ok(!/CreateJenesisShortcut "\w+" "JENESIS Admin"/.test(nsis),
+    'the installer must not still create a shortcut called "JENESIS Admin"');
+  assert.ok(!/CreateJenesisShortcut "\w+" "JENESIS Maintenance"/.test(nsis),
+    'the installer must not still create a shortcut called "JENESIS Maintenance"');
 });
 
 check('every application opens directly in its own environment', () => {
   assert.strictEqual(appIdentity.APPS.seller.defaultView, 'sales', 'Seller opens on Sales');
   assert.strictEqual(appIdentity.APPS.maintenance.defaultView, 'maintenance',
-    'Maintenance opens on its own maintenance screen');
-  assert.strictEqual(appIdentity.APPS.admin.defaultView, 'dashboard', 'Admin opens on the dashboard');
+    'Network & Maintenance opens on its own screen');
+  assert.strictEqual(appIdentity.APPS.admin.defaultView, 'dashboard',
+    'Accounting & Business opens on the dashboard');
+  assert.strictEqual(appIdentity.APPS.settings.defaultView, 'settings',
+    'Settings & Access Point opens on Settings');
   for (const id of appIdentity.APP_IDS) {
     const views = appIdentity.viewsForApp(id);
     assert.ok(views.includes('help'), `${id} always offers Help`);
-    assert.ok(views.includes('dashboard'), `${id} always offers the dashboard`);
+    assert.ok(views.includes(appIdentity.APPS[id].defaultView),
+      `${id} always offers the screen it opens on`);
   }
   // A remembered screen is honoured only inside the application that offers it.
   assert.strictEqual(appIdentity.landingViewFor('seller', 'reports'), 'sales',
@@ -132,10 +160,12 @@ check('no application renders a screen it does not own', () => {
   assert.strictEqual(appIdentity.canOpenView('seller', 'purchases'), false);
   assert.strictEqual(appIdentity.canOpenView('seller', 'sales'), true);
   assert.strictEqual(appIdentity.canOpenView('maintenance', 'sales'), false);
-  assert.strictEqual(appIdentity.canOpenView('maintenance', 'inventory'), true);
   assert.strictEqual(appIdentity.canOpenView('maintenance', 'maintenance'), true);
+  assert.strictEqual(appIdentity.canOpenView('settings', 'reports'), false);
+  assert.strictEqual(appIdentity.canOpenView('settings', 'settings'), true);
   for (const view of ['sales', 'purchases', 'accounting', 'reports', 'settings', 'maintenance']) {
-    assert.strictEqual(appIdentity.canOpenView('admin', view), true, `Admin offers ${view}`);
+    assert.strictEqual(appIdentity.canOpenView('admin', view), true,
+      `Accounting & Business offers ${view}`);
   }
   // Enforced in the interface, not only in the menu.
   const app = read('src/App.jsx');
@@ -144,9 +174,36 @@ check('no application renders a screen it does not own', () => {
   assert.ok(sidebar.includes("app.views.includes(item.id)"), 'the menu is scoped to the application');
 });
 
+check('Network & Maintenance holds no business screen at all', () => {
+  // Modification 6: the maintenance application is a technical tool. It must
+  // not be able to reach accounting, sales, purchases, customers, suppliers,
+  // products, inventory or reports — not in its menu, not by URL.
+  const forbidden = [
+    'dashboard', 'sales', 'purchases', 'customers', 'suppliers',
+    'inventory', 'accounting', 'banking', 'reports'
+  ];
+  for (const view of forbidden) {
+    assert.strictEqual(appIdentity.canOpenView('maintenance', view), false,
+      `Network & Maintenance must not be able to open ${view}`);
+  }
+  const views = [...appIdentity.viewsForApp('maintenance')];
+  assert.deepStrictEqual(views.slice().sort(), ['help', 'maintenance'],
+    `Network & Maintenance owns only its own screen and Help; found ${views.join(', ')}`);
+});
+
+check('Settings & Access Point is configuration only', () => {
+  const views = [...appIdentity.viewsForApp('settings')];
+  assert.deepStrictEqual(views.slice().sort(), ['help', 'settings'],
+    `Settings & Access Point owns only Settings and Help; found ${views.join(', ')}`);
+  for (const view of ['sales', 'purchases', 'reports', 'accounting', 'inventory']) {
+    assert.strictEqual(appIdentity.canOpenView('settings', view), false,
+      `Settings & Access Point must not be able to open ${view}`);
+  }
+});
+
 check('each application remembers its own Light/Dark/System choice', () => {
   const keys = appIdentity.APP_IDS.map((id) => appIdentity.themeStorageKey(id));
-  assert.strictEqual(new Set(keys).size, 3, 'the three applications must not share a theme key');
+  assert.strictEqual(new Set(keys).size, 4, 'the four applications must not share a theme key');
   for (const id of appIdentity.APP_IDS) {
     assert.strictEqual(appIdentity.themeStorageKey(id), `jenesis_theme:${id}`);
   }
@@ -180,13 +237,15 @@ check('every application ships its own icon, and none of them is the old G logo'
     assert.notStrictEqual(hash, OLD_G_ICON_MD5, `${app.iconIco} must not be the old G icon`);
     hashes.add(hash);
   }
-  assert.strictEqual(hashes.size, 3, 'the three icons must be three different files');
+  assert.strictEqual(hashes.size, 4, 'the four icons must be four different files');
   assert.ok(exists('build/icon.ico'), 'the product mark is still shipped for the launcher');
 });
 
 check('the installer creates one shortcut per application, each with its own icon', () => {
   const nsis = read('build/installer.nsh');
   const pkg = JSON.parse(read('package.json'));
+  const created = nsis.match(/!insertmacro CreateJenesisShortcut "/g) || [];
+  assert.strictEqual(created.length, 4, `the installer must create four shortcuts, found ${created.length}`);
   assert.strictEqual(pkg.build.nsis.include, 'build/installer.nsh', 'the installer script is used');
   for (const id of appIdentity.APP_IDS) {
     const title = appIdentity.appTitle(id);
@@ -202,13 +261,13 @@ check('the installer creates one shortcut per application, each with its own ico
   const extra = JSON.stringify(pkg.build.extraResources || []);
   assert.ok(extra.includes('app-icons') && extra.includes('icon-*.ico'),
     'the shortcut icons must be readable by Windows (outside app.asar)');
-  // The Windows identity of each window keeps the three apart in the taskbar.
+  // The Windows identity of each window keeps the four apart in the taskbar.
   const main = read('electron/main.cjs');
   assert.ok(main.includes('setAppDetails'), 'each window carries its own Windows identity');
   assert.ok(main.includes('appUserModelId(appId)'));
 });
 
-check('the installation package carries everything the three applications need', () => {
+check('the installation package carries everything the four applications need', () => {
   const pkg = JSON.parse(read('package.json'));
   const files = JSON.stringify(pkg.build.files || []);
   // The shortcuts read their icons from resources/app-icons (outside app.asar),
@@ -219,7 +278,7 @@ check('the installation package carries everything the three applications need',
   }
   const extra = JSON.stringify(pkg.build.extraResources || []);
   assert.ok(extra.includes('icon-*.ico'), 'Windows must be able to read the shortcut icons');
-  // The three applications are the same program, so these never change.
+  // The four applications are the same program, so these never change.
   assert.ok(files.includes('dist/**/*'), 'the built interface must be packaged');
   assert.ok(files.includes('server/**/*'), 'the accounting service must be packaged');
   assert.ok(files.includes('electron/**/*'), 'the desktop shell must be packaged');
@@ -230,10 +289,10 @@ check('the installation package carries everything the three applications need',
   assert.ok(files.includes('!**/tests/**'), 'the test suite is not shipped');
 });
 
-check('the launcher offers the three applications and remembers the choice', () => {
+check('the launcher offers the four applications and remembers the choice', () => {
   assert.ok(exists('src/views/LauncherView.jsx'), 'the chooser exists');
   const launcher = read('src/views/LauncherView.jsx');
-  assert.ok(launcher.includes('APP_IDS'), 'it offers the three applications');
+  assert.ok(launcher.includes('APP_IDS'), 'it offers the four applications');
   assert.ok(launcher.includes('launcher.intro') && launcher.includes('launcher.open'),
     'it is translated');
   assert.ok(launcher.includes('identity.developed_by'), 'it credits the developer');
@@ -248,7 +307,7 @@ check('the launcher offers the three applications and remembers the choice', () 
   assert.ok(/get\('app'\)/.test(context), 'the mode can be passed on the URL (shortcuts do)');
 });
 
-check('the three applications share one database and one accounting engine', () => {
+check('the four applications share one database and one accounting engine', () => {
   // One service, one file: the applications differ in what they expose, never
   // in where the records live.
   const db = read('server/db.js');

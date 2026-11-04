@@ -4,7 +4,8 @@
  * backend beyond its session lookup.
  *
  * By default it talks to the JENESIS service running on this computer (same
- * origin). JENESIS Maintenance can point it at another computer on the network
+ * origin). JENESIS Network & Maintenance can point it at another computer on
+ * the network
  * instead — that is how several computers share one company and one Messenger.
  * When a remote address is set, requests are absolute and cross-origin; the
  * server only answers for loopback origins and always requires a session token.

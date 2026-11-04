@@ -22,7 +22,8 @@ export const THEME_STORAGE_KEY = 'jenesis_theme';
 
 /**
  * Each of the three JENESIS applications remembers its own theme, so setting
- * Dark Mode in JENESIS Seller never changes JENESIS Admin. The key is
+ * Dark Mode in JENESIS Seller never changes JENESIS Accounting & Business.
+ * The key is
  * `jenesis_theme:<application>`; the plain `jenesis_theme` key stays valid and
  * is used when an application has no key of its own yet (people who chose a
  * theme before the three applications existed keep it).

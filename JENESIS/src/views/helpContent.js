@@ -63,19 +63,20 @@ export const HELP = {
         ]
       },
       applications: {
-        title: 'The three JENESIS applications',
+        title: 'The four JENESIS applications',
         purpose: 'Each member of the team opens the application that matches their work, and everybody works on the same company data.',
-        where: 'The JENESIS Seller, JENESIS Maintenance and JENESIS Admin shortcuts on the desktop or in the Start Menu. Opening JENESIS without a shortcut shows the chooser.',
+        where: 'The JENESIS Seller, JENESIS Network & Maintenance, JENESIS Accounting & Business and JENESIS Settings & Access Point shortcuts on the desktop or in the Start Menu. Opening JENESIS without a shortcut shows the chooser.',
         steps: [
           'JENESIS Seller (red) — selling: sales, receipts, customers, stock levels. It opens on Sales.',
-          'JENESIS Maintenance (green) — upkeep: stock, the connection between the computers, verified backups, integrity check and logs. It opens on Maintenance.',
-          'JENESIS Admin (blue) — administration: accounting, purchases, reports, settings, users and permissions. It opens on the Dashboard.',
-          'Each application remembers its own Light or Dark choice: changing the theme in Seller does not change Maintenance or Admin.',
-          'All three read and write the same company database, so a sale recorded in Seller appears at once in the Admin reports.'
+          'JENESIS Network & Maintenance (green) — upkeep: the service, the connection between the computers, verified backups, integrity check and logs. It holds no accounting, sales, purchase, customer, supplier, product, inventory or reporting screen. It opens on Maintenance.',
+          'JENESIS Accounting & Business (blue) — the books: accounting, purchases, banking, reports, taxes, users and permissions. It opens on the Dashboard.',
+          'JENESIS Settings & Access Point (yellow) — configuration: company, users, roles, taxes, currencies, backup, appearance and the network access point. It opens on Settings.',
+          'Each application remembers its own Light or Dark choice: changing the theme in Seller does not change the others.',
+          'All four read and write the same company database, so a sale recorded in Seller appears at once in the Accounting & Business reports.'
         ],
         expected: 'Each shortcut opens its own window, with its own title, colour and menu. Nothing is duplicated: there is one set of records.',
         notes: [
-          'A screen that does not belong to the application is not offered: JENESIS Seller has no general ledger, JENESIS Maintenance has no sales screen.',
+          'A screen that does not belong to the application is not offered: JENESIS Seller has no general ledger, JENESIS Network & Maintenance has no sales screen and no financial figures at all.',
           'Your permissions still apply inside every application: a user who may not post an entry sees the same refusal as anywhere else.',
           'Created and developed by KAYIGANWA JACQUES.'
         ],
@@ -300,7 +301,7 @@ export const HELP = {
       maintenance: {
         title: 'Maintenance: service, network, backups and logs',
         purpose: 'Keep JENESIS healthy, let the other computers of the office connect, and prove the data is intact.',
-        where: 'JENESIS Maintenance → Maintenance (the screen it opens on), or JENESIS Admin → Maintenance.',
+        where: 'JENESIS Network & Maintenance → Maintenance (the screen it opens on), or JENESIS Accounting & Business → Maintenance.',
         steps: [
           'Service — shows the version, when the service started, how long it has been running, and where the database and the data folder are.',
           'Network — off by default: the service answers this computer only. Switch it on to let the other computers of the network connect; the address is shown and Windows asks about the firewall.',
@@ -359,7 +360,7 @@ export const HELP = {
         expected: 'You see the developer/creator credit: Created and developed by KAYIGANWA JACQUES.',
         notes: [
           'KAYIGANWA JACQUES is the developer/creator of JENESIS.',
-          'The same credit appears at the bottom of the left column in JENESIS Admin, JENESIS Seller and JENESIS Maintenance, in English, French and Kinyarwanda.',
+          'The same credit appears at the bottom of the left column in all four applications, in English, French and Kinyarwanda.',
           'Support, changes and new versions of JENESIS come from the developer named here.'
         ]
       }
@@ -414,19 +415,20 @@ export const HELP = {
         ]
       },
       applications: {
-        title: 'Les trois applications JENESIS',
+        title: 'Les quatre applications JENESIS',
         purpose: 'Chacun ouvre l’application qui correspond à son travail, et tout le monde travaille sur les mêmes données.',
-        where: 'Les raccourcis JENESIS Seller, JENESIS Maintenance et JENESIS Admin sur le bureau ou dans le menu Démarrer. Ouvrir JENESIS sans raccourci affiche le choix.',
+        where: 'Les raccourcis JENESIS Seller, JENESIS Réseau & Maintenance, JENESIS Comptabilité & Gestion et JENESIS Paramètres & Point d’accès sur le bureau ou dans le menu Démarrer. Ouvrir JENESIS sans raccourci affiche le choix.',
         steps: [
           'JENESIS Seller (rouge) — la vente : ventes, reçus, clients, niveaux de stock. Il s’ouvre sur Ventes.',
-          'JENESIS Maintenance (vert) — l’entretien : stock, la connexion entre les ordinateurs, sauvegardes vérifiées, contrôle d’intégrité et journaux. Il s’ouvre sur Maintenance.',
-          'JENESIS Admin (bleu) — l’administration : comptabilité, achats, rapports, paramètres, utilisateurs et permissions. Il s’ouvre sur le Tableau de bord.',
+          'JENESIS Réseau & Maintenance (vert) — l’entretien : le service, la connexion entre les ordinateurs, sauvegardes vérifiées, contrôle d’intégrité et journaux. Il ne contient aucun écran de comptabilité, de vente, d’achat, de client, de fournisseur, d’article, de stock ni de rapport. Il s’ouvre sur Maintenance.',
+          'JENESIS Comptabilité & Gestion (bleu) — les livres : comptabilité, achats, banque, rapports, taxes, utilisateurs et permissions. Il s’ouvre sur le Tableau de bord.',
+          'JENESIS Paramètres & Point d’accès (jaune) — la configuration : société, utilisateurs, rôles, taxes, devises, sauvegarde, apparence et point d’accès réseau. Il s’ouvre sur Paramètres.',
           'Chaque application retient son propre choix Clair ou Sombre : changer le thème dans Seller ne change pas Maintenance ni Admin.',
           'Les trois lisent et écrivent la même base, donc une vente enregistrée dans Seller apparaît aussitôt dans les rapports d’Admin.'
         ],
         expected: 'Chaque raccourci ouvre sa propre fenêtre, avec son titre, sa couleur et son menu. Rien n’est dupliqué : il n’y a qu’un seul jeu d’enregistrements.',
         notes: [
-          'Un écran qui n’appartient pas à l’application n’est pas proposé : JENESIS Seller n’a pas de grand livre, JENESIS Maintenance n’a pas d’écran de vente.',
+          'Un écran qui n’appartient pas à l’application n’est pas proposé : JENESIS Seller n’a pas de grand livre, JENESIS Réseau & Maintenance n’a ni écran de vente ni chiffre financier.',
           'Vos permissions s’appliquent dans chaque application : un utilisateur qui ne peut pas valider une écriture voit le même refus partout.',
           'Créé et développé par KAYIGANWA JACQUES.'
         ],
@@ -651,7 +653,7 @@ export const HELP = {
       maintenance: {
         title: 'Maintenance : service, réseau, sauvegardes et journaux',
         purpose: 'Garder JENESIS en bonne santé, laisser les autres ordinateurs du bureau se connecter, et prouver que les données sont intactes.',
-        where: 'JENESIS Maintenance → Maintenance (l’écran sur lequel il s’ouvre), ou JENESIS Admin → Maintenance.',
+        where: 'JENESIS Réseau & Maintenance → Maintenance (l’écran sur lequel il s’ouvre), ou JENESIS Comptabilité & Gestion → Maintenance.',
         steps: [
           'Service — affiche la version, le démarrage du service, sa durée de fonctionnement, et l’emplacement de la base et du dossier de données.',
           'Réseau — désactivé par défaut : le service ne répond qu’à cet ordinateur. Activez-le pour laisser les autres ordinateurs du réseau se connecter ; l’adresse est affichée et Windows demande l’autorisation du pare-feu.',
@@ -710,7 +712,7 @@ export const HELP = {
         expected: 'Vous voyez la mention du développeur : Créé et développé par KAYIGANWA JACQUES.',
         notes: [
           'KAYIGANWA JACQUES est le développeur/créateur de JENESIS.',
-          'La même mention apparaît en bas de la colonne de gauche de JENESIS Admin, JENESIS Vendeur et JENESIS Maintenance, en anglais, français et kinyarwanda.',
+          'La même mention apparaît en bas de la colonne de gauche des quatre applications, en anglais, français et kinyarwanda.',
           'L’assistance, les modifications et les nouvelles versions de JENESIS viennent du développeur nommé ici.'
         ]
       }
@@ -767,17 +769,18 @@ export const HELP = {
       applications: {
         title: 'Porogaramu eshatu za JENESIS',
         purpose: 'Buri wese afungura porogaramu ijyanye n’akazi ke, kandi bose bakoresha amakuru amwe.',
-        where: 'Utubuto twa JENESIS Seller, JENESIS Maintenance na JENESIS Admin kuri desktop cyangwa muri menu yo gutangira. Gufungura JENESIS nta buto bigaragaza ihitamo.',
+        where: 'Utubuto twa JENESIS Seller, JENESIS Umuyoboro & Kubungabunga, JENESIS Ibaruramari & Ubucuruzi na JENESIS Igenamiterere & Ahantu ho kwinjirira kuri desktop cyangwa muri menu yo gutangira. Gufungura JENESIS nta buto bigaragaza ihitamo.',
         steps: [
           'JENESIS Seller (umutuku) — ubucuruzi: kugurisha, inyemezabwishyu, abakiriya, ububiko. Ifungura ku Bucuruzi.',
-          'JENESIS Maintenance (icyatsi) — kubungabunga: ububiko, ihuzwa ry’amaorudinate, kopi zagenzuwe, isuzuma ry’ubusugire n’ibitabo by’ibyabaye. Ifungura kuri Maintenance.',
-          'JENESIS Admin (ubururu) — ubuyobozi: ibaramuramari, kugura, raporo, amagenamiterere, abakoresha n’uburenganzira. Ifungura ku Mbonerahamwe.',
-          'Buri porogaramu yibuka imiterere yayo bwite: guhindura imiterere muri Seller ntibihindura Maintenance cyangwa Admin.',
+          'JENESIS Umuyoboro & Kubungabunga (icyatsi) — kubungabunga: serivisi, ihuzwa ry’amaorudinate, kopi zagenzuwe, isuzuma ry’ubusugire n’ibitabo by’ibyabaye. Nta ipaji y’ibaruramari, yo kugurisha, yo kugura, y’abakiriya, y’abacuruzi, y’ibicuruzwa, y’ububiko cyangwa ya raporo igira. Ifungura kuri Maintenance.',
+          'JENESIS Ibaruramari & Ubucuruzi (ubururu) — ibitabo: ibaruramari, kugura, banki, raporo, imisoro, abakoresha n’uburenganzira. Ifungura ku Mbonerahamwe.',
+          'JENESIS Igenamiterere & Ahantu ho kwinjirira (umuhondo) — igenamiterere: ikigo, abakoresha, inshingano, imisoro, amafaranga, ububiko, isura n’ahantu ho kwinjirira ku muyoboro. Ifungura ku Igenamiterere.',
+          'Buri porogaramu yibuka imiterere yayo bwite: guhindura imiterere muri Seller ntibihindura izindi.',
           'Zose eshatu zisoma kandi zandika muri base imwe, bityo igurisha ryanditswe muri Seller rigaragara ako kanya muri raporo za Admin.'
         ],
         expected: 'Buri buto bufungura idirishya ryabwo, rifite umutwe, ibara na menu yaryo. Nta gusubiramo kabiri: hari inyandiko imwe gusa.',
         notes: [
-          'Ipaji idakwiye iyo porogaramu ntitangwa: JENESIS Seller nta gitabo kinini, JENESIS Maintenance nta paji yo kugurisha.',
+          'Ipaji idakwiye iyo porogaramu ntitangwa: JENESIS Seller nta gitabo kinini, JENESIS Umuyoboro & Kubungabunga nta paji yo kugurisha kandi nta mibare y’amafaranga na mba.',
           'Uburenganzira bwawe buracyakurikizwa muri buri porogaramu: ukoresha udashobora kwemeza inyandiko abona ubwanga bumwe hose.',
           'Byakozwe na KAYIGANWA JACQUES.'
         ],
@@ -1002,7 +1005,7 @@ export const HELP = {
       maintenance: {
         title: 'Kubungabunga: serivisi, urusobe, kopi z’ububiko n’ibitabo',
         purpose: 'Kubungabunga JENESIS, kwemerera andi maorudinate yo mu biro guhuzwa, no kugaragaza ko amakuru ari meza.',
-        where: 'JENESIS Maintenance → Maintenance (ipaji ifunguraho), cyangwa JENESIS Admin → Maintenance.',
+        where: 'JENESIS Umuyoboro & Kubungabunga → Maintenance (ipaji ifunguraho), cyangwa JENESIS Ibaruramari & Ubucuruzi → Maintenance.',
         steps: [
           'Serivisi — yerekana verisiyo, igihe serivisi yatangiye, igihe imaze ikora, n’aho base n’ububiko bw’amakuru biri.',
           'Urusobe — ntibikora nk’ibisanzwe: serivisi isubiza iyi orudinate gusa. Bikoreshe kugira ngo andi maorudinate yo ku rusobe ahuzwe; aderesi irerekanwa na Windows ikabaza ku rukuta rw’umutekano.',
@@ -1061,7 +1064,7 @@ export const HELP = {
         expected: 'Ubona izina ry’uwakoze porogaramu: Byakozwe na KAYIGANWA JACQUES.',
         notes: [
           'KAYIGANWA JACQUES ni we wakoze kandi uteza imbere JENESIS.',
-          'Iyo nyandiko inagaragara hasi ku ruhande rw’ibumoso muri JENESIS Admin, JENESIS Umucuruzi na JENESIS Kubungabunga, mu Cyongereza, Igifaransa n’Ikinyarwanda.',
+          'Iyo nyandiko inagaragara hasi ku ruhande rw’ibumoso muri porogaramu zose uko ari enye, mu Cyongereza, Igifaransa n’Ikinyarwanda.',
           'Ubufasha, impinduka n’amavugururwa ya JENESIS bituruka ku wakoze porogaramu uvugwa hano.'
         ]
       }

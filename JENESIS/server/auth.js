@@ -36,6 +36,10 @@ const PERMISSIONS = [
   'accounting:read', 'accounting:write', 'journal:post', 'journal:reverse',
   'fx:read', 'fx:write', 'fx:revalue',
   'company:manage', 'users:manage', 'backup:export', 'backup:restore', 'demo:reset',
+  // Opening the JENESIS Settings & Access Point application. An
+  // administrator and a manager only: the screens inside it change the
+  // company record, the users and the permissions.
+  'settings:access',
   // Retiring a record (deactivate / reactivate / delete). Deliberately NOT
   // granted to accountant, sales, purchases or inventory: only an
   // administrator and a manager may take a record out of service.
@@ -90,7 +94,7 @@ const ROLE_PERMISSIONS = {
   // places delete/deactivate/reactivate at, and it is enforced here rather
   // than by hiding buttons, so a manager's request cannot be forged by
   // calling the API directly.
-  manager: [...READ_ALL, 'records:deactivate', 'records:delete']
+  manager: [...READ_ALL, 'settings:access', 'records:deactivate', 'records:delete']
 };
 
 const ROLES = Object.keys(ROLE_PERMISSIONS);

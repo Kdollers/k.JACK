@@ -714,9 +714,10 @@
 }
 
 /* ==========================================================================
-   Application identity — JENESIS Seller (red), Maintenance (green), Admin (blue)
+   Application identity — Seller (red), Network & Maintenance (green),
+   Accounting & Business (blue), Settings & Access Point (yellow)
    --------------------------------------------------------------------------
-   The three applications are one program with three identities. The accent
+   The four applications are one program with four identities. The accent
    tokens below are re-bound per application (the launcher sets `data-app` on
    <html> before the first paint) and the blue utilities the interface already
    uses follow them, so buttons, links, highlights, focus rings and the active
@@ -724,7 +725,7 @@
 
    The identity colour does NOT change between Light Mode and Dark Mode: only
    the text tint is brightened in Dark Mode, which keeps the hue (red / green /
-   blue) identical while keeping text readable.
+   blue / yellow) identical while keeping text readable.
    ========================================================================== */
 :root,
 [data-app='admin'] {
@@ -744,11 +745,22 @@
 }
 
 [data-app='maintenance'] {
-  --j-accent: 22 163 74;        /* green-600 — Maintenance */
+  --j-accent: 22 163 74;        /* green-600 — Network & Maintenance */
   --j-accent-strong: 21 128 61; /* green-700 */
   --j-accent-text: 21 128 61;
   --j-accent-soft: 220 252 231; /* green-100 */
   --j-accent-line: 187 247 208; /* green-200 */
+}
+
+[data-app='settings'] {
+  /* amber-600 rather than yellow-400: pure yellow cannot carry white text or
+     a readable link on a light surface, so the identity hue is kept while the
+     contrast stays inside WCAG AA. */
+  --j-accent: 217 119 6;        /* amber-600 — Settings & Access Point */
+  --j-accent-strong: 180 83 9;  /* amber-700 */
+  --j-accent-text: 180 83 9;
+  --j-accent-soft: 254 243 199; /* amber-100 */
+  --j-accent-line: 253 230 138; /* amber-200 */
 }
 
 .dark,
@@ -774,6 +786,14 @@
   --j-accent-text: 134 239 172; /* green-300 */
   --j-accent-soft: 5 46 22;     /* green-950 */
   --j-accent-line: 20 83 45;    /* green-900 */
+}
+
+.dark[data-app='settings'] {
+  --j-accent: 217 119 6;
+  --j-accent-strong: 180 83 9;
+  --j-accent-text: 252 211 77;  /* amber-300 — readable on dark */
+  --j-accent-soft: 69 26 3;     /* amber-950 */
+  --j-accent-line: 120 53 15;   /* amber-900 */
 }
 
 /* Semantic helpers for new code — these always follow the application. */

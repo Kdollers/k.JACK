@@ -47,7 +47,28 @@ if (!process.argv[2]) {
 const scenario = process.argv[2];
 const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `genesis-auth-${scenario}-`));
 const dbPath = path.join(workDir, 'genesis.db');
-if (scenario === 'legacy') fs.copyFileSync(SOURCE_DB, dbPath);
+// The legacy scenario exists to prove that a database captured BEFORE the
+// versioned migrations is upgraded safely. It is only meaningful while the
+// repository's baseline genesis.db is still pre-migration. If someone runs
+// JENESIS against that baseline (a live server does, and it migrates in
+// place), the scenario silently upgrades an already-upgraded file and then
+// reports confusing count mismatches instead of testing anything. Refuse to
+// run in that state and say exactly how to fix it.
+if (scenario === 'legacy') {
+  const probe = new (require('node:sqlite').DatabaseSync)(SOURCE_DB, { readOnly: true });
+  const migrated = probe
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_migrations'")
+    .all();
+  probe.close();
+  assert.strictEqual(
+    migrated.length,
+    0,
+    "genesis.db is already migrated, so the legacy upgrade scenario would test nothing. " +
+      'Restore the pristine baseline with: git checkout HEAD -- JENESIS/genesis.db ' +
+      '(and delete genesis.db-wal / genesis.db-shm).'
+  );
+  fs.copyFileSync(SOURCE_DB, dbPath);
+}
 process.env.GENESIS_DB_PATH = dbPath;
 process.env.GENESIS_DIST_DIR = path.join(ROOT, 'dist');
 
@@ -340,15 +361,18 @@ if (scenario === 'fresh') {
     for (const [role, perms] of Object.entries(ROLE_PERMISSIONS)) {
       for (const p of perms) assert.ok(PERMISSIONS.includes(p), `${role} has unknown permission ${p}`);
     }
-    // A manager is read-only with one deliberate exception: retiring a record
-    // (deactivate / reactivate / delete) sits at administrator-and-manager
-    // level in the specification. Everything else a manager holds ends in
-    // :read; this asserts that list stays exactly that one exception.
+    // A manager is read-only with two deliberate exceptions, both required by
+    // the specification: retiring a record (deactivate / reactivate / delete)
+    // sits at administrator-and-manager level, and opening the JENESIS
+    // Settings & Access Point application is an administrator-and-manager
+    // right because the screens inside it change the company record, the users
+    // and their permissions. Everything else a manager holds ends in :read;
+    // this asserts that list stays exactly those two exceptions.
     const writePerms = ROLE_PERMISSIONS.manager.filter((p) => !p.endsWith(':read'));
     assert.deepStrictEqual(
       writePerms.slice().sort(),
-      ['records:deactivate', 'records:delete'],
-      `manager must be read-only apart from record retirement; found ${writePerms.join(', ')}`
+      ['records:deactivate', 'records:delete', 'settings:access'],
+      `manager must be read-only apart from record retirement and configuration; found ${writePerms.join(', ')}`
     );
   });
 }

@@ -17,7 +17,11 @@ import {
 } from 'lucide-react';
 
 /**
- * MaintenanceView — the home of the JENESIS Maintenance application.
+ * MaintenanceView — the home of the JENESIS Network & Maintenance application.
+ *
+ * It holds no accounting, sales, purchase, customer, supplier, product,
+ * inventory or reporting screen: only the service, the network, backups,
+ * integrity and logs.
  *
  * Everything here does real work against the running service:
  *   - the state of the service and the database file,

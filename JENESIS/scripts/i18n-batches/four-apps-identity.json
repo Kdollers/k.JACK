@@ -1,0 +1,50 @@
+{
+  "identity": {
+    "maintenance_name": {
+      "en": "JENESIS Network & Maintenance",
+      "fr": "JENESIS Réseau & Maintenance",
+      "rw": "JENESIS Umuyoboro & Kubungabunga"
+    },
+    "maintenance_short": {
+      "en": "Network & Maintenance",
+      "fr": "Réseau & Maintenance",
+      "rw": "Umuyoboro & Kubungabunga"
+    },
+    "maintenance_purpose": {
+      "en": "The service, the network between computers, verified backups, integrity checks and logs. No accounting data of any kind.",
+      "fr": "Le service, le réseau entre les ordinateurs, les sauvegardes vérifiées, les contrôles d'intégrité et les journaux. Aucune donnée comptable.",
+      "rw": "Serivisi, umuyoboro hagati ya mudasobwa, ububiko bwemewe, igenzura ry'ubusugire n'inyandiko. Nta makuru y'ibaruramari na mba."
+    },
+    "admin_name": {
+      "en": "JENESIS Accounting & Business",
+      "fr": "JENESIS Comptabilité & Gestion",
+      "rw": "JENESIS Ibaruramari & Ubucuruzi"
+    },
+    "admin_short": {
+      "en": "Accounting & Business",
+      "fr": "Comptabilité & Gestion",
+      "rw": "Ibaruramari & Ubucuruzi"
+    },
+    "admin_purpose": {
+      "en": "Accounting, purchases, banking, reports, taxes, users, settings and the whole company record.",
+      "fr": "Comptabilité, achats, banque, rapports, taxes, utilisateurs, paramètres et tout le dossier de l'entreprise.",
+      "rw": "Ibaruramari, kugura, banki, raporo, imisoro, abakoresha, igenamiterere n'idosiye yose y'ikigo."
+    },
+    "settings_name": {
+      "en": "JENESIS Settings & Access Point",
+      "fr": "JENESIS Paramètres & Point d'accès",
+      "rw": "JENESIS Igenamiterere & Ahantu ho Kwinjirira"
+    },
+    "settings_short": {
+      "en": "Settings & Access Point",
+      "fr": "Paramètres & Point d'accès",
+      "rw": "Igenamiterere & Ahantu ho Kwinjirira"
+    },
+    "settings_purpose": {
+      "en": "Configuration: company, users, roles and permissions, taxes, currencies, backup, appearance and the network access point.",
+      "fr": "Configuration : société, utilisateurs, rôles et permissions, taxes, devises, sauvegarde, apparence et point d'accès réseau.",
+      "rw": "Igenamiterere: ikigo, abakoresha, inshingano n'uburenganzira, imisoro, amafaranga, ububiko, isura n'ahantu ho kwinjirira ku muyoboro."
+    },
+    "settings_colour": { "en": "Yellow", "fr": "Jaune", "rw": "Umuhondo" }
+  }
+}

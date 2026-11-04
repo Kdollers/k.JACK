@@ -24,12 +24,15 @@ const TONES = {
   brand: ['#1d4ed8', '#0b1f4b'],
   seller: ['#dc2626', '#450a0a'],
   maintenance: ['#16a34a', '#052e16'],
-  admin: ['#2563eb', '#0b1f4b']
+  admin: ['#2563eb', '#0b1f4b'],
+  // amber rather than yellow-400: the mark is drawn with white inside it, and
+  // pure yellow cannot carry white legibly. The hue still reads as yellow.
+  settings: ['#d97706', '#451a03']
 };
 
 /**
  * @param {object}  props
- * @param {string}  props.tone        'seller' | 'maintenance' | 'admin' | 'brand'
+ * @param {string}  props.tone        'seller' | 'maintenance' | 'admin' | 'settings' | 'brand'
  * @param {number}  props.size        edge length in pixels (the mark is square)
  * @param {boolean} props.wordmark    draw the JENESIS wordmark next to the mark
  * @param {string}  props.className   extra classes (spacing, alignment)

@@ -1,21 +1,34 @@
 /**
- * appIdentity.js — the three JENESIS applications.
+ * appIdentity.js — the four JENESIS applications.
  *
  * JEN 0.2 shipped as one program with role-based permissions. This module adds
- * the product decision JENESIS is built around: three distinct applications,
- * each with its own name, colour, menu and remembered theme, all sharing one
+ * the product decision JENESIS is built around: four distinct applications,
+ * each with its own name, colour, menu and remembered theme, all sharing ONE
  * database and one accounting engine.
  *
- *   JENESIS Seller      — red   — selling: sales, receipts, customers
- *   JENESIS Maintenance — green — upkeep: inventory, network, backups, logs
- *   JENESIS Admin       — blue  — everything: accounting, purchases, reports
+ *   1. JENESIS Seller                  — red    — the counter: sales, receipts,
+ *                                                customers, stock levels
+ *   2. JENESIS Network & Maintenance   — green  — the upkeep: the service, the
+ *                                                network, backups, integrity,
+ *                                                logs. Deliberately NO
+ *                                                accounting, sales, purchase,
+ *                                                customer, supplier, product,
+ *                                                inventory or reporting screen.
+ *   3. JENESIS Accounting & Business   — blue   — the books: accounting,
+ *                                                purchases, banking, reports,
+ *                                                taxes, and the whole company
+ *                                                record
+ *   4. JENESIS Settings & Access Point — yellow — configuration: company,
+ *                                                users, roles, taxes,
+ *                                                currencies, backup, appearance
+ *                                                and the network access point
  *
  * This file holds no React and touches no DOM by itself, so the rules are
- * unit-tested in Node (tests/app-identity.test.js).
+ * unit-tested in Node (tests/four-apps.test.js).
  */
 
-/** The three applications, in the order they are offered to the user. */
-export const APP_IDS = ['seller', 'maintenance', 'admin'];
+/** The four applications, in the order they are offered to the user. */
+export const APP_IDS = ['seller', 'maintenance', 'admin', 'settings'];
 
 /**
  * Everything that makes an application itself. `views` are the screens it
@@ -49,7 +62,10 @@ export const APPS = {
     favicon: '/favicon-maintenance.png',
     accent: { light: '#16a34a', dark: '#4ade80', deep: '#052e16' },
     defaultView: 'maintenance',
-    views: ['dashboard', 'inventory', 'maintenance', 'help']
+    // No dashboard and no inventory: a maintenance window must not be able to
+    // reach financial totals or stock screens at all. It opens on its own
+    // screen and has nothing else.
+    views: ['maintenance', 'help']
   },
   admin: {
     id: 'admin',
@@ -67,6 +83,25 @@ export const APPS = {
       'dashboard', 'sales', 'purchases', 'inventory', 'customers', 'suppliers',
       'banking', 'accounting', 'reports', 'settings', 'maintenance', 'help'
     ]
+  },
+  settings: {
+    id: 'settings',
+    nameKey: 'identity.settings_name',
+    shortKey: 'identity.settings_short',
+    purposeKey: 'identity.settings_purpose',
+    colour: 'yellow',
+    tone: 'settings',
+    iconIco: 'build/icon-settings.ico',
+    iconPng: 'build/icon-settings.png',
+    favicon: '/favicon-settings.png',
+    accent: { light: '#d97706', dark: '#fbbf24', deep: '#451a03' },
+    defaultView: 'settings',
+    // Configuration changes the company record, the users and their
+    // permissions, so the application itself is gated: a user who may
+    // not configure anything is told so instead of being shown a screen
+    // whose every action would be refused.
+    accessPermission: 'settings:access',
+    views: ['settings', 'help']
   }
 };
 
@@ -95,7 +130,7 @@ export function themeStorageKey(appId) {
  */
 export const LEGACY_THEME_STORAGE_KEY = 'jenesis_theme';
 
-/** True for a value that names one of the three applications. */
+/** True for a value that names one of the four applications. */
 export function isAppId(value) {
   return APP_IDS.includes(value);
 }
@@ -118,6 +153,15 @@ export function resolveAppId(candidate) {
 /** The application identity, falling back to the product mark. */
 export function getApp(appId) {
   return APPS[appId] || null;
+}
+
+/**
+ * The permission a user must hold to open the application at all, or null when
+ * every signed-in user may open it. Administrators and managers configure the
+ * company; everybody else uses one of the working applications.
+ */
+export function accessPermissionFor(appId) {
+  return APPS[appId] ? APPS[appId].accessPermission || null : null;
 }
 
 /** Every screen the application offers, in menu order. */
@@ -166,17 +210,27 @@ export function appIdFromArgv(argv) {
 }
 
 /**
- * The window title of an application, in the shape Windows shows it:
- * "JENESIS Seller" / "JENESIS Maintenance" / "JENESIS Admin".
+ * The full name of an application, in the shape Windows shows it in the title
+ * bar, on the desktop shortcut and in the Start Menu. These are proper names,
+ * not the id with a capital letter, so "JENESIS Admin" has become "JENESIS
+ * Accounting & Business" and the shortcut names match what the user reads.
+ *
+ * Kept in sync with electron/app-mode.cjs; tests/four-apps.test.js asserts the
+ * two implementations agree, so a rename that forgets one of them fails.
  */
+export const APP_TITLES = {
+  seller: 'JENESIS Seller',
+  maintenance: 'JENESIS Network & Maintenance',
+  admin: 'JENESIS Accounting & Business',
+  settings: 'JENESIS Settings & Access Point'
+};
+
 export function appTitle(appId) {
-  const app = APPS[appId];
-  if (!app) return PRODUCT.name;
-  return `JENESIS ${appId.charAt(0).toUpperCase()}${appId.slice(1)}`;
+  return APP_TITLES[appId] || PRODUCT.name;
 }
 
 /**
- * Electron uses this to keep the three applications apart in the taskbar, so
+ * Electron uses this to keep the four applications apart in the taskbar, so
  * each one gets its own pinned icon instead of sharing a single group.
  */
 export function appUserModelId(appId) {

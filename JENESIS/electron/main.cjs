@@ -24,7 +24,8 @@ const WINDOW_MIN_HEIGHT = 640;
 const MAX_START_ATTEMPTS = 3;
 
 let mainWindow = null;
-// One window per application: opening JENESIS Seller while JENESIS Admin is
+// One window per application: opening JENESIS Seller while JENESIS Accounting &
+// Business is
 // running adds a second window instead of focusing the wrong application.
 const appWindows = new Map();
 // The application this process was started for (null = the launcher), and a
@@ -393,7 +394,7 @@ function createWindow(mode) {
   });
 
   // Give the window its own taskbar identity, so pinning JENESIS Seller does
-  // not pin JENESIS Admin (Windows groups windows by this id).
+  // not pin JENESIS Accounting & Business (Windows groups windows by this id).
   try {
     if (process.platform === 'win32' && typeof mainWindow.setAppDetails === 'function') {
       mainWindow.setAppDetails({ appId: appUserModelId(appId) });

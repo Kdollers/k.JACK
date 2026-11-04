@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { AppModeProvider, useAppMode } from './context/AppModeContext';
+import { AppModeProvider, useAppMode, appTitle } from './context/AppModeContext';
+import { accessPermissionFor } from './appIdentity';
+import { useI18n } from './i18n';
 import { ShortcutsProvider } from './context/ShortcutsContext';
 import { I18nProvider } from './i18n';
 import Navbar from './components/Navbar';
@@ -30,10 +32,11 @@ import JenesisLogo from './components/JenesisLogo';
 import { AppErrorBoundary } from './components/AppCrashScreen';
 
 function AppContent() {
-  const { activeView, loading, authState, authError, setActiveView } = useApp();
+  const { activeView, loading, authState, authError, setActiveView, hasPermission, logout } = useApp();
   const { appId, isLauncher, app, canOpen, landingView } = useAppMode();
+  const { t } = useI18n();
 
-  // No application was requested: offer the three of them. The installed
+  // No application was requested: offer the four of them. The installed
   // shortcuts never reach this screen — they name their application.
   if (isLauncher) return <LauncherView />;
 
@@ -60,6 +63,32 @@ function AppContent() {
   if (authState === 'login') return <LoginScreen />;
   if (authState === 'change-password') return <ChangePasswordScreen />;
   if (authState === 'error') return <BackendUnavailable message={authError} />;
+
+  // An application can require a permission simply to be opened. Without this
+  // gate a user who may not configure anything would land on a settings screen
+  // whose every action the server refuses — a screen that looks broken.
+  const requiredPermission = accessPermissionFor(appId);
+  if (requiredPermission && !hasPermission(requiredPermission)) {
+    const tone = app ? app.tone : 'brand';
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-canvas p-6">
+        <div className="max-w-md w-full bg-surface border border-line rounded-xl shadow-lg p-6 text-center">
+          <JenesisLogo tone={tone} size={56} className="mx-auto" />
+          <h1 className="mt-4 text-base font-bold">{t('identity.no_access_title')}</h1>
+          <p className="mt-2 text-xs text-[rgb(var(--j-ink-muted))]">
+            {t('identity.no_access_body', { app: app ? appTitle(appId) : 'JENESIS' })}
+          </p>
+          <button
+            type="button"
+            onClick={logout}
+            className="mt-5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white j-bg hover:opacity-90 j-ring"
+          >
+            {t('identity.open_another')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     const tone = app ? app.tone : 'brand';

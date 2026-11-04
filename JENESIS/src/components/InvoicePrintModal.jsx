@@ -10,7 +10,7 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
   const { currentCompany, formatCurrency, formatDate } = useApp();
   const { t } = useI18n();
   // Printed documents carry the mark of the application that issued them:
-  // red in JENESIS Seller, blue in JENESIS Admin.
+  // red in JENESIS Seller, blue in JENESIS Accounting & Business.
   const { app } = useAppMode();
   const markTone = app?.tone || 'brand';
 
