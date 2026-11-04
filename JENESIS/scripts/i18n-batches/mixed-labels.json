@@ -1,0 +1,23 @@
+{
+  "common": {
+    "tel":       { "en": "Tel:",  "fr": "Tél :",  "rw": "Telefoni:" },
+    "tin_short": { "en": "TIN:",  "fr": "TIN :",  "rw": "TIN:" }
+  },
+  "print": {
+    "tin_tax_id": { "en": "TIN / Tax ID:", "fr": "TIN / N° fiscal :", "rw": "TIN / Nomero y'umusoro:" },
+    "tax_id_tin": { "en": "Tax ID / TIN:", "fr": "N° fiscal / TIN :", "rw": "Nomero y'umusoro / TIN:" }
+  },
+  "accounting": {
+    "journal_entry_hash": { "en": "Journal Entry #", "fr": "Écriture n°", "rw": "Ijuru #" },
+    "source": { "en": "Source:", "fr": "Source :", "rw": "Inkomoko:" }
+  },
+  "banking": {
+    "acc_short": { "en": "Acc:", "fr": "Cpte :", "rw": "Konti:" }
+  },
+  "dashboard": {
+    "cash_label":   { "en": "Cash:", "fr": "Espèces :", "rw": "Amafaranga mu ntoki:" },
+    "bank_label":   { "en": "Bank:", "fr": "Banque :", "rw": "Banki:" },
+    "gross_margin": { "en": "Gross Margin:", "fr": "Marge brute :", "rw": "Inyungu rusange:" },
+    "min_short":    { "en": "Min:", "fr": "Min :", "rw": "Ntoya:" }
+  }
+}

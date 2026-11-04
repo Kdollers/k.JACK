@@ -290,11 +290,11 @@ export default function ReportsView() {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold border-b-2 border-slate-300">
                 <tr>
-                  <th className="py-2.5 px-3">Account Code</th>
-                  <th className="py-2.5 px-3">Account Name</th>
-                  <th className="py-2.5 px-3">Type</th>
-                  <th className="py-2.5 px-3 text-right">Debit Balance</th>
-                  <th className="py-2.5 px-3 text-right">Credit Balance</th>
+                  <th className="py-2.5 px-3">{t('accounting.account_code')}</th>
+                  <th className="py-2.5 px-3">{t('accounting.account_name')}</th>
+                  <th className="py-2.5 px-3">{t('common.type')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('accounting.debit_balance')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('accounting.credit_balance')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
@@ -601,39 +601,39 @@ export default function ReportsView() {
           <div className="max-w-2xl mx-auto space-y-4 text-xs">
             <div className="space-y-3">
               <div className="flex justify-between py-2 border-b border-slate-200">
-                <span className="font-bold text-slate-800">Net Operating Income (P&L):</span>
+                <span className="font-bold text-slate-800">{t('reports.cf_net_operating_income')}</span>
                 <span className="font-mono font-semibold">{formatCurrency(data.netIncome)}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-200 text-slate-700">
-                <span>Cash Receipts from Customers & Inflows:</span>
+                <span>{t('reports.cf_receipts')}</span>
                 <span className="font-mono text-emerald-600 font-semibold">
                   +{formatCurrency(data.cashReceiptsFromCustomers)}
                 </span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-200 text-slate-700">
-                <span>Cash Payments to Suppliers & Operating Expenses:</span>
+                <span>{t('reports.cf_payments')}</span>
                 <span className="font-mono text-rose-600 font-semibold">
                   -{formatCurrency(data.cashPaidToSuppliersAndExpenses)}
                 </span>
               </div>
               <div className="bg-slate-50 p-3 rounded-lg flex justify-between font-bold text-slate-900">
-                <span>Net Cash Generated from Operations:</span>
+                <span>{t('reports.cf_net_operations')}</span>
                 <span className="font-mono">{formatCurrency(data.netOperatingCash)}</span>
               </div>
 
               <div className="pt-4 border-t border-slate-300 space-y-2">
                 <div className="flex justify-between py-1 text-slate-600">
-                  <span>Cash & Bank Balances at Beginning of Period:</span>
+                  <span>{t('reports.cf_beginning')}</span>
                   <span className="font-mono font-semibold">{formatCurrency(data.beginningCash)}</span>
                 </div>
                 <div className="flex justify-between py-1 text-slate-600">
-                  <span>Net Change in Liquidity:</span>
+                  <span>{t('reports.cf_net_change')}</span>
                   <span className="font-mono font-semibold">
                     {data.netChangeInCash >= 0 ? '+' : ''}{formatCurrency(data.netChangeInCash)}
                   </span>
                 </div>
                 <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg flex justify-between font-black text-sm text-blue-900">
-                  <span>Cash & Bank Balances at End of Period:</span>
+                  <span>{t('reports.cf_ending')}</span>
                   <span className="font-mono">{formatCurrency(data.endingCash)}</span>
                 </div>
               </div>
@@ -673,7 +673,7 @@ export default function ReportsView() {
             <div className="bg-blue-50 border-2 border-blue-600 p-5 rounded-xl flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-sm text-slate-900">{t('reports.net_tax_payable')}</h3>
-                <p className="text-[11px] text-slate-600">Output VAT Collected minus Deductible Input VAT</p>
+                <p className="text-[11px] text-slate-600">{t('reports.vat_net_note')}</p>
               </div>
               <div
                 className={`text-xl font-black font-mono ${

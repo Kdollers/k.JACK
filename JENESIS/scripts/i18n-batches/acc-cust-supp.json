@@ -1,0 +1,58 @@
+{
+  "aging": {
+    "current_not_due": { "en": "Current (Not Due)", "fr": "Courant (non échu)", "rw": "Igihe kitaragera" },
+    "d1_30":   { "en": "1-30 Days",   "fr": "1-30 jours",   "rw": "Iminsi 1-30" },
+    "d31_60":  { "en": "31-60 Days",  "fr": "31-60 jours",  "rw": "Iminsi 31-60" },
+    "d61_90":  { "en": "61-90 Days",  "fr": "61-90 jours",  "rw": "Iminsi 61-90" },
+    "over_90": { "en": "> 90 Days",   "fr": "> 90 jours",   "rw": "Hejuru y'iminsi 90" },
+    "total_due": { "en": "Total Due", "fr": "Total dû",     "rw": "Umwenda wose" }
+  },
+  "accounting": {
+    "add_account":    { "en": "Add Account", "fr": "Ajouter un compte", "rw": "Ongeraho Konti" },
+    "subtype":        { "en": "Subtype", "fr": "Sous-type", "rw": "Ubwoko bw'inyongera" },
+    "normal_balance": { "en": "Normal Balance", "fr": "Solde normal", "rw": "Igisigaye gisanzwe" },
+    "debit_balance":  { "en": "Debit Balance", "fr": "Solde débiteur", "rw": "Igisigaye cya Débit" },
+    "credit_balance": { "en": "Credit Balance", "fr": "Solde créditeur", "rw": "Igisigaye cya Crédit" },
+    "net_balance":    { "en": "Net Balance", "fr": "Solde net", "rw": "Igisigaye rusange" },
+    "reverse_void":   { "en": "Reverse / Void", "fr": "Contrepasser / Annuler", "rw": "Subiza inyuma / Hanagura" },
+    "account_label":  { "en": "Account:", "fr": "Compte :", "rw": "Konti:" },
+    "opening_label":  { "en": "Opening:", "fr": "Ouverture :", "rw": "Itangira:" },
+    "net_closing_label": { "en": "Net Closing:", "fr": "Clôture nette :", "rw": "Isoza rusange:" },
+    "txn_purpose_placeholder": { "en": "Transaction purpose", "fr": "Objet de la transaction", "rw": "Impamvu y'igikorwa" },
+    "journal_lines":  { "en": "Journal Lines (Debits & Credits)", "fr": "Lignes d'écriture (débits et crédits)", "rw": "Imirongo ya Jorunali (Débit na Crédit)" },
+    "accounting_lines": { "en": "Accounting Lines", "fr": "Lignes comptables", "rw": "Imirongo y'ibaruramari" },
+    "account":        { "en": "Account", "fr": "Compte", "rw": "Konti" },
+    "add_new_account": { "en": "Add New Account to Chart of Accounts", "fr": "Ajouter un nouveau compte au plan comptable", "rw": "Ongeraho Konti nshya mu gitabo cya Konti" },
+    "account_code":   { "en": "Account Code", "fr": "Code du compte", "rw": "Kode ya Konti" },
+    "account_name":   { "en": "Account Name", "fr": "Nom du compte", "rw": "Izina rya Konti" },
+    "account_type":   { "en": "Account Type", "fr": "Type de compte", "rw": "Ubwoko bwa Konti" },
+    "debit_upper":    { "en": "DEBIT", "fr": "DÉBIT", "rw": "DÉBIT" },
+    "credit_upper":   { "en": "CREDIT", "fr": "CRÉDIT", "rw": "CRÉDIT" },
+    "eg_account_name": { "en": "e.g. Software Subscriptions", "fr": "ex. Abonnements logiciels", "rw": "urugero: Ubwishyu bwa porogaramu" },
+    "unbalanced_toast": { "en": "Journal entry is unbalanced by {amount}", "fr": "L'écriture n'est pas équilibrée de {amount}", "rw": "Ijuru ntiriringaniye ku {amount}" },
+    "posted_toast": { "en": "Journal Entry {number} posted successfully!", "fr": "Écriture {number} comptabilisée avec succès !", "rw": "Ijuru {number} ryanditswe neza!" },
+    "account_created_toast": { "en": "Chart of account created successfully", "fr": "Compte créé avec succès", "rw": "Igitabo cya Konti cyaremwe neza" },
+    "reversed_toast": { "en": "Entry reversed! Generated reversal journal entry {number}", "fr": "Écriture contrepassée ! Contre-écriture {number} générée", "rw": "Ijuru ryasubijwe inyuma! Haremwe ijuru ryo gusubiza {number}" }
+  },
+  "customers": {
+    "updated_toast": { "en": "Customer updated successfully", "fr": "Client mis à jour avec succès", "rw": "Umukiriya yahinduwe neza" },
+    "created_toast": { "en": "Customer created successfully", "fr": "Client créé avec succès", "rw": "Umukiriya yaremwe neza" },
+    "contact_info":  { "en": "Contact Info", "fr": "Coordonnées", "rw": "Amakuru yo kuvugana" },
+    "aging_subtitle": { "en": "Aging analysis of outstanding customer receivables", "fr": "Analyse d'ancienneté des créances clients en cours", "rw": "Isesengura ry'igihe cy'umwenda w'abakiriya utarishyurwa" },
+    "aging_party":   { "en": "Customer", "fr": "Client", "rw": "Umukiriya" },
+    "eg_company":    { "en": "e.g. Acme Corporation", "fr": "ex. Acme Corporation", "rw": "urugero: Acme Corporation" },
+    "auto_generated": { "en": "Auto-generated if empty", "fr": "Généré automatiquement si vide", "rw": "Byikora ubwabyo niba nta cyanditswe" },
+    "tin_number":    { "en": "TIN number", "fr": "Numéro TIN", "rw": "Numero ya TIN" },
+    "address_placeholder": { "en": "Street, City, Country", "fr": "Rue, Ville, Pays", "rw": "Umuhanda, Umujyi, Igihugu" }
+  },
+  "suppliers": {
+    "updated_toast": { "en": "Supplier updated successfully", "fr": "Fournisseur mis à jour avec succès", "rw": "Umucuruzi yahinduwe neza" },
+    "created_toast": { "en": "Supplier created successfully", "fr": "Fournisseur créé avec succès", "rw": "Umucuruzi yaremwe neza" },
+    "contact_info":  { "en": "Contact Info", "fr": "Coordonnées", "rw": "Amakuru yo kuvugana" },
+    "current_payable_balance": { "en": "Current Payable Balance", "fr": "Solde fournisseur actuel", "rw": "Umwenda uriho ubu" },
+    "aging_subtitle": { "en": "Aging analysis of supplier accounts payable", "fr": "Analyse d'ancienneté des dettes fournisseurs", "rw": "Isesengura ry'igihe cy'umwenda ku bacuruzi" },
+    "aging_party":   { "en": "Supplier", "fr": "Fournisseur", "rw": "Umucuruzi" },
+    "eg_company":    { "en": "e.g. Global Tech Distributors", "fr": "ex. Global Tech Distributors", "rw": "urugero: Global Tech Distributors" },
+    "auto_generated": { "en": "Auto-generated if empty", "fr": "Généré automatiquement si vide", "rw": "Byikora ubwabyo niba nta cyanditswe" }
+  }
+}

@@ -113,7 +113,12 @@
     "outstanding_due": "Ideni Risigaye",
     "none": "Ntacyo",
     "theme": "Insanganyamatsiko",
-    "appearance": "Imiterere"
+    "appearance": "Imiterere",
+    "initializing": "Kwitegura igitabo rusange n'ububiko bw'amakuru...",
+    "tax_pct": "Umusoro %",
+    "disc_pct": "Igabanywa %",
+    "tel": "Telefoni:",
+    "tin_short": "TIN:"
   },
   "dashboard": {
     "title": "Imbonerahamwe Nkuru y'Imari n'Ubucuruzi",
@@ -141,7 +146,19 @@
     "new_bill": "Kora Inyandiko yo Kwishyura",
     "record_payment": "Andika Ubwishyu",
     "new_journal": "Andika mu Ibaruramari",
-    "receipt_voucher": "Inyemezabwishyu / Inyandiko"
+    "receipt_voucher": "Inyemezabwishyu / Inyandiko",
+    "total_liquidity": "Amafaranga yose aboneka (isanduku na banki)",
+    "party": "Uwo bireba",
+    "new_client_bill": "Inyemezo nshya ry'umukiriya",
+    "vendor_purchase": "Kugura ku mucuruzi",
+    "quick_invoice": "+ Inivoyisi",
+    "quick_bill": "+ Inyemezo",
+    "quick_payment": "+ Kwishyura",
+    "quick_journal": "+ Inyandiko y'ibaruramari",
+    "cash_label": "Amafaranga mu ntoki:",
+    "bank_label": "Banki:",
+    "gross_margin": "Inyungu rusange:",
+    "min_short": "Ntoya:"
   },
   "customers": {
     "title": "Gucunga Abakiriya",
@@ -163,7 +180,16 @@
     "opening_balance": "Asanzwe arimo",
     "closing_balance": "Asigaye arimo",
     "aging_title": "Igihe Imyenda y'Abakiriya Imaranye",
-    "total_ar": "Igiteranyo cy'Imyenda y'Abakiriya"
+    "total_ar": "Igiteranyo cy'Imyenda y'Abakiriya",
+    "updated_toast": "Umukiriya yahinduwe neza",
+    "created_toast": "Umukiriya yaremwe neza",
+    "contact_info": "Amakuru yo kuvugana",
+    "aging_subtitle": "Isesengura ry'igihe cy'umwenda w'abakiriya utarishyurwa",
+    "aging_party": "Umukiriya",
+    "eg_company": "urugero: Acme Corporation",
+    "auto_generated": "Byikora ubwabyo niba nta cyanditswe",
+    "tin_number": "Numero ya TIN",
+    "address_placeholder": "Umuhanda, Umujyi, Igihugu"
   },
   "suppliers": {
     "title": "Gucunga Abagemura",
@@ -174,7 +200,15 @@
     "statement_title": "Inyandiko y'Ubwishyu bw'Umgemura",
     "record_payment": "Kwishyura Umgemura",
     "aging_title": "Igihe Imyenda y'Abagemura Imaranye",
-    "total_ap": "Igiteranyo cy'Imyenda y'Ababigisha"
+    "total_ap": "Igiteranyo cy'Imyenda y'Ababigisha",
+    "updated_toast": "Umucuruzi yahinduwe neza",
+    "created_toast": "Umucuruzi yaremwe neza",
+    "contact_info": "Amakuru yo kuvugana",
+    "current_payable_balance": "Umwenda uriho ubu",
+    "aging_subtitle": "Isesengura ry'igihe cy'umwenda ku bacuruzi",
+    "aging_party": "Umucuruzi",
+    "eg_company": "urugero: Global Tech Distributors",
+    "auto_generated": "Byikora ubwabyo niba nta cyanditswe"
   },
   "inventory": {
     "title": "Ibicuruzwa n'Ububiko",
@@ -330,7 +364,15 @@
     "discard_title": "Gusiba iyi fagitire?",
     "discard_message": "Fagitire watangiye ntirabikwa. Gufunga iyi nyandiko birayisiba.",
     "discard_confirm": "Siba kandi ufunge",
-    "duplicated_from": "Bivanye kuri {number}. Reba ingano, hanyuma wemeze."
+    "duplicated_from": "Bivanye kuri {number}. Reba ingano, hanyuma wemeze.",
+    "quotes_subtitle": "Ibiciro byagereranijwe n'amasezerano yo kugurisha",
+    "valid_until": "Bimara kugeza",
+    "credit_total": "Igiteranyo cy'inguzanyo",
+    "custom_item_option": "-- Ikintu cyihariye cyangwa hitamo igicuruzwa --",
+    "credit_reason": "Impamvu yo gusubiza / kugaruza",
+    "returned_product_optional": "Igicuruzwa cyagarujwe (ntabwo ari ngombwa)",
+    "select_product_option": "-- Hitamo igicuruzwa --",
+    "credit_unit_price": "Igiciro ku gice cy'inguzanyo"
   },
   "purchases": {
     "title": "Ibyaguzwe n'Inyemezabwishyu z'Abagemura",
@@ -377,7 +419,11 @@
     "payment_on_creation_hint": "Iyo fagitire yandikwa nk'iyishyuwe ifite ubwishyu nyabwo bw'uwaduhaye ibicuruzwa. Nta guhitamo BYISHYUWE/NTIBYISHYUWE.",
     "discard_title": "Gusiba iyi fagitire?",
     "discard_message": "Fagitire watangiye ntirabikwa. Gufunga iyi nyandiko birayisiba.",
-    "discard_confirm": "Siba kandi ufunge"
+    "discard_confirm": "Siba kandi ufunge",
+    "vendor_ref": "Nomero y'umucuruzi",
+    "vendor_invoice_placeholder": "urugero: INYEMEZO-9988",
+    "item_service": "Igicuruzwa / Serivisi",
+    "vat_input_label": "TVA yishyuwe ku byaguze (ishobora gukurwaho):"
   },
   "banking": {
     "title": "Ubwishyu, Amafaranga na Banki",
@@ -445,7 +491,14 @@
     "narrative_placeholder": "Intego cyangwa impamvu y'inyandiko",
     "foreign_amount": "Amafaranga mu Faranga y'Ikindi Gihugu",
     "settle_fx_diff": "Kwishyura inyandiko yose — shyira ikinyuranyo cy'ivunjisha mu bitabo",
-    "settle_fx_hint": "Ikinyuranyo hagati y'umusigane w'inyandiko n'ubu bwishyu mu faranga y'ibanze kigenda mu nyungu (4800) / igihombo (5900) cy'ivunjisha."
+    "settle_fx_hint": "Ikinyuranyo hagati y'umusigane w'inyandiko n'ubu bwishyu mu faranga y'ibanze kigenda mu nyungu (4800) / igihombo (5900) cy'ivunjisha.",
+    "available_balance": "Amafaranga aboneka",
+    "eg_bank_name": "urugero: Banki nkuru ya Kigali",
+    "method_cheque": "Sheki",
+    "method_card": "Ikarita yo kubikuza / kwishyura",
+    "payment_reference": "Nomero y'ubwishyu",
+    "eg_payment_ref": "urugero: Nimero ya MoMo, Sheki #",
+    "acc_short": "Konti:"
   },
   "accounting": {
     "title": "Ibaruramari Rusange n'Igitabo Kinini",
@@ -474,7 +527,35 @@
     "type_equity": "Imari Shingiro (Equity)",
     "type_revenue": "Inyungu / Ibyinjijwe (Revenue)",
     "type_cogs": "Ikiguzi cy'Ibyagurishijwe (COGS)",
-    "type_expense": "Ibyakoreshejwe mu Mirimo (Expense)"
+    "type_expense": "Ibyakoreshejwe mu Mirimo (Expense)",
+    "add_account": "Ongeraho Konti",
+    "subtype": "Ubwoko bw'inyongera",
+    "normal_balance": "Igisigaye gisanzwe",
+    "debit_balance": "Igisigaye cya Débit",
+    "credit_balance": "Igisigaye cya Crédit",
+    "net_balance": "Igisigaye rusange",
+    "reverse_void": "Subiza inyuma / Hanagura",
+    "account_label": "Konti:",
+    "opening_label": "Itangira:",
+    "net_closing_label": "Isoza rusange:",
+    "txn_purpose_placeholder": "Impamvu y'igikorwa",
+    "journal_lines": "Imirongo ya Jorunali (Débit na Crédit)",
+    "accounting_lines": "Imirongo y'ibaruramari",
+    "account": "Konti",
+    "add_new_account": "Ongeraho Konti nshya mu gitabo cya Konti",
+    "account_code": "Kode ya Konti",
+    "account_name": "Izina rya Konti",
+    "account_type": "Ubwoko bwa Konti",
+    "debit_upper": "DÉBIT",
+    "credit_upper": "CRÉDIT",
+    "eg_account_name": "urugero: Ubwishyu bwa porogaramu",
+    "unbalanced_toast": "Ijuru ntiriringaniye ku {amount}",
+    "posted_toast": "Ijuru {number} ryanditswe neza!",
+    "account_created_toast": "Igitabo cya Konti cyaremwe neza",
+    "reversed_toast": "Ijuru ryasubijwe inyuma! Haremwe ijuru ryo gusubiza {number}",
+    "reversal_prompt": "Shyiramo impamvu yo gusubiza inyuma iyi jorunali:",
+    "journal_entry_hash": "Ijuru #",
+    "source": "Inkomoko:"
   },
   "reports": {
     "title": "Raporo z'Imari z'Ubucuruzi",
@@ -514,7 +595,15 @@
     "output_tax": "TVA Yishyuwe n'Abakiriya",
     "taxable_purchases": "Ibyaguzwe Bisoreshwa (Bitarimo TVA)",
     "input_tax": "TVA Yishyuwe ku Byaguzwe",
-    "net_tax_payable": "TVA Isigaye yo Kwishyura RRA / (TVA Yishyurwa Isosiyete)"
+    "net_tax_payable": "TVA Isigaye yo Kwishyura RRA / (TVA Yishyurwa Isosiyete)",
+    "cf_net_operating_income": "Inyungu nyayo y'ibikorwa (P&L):",
+    "cf_receipts": "Amafaranga yinjiye aturutse ku bakiriya n'ibindi:",
+    "cf_payments": "Amafaranga yishyuwe abacuruzi n'ibikorwa:",
+    "cf_net_operations": "Itandukaniro ry'amafaranga mu bikorwa:",
+    "cf_beginning": "Amafaranga mu ntangiriro y'igihe:",
+    "cf_net_change": "Impinduka y'amafaranga:",
+    "cf_ending": "Amafaranga ku iherezo ry'igihe:",
+    "vat_net_note": "TVA yakusanyijwe ukuyemo TVA yishyuwe"
   },
   "settings": {
     "title": "Ibyagenwe n'Ubuyobozi bwa Sisitemu",
@@ -614,7 +703,32 @@
     "theme_system_active": "Kurikiza igenamiterere rya mudasobwa",
     "theme_persist_note": "Icyo wahisemo kibikwa kuri iyi mudasobwa kandi kigakomeza no nyuma yo gufunga no kongera gufungura JENESIS.",
     "switch_to_light": "Hindura ku buryo bw'umucyo",
-    "switch_to_dark": "Hindura ku buryo bw'ijoro"
+    "switch_to_dark": "Hindura ku buryo bw'ijoro",
+    "company_subtitle": "Amakuru y'ikigo, ingengabihe y'imisoro, ifaranga n'amategeko yo gaciro",
+    "create_new_company": "Kora ikigo gishya",
+    "currency_code_placeholder": "USD, RWF, EUR",
+    "currency_symbol_placeholder": "$, Frw, €",
+    "users_subtitle": "Igenzura ry'uburenganzira n'uruhare rw'abakoresha",
+    "add_user": "Ongeraho ukoresha",
+    "role": "Uruhare",
+    "taxes_subtitle": "Ibipimo by'umusoro bishobora guhindurwa ku byagurishijwe n'ibyaguze",
+    "add_tax_rate": "Ongeraho igipimo cy'umusoro",
+    "tax_rate_percent": "Igipimo cy'umusoro %",
+    "tax_rate_pct": "Igipimo cy'umusoro (%)",
+    "tax_description": "Ibisobanuro by'umusoro",
+    "tax_code_placeholder": "TVA18, RED10",
+    "tax_desc_placeholder": "TVA isanzwe 18%",
+    "audit_subtitle": "Inyandiko ntahinduka y'ibikorwa, kwinjira n'impinduka ku makuru",
+    "audit_timestamp": "Igihe",
+    "audit_module": "Igice",
+    "audit_action": "Igikorwa",
+    "audit_description": "Ibisobanuro",
+    "export_full_backup": "Kuramo ububiko bwuzuye bwa sisitemu",
+    "eg_company_name": "urugero: Apex Enterprises Ltd",
+    "company_created_toast": "Ikigo {name} cyaremwe! Igitabo cy'ama Konti cyatangijwe.",
+    "user_created_toast": "Ukoresha {username} yaremwe neza",
+    "tax_configured_toast": "Igipimo cy'umusoro cyashyizweho neza",
+    "add_new_user": "Ongeraho ukoresha mushya"
   },
   "auth": {
     "app_tagline": "Imicungire n’ibaruramari ry’ubucuruzi",
@@ -735,7 +849,8 @@
     "divide_by_zero": "Ntibishoboka kugabanya na zeru",
     "clear_entry": "Gusiba ibyanditswe",
     "minimise": "Hisha",
-    "restore": "Ongera werekane"
+    "restore": "Ongera werekane",
+    "backspace": "Gusiba inyuguti imwe"
   },
   "shortcuts": {
     "title": "Utubuto twa Clavier",
@@ -890,5 +1005,28 @@
     "posted_entries": "Ibyanditswe byemejwe",
     "logs": "Inyandiko",
     "read_logs": "Soma imirongo ya nyuma"
+  },
+  "aging": {
+    "current_not_due": "Igihe kitaragera",
+    "d1_30": "Iminsi 1-30",
+    "d31_60": "Iminsi 31-60",
+    "d61_90": "Iminsi 61-90",
+    "over_90": "Hejuru y'iminsi 90",
+    "total_due": "Umwenda wose"
+  },
+  "print": {
+    "payment_instructions": "Amabwiriza yo kwishyura / Amakuru ya banki:",
+    "bank_label": "Banki:",
+    "account_label": "Konti:",
+    "mobile_money_label": "Mobile Money:",
+    "thank_you": "Murakoze cyane!",
+    "authorized_signature": "Umukono wemewe",
+    "no_bank_details": "Ongeramo amakuru ya banki muri Settings kugira ngo acapurwe hano.",
+    "tin_tax_id": "TIN / Nomero y'umusoro:",
+    "tax_id_tin": "Nomero y'umusoro / TIN:"
+  },
+  "statement": {
+    "account_info": "Amakuru ya konti",
+    "payment_credit": "Ubwishyu / Inguzanyo"
   }
 }

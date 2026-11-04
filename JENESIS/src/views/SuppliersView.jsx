@@ -82,13 +82,13 @@ export default function SuppliersView() {
           method: 'PUT',
           body: JSON.stringify(formData)
         });
-        showToast('Supplier updated successfully', 'success');
+        showToast(t('suppliers.updated_toast'), 'success');
       } else {
         await apiRequest('/api/suppliers', {
           method: 'POST',
           body: JSON.stringify(formData)
         });
-        showToast('Supplier created successfully', 'success');
+        showToast(t('suppliers.created_toast'), 'success');
       }
       setShowAddModal(false);
       setEditingSupplier(null);
@@ -204,9 +204,9 @@ export default function SuppliersView() {
                   <th className="py-2.5 px-4">{t('suppliers.supplier_code')}</th>
                   <th className="py-2.5 px-4">{t('suppliers.supplier_name')}</th>
                   <th className="py-2.5 px-4">{t('common.contact_person')}</th>
-                  <th className="py-2.5 px-4">Contact Info</th>
+                  <th className="py-2.5 px-4">{t('suppliers.contact_info')}</th>
                   <th className="py-2.5 px-4">{t('customers.payment_terms')}</th>
-                  <th className="py-2.5 px-4 text-right">Current Payable Balance</th>
+                  <th className="py-2.5 px-4 text-right">{t('suppliers.current_payable_balance')}</th>
                   <th className="py-2.5 px-4 text-center">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -223,7 +223,7 @@ export default function SuppliersView() {
                       <td className="py-3 px-4 font-mono font-semibold text-blue-600">{s.code}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">
                         <div>{s.name}</div>
-                        {s.tax_id && <div className="text-[10px] text-slate-400 font-mono">TIN: {s.tax_id}</div>}
+                        {s.tax_id && <div className="text-[10px] text-slate-400 font-mono">{t('common.tin_short')} {s.tax_id}</div>}
                       </td>
                       <td className="py-3 px-4 text-slate-600">{s.contact_person || '-'}</td>
                       <td className="py-3 px-4 text-slate-600 text-[11px] space-y-0.5">
@@ -287,7 +287,7 @@ export default function SuppliersView() {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h2 className="text-sm font-bold text-slate-800">{t('suppliers.aging_title')}</h2>
-              <p className="text-[11px] text-slate-500">Aging analysis of supplier accounts payable</p>
+              <p className="text-[11px] text-slate-500">{t('suppliers.aging_subtitle')}</p>
             </div>
             <div className="text-right">
               <span className="text-xs text-slate-500">{t('suppliers.total_ap')}: </span>
@@ -301,13 +301,13 @@ export default function SuppliersView() {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                 <tr>
-                  <th className="py-2.5 px-3">Supplier</th>
-                  <th className="py-2.5 px-3 text-right">Current (Not Due)</th>
-                  <th className="py-2.5 px-3 text-right">1-30 Days</th>
-                  <th className="py-2.5 px-3 text-right">31-60 Days</th>
-                  <th className="py-2.5 px-3 text-right">61-90 Days</th>
-                  <th className="py-2.5 px-3 text-right">&gt; 90 Days</th>
-                  <th className="py-2.5 px-3 text-right font-bold">Total Due</th>
+                  <th className="py-2.5 px-3">{t('suppliers.aging_party')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.current_not_due')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.d1_30')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.d31_60')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.d61_90')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.over_90')}</th>
+                  <th className="py-2.5 px-3 text-right font-bold">{t('aging.total_due')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -372,7 +372,7 @@ export default function SuppliersView() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="e.g. Global Tech Distributors"
+                    placeholder={t('suppliers.eg_company')}
                   />
                 </div>
                 <div>
@@ -384,7 +384,7 @@ export default function SuppliersView() {
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Auto-generated if empty"
+                    placeholder={t('suppliers.auto_generated')}
                   />
                 </div>
               </div>

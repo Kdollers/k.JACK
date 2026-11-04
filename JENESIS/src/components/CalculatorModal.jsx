@@ -276,7 +276,7 @@ export default function CalculatorModal({ onClose }) {
           <div className="grid grid-cols-4 gap-2">
             <Btn label="C" onClick={clearAll} title={t('calculator.clear')} className="bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100" />
             <Btn label="CE" onClick={clearEntry} title={t('calculator.clear_entry')} className="bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" />
-            <Btn label={<Delete className="w-4 h-4 mx-auto" />} onClick={backspace} title="Backspace" className="bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" />
+            <Btn label={<Delete className="w-4 h-4 mx-auto" />} onClick={backspace} title={t('calculator.backspace')} className="bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" />
             <Btn label="÷" onClick={() => applyOperator('÷')} className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" />
 
             <Btn label="7" onClick={() => inputDigit('7')} className="bg-white text-slate-800 border-slate-200 hover:bg-slate-50" />

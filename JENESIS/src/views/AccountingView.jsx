@@ -145,7 +145,7 @@ export default function AccountingView() {
   const handlePostJournalEntry = async (e) => {
     e.preventDefault();
     if (!isBalanced) {
-      return showToast(`Journal entry is unbalanced by ${formatCurrency(balanceDiff)}`, 'error');
+      return showToast(t('accounting.unbalanced_toast', { amount: formatCurrency(balanceDiff) }), 'error');
     }
 
     try {
@@ -153,7 +153,7 @@ export default function AccountingView() {
         method: 'POST',
         body: JSON.stringify(entryForm)
       });
-      showToast(`Journal Entry ${res.entryNumber} posted successfully!`, 'success');
+      showToast(t('accounting.posted_toast', { number: res.entryNumber }), 'success');
       setShowNewEntryModal(false);
       setEntryForm({
         date: new Date().toISOString().split('T')[0],
@@ -177,7 +177,7 @@ export default function AccountingView() {
         method: 'POST',
         body: JSON.stringify(accountForm)
       });
-      showToast('Chart of account created successfully', 'success');
+      showToast(t('accounting.account_created_toast'), 'success');
       setShowAddAccountModal(false);
       setAccountForm({ code: '', name: '', type: 'ASSET', subtype: 'CURRENT_ASSET', normal_balance: 'DEBIT', notes: '' });
       fetchData();
@@ -187,7 +187,7 @@ export default function AccountingView() {
   };
 
   const handleReverseEntry = async (entryId) => {
-    const reason = prompt('Please enter the reason for this journal entry reversal:');
+    const reason = prompt(t('accounting.reversal_prompt'));
     if (!reason) return;
 
     try {
@@ -195,7 +195,7 @@ export default function AccountingView() {
         method: 'POST',
         body: JSON.stringify({ reason })
       });
-      showToast(`Entry reversed! Generated reversal journal entry ${res.entryNumber}`, 'success');
+      showToast(t('accounting.reversed_toast', { number: res.entryNumber }), 'success');
       fetchData();
     } catch (err) {
       showToast(err.message, 'error');
@@ -253,7 +253,7 @@ export default function AccountingView() {
             className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Account</span>
+            <span>{t('accounting.add_account')}</span>
           </button>
 
           <button
@@ -290,11 +290,11 @@ export default function AccountingView() {
                   <th className="py-2.5 px-4">{t('common.code')}</th>
                   <th className="py-2.5 px-4">{t('common.name')}</th>
                   <th className="py-2.5 px-4">{t('common.type')}</th>
-                  <th className="py-2.5 px-4">Subtype</th>
-                  <th className="py-2.5 px-4">Normal Balance</th>
-                  <th className="py-2.5 px-4 text-right">Debit Balance</th>
-                  <th className="py-2.5 px-4 text-right">Credit Balance</th>
-                  <th className="py-2.5 px-4 text-right">Net Balance</th>
+                  <th className="py-2.5 px-4">{t('accounting.subtype')}</th>
+                  <th className="py-2.5 px-4">{t('accounting.normal_balance')}</th>
+                  <th className="py-2.5 px-4 text-right">{t('accounting.debit_balance')}</th>
+                  <th className="py-2.5 px-4 text-right">{t('accounting.credit_balance')}</th>
+                  <th className="py-2.5 px-4 text-right">{t('accounting.net_balance')}</th>
                   <th className="py-2.5 px-4 text-center">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -403,7 +403,7 @@ export default function AccountingView() {
                         {je.status === 'POSTED' && (
                           <button
                             onClick={() => handleReverseEntry(je.id)}
-                            title="Reverse / Void"
+                            title={t('accounting.reverse_void')}
                             className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
@@ -424,7 +424,7 @@ export default function AccountingView() {
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-3 w-full sm:w-auto">
-              <span className="text-xs font-bold text-slate-700">Account:</span>
+              <span className="text-xs font-bold text-slate-700">{t('accounting.account_label')}</span>
               <select
                 value={ledgerAccountId}
                 onChange={(e) => setLedgerAccountId(e.target.value)}
@@ -441,13 +441,13 @@ export default function AccountingView() {
             {ledgerData && (
               <div className="flex items-center space-x-4 text-xs">
                 <div>
-                  <span className="text-slate-500">Opening: </span>
+                  <span className="text-slate-500">{t('accounting.opening_label')} </span>
                   <span className="font-bold font-mono text-slate-800">
                     {formatCurrency(ledgerData.openingBalance)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Net Closing: </span>
+                  <span className="text-slate-500">{t('accounting.net_closing_label')} </span>
                   <span className="font-bold font-mono text-blue-700 text-sm">
                     {formatCurrency(ledgerData.closingBalance)}
                   </span>
@@ -554,7 +554,7 @@ export default function AccountingView() {
                     value={entryForm.description}
                     onChange={(e) => setEntryForm({ ...entryForm, description: e.target.value })}
                     className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Transaction purpose"
+                    placeholder={t('accounting.txn_purpose_placeholder')}
                   />
                 </div>
               </div>
@@ -562,7 +562,7 @@ export default function AccountingView() {
               {/* Journal Lines Table */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-bold text-slate-700">Journal Lines (Debits & Credits)</h4>
+                  <h4 className="font-bold text-slate-700">{t('accounting.journal_lines')}</h4>
                   <button
                     type="button"
                     onClick={addEntryLine}
@@ -679,7 +679,7 @@ export default function AccountingView() {
                       : `${t('accounting.unbalanced')}: Difference is ${formatCurrency(balanceDiff)}`}
                   </span>
                 </div>
-                <div className="font-mono">Total: {formatCurrency(sumDebits)}</div>
+                <div className="font-mono">{t('common.total')}: {formatCurrency(sumDebits)}</div>
               </div>
 
               <div className="border-t border-slate-200 pt-4 flex justify-end space-x-2">
@@ -712,7 +712,7 @@ export default function AccountingView() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden">
             <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
-              <h3 className="font-bold text-sm">Journal Entry #{selectedEntry.entry_number}</h3>
+              <h3 className="font-bold text-sm">{t('accounting.journal_entry_hash')}{selectedEntry.entry_number}</h3>
               <button
                 onClick={() => setSelectedEntry(null)}
                 className="text-slate-400 hover:text-white p-1 rounded transition"
@@ -724,12 +724,12 @@ export default function AccountingView() {
             <div className="p-5 space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <div>
-                  <div className="text-slate-500">Date: {formatDate(selectedEntry.date)}</div>
-                  <div className="text-slate-500">Source: {selectedEntry.source_type}</div>
-                  <div className="text-slate-500">Ref: {selectedEntry.reference || '-'}</div>
+                  <div className="text-slate-500">{t('common.date')}: {formatDate(selectedEntry.date)}</div>
+                  <div className="text-slate-500">{t('accounting.source')} {selectedEntry.source_type}</div>
+                  <div className="text-slate-500">{t('common.reference')}: {selectedEntry.reference || '-'}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-slate-800">Status: {selectedEntry.status}</div>
+                  <div className="font-bold text-slate-800">{t('common.status')}: {selectedEntry.status}</div>
                   <div className="font-mono font-bold text-blue-700 text-sm mt-1">
                     Amount: {formatCurrency(selectedEntry.total_debit)}
                   </div>
@@ -737,14 +737,14 @@ export default function AccountingView() {
               </div>
 
               <div>
-                <h4 className="font-bold text-slate-700 mb-2">Accounting Lines</h4>
+                <h4 className="font-bold text-slate-700 mb-2">{t('accounting.accounting_lines')}</h4>
                 <table className="w-full text-left border border-slate-200 rounded-lg overflow-hidden">
                   <thead className="bg-slate-100 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                     <tr>
-                      <th className="py-2 px-3">Account</th>
-                      <th className="py-2 px-3">Description</th>
-                      <th className="py-2 px-3 text-right">Debit</th>
-                      <th className="py-2 px-3 text-right">Credit</th>
+                      <th className="py-2 px-3">{t('accounting.account')}</th>
+                      <th className="py-2 px-3">{t('common.description')}</th>
+                      <th className="py-2 px-3 text-right">{t('accounting.debit')}</th>
+                      <th className="py-2 px-3 text-right">{t('accounting.credit')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -776,7 +776,7 @@ export default function AccountingView() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
             <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
-              <h3 className="font-bold text-sm">Add New Account to Chart of Accounts</h3>
+              <h3 className="font-bold text-sm">{t('accounting.add_new_account')}</h3>
               <button
                 onClick={() => setShowAddAccountModal(false)}
                 className="text-slate-400 hover:text-white p-1 rounded transition"
@@ -788,7 +788,7 @@ export default function AccountingView() {
             <form onSubmit={handleCreateAccount} className="p-5 space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Account Code *</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('accounting.account_code')} *</label>
                   <input
                     type="text"
                     required
@@ -799,33 +799,33 @@ export default function AccountingView() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Normal Balance *</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('accounting.normal_balance')} *</label>
                   <select
                     value={accountForm.normal_balance}
                     onChange={(e) => setAccountForm({ ...accountForm, normal_balance: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
                   >
-                    <option value="DEBIT">DEBIT</option>
-                    <option value="CREDIT">CREDIT</option>
+                    <option value="DEBIT">{t('accounting.debit_upper')}</option>
+                    <option value="CREDIT">{t('accounting.credit_upper')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Account Name *</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('accounting.account_name')} *</label>
                 <input
                   type="text"
                   required
                   value={accountForm.name}
                   onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="e.g. Software Subscriptions"
+                  placeholder={t('accounting.eg_account_name')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Account Type *</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('accounting.account_type')} *</label>
                   <select
                     value={accountForm.type}
                     onChange={(e) => setAccountForm({ ...accountForm, type: e.target.value })}
@@ -840,7 +840,7 @@ export default function AccountingView() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Subtype</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('accounting.subtype')}</label>
                   <input
                     type="text"
                     value={accountForm.subtype}

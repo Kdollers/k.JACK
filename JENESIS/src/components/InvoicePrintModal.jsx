@@ -79,11 +79,11 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
                 <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
                   {currentCompany?.address || 'Kigali, Rwanda'}
                   <br />
-                  {currentCompany?.phone && `Tel: ${currentCompany.phone}`}
-                  {currentCompany?.email && ` • Email: ${currentCompany.email}`}
+                  {currentCompany?.phone && `${t('common.tel')} ${currentCompany.phone}`}
+                  {currentCompany?.email && ` • ${t('common.email')}: ${currentCompany.email}`}
                   <br />
                   {currentCompany?.tax_id && (
-                    <span className="font-semibold text-slate-700">TIN / Tax ID: {currentCompany.tax_id}</span>
+                    <span className="font-semibold text-slate-700">{t('print.tin_tax_id')} {currentCompany.tax_id}</span>
                   )}
                 </p>
               </div>
@@ -125,15 +125,15 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
                 </div>
                 <div className="text-sm font-bold text-slate-900">{partyName}</div>
                 {partyAddress && <div className="text-slate-600 mt-0.5">{partyAddress}</div>}
-                {partyPhone && <div className="text-slate-600">Tel: {partyPhone}</div>}
-                {partyEmail && <div className="text-slate-600">Email: {partyEmail}</div>}
+                {partyPhone && <div className="text-slate-600">{t('common.tel')} {partyPhone}</div>}
+                {partyEmail && <div className="text-slate-600">{t('common.email')}: {partyEmail}</div>}
                 {partyTaxId && (
-                  <div className="font-semibold text-slate-700 mt-1">Tax ID / TIN: {partyTaxId}</div>
+                  <div className="font-semibold text-slate-700 mt-1">{t('print.tax_id_tin')} {partyTaxId}</div>
                 )}
               </div>
 
               <div className="text-right flex flex-col justify-end">
-                <div className="text-slate-500 text-[11px] mb-1">Total Outstanding Due:</div>
+                <div className="text-slate-500 text-[11px] mb-1">{t('common.outstanding_due')}:</div>
                 <div className="text-xl font-extrabold text-blue-700">
                   {formatCurrency(invoice.balance_due || invoice.total)}
                 </div>
@@ -162,7 +162,7 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
                         <td className="py-2.5 px-3 font-medium text-slate-800">
                           <div>{line.description}</div>
                           {line.product_sku && (
-                            <div className="text-[10px] text-slate-400 font-mono">SKU: {line.product_sku}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">{t('inventory.sku')}: {line.product_sku}</div>
                           )}
                         </td>
                         <td className="py-2.5 px-3 text-right font-medium text-slate-800">{line.quantity}</td>
@@ -234,14 +234,17 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
           {/* Footer Declaration */}
           <div className="border-t border-slate-200 pt-6 text-[11px] text-slate-500 flex justify-between items-end">
             <div>
-              <p className="font-medium text-slate-600">Payment Instructions / Banking Details:</p>
-              <p>Bank: Bank of Kigali • Account: 00040-01234567-USD</p>
-              <p>MTN Mobile Money Merchant: 788123456 ({currentCompany?.name || 'JENESIS'})</p>
-              <p className="text-[10px] text-slate-400 mt-1">Thank you for your business!</p>
+              <p className="font-medium text-slate-600">{t('print.payment_instructions')}</p>
+              <p>
+                {currentCompany?.phone || currentCompany?.email
+                  ? [currentCompany.phone, currentCompany.email].filter(Boolean).join(' • ')
+                  : t('print.no_bank_details')}
+              </p>
+              <p className="text-[10px] text-slate-400 mt-1">{t('print.thank_you')}</p>
             </div>
             <div className="text-right">
               <div className="border-b border-slate-400 w-44 mb-1"></div>
-              <p className="font-semibold text-slate-700">Authorized Signature</p>
+              <p className="font-semibold text-slate-700">{t('print.authorized_signature')}</p>
             </div>
           </div>
         </div>

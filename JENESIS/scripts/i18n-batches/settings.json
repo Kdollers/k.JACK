@@ -1,0 +1,124 @@
+{
+  "settings": {
+    "company_subtitle": {
+      "en": "Legal entity details, fiscal calendar, currency, and valuation rules",
+      "fr": "Informations de l'entité légale, calendrier fiscal, devise et règles de valorisation",
+      "rw": "Amakuru y'ikigo, ingengabihe y'imisoro, ifaranga n'amategeko yo gaciro"
+    },
+    "create_new_company": {
+      "en": "Create New Company",
+      "fr": "Créer une nouvelle société",
+      "rw": "Kora ikigo gishya"
+    },
+    "currency_code_placeholder": {
+      "en": "USD, RWF, EUR",
+      "fr": "USD, RWF, EUR",
+      "rw": "USD, RWF, EUR"
+    },
+    "currency_symbol_placeholder": {
+      "en": "$, Frw, €",
+      "fr": "$, Frw, €",
+      "rw": "$, Frw, €"
+    },
+    "users_subtitle": {
+      "en": "Role-based access control and user authorization",
+      "fr": "Contrôle d'accès par rôle et autorisations des utilisateurs",
+      "rw": "Igenzura ry'uburenganzira n'uruhare rw'abakoresha"
+    },
+    "add_user": {
+      "en": "Add User",
+      "fr": "Ajouter un utilisateur",
+      "rw": "Ongeraho ukoresha"
+    },
+    "role": {
+      "en": "Role",
+      "fr": "Rôle",
+      "rw": "Uruhare"
+    },
+    "taxes_subtitle": {
+      "en": "Configurable sales and purchase tax rates",
+      "fr": "Taux de taxe configurables pour les ventes et les achats",
+      "rw": "Ibipimo by'umusoro bishobora guhindurwa ku byagurishijwe n'ibyaguze"
+    },
+    "add_tax_rate": {
+      "en": "Add Tax Rate",
+      "fr": "Ajouter un taux de taxe",
+      "rw": "Ongeraho igipimo cy'umusoro"
+    },
+    "tax_rate_percent": {
+      "en": "Tax Rate %",
+      "fr": "Taux de taxe %",
+      "rw": "Igipimo cy'umusoro %"
+    },
+    "tax_rate_pct": {
+      "en": "Tax Rate (%)",
+      "fr": "Taux de taxe (%)",
+      "rw": "Igipimo cy'umusoro (%)"
+    },
+    "tax_description": {
+      "en": "Tax Description",
+      "fr": "Description de la taxe",
+      "rw": "Ibisobanuro by'umusoro"
+    },
+    "tax_code_placeholder": {
+      "en": "VAT18, RED10",
+      "fr": "TVA18, RED10",
+      "rw": "TVA18, RED10"
+    },
+    "tax_desc_placeholder": {
+      "en": "Standard VAT 18%",
+      "fr": "TVA standard 18 %",
+      "rw": "TVA isanzwe 18%"
+    },
+    "audit_subtitle": {
+      "en": "Immutable trace of transactions, logins, and data modifications",
+      "fr": "Trace immuable des transactions, connexions et modifications de données",
+      "rw": "Inyandiko ntahinduka y'ibikorwa, kwinjira n'impinduka ku makuru"
+    },
+    "audit_timestamp": {
+      "en": "Timestamp",
+      "fr": "Horodatage",
+      "rw": "Igihe"
+    },
+    "audit_module": {
+      "en": "Module",
+      "fr": "Module",
+      "rw": "Igice"
+    },
+    "audit_action": {
+      "en": "Action",
+      "fr": "Action",
+      "rw": "Igikorwa"
+    },
+    "audit_description": {
+      "en": "Description",
+      "fr": "Description",
+      "rw": "Ibisobanuro"
+    },
+    "export_full_backup": {
+      "en": "Export Full System Backup",
+      "fr": "Exporter une sauvegarde complète du système",
+      "rw": "Kuramo ububiko bwuzuye bwa sisitemu"
+    },
+    "eg_company_name": {
+      "en": "e.g. Apex Enterprises Ltd",
+      "fr": "ex. Apex Entreprises SARL",
+      "rw": "urugero: Apex Enterprises Ltd"
+    },
+    "company_created_toast": {
+      "en": "Company {name} created! Chart of accounts initialized.",
+      "fr": "Société {name} créée ! Plan comptable initialisé.",
+      "rw": "Ikigo {name} cyaremwe! Igitabo cy'ama Konti cyatangijwe."
+    },
+    "user_created_toast": {
+      "en": "User {username} created successfully",
+      "fr": "Utilisateur {username} créé avec succès",
+      "rw": "Ukoresha {username} yaremwe neza"
+    },
+    "tax_configured_toast": {
+      "en": "Tax rate configured successfully",
+      "fr": "Taux de taxe configuré avec succès",
+      "rw": "Igipimo cy'umusoro cyashyizweho neza"
+    }
+  }
+}

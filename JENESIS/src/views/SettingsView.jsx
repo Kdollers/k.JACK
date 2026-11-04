@@ -152,7 +152,7 @@ export default function SettingsView() {
         method: 'POST',
         body: JSON.stringify(newCompanyForm)
       });
-      showToast(`Company ${newComp.name} created! Chart of accounts initialized.`, 'success');
+      showToast(t('settings.company_created_toast', { name: newComp.name }), 'success');
       setShowNewCompanyModal(false);
       triggerRefresh();
     } catch (err) {
@@ -167,7 +167,7 @@ export default function SettingsView() {
         method: 'POST',
         body: JSON.stringify(userForm)
       });
-      showToast(`User ${userForm.username} created successfully`, 'success');
+      showToast(t('settings.user_created_toast', { username: userForm.username }), 'success');
       setShowUserModal(false);
       setUserForm({ username: '', password: '', full_name: '', email: '', role: 'accountant' });
       triggerRefresh();
@@ -183,7 +183,7 @@ export default function SettingsView() {
         method: 'POST',
         body: JSON.stringify(taxForm)
       });
-      showToast('Tax rate configured successfully', 'success');
+      showToast(t('settings.tax_configured_toast'), 'success');
       setShowTaxModal(false);
       setTaxForm({ code: '', name: '', rate: 18 });
       fetchTaxes();
@@ -442,14 +442,14 @@ export default function SettingsView() {
           <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
             <div>
               <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_company')}</h2>
-              <p className="text-[11px] text-slate-500">Legal entity details, fiscal calendar, currency, and valuation rules</p>
+              <p className="text-[11px] text-slate-500">{t('settings.company_subtitle')}</p>
             </div>
             <button
               onClick={() => setShowNewCompanyModal(true)}
               className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Create New Company</span>
+              <span>{t('settings.create_new_company')}</span>
             </button>
           </div>
 
@@ -518,27 +518,27 @@ export default function SettingsView() {
 
             <div className="grid grid-cols-3 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Currency Code</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_code')}</label>
                 <input
                   type="text"
                   value={companyForm.currency_code}
                   onChange={(e) => setCompanyForm({ ...companyForm, currency_code: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                  placeholder="USD, RWF, EUR"
+                  placeholder={t('settings.currency_code_placeholder')}
                 />
               </div>
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Currency Symbol</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_symbol')}</label>
                 <input
                   type="text"
                   value={companyForm.currency_symbol}
                   onChange={(e) => setCompanyForm({ ...companyForm, currency_symbol: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                  placeholder="$, Frw, €"
+                  placeholder={t('settings.currency_symbol_placeholder')}
                 />
               </div>
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Decimals</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('settings.decimals')}</label>
                 <input
                   type="number"
                   min="0"
@@ -611,24 +611,24 @@ export default function SettingsView() {
           <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_users')}</h2>
-              <p className="text-[11px] text-slate-500">Role-based access control and user authorization</p>
+              <p className="text-[11px] text-slate-500">{t('settings.users_subtitle')}</p>
             </div>
             <button
               onClick={() => setShowUserModal(true)}
               className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 shadow"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add User</span>
+              <span>{t('settings.add_user')}</span>
             </button>
           </div>
 
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
               <tr>
-                <th className="py-2.5 px-4">Full Name</th>
-                <th className="py-2.5 px-4">Username</th>
-                <th className="py-2.5 px-4">Role</th>
-                <th className="py-2.5 px-4">Email</th>
+                <th className="py-2.5 px-4">{t('auth.full_name')}</th>
+                <th className="py-2.5 px-4">{t('auth.username')}</th>
+                <th className="py-2.5 px-4">{t('settings.role')}</th>
+                <th className="py-2.5 px-4">{t('common.email')}</th>
                 <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
               </tr>
             </thead>
@@ -661,14 +661,14 @@ export default function SettingsView() {
           <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_taxes')}</h2>
-              <p className="text-[11px] text-slate-500">Configurable sales and purchase tax rates</p>
+              <p className="text-[11px] text-slate-500">{t('settings.taxes_subtitle')}</p>
             </div>
             <button
               onClick={() => setShowTaxModal(true)}
               className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 shadow"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Tax Rate</span>
+              <span>{t('settings.add_tax_rate')}</span>
             </button>
           </div>
 
@@ -677,7 +677,7 @@ export default function SettingsView() {
               <tr>
                 <th className="py-2.5 px-4">{t('common.code')}</th>
                 <th className="py-2.5 px-4">{t('common.name')}</th>
-                <th className="py-2.5 px-4 text-right">Tax Rate %</th>
+                <th className="py-2.5 px-4 text-right">{t('settings.tax_rate_percent')}</th>
                 <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
               </tr>
             </thead>
@@ -917,7 +917,7 @@ export default function SettingsView() {
                       <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_code')} *</label>
                       <input required pattern="[A-Za-z]{3}" value={currencyForm.code}
                         onChange={(e) => setCurrencyForm({ ...currencyForm, code: e.target.value.toUpperCase() })}
-                        placeholder="EUR" className="w-full px-3 py-1.5 border border-slate-300 rounded-md font-mono" />
+                        placeholder={t('settings.currency_code_placeholder')} className="w-full px-3 py-1.5 border border-slate-300 rounded-md font-mono" />
                     </div>
                     <div>
                       <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_symbol')}</label>
@@ -954,17 +954,17 @@ export default function SettingsView() {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50">
             <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_audit')}</h2>
-            <p className="text-[11px] text-slate-500">Immutable trace of transactions, logins, and data modifications</p>
+            <p className="text-[11px] text-slate-500">{t('settings.audit_subtitle')}</p>
           </div>
 
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
               <tr>
-                <th className="py-2.5 px-4">Timestamp</th>
-                <th className="py-2.5 px-4">User</th>
-                <th className="py-2.5 px-4">Module</th>
-                <th className="py-2.5 px-4">Action</th>
-                <th className="py-2.5 px-4">Description</th>
+                <th className="py-2.5 px-4">{t('settings.audit_timestamp')}</th>
+                <th className="py-2.5 px-4">{t('common.user')}</th>
+                <th className="py-2.5 px-4">{t('settings.audit_module')}</th>
+                <th className="py-2.5 px-4">{t('settings.audit_action')}</th>
+                <th className="py-2.5 px-4">{t('settings.audit_description')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -995,7 +995,7 @@ export default function SettingsView() {
               <Download className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-900">Export Full System Backup</h3>
+              <h3 className="font-bold text-sm text-slate-900">{t('settings.export_full_backup')}</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">{t('settings.backup_desc')}</p>
             </div>
             <button
@@ -1064,7 +1064,7 @@ export default function SettingsView() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
             <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
-              <h3 className="font-bold text-sm">Create New Company</h3>
+              <h3 className="font-bold text-sm">{t('settings.create_new_company')}</h3>
               <button
                 onClick={() => setShowNewCompanyModal(false)}
                 className="text-slate-400 hover:text-white p-1 rounded transition"
@@ -1075,19 +1075,19 @@ export default function SettingsView() {
 
             <form onSubmit={handleCreateCompany} className="p-5 space-y-3.5 text-xs">
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Company Name *</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('settings.company_name')} *</label>
                 <input
                   type="text"
                   required
                   value={newCompanyForm.name}
                   onChange={(e) => setNewCompanyForm({ ...newCompanyForm, name: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
-                  placeholder="e.g. Apex Enterprises Ltd"
+                  placeholder={t('settings.eg_company_name')}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Tax ID / TIN</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('common.tax_id')}</label>
                 <input
                   type="text"
                   value={newCompanyForm.tax_id}
@@ -1098,7 +1098,7 @@ export default function SettingsView() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Currency Code</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_code')}</label>
                   <input
                     type="text"
                     value={newCompanyForm.currency_code}
@@ -1107,7 +1107,7 @@ export default function SettingsView() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Currency Symbol</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('settings.currency_symbol')}</label>
                   <input
                     type="text"
                     value={newCompanyForm.currency_symbol}
@@ -1142,7 +1142,7 @@ export default function SettingsView() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
             <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
-              <h3 className="font-bold text-sm">Add New User</h3>
+              <h3 className="font-bold text-sm">{t('settings.add_new_user')}</h3>
               <button
                 onClick={() => setShowUserModal(false)}
                 className="text-slate-400 hover:text-white p-1 rounded transition"
@@ -1153,7 +1153,7 @@ export default function SettingsView() {
 
             <form onSubmit={handleCreateUser} className="p-5 space-y-3.5 text-xs">
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Full Name *</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('auth.full_name')} *</label>
                 <input
                   type="text"
                   required
@@ -1165,7 +1165,7 @@ export default function SettingsView() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Username *</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('auth.username')} *</label>
                   <input
                     type="text"
                     required
@@ -1175,7 +1175,7 @@ export default function SettingsView() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Password *</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('auth.password')} *</label>
                   <input
                     type="password"
                     required
@@ -1188,7 +1188,7 @@ export default function SettingsView() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Role *</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('settings.role')} *</label>
                   <select
                     value={userForm.role}
                     onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
@@ -1203,7 +1203,7 @@ export default function SettingsView() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Email</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('common.email')}</label>
                   <input
                     type="email"
                     value={userForm.email}
@@ -1238,7 +1238,7 @@ export default function SettingsView() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden">
             <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
-              <h3 className="font-bold text-sm">Add Tax Rate</h3>
+              <h3 className="font-bold text-sm">{t('settings.add_tax_rate')}</h3>
               <button
                 onClick={() => setShowTaxModal(false)}
                 className="text-slate-400 hover:text-white p-1 rounded transition"
@@ -1249,31 +1249,31 @@ export default function SettingsView() {
 
             <form onSubmit={handleCreateTax} className="p-5 space-y-3.5 text-xs">
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Code *</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('common.code')} *</label>
                 <input
                   type="text"
                   required
                   value={taxForm.code}
                   onChange={(e) => setTaxForm({ ...taxForm, code: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                  placeholder="VAT18, RED10"
+                  placeholder={t('settings.tax_code_placeholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Tax Description *</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('settings.tax_description')} *</label>
                 <input
                   type="text"
                   required
                   value={taxForm.name}
                   onChange={(e) => setTaxForm({ ...taxForm, name: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Standard VAT 18%"
+                  placeholder={t('settings.tax_desc_placeholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Tax Rate (%) *</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('settings.tax_rate_pct')} *</label>
                 <input
                   type="number"
                   step="0.1"

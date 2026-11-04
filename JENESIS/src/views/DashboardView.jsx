@@ -147,7 +147,7 @@ export default function DashboardView() {
         {/* Cash & Bank Balances */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 transition">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-medium uppercase tracking-wider">Total Liquidity</span>
+            <span className="text-xs font-medium uppercase tracking-wider">{t('dashboard.total_liquidity')}</span>
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Wallet className="w-4 h-4" />
             </div>
@@ -156,8 +156,8 @@ export default function DashboardView() {
             {formatCurrency(stats?.totalCashBank || 0)}
           </div>
           <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Cash: {formatCurrency(stats?.cashBalance || 0)}</span>
-            <span>Bank: {formatCurrency(stats?.bankBalance || 0)}</span>
+            <span>{t('dashboard.cash_label')} {formatCurrency(stats?.cashBalance || 0)}</span>
+            <span>{t('dashboard.bank_label')} {formatCurrency(stats?.bankBalance || 0)}</span>
           </div>
         </div>
 
@@ -177,7 +177,7 @@ export default function DashboardView() {
             {formatCurrency(stats?.netProfit || 0)}
           </div>
           <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-            <span>Gross Margin: {formatCurrency(stats?.grossProfit || 0)}</span>
+            <span>{t('dashboard.gross_margin')} {formatCurrency(stats?.grossProfit || 0)}</span>
             <button onClick={() => setActiveView('reports')} className="text-blue-600 hover:underline font-semibold">
               P&L Report
             </button>
@@ -268,7 +268,7 @@ export default function DashboardView() {
                   <th className="py-2.5 px-4">{t('common.date')}</th>
                   <th className="py-2.5 px-4">{t('common.type')}</th>
                   <th className="py-2.5 px-4">{t('common.reference')}</th>
-                  <th className="py-2.5 px-4">Party</th>
+                  <th className="py-2.5 px-4">{t('dashboard.party')}</th>
                   <th className="py-2.5 px-4 text-right">{t('common.amount')}</th>
                   <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
                 </tr>
@@ -336,13 +336,13 @@ export default function DashboardView() {
                   >
                     <div>
                       <div className="font-bold text-slate-800 truncate max-w-[160px]">{item.name}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">SKU: {item.sku}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">{t('inventory.sku')}: {item.sku}</div>
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-rose-600 font-mono">
                         {item.current_stock} {item.unit}
                       </div>
-                      <div className="text-[10px] text-slate-400">Min: {item.min_stock_level}</div>
+                      <div className="text-[10px] text-slate-400">{t('dashboard.min_short')} {item.min_stock_level}</div>
                     </div>
                   </div>
                 ))}
@@ -365,29 +365,29 @@ export default function DashboardView() {
                 onClick={() => setActiveView('sales')}
                 className="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-lg text-left transition border border-slate-700/60"
               >
-                <div className="font-semibold text-blue-400">+ Invoice</div>
-                <div className="text-[10px] text-slate-400">New Client Bill</div>
+                <div className="font-semibold text-blue-400">{t('dashboard.quick_invoice')}</div>
+                <div className="text-[10px] text-slate-400">{t('dashboard.new_invoice')}</div>
               </button>
               <button
                 onClick={() => setActiveView('purchases')}
                 className="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-lg text-left transition border border-slate-700/60"
               >
-                <div className="font-semibold text-emerald-400">+ Bill</div>
-                <div className="text-[10px] text-slate-400">Vendor Purchase</div>
+                <div className="font-semibold text-emerald-400">{t('dashboard.quick_bill')}</div>
+                <div className="text-[10px] text-slate-400">{t('dashboard.new_bill')}</div>
               </button>
               <button
                 onClick={() => setActiveView('banking')}
                 className="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-lg text-left transition border border-slate-700/60"
               >
-                <div className="font-semibold text-amber-400">+ Payment</div>
+                <div className="font-semibold text-amber-400">{t('dashboard.quick_payment')}</div>
                 <div className="text-[10px] text-slate-400">{t('dashboard.receipt_voucher')}</div>
               </button>
               <button
                 onClick={() => setActiveView('accounting')}
                 className="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-lg text-left transition border border-slate-700/60"
               >
-                <div className="font-semibold text-purple-400">+ Journal</div>
-                <div className="text-[10px] text-slate-400">Double Entry</div>
+                <div className="font-semibold text-purple-400">{t('dashboard.quick_journal')}</div>
+                <div className="text-[10px] text-slate-400">{t('dashboard.new_journal')}</div>
               </button>
             </div>
           </div>

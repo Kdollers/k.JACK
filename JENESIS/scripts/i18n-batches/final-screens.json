@@ -1,0 +1,69 @@
+{
+  "common": {
+    "initializing": {
+      "en": "Initializing ledger & database...",
+      "fr": "Initialisation du grand livre et de la base de données...",
+      "rw": "Kwitegura igitabo rusange n'ububiko bw'amakuru..."
+    },
+    "tax_pct":  { "en": "Tax %",  "fr": "Taxe %",   "rw": "Umusoro %" },
+    "disc_pct": { "en": "Disc %", "fr": "Remise %", "rw": "Igabanywa %" }
+  },
+  "sales": {
+    "quotes_subtitle": {
+      "en": "Estimates and quotations for potential customer sales",
+      "fr": "Devis et estimations pour les ventes potentielles",
+      "rw": "Ibiciro byagereranijwe n'amasezerano yo kugurisha"
+    },
+    "valid_until":  { "en": "Valid Until", "fr": "Valable jusqu'au", "rw": "Bimara kugeza" },
+    "credit_total": { "en": "Credit Total", "fr": "Total du crédit", "rw": "Igiteranyo cy'inguzanyo" },
+    "custom_item_option": {
+      "en": "-- Custom Item or Choose Product --",
+      "fr": "-- Article personnalisé ou choisir un produit --",
+      "rw": "-- Ikintu cyihariye cyangwa hitamo igicuruzwa --"
+    },
+    "credit_reason": { "en": "Reason for Credit / Return", "fr": "Motif du crédit / du retour", "rw": "Impamvu yo gusubiza / kugaruza" },
+    "returned_product_optional": { "en": "Returned Product (Optional)", "fr": "Produit retourné (facultatif)", "rw": "Igicuruzwa cyagarujwe (ntabwo ari ngombwa)" },
+    "select_product_option": { "en": "-- Select Product --", "fr": "-- Sélectionner un produit --", "rw": "-- Hitamo igicuruzwa --" },
+    "credit_unit_price": { "en": "Credit Unit Price", "fr": "Prix unitaire du crédit", "rw": "Igiciro ku gice cy'inguzanyo" }
+  },
+  "purchases": {
+    "vendor_ref": { "en": "Vendor Ref", "fr": "Réf. fournisseur", "rw": "Nomero y'umucuruzi" },
+    "vendor_invoice_placeholder": { "en": "e.g. VEND-INV-9988", "fr": "ex. FACT-FOURN-9988", "rw": "urugero: INYEMEZO-9988" },
+    "item_service": { "en": "Item / Service", "fr": "Article / Service", "rw": "Igicuruzwa / Serivisi" },
+    "vat_input_label": { "en": "VAT Input (Deductible Tax):", "fr": "TVA déductible (taxe récupérable) :", "rw": "TVA yishyuwe ku byaguze (ishobora gukurwaho):" }
+  },
+  "banking": {
+    "available_balance": { "en": "Available Balance", "fr": "Solde disponible", "rw": "Amafaranga aboneka" },
+    "eg_bank_name": { "en": "e.g. Bank of Kigali Main", "fr": "ex. Bank of Kigali Principal", "rw": "urugero: Banki nkuru ya Kigali" },
+    "method_cheque": { "en": "Cheque", "fr": "Chèque", "rw": "Sheki" },
+    "method_card": { "en": "Credit / Debit Card", "fr": "Carte de crédit / débit", "rw": "Ikarita yo kubikuza / kwishyura" },
+    "payment_reference": { "en": "Payment Reference", "fr": "Référence de paiement", "rw": "Nomero y'ubwishyu" },
+    "eg_payment_ref": { "en": "e.g. MoMo ID, Cheque #", "fr": "ex. ID MoMo, Chèque n°", "rw": "urugero: Nimero ya MoMo, Sheki #" }
+  },
+  "reports": {
+    "cf_net_operating_income": { "en": "Net Operating Income (P&L):", "fr": "Résultat d'exploitation net (P&L) :", "rw": "Inyungu nyayo y'ibikorwa (P&L):" },
+    "cf_receipts": { "en": "Cash Receipts from Customers & Inflows:", "fr": "Encaissements clients et autres entrées :", "rw": "Amafaranga yinjiye aturutse ku bakiriya n'ibindi:" },
+    "cf_payments": { "en": "Cash Payments to Suppliers & Operating Expenses:", "fr": "Paiements aux fournisseurs et charges d'exploitation :", "rw": "Amafaranga yishyuwe abacuruzi n'ibikorwa:" },
+    "cf_net_operations": { "en": "Net Cash Generated from Operations:", "fr": "Flux net généré par l'exploitation :", "rw": "Itandukaniro ry'amafaranga mu bikorwa:" },
+    "cf_beginning": { "en": "Cash & Bank Balances at Beginning of Period:", "fr": "Trésorerie en début de période :", "rw": "Amafaranga mu ntangiriro y'igihe:" },
+    "cf_net_change": { "en": "Net Change in Liquidity:", "fr": "Variation nette de trésorerie :", "rw": "Impinduka y'amafaranga:" },
+    "cf_ending": { "en": "Cash & Bank Balances at End of Period:", "fr": "Trésorerie en fin de période :", "rw": "Amafaranga ku iherezo ry'igihe:" },
+    "vat_net_note": { "en": "Output VAT Collected minus Deductible Input VAT", "fr": "TVA collectée moins TVA déductible", "rw": "TVA yakusanyijwe ukuyemo TVA yishyuwe" }
+  },
+  "print": {
+    "payment_instructions": { "en": "Payment Instructions / Banking Details:", "fr": "Instructions de paiement / Coordonnées bancaires :", "rw": "Amabwiriza yo kwishyura / Amakuru ya banki:" },
+    "bank_label": { "en": "Bank:", "fr": "Banque :", "rw": "Banki:" },
+    "account_label": { "en": "Account:", "fr": "Compte :", "rw": "Konti:" },
+    "mobile_money_label": { "en": "Mobile Money:", "fr": "Mobile Money :", "rw": "Mobile Money:" },
+    "thank_you": { "en": "Thank you for your business!", "fr": "Merci pour votre confiance !", "rw": "Murakoze cyane!" },
+    "authorized_signature": { "en": "Authorized Signature", "fr": "Signature autorisée", "rw": "Umukono wemewe" },
+    "no_bank_details": { "en": "Add your bank details in Settings to print them here.", "fr": "Ajoutez vos coordonnées bancaires dans les Paramètres pour les imprimer ici.", "rw": "Ongeramo amakuru ya banki muri Settings kugira ngo acapurwe hano." }
+  },
+  "statement": {
+    "account_info": { "en": "Account Info", "fr": "Informations du compte", "rw": "Amakuru ya konti" },
+    "payment_credit": { "en": "Payment / Credit", "fr": "Paiement / Crédit", "rw": "Ubwishyu / Inguzanyo" }
+  },
+  "calculator": {
+    "backspace": { "en": "Backspace", "fr": "Retour arrière", "rw": "Gusiba inyuguti imwe" }
+  }
+}

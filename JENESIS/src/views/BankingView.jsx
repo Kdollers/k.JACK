@@ -53,7 +53,7 @@ function DenominationLines({ lines, onChange, t }) {
           <Plus className="w-3.5 h-3.5" /><span>{t('banking.add_denom_line')}</span>
         </button>
         <div className="text-xs font-bold text-slate-800 font-mono">
-          {t('banking.counted_total')}: {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {t('banking.counted_total')}: {formatCurrency(total)}
         </div>
       </div>
     </div>
@@ -387,7 +387,7 @@ export default function BankingView() {
                       </div>
                       <div>
                         <h3 className="font-bold text-sm text-slate-900">{acc.bank_name}</h3>
-                        <p className="text-[11px] text-slate-500 font-mono">Acc: {acc.account_number}</p>
+                        <p className="text-[11px] text-slate-500 font-mono">{t('banking.acc_short')} {acc.account_number}</p>
                       </div>
                     </div>
                     <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-700 border border-slate-200">
@@ -397,7 +397,7 @@ export default function BankingView() {
 
                   <div className="border-t border-slate-100 pt-3 flex items-end justify-between">
                     <div>
-                      <div className="text-[10px] text-slate-400 uppercase font-semibold">Available Balance</div>
+                      <div className="text-[10px] text-slate-400 uppercase font-semibold">{t('banking.available_balance')}</div>
                       <div className="text-xl font-black text-slate-900 font-mono">
                         {formatCurrency(acc.current_balance)}
                       </div>
@@ -686,7 +686,7 @@ export default function BankingView() {
                   value={bankForm.bank_name}
                   onChange={(e) => setBankForm({ ...bankForm, bank_name: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="e.g. Bank of Kigali Main"
+                  placeholder={t('banking.eg_bank_name')}
                 />
               </div>
 
@@ -995,19 +995,19 @@ export default function BankingView() {
                     <option value="BANK_TRANSFER">{t('banking.method_bank')}</option>
                     <option value="CASH">{t('banking.method_cash')}</option>
                     <option value="MOBILE_MONEY">{t('banking.method_momo')}</option>
-                    <option value="CHECK">Cheque</option>
-                    <option value="CARD">Credit / Debit Card</option>
+                    <option value="CHECK">{t('banking.method_cheque')}</option>
+                    <option value="CARD">{t('banking.method_card')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Payment Reference</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('banking.payment_reference')}</label>
                   <input
                     type="text"
                     value={paymentForm.reference}
                     onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                    placeholder="e.g. MoMo ID, Cheque #"
+                    placeholder={t('banking.eg_payment_ref')}
                   />
                 </div>
               </div>

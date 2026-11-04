@@ -113,7 +113,12 @@
     "outstanding_due": "Dette en cours",
     "none": "Aucun",
     "theme": "Thème",
-    "appearance": "Apparence"
+    "appearance": "Apparence",
+    "initializing": "Initialisation du grand livre et de la base de données...",
+    "tax_pct": "Taxe %",
+    "disc_pct": "Remise %",
+    "tel": "Tél :",
+    "tin_short": "TIN :"
   },
   "dashboard": {
     "title": "Tableau de Bord Financier et Opérationnel",
@@ -141,7 +146,19 @@
     "new_bill": "Nouvelle facture fournisseur",
     "record_payment": "Enregistrer un paiement",
     "new_journal": "Saisie d'écriture comptable",
-    "receipt_voucher": "Reçu / Pièce"
+    "receipt_voucher": "Reçu / Pièce",
+    "total_liquidity": "Liquidité totale",
+    "party": "Tiers",
+    "new_client_bill": "Nouvelle facture client",
+    "vendor_purchase": "Achat fournisseur",
+    "quick_invoice": "+ Facture",
+    "quick_bill": "+ Facture fournisseur",
+    "quick_payment": "+ Paiement",
+    "quick_journal": "+ Écriture",
+    "cash_label": "Espèces :",
+    "bank_label": "Banque :",
+    "gross_margin": "Marge brute :",
+    "min_short": "Min :"
   },
   "customers": {
     "title": "Gestion des Clients",
@@ -163,7 +180,16 @@
     "opening_balance": "Solde initial",
     "closing_balance": "Solde final",
     "aging_title": "Balance Âgée des Créances Clients",
-    "total_ar": "Total A/R en cours"
+    "total_ar": "Total A/R en cours",
+    "updated_toast": "Client mis à jour avec succès",
+    "created_toast": "Client créé avec succès",
+    "contact_info": "Coordonnées",
+    "aging_subtitle": "Analyse d'ancienneté des créances clients en cours",
+    "aging_party": "Client",
+    "eg_company": "ex. Acme Corporation",
+    "auto_generated": "Généré automatiquement si vide",
+    "tin_number": "Numéro TIN",
+    "address_placeholder": "Rue, Ville, Pays"
   },
   "suppliers": {
     "title": "Gestion des Fournisseurs",
@@ -174,7 +200,15 @@
     "statement_title": "Extrait de Compte Fournisseur",
     "record_payment": "Régler le fournisseur",
     "aging_title": "Balance Âgée des Dettes Fournisseurs",
-    "total_ap": "Total A/P en cours"
+    "total_ap": "Total A/P en cours",
+    "updated_toast": "Fournisseur mis à jour avec succès",
+    "created_toast": "Fournisseur créé avec succès",
+    "contact_info": "Coordonnées",
+    "current_payable_balance": "Solde fournisseur actuel",
+    "aging_subtitle": "Analyse d'ancienneté des dettes fournisseurs",
+    "aging_party": "Fournisseur",
+    "eg_company": "ex. Global Tech Distributors",
+    "auto_generated": "Généré automatiquement si vide"
   },
   "inventory": {
     "title": "Produits et Gestion des Stocks",
@@ -330,7 +364,15 @@
     "discard_title": "Supprimer cette facture ?",
     "discard_message": "La facture commencée n'a pas été enregistrée. Fermer le formulaire la supprimera.",
     "discard_confirm": "Supprimer et fermer",
-    "duplicated_from": "Copié depuis {number}. Vérifiez les quantités puis validez."
+    "duplicated_from": "Copié depuis {number}. Vérifiez les quantités puis validez.",
+    "quotes_subtitle": "Devis et estimations pour les ventes potentielles",
+    "valid_until": "Valable jusqu'au",
+    "credit_total": "Total du crédit",
+    "custom_item_option": "-- Article personnalisé ou choisir un produit --",
+    "credit_reason": "Motif du crédit / du retour",
+    "returned_product_optional": "Produit retourné (facultatif)",
+    "select_product_option": "-- Sélectionner un produit --",
+    "credit_unit_price": "Prix unitaire du crédit"
   },
   "purchases": {
     "title": "Achats et Dépenses Fournisseurs",
@@ -377,7 +419,11 @@
     "payment_on_creation_hint": "La facture est enregistrée comme PAYÉE avec un paiement fournisseur réel. Il n'y a pas de choix PAYÉ/IMPAYÉ.",
     "discard_title": "Supprimer cette facture ?",
     "discard_message": "La facture commencée n'a pas été enregistrée. Fermer le formulaire la supprimera.",
-    "discard_confirm": "Supprimer et fermer"
+    "discard_confirm": "Supprimer et fermer",
+    "vendor_ref": "Réf. fournisseur",
+    "vendor_invoice_placeholder": "ex. FACT-FOURN-9988",
+    "item_service": "Article / Service",
+    "vat_input_label": "TVA déductible (taxe récupérable) :"
   },
   "banking": {
     "title": "Trésorerie et Règlements",
@@ -445,7 +491,14 @@
     "narrative_placeholder": "Objet ou motif de la pièce",
     "foreign_amount": "Montant en devise",
     "settle_fx_diff": "Régler le document entièrement — comptabiliser l'écart de change",
-    "settle_fx_hint": "La différence en devise de base entre le solde du document et ce paiement est comptabilisée en gain (4800) / perte (5900) de change."
+    "settle_fx_hint": "La différence en devise de base entre le solde du document et ce paiement est comptabilisée en gain (4800) / perte (5900) de change.",
+    "available_balance": "Solde disponible",
+    "eg_bank_name": "ex. Bank of Kigali Principal",
+    "method_cheque": "Chèque",
+    "method_card": "Carte de crédit / débit",
+    "payment_reference": "Référence de paiement",
+    "eg_payment_ref": "ex. ID MoMo, Chèque n°",
+    "acc_short": "Cpte :"
   },
   "accounting": {
     "title": "Comptabilité Générale et Grand Livre",
@@ -474,7 +527,35 @@
     "type_equity": "Capitaux propres",
     "type_revenue": "Produits",
     "type_cogs": "Coût des marchandises vendues",
-    "type_expense": "Charges"
+    "type_expense": "Charges",
+    "add_account": "Ajouter un compte",
+    "subtype": "Sous-type",
+    "normal_balance": "Solde normal",
+    "debit_balance": "Solde débiteur",
+    "credit_balance": "Solde créditeur",
+    "net_balance": "Solde net",
+    "reverse_void": "Contrepasser / Annuler",
+    "account_label": "Compte :",
+    "opening_label": "Ouverture :",
+    "net_closing_label": "Clôture nette :",
+    "txn_purpose_placeholder": "Objet de la transaction",
+    "journal_lines": "Lignes d'écriture (débits et crédits)",
+    "accounting_lines": "Lignes comptables",
+    "account": "Compte",
+    "add_new_account": "Ajouter un nouveau compte au plan comptable",
+    "account_code": "Code du compte",
+    "account_name": "Nom du compte",
+    "account_type": "Type de compte",
+    "debit_upper": "DÉBIT",
+    "credit_upper": "CRÉDIT",
+    "eg_account_name": "ex. Abonnements logiciels",
+    "unbalanced_toast": "L'écriture n'est pas équilibrée de {amount}",
+    "posted_toast": "Écriture {number} comptabilisée avec succès !",
+    "account_created_toast": "Compte créé avec succès",
+    "reversed_toast": "Écriture contrepassée ! Contre-écriture {number} générée",
+    "reversal_prompt": "Veuillez saisir le motif de cette contre-passation :",
+    "journal_entry_hash": "Écriture n°",
+    "source": "Source :"
   },
   "reports": {
     "title": "États Financiers et Rapports",
@@ -514,7 +595,15 @@
     "output_tax": "TVA collectée",
     "taxable_purchases": "Achats imposables (H.T.)",
     "input_tax": "TVA déductible",
-    "net_tax_payable": "TVA nette à décaisser / (Crédit de TVA)"
+    "net_tax_payable": "TVA nette à décaisser / (Crédit de TVA)",
+    "cf_net_operating_income": "Résultat d'exploitation net (P&L) :",
+    "cf_receipts": "Encaissements clients et autres entrées :",
+    "cf_payments": "Paiements aux fournisseurs et charges d'exploitation :",
+    "cf_net_operations": "Flux net généré par l'exploitation :",
+    "cf_beginning": "Trésorerie en début de période :",
+    "cf_net_change": "Variation nette de trésorerie :",
+    "cf_ending": "Trésorerie en fin de période :",
+    "vat_net_note": "TVA collectée moins TVA déductible"
   },
   "settings": {
     "title": "Configuration et Administration du Système",
@@ -614,7 +703,32 @@
     "theme_system_active": "Suit le réglage de l'ordinateur",
     "theme_persist_note": "Votre choix est enregistré sur cet ordinateur et reste actif après la fermeture et la réouverture de JENESIS.",
     "switch_to_light": "Passer au mode clair",
-    "switch_to_dark": "Passer au mode sombre"
+    "switch_to_dark": "Passer au mode sombre",
+    "company_subtitle": "Informations de l'entité légale, calendrier fiscal, devise et règles de valorisation",
+    "create_new_company": "Créer une nouvelle société",
+    "currency_code_placeholder": "USD, RWF, EUR",
+    "currency_symbol_placeholder": "$, Frw, €",
+    "users_subtitle": "Contrôle d'accès par rôle et autorisations des utilisateurs",
+    "add_user": "Ajouter un utilisateur",
+    "role": "Rôle",
+    "taxes_subtitle": "Taux de taxe configurables pour les ventes et les achats",
+    "add_tax_rate": "Ajouter un taux de taxe",
+    "tax_rate_percent": "Taux de taxe %",
+    "tax_rate_pct": "Taux de taxe (%)",
+    "tax_description": "Description de la taxe",
+    "tax_code_placeholder": "TVA18, RED10",
+    "tax_desc_placeholder": "TVA standard 18 %",
+    "audit_subtitle": "Trace immuable des transactions, connexions et modifications de données",
+    "audit_timestamp": "Horodatage",
+    "audit_module": "Module",
+    "audit_action": "Action",
+    "audit_description": "Description",
+    "export_full_backup": "Exporter une sauvegarde complète du système",
+    "eg_company_name": "ex. Apex Entreprises SARL",
+    "company_created_toast": "Société {name} créée ! Plan comptable initialisé.",
+    "user_created_toast": "Utilisateur {username} créé avec succès",
+    "tax_configured_toast": "Taux de taxe configuré avec succès",
+    "add_new_user": "Ajouter un nouvel utilisateur"
   },
   "auth": {
     "app_tagline": "Gestion et comptabilité d’entreprise",
@@ -735,7 +849,8 @@
     "divide_by_zero": "Division par zéro impossible",
     "clear_entry": "Effacer la saisie",
     "minimise": "Réduire",
-    "restore": "Restaurer"
+    "restore": "Restaurer",
+    "backspace": "Retour arrière"
   },
   "shortcuts": {
     "title": "Raccourcis clavier",
@@ -890,5 +1005,28 @@
     "posted_entries": "Écritures validées",
     "logs": "Journaux",
     "read_logs": "Lire les dernières lignes"
+  },
+  "aging": {
+    "current_not_due": "Courant (non échu)",
+    "d1_30": "1-30 jours",
+    "d31_60": "31-60 jours",
+    "d61_90": "61-90 jours",
+    "over_90": "> 90 jours",
+    "total_due": "Total dû"
+  },
+  "print": {
+    "payment_instructions": "Instructions de paiement / Coordonnées bancaires :",
+    "bank_label": "Banque :",
+    "account_label": "Compte :",
+    "mobile_money_label": "Mobile Money :",
+    "thank_you": "Merci pour votre confiance !",
+    "authorized_signature": "Signature autorisée",
+    "no_bank_details": "Ajoutez vos coordonnées bancaires dans les Paramètres pour les imprimer ici.",
+    "tin_tax_id": "TIN / N° fiscal :",
+    "tax_id_tin": "N° fiscal / TIN :"
+  },
+  "statement": {
+    "account_info": "Informations du compte",
+    "payment_credit": "Paiement / Crédit"
   }
 }

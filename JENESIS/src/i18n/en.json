@@ -113,7 +113,12 @@
     "outstanding_due": "Outstanding Due",
     "none": "None",
     "theme": "Theme",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "initializing": "Initializing ledger & database...",
+    "tax_pct": "Tax %",
+    "disc_pct": "Disc %",
+    "tel": "Tel:",
+    "tin_short": "TIN:"
   },
   "dashboard": {
     "title": "Executive Financial Dashboard",
@@ -141,7 +146,19 @@
     "new_bill": "New Purchase Bill",
     "record_payment": "Record Payment",
     "new_journal": "Manual Journal Entry",
-    "receipt_voucher": "Receipt / Voucher"
+    "receipt_voucher": "Receipt / Voucher",
+    "total_liquidity": "Total Liquidity",
+    "party": "Party",
+    "new_client_bill": "New Client Bill",
+    "vendor_purchase": "Vendor Purchase",
+    "quick_invoice": "+ Invoice",
+    "quick_bill": "+ Bill",
+    "quick_payment": "+ Payment",
+    "quick_journal": "+ Journal",
+    "cash_label": "Cash:",
+    "bank_label": "Bank:",
+    "gross_margin": "Gross Margin:",
+    "min_short": "Min:"
   },
   "customers": {
     "title": "Customer Management",
@@ -163,7 +180,16 @@
     "opening_balance": "Opening Balance",
     "closing_balance": "Closing Balance",
     "aging_title": "Accounts Receivable Aging Report",
-    "total_ar": "Total Outstanding A/R"
+    "total_ar": "Total Outstanding A/R",
+    "updated_toast": "Customer updated successfully",
+    "created_toast": "Customer created successfully",
+    "contact_info": "Contact Info",
+    "aging_subtitle": "Aging analysis of outstanding customer receivables",
+    "aging_party": "Customer",
+    "eg_company": "e.g. Acme Corporation",
+    "auto_generated": "Auto-generated if empty",
+    "tin_number": "TIN number",
+    "address_placeholder": "Street, City, Country"
   },
   "suppliers": {
     "title": "Supplier Management",
@@ -174,7 +200,15 @@
     "statement_title": "Supplier Account Statement",
     "record_payment": "Pay Supplier",
     "aging_title": "Accounts Payable Aging Report",
-    "total_ap": "Total Outstanding A/P"
+    "total_ap": "Total Outstanding A/P",
+    "updated_toast": "Supplier updated successfully",
+    "created_toast": "Supplier created successfully",
+    "contact_info": "Contact Info",
+    "current_payable_balance": "Current Payable Balance",
+    "aging_subtitle": "Aging analysis of supplier accounts payable",
+    "aging_party": "Supplier",
+    "eg_company": "e.g. Global Tech Distributors",
+    "auto_generated": "Auto-generated if empty"
   },
   "inventory": {
     "title": "Products & Stock Management",
@@ -330,7 +364,15 @@
     "discard_title": "Discard this invoice?",
     "discard_message": "The invoice you started has not been saved. Closing the form will discard it.",
     "discard_confirm": "Discard and close",
-    "duplicated_from": "Copied from {number}. Check the quantities, then post it."
+    "duplicated_from": "Copied from {number}. Check the quantities, then post it.",
+    "quotes_subtitle": "Estimates and quotations for potential customer sales",
+    "valid_until": "Valid Until",
+    "credit_total": "Credit Total",
+    "custom_item_option": "-- Custom Item or Choose Product --",
+    "credit_reason": "Reason for Credit / Return",
+    "returned_product_optional": "Returned Product (Optional)",
+    "select_product_option": "-- Select Product --",
+    "credit_unit_price": "Credit Unit Price"
   },
   "purchases": {
     "title": "Purchases & Vendor Bills",
@@ -377,7 +419,11 @@
     "payment_on_creation_hint": "The bill is recorded as PAID with a real supplier payment. There is no PAID/UNPAID choice.",
     "discard_title": "Discard this bill?",
     "discard_message": "The bill you started has not been saved. Closing the form will discard it.",
-    "discard_confirm": "Discard and close"
+    "discard_confirm": "Discard and close",
+    "vendor_ref": "Vendor Ref",
+    "vendor_invoice_placeholder": "e.g. VEND-INV-9988",
+    "item_service": "Item / Service",
+    "vat_input_label": "VAT Input (Deductible Tax):"
   },
   "banking": {
     "title": "Payments & Banking",
@@ -445,7 +491,14 @@
     "narrative_placeholder": "Voucher narrative or purpose",
     "foreign_amount": "Foreign Amount",
     "settle_fx_diff": "Settle document fully — post FX difference",
-    "settle_fx_hint": "The base-currency difference between the document balance and this payment is posted to FX gain (4800) / FX loss (5900)."
+    "settle_fx_hint": "The base-currency difference between the document balance and this payment is posted to FX gain (4800) / FX loss (5900).",
+    "available_balance": "Available Balance",
+    "eg_bank_name": "e.g. Bank of Kigali Main",
+    "method_cheque": "Cheque",
+    "method_card": "Credit / Debit Card",
+    "payment_reference": "Payment Reference",
+    "eg_payment_ref": "e.g. MoMo ID, Cheque #",
+    "acc_short": "Acc:"
   },
   "accounting": {
     "title": "General Ledger & Accounting",
@@ -474,7 +527,35 @@
     "type_equity": "Equity",
     "type_revenue": "Revenue",
     "type_cogs": "Cost of Goods Sold",
-    "type_expense": "Expense"
+    "type_expense": "Expense",
+    "add_account": "Add Account",
+    "subtype": "Subtype",
+    "normal_balance": "Normal Balance",
+    "debit_balance": "Debit Balance",
+    "credit_balance": "Credit Balance",
+    "net_balance": "Net Balance",
+    "reverse_void": "Reverse / Void",
+    "account_label": "Account:",
+    "opening_label": "Opening:",
+    "net_closing_label": "Net Closing:",
+    "txn_purpose_placeholder": "Transaction purpose",
+    "journal_lines": "Journal Lines (Debits & Credits)",
+    "accounting_lines": "Accounting Lines",
+    "account": "Account",
+    "add_new_account": "Add New Account to Chart of Accounts",
+    "account_code": "Account Code",
+    "account_name": "Account Name",
+    "account_type": "Account Type",
+    "debit_upper": "DEBIT",
+    "credit_upper": "CREDIT",
+    "eg_account_name": "e.g. Software Subscriptions",
+    "unbalanced_toast": "Journal entry is unbalanced by {amount}",
+    "posted_toast": "Journal Entry {number} posted successfully!",
+    "account_created_toast": "Chart of account created successfully",
+    "reversed_toast": "Entry reversed! Generated reversal journal entry {number}",
+    "reversal_prompt": "Please enter the reason for this journal entry reversal:",
+    "journal_entry_hash": "Journal Entry #",
+    "source": "Source:"
   },
   "reports": {
     "title": "Financial Reports & Statements",
@@ -514,7 +595,15 @@
     "output_tax": "Output VAT Collected",
     "taxable_purchases": "Taxable Purchases (Excl. Tax)",
     "input_tax": "Input VAT Deductible",
-    "net_tax_payable": "Net VAT Payable / (Refundable)"
+    "net_tax_payable": "Net VAT Payable / (Refundable)",
+    "cf_net_operating_income": "Net Operating Income (P&L):",
+    "cf_receipts": "Cash Receipts from Customers & Inflows:",
+    "cf_payments": "Cash Payments to Suppliers & Operating Expenses:",
+    "cf_net_operations": "Net Cash Generated from Operations:",
+    "cf_beginning": "Cash & Bank Balances at Beginning of Period:",
+    "cf_net_change": "Net Change in Liquidity:",
+    "cf_ending": "Cash & Bank Balances at End of Period:",
+    "vat_net_note": "Output VAT Collected minus Deductible Input VAT"
   },
   "settings": {
     "title": "System Settings & Administration",
@@ -614,7 +703,32 @@
     "theme_system_active": "Following your computer setting",
     "theme_persist_note": "Your choice is saved on this computer and stays active after closing and reopening JENESIS.",
     "switch_to_light": "Switch to Light Mode",
-    "switch_to_dark": "Switch to Dark Mode"
+    "switch_to_dark": "Switch to Dark Mode",
+    "company_subtitle": "Legal entity details, fiscal calendar, currency, and valuation rules",
+    "create_new_company": "Create New Company",
+    "currency_code_placeholder": "USD, RWF, EUR",
+    "currency_symbol_placeholder": "$, Frw, €",
+    "users_subtitle": "Role-based access control and user authorization",
+    "add_user": "Add User",
+    "role": "Role",
+    "taxes_subtitle": "Configurable sales and purchase tax rates",
+    "add_tax_rate": "Add Tax Rate",
+    "tax_rate_percent": "Tax Rate %",
+    "tax_rate_pct": "Tax Rate (%)",
+    "tax_description": "Tax Description",
+    "tax_code_placeholder": "VAT18, RED10",
+    "tax_desc_placeholder": "Standard VAT 18%",
+    "audit_subtitle": "Immutable trace of transactions, logins, and data modifications",
+    "audit_timestamp": "Timestamp",
+    "audit_module": "Module",
+    "audit_action": "Action",
+    "audit_description": "Description",
+    "export_full_backup": "Export Full System Backup",
+    "eg_company_name": "e.g. Apex Enterprises Ltd",
+    "company_created_toast": "Company {name} created! Chart of accounts initialized.",
+    "user_created_toast": "User {username} created successfully",
+    "tax_configured_toast": "Tax rate configured successfully",
+    "add_new_user": "Add New User"
   },
   "auth": {
     "app_tagline": "Business accounting & management",
@@ -735,7 +849,8 @@
     "divide_by_zero": "Cannot divide by zero",
     "clear_entry": "Clear entry",
     "minimise": "Minimise",
-    "restore": "Restore"
+    "restore": "Restore",
+    "backspace": "Backspace"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
@@ -890,5 +1005,28 @@
     "posted_entries": "Posted entries",
     "logs": "Logs",
     "read_logs": "Read the last lines"
+  },
+  "aging": {
+    "current_not_due": "Current (Not Due)",
+    "d1_30": "1-30 Days",
+    "d31_60": "31-60 Days",
+    "d61_90": "61-90 Days",
+    "over_90": "> 90 Days",
+    "total_due": "Total Due"
+  },
+  "print": {
+    "payment_instructions": "Payment Instructions / Banking Details:",
+    "bank_label": "Bank:",
+    "account_label": "Account:",
+    "mobile_money_label": "Mobile Money:",
+    "thank_you": "Thank you for your business!",
+    "authorized_signature": "Authorized Signature",
+    "no_bank_details": "Add your bank details in Settings to print them here.",
+    "tin_tax_id": "TIN / Tax ID:",
+    "tax_id_tin": "Tax ID / TIN:"
+  },
+  "statement": {
+    "account_info": "Account Info",
+    "payment_credit": "Payment / Credit"
   }
 }

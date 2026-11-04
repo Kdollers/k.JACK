@@ -120,7 +120,7 @@ export default function StatementModal({ entityId, entityType = 'CUSTOMER', onCl
                 <div>
                   <h1 className="text-lg font-bold text-slate-900">{currentCompany?.name}</h1>
                   <p className="text-slate-500 text-[11px]">
-                    {currentCompany?.address} • TIN: {currentCompany?.tax_id}
+                    {currentCompany?.address} • {t('common.tin_short')} {currentCompany?.tax_id}
                   </p>
                 </div>
                 <div className="text-right">
@@ -136,11 +136,11 @@ export default function StatementModal({ entityId, entityType = 'CUSTOMER', onCl
               {/* Entity Info & Balances */}
               <div className="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
                 <div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Account Info</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{t('statement.account_info')}</div>
                   <div className="font-bold text-sm text-slate-900">{entity?.name}</div>
-                  <div className="text-slate-600 font-mono text-[11px]">Code: {entity?.code}</div>
+                  <div className="text-slate-600 font-mono text-[11px]">{t('common.code')}: {entity?.code}</div>
                   {entity?.address && <div className="text-slate-600">{entity.address}</div>}
-                  {entity?.phone && <div className="text-slate-600">Tel: {entity.phone}</div>}
+                  {entity?.phone && <div className="text-slate-600">{t('common.tel')} {entity.phone}</div>}
                 </div>
                 <div className="text-right flex flex-col justify-center space-y-1">
                   <div className="flex justify-between sm:justify-end sm:space-x-4 text-slate-600">
@@ -165,7 +165,7 @@ export default function StatementModal({ entityId, entityType = 'CUSTOMER', onCl
                       <th className="py-2 px-3">{t('common.type')}</th>
                       <th className="py-2 px-3">{t('common.reference')}</th>
                       <th className="py-2 px-3 text-right">{isCustomer ? 'Invoice Amount' : 'Bill Amount'}</th>
-                      <th className="py-2 px-3 text-right">Payment / Credit</th>
+                      <th className="py-2 px-3 text-right">{t('statement.payment_credit')}</th>
                       <th className="py-2 px-3 text-right">{t('accounting.running_balance')}</th>
                     </tr>
                   </thead>

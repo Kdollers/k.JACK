@@ -70,7 +70,7 @@ function AppContent() {
           <div className="text-sm font-bold tracking-wider">
             {app ? `JENESIS ${app.id.toUpperCase()}` : 'JENESIS ERP & ACCOUNTING'}
           </div>
-          <div className="text-xs text-slate-400 mt-1">Initializing ledger & database...</div>
+          <div className="text-xs text-slate-400 mt-1">{t('common.initializing')}</div>
         </div>
       </div>
     );

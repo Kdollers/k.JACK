@@ -86,13 +86,13 @@ export default function CustomersView() {
           method: 'PUT',
           body: JSON.stringify(formData)
         });
-        showToast('Customer updated successfully', 'success');
+        showToast(t('customers.updated_toast'), 'success');
       } else {
         await apiRequest('/api/customers', {
           method: 'POST',
           body: JSON.stringify(formData)
         });
-        showToast('Customer created successfully', 'success');
+        showToast(t('customers.created_toast'), 'success');
       }
       setShowAddModal(false);
       setEditingCustomer(null);
@@ -211,7 +211,7 @@ export default function CustomersView() {
                   <th className="py-2.5 px-4">{t('customers.customer_code')}</th>
                   <th className="py-2.5 px-4">{t('customers.customer_name')}</th>
                   <th className="py-2.5 px-4">{t('common.contact_person')}</th>
-                  <th className="py-2.5 px-4">Contact Info</th>
+                  <th className="py-2.5 px-4">{t('customers.contact_info')}</th>
                   <th className="py-2.5 px-4">{t('customers.payment_terms')}</th>
                   <th className="py-2.5 px-4 text-right">{t('customers.credit_limit')}</th>
                   <th className="py-2.5 px-4 text-right">{t('customers.current_balance')}</th>
@@ -231,7 +231,7 @@ export default function CustomersView() {
                       <td className="py-3 px-4 font-mono font-semibold text-blue-600">{c.code}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">
                         <div>{c.name}</div>
-                        {c.tax_id && <div className="text-[10px] text-slate-400 font-mono">TIN: {c.tax_id}</div>}
+                        {c.tax_id && <div className="text-[10px] text-slate-400 font-mono">{t('common.tin_short')} {c.tax_id}</div>}
                       </td>
                       <td className="py-3 px-4 text-slate-600">{c.contact_person || '-'}</td>
                       <td className="py-3 px-4 text-slate-600 text-[11px] space-y-0.5">
@@ -298,7 +298,7 @@ export default function CustomersView() {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h2 className="text-sm font-bold text-slate-800">{t('customers.aging_title')}</h2>
-              <p className="text-[11px] text-slate-500">Aging analysis of outstanding customer receivables</p>
+              <p className="text-[11px] text-slate-500">{t('customers.aging_subtitle')}</p>
             </div>
             <div className="text-right">
               <span className="text-xs text-slate-500">{t('customers.total_ar')}: </span>
@@ -312,13 +312,13 @@ export default function CustomersView() {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                 <tr>
-                  <th className="py-2.5 px-3">Customer</th>
-                  <th className="py-2.5 px-3 text-right">Current (Not Due)</th>
-                  <th className="py-2.5 px-3 text-right">1-30 Days</th>
-                  <th className="py-2.5 px-3 text-right">31-60 Days</th>
-                  <th className="py-2.5 px-3 text-right">61-90 Days</th>
-                  <th className="py-2.5 px-3 text-right">&gt; 90 Days</th>
-                  <th className="py-2.5 px-3 text-right font-bold">Total Due</th>
+                  <th className="py-2.5 px-3">{t('customers.aging_party')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.current_not_due')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.d1_30')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.d31_60')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.d61_90')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('aging.over_90')}</th>
+                  <th className="py-2.5 px-3 text-right font-bold">{t('aging.total_due')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -383,7 +383,7 @@ export default function CustomersView() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="e.g. Acme Corporation"
+                    placeholder={t('customers.eg_company')}
                   />
                 </div>
                 <div>
@@ -395,7 +395,7 @@ export default function CustomersView() {
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Auto-generated if empty"
+                    placeholder={t('customers.auto_generated')}
                   />
                 </div>
               </div>
@@ -421,7 +421,7 @@ export default function CustomersView() {
                     value={formData.tax_id}
                     onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="TIN number"
+                    placeholder={t('customers.tin_number')}
                   />
                 </div>
               </div>
@@ -454,7 +454,7 @@ export default function CustomersView() {
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Street, City, Country"
+                  placeholder={t('customers.address_placeholder')}
                 />
               </div>
 

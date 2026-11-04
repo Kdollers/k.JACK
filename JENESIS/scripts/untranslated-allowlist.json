@@ -1,0 +1,33 @@
+{
+  "_comment": [
+    "Strings the scanner deliberately ignores, each with a reason.",
+    "Anything listed here is a conscious decision, not an oversight: if a",
+    "string is added to this file it must say why it must stay untranslated."
+  ],
+  "language_endonyms": {
+    "_why": "A language picker must show each language in that language, so a Rwandan user can find 'Ikinyarwanda' whatever the current UI language is. Translating these would make the selector unusable.",
+    "texts": [
+      "English (EN)",
+      "Français (FR)",
+      "Ikinyarwanda (RW)",
+      "English",
+      "Français",
+      "Ikinyarwanda"
+    ]
+  },
+  "iso_codes_and_symbols": {
+    "_why": "ISO 4217 codes (USD, EUR, RWF), currency symbols and tax codes (VAT18) are identifiers, not English prose. Writing them in Kinyarwanda would break the form validation.",
+    "patterns": [
+      "^[A-Z]{3}$",
+      "^[A-Z]{2,4}[0-9]{1,3}$",
+      "^[$€£¥]$"
+    ]
+  },
+  "keyboard_and_calculator_keys": {
+    "_why": "Keyboard shortcuts and calculator keys are shown as the physical key or the symbol printed on it. Translating 'Ctrl + /' or 'CE' would describe a key the user cannot find.",
+    "texts": [
+      "Ctrl + /",
+      "CE"
+    ]
+  }
+}

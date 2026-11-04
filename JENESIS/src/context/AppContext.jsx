@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { apiRequest, setSessionToken, getSessionToken, setUnauthorizedHandler } from '../services/api';
+import { formatMoney } from '../money';
 
 const AppContext = createContext();
 
@@ -165,12 +166,18 @@ export function AppProvider({ children }) {
     triggerRefresh();
   };
 
-  const formatCurrency = (val) => {
-    const num = Number(val) || 0;
-    const sym = currentCompany?.currency_symbol || '$';
-    const decimals = currentCompany?.currency_decimals !== undefined ? currentCompany.currency_decimals : 2;
-    return `${sym}${num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
-  };
+  /**
+   * Every amount in JENESIS is printed through src/money.js, so the currency
+   * sits beside the figure with a space — "1,400.00 XFA", not "XFA1,400.00" —
+   * and a code goes behind the amount while a sign such as $ stays in front.
+   * Display only: the number, its decimals and every stored value are exactly
+   * what the company configured.
+   */
+  const formatCurrency = (val) => formatMoney(val, {
+    symbol: currentCompany?.currency_symbol,
+    code: currentCompany?.currency_code,
+    decimals: currentCompany?.currency_decimals === undefined ? 2 : currentCompany.currency_decimals
+  });
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useEscapeLayer, useShortcutAction } from '../context/ShortcutsContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../context/AppContext';
+import { formatMoney } from '../money';
 import { useI18n } from '../i18n';
 import { apiRequest, translateError } from '../services/api';
 import InvoicePrintModal from '../components/InvoicePrintModal';
@@ -443,7 +444,7 @@ export default function PurchasesView() {
                   <th className="py-2.5 px-4">{t('purchases.bill_number')}</th>
                   <th className="py-2.5 px-4">{t('common.date')}</th>
                   <th className="py-2.5 px-4">{t('purchases.supplier')}</th>
-                  <th className="py-2.5 px-4">Vendor Ref</th>
+                  <th className="py-2.5 px-4">{t('purchases.vendor_ref')}</th>
                   <th className="py-2.5 px-4 text-right">{t('common.subtotal')}</th>
                   <th className="py-2.5 px-4 text-right">{t('common.tax')}</th>
                   <th className="py-2.5 px-4 text-right">{t('common.total')}</th>
@@ -723,7 +724,7 @@ export default function PurchasesView() {
                     value={billForm.vendor_invoice_number}
                     onChange={(e) => setBillForm({ ...billForm, vendor_invoice_number: e.target.value })}
                     className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                    placeholder="e.g. VEND-INV-9988"
+                    placeholder={t('purchases.vendor_invoice_placeholder')}
                   />
                 </div>
 
@@ -814,10 +815,10 @@ export default function PurchasesView() {
                   <table className="w-full text-left">
                     <thead className="bg-slate-100 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                       <tr>
-                        <th className="py-2 px-3 w-5/12">Item / Service</th>
+                        <th className="py-2 px-3 w-5/12">{t('purchases.item_service')}</th>
                         <th className="py-2 px-3 text-right w-24">{t('common.quantity')}</th>
                         <th className="py-2 px-3 text-right w-32">{t('common.unit_cost')}</th>
-                        <th className="py-2 px-3 text-right w-20">Tax %</th>
+                        <th className="py-2 px-3 text-right w-20">{t('common.tax_pct')}</th>
                         <th className="py-2 px-3 text-right w-32">{t('common.amount')}</th>
                         <th className="py-2 px-2 w-8"></th>
                       </tr>
@@ -845,7 +846,7 @@ export default function PurchasesView() {
                               </select>
                               <input
                                 type="text"
-                                placeholder="Description"
+                                placeholder={t('common.description')}
                                 value={line.description}
                                 onChange={(e) => updateLine(idx, 'description', e.target.value)}
                                 className="w-full px-2 py-1 border border-slate-200 rounded text-[11px]"
@@ -955,7 +956,7 @@ export default function PurchasesView() {
                     </span>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <span>VAT Input (Deductible Tax):</span>
+                    <span>{t('purchases.vat_input_label')}</span>
                     <span className="font-mono font-semibold text-slate-800">
                       {formatCurrency(billTotals.taxTotal)}
                     </span>
@@ -968,7 +969,7 @@ export default function PurchasesView() {
                     <div className="flex justify-between text-slate-600">
                       <span>{t('sales.foreign_total')}:</span>
                       <span className="font-mono font-semibold text-emerald-700">
-                        {billTotals.total.toLocaleString(undefined, { maximumFractionDigits: 4 })} {billForm.currency_code}
+                        {formatMoney(billTotals.total, { code: billForm.currency_code, decimals: 4 })}
                         {billForm.exchange_rate ? ` × ${billForm.exchange_rate}` : ''}
                       </span>
                     </div>

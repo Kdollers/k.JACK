@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useEscapeLayer, useShortcutAction } from '../context/ShortcutsContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../context/AppContext';
+import { formatMoney } from '../money';
 import { useI18n } from '../i18n';
 import { apiRequest, translateError, interpolateVars } from '../services/api';
 import InvoicePrintModal from '../components/InvoicePrintModal';
@@ -632,7 +633,7 @@ export default function SalesView() {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200 bg-slate-50">
             <h2 className="text-sm font-bold text-slate-800">{t('sales.tab_quotes')}</h2>
-            <p className="text-[11px] text-slate-500">Estimates and quotations for potential customer sales</p>
+            <p className="text-[11px] text-slate-500">{t('sales.quotes_subtitle')}</p>
           </div>
 
           <div className="overflow-x-auto">
@@ -641,7 +642,7 @@ export default function SalesView() {
                 <tr>
                   <th className="py-2.5 px-4">{t('sales.quote_number')}</th>
                   <th className="py-2.5 px-4">{t('common.date')}</th>
-                  <th className="py-2.5 px-4">Valid Until</th>
+                  <th className="py-2.5 px-4">{t('sales.valid_until')}</th>
                   <th className="py-2.5 px-4">{t('sales.customer')}</th>
                   <th className="py-2.5 px-4 text-right">{t('common.total')}</th>
                   <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
@@ -670,7 +671,7 @@ export default function SalesView() {
                             onClick={() => handleConvertQuote(q.id)}
                             className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded text-[10px] font-bold hover:bg-blue-100 transition inline-flex items-center space-x-1"
                           >
-                            <span>Convert to Invoice</span>
+                            <span>{t('sales.convert_to_invoice')}</span>
                             <ArrowRight className="w-3 h-3" />
                           </button>
                         )}
@@ -707,8 +708,8 @@ export default function SalesView() {
                   <th className="py-2.5 px-4">{t('sales.credit_note_number')}</th>
                   <th className="py-2.5 px-4">{t('common.date')}</th>
                   <th className="py-2.5 px-4">{t('sales.customer')}</th>
-                  <th className="py-2.5 px-4">Reason</th>
-                  <th className="py-2.5 px-4 text-right">Credit Total</th>
+                  <th className="py-2.5 px-4">{t('common.reason')}</th>
+                  <th className="py-2.5 px-4 text-right">{t('sales.credit_total')}</th>
                   <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
                 </tr>
               </thead>
@@ -922,8 +923,8 @@ export default function SalesView() {
                         <th className="py-2 px-3 w-5/12">{t('sales.product')} / Description</th>
                         <th className="py-2 px-3 text-right w-20">{t('common.quantity')}</th>
                         <th className="py-2 px-3 text-right w-28">{t('common.unit_price')}</th>
-                        <th className="py-2 px-3 text-right w-20">Disc %</th>
-                        <th className="py-2 px-3 text-right w-20">Tax %</th>
+                        <th className="py-2 px-3 text-right w-20">{t('common.disc_pct')}</th>
+                        <th className="py-2 px-3 text-right w-20">{t('common.tax_pct')}</th>
                         <th className="py-2 px-3 text-right w-28">{t('common.amount')}</th>
                         <th className="py-2 px-2 w-8"></th>
                       </tr>
@@ -942,7 +943,7 @@ export default function SalesView() {
                                 onChange={(e) => handleProductSelect(idx, e.target.value)}
                                 className="w-full px-2 py-1 border border-slate-300 rounded mb-1 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
                               >
-                                <option value="">-- Custom Item or Choose Product --</option>
+                                <option value="">{t('sales.custom_item_option')}</option>
                                 {products.map((p) => (
                                   <option key={p.id} value={p.id}>
                                     {p.name} ({p.sku}) — {formatCurrency(p.selling_price)}
@@ -951,7 +952,7 @@ export default function SalesView() {
                               </select>
                               <input
                                 type="text"
-                                placeholder="Description"
+                                placeholder={t('common.description')}
                                 value={line.description}
                                 onChange={(e) => updateLine(idx, 'description', e.target.value)}
                                 className="w-full px-2 py-1 border border-slate-200 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -1065,7 +1066,7 @@ export default function SalesView() {
                     <div className="flex justify-between text-slate-600">
                       <span>{t('sales.foreign_total')}:</span>
                       <span className="font-mono font-semibold text-violet-700">
-                        {invTotals.total.toLocaleString(undefined, { maximumFractionDigits: 4 })} {invoiceForm.currency_code}
+                        {formatMoney(invTotals.total, { code: invoiceForm.currency_code, decimals: 4 })}
                         {invoiceForm.exchange_rate ? ` × ${invoiceForm.exchange_rate}` : ''}
                       </span>
                     </div>
@@ -1127,7 +1128,7 @@ export default function SalesView() {
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Reason for Credit / Return *</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('sales.credit_reason')} *</label>
                 <input
                   type="text"
                   required
@@ -1138,7 +1139,7 @@ export default function SalesView() {
               </div>
 
               <div>
-                <label className="block text-slate-600 font-semibold mb-1">Returned Product (Optional)</label>
+                <label className="block text-slate-600 font-semibold mb-1">{t('sales.returned_product_optional')}</label>
                 <select
                   value={creditNoteForm.lines[0]?.productId || ''}
                   onChange={(e) => {
@@ -1158,7 +1159,7 @@ export default function SalesView() {
                   }}
                   className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="">-- Select Product --</option>
+                  <option value="">{t('sales.select_product_option')}</option>
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} ({p.sku})
@@ -1183,7 +1184,7 @@ export default function SalesView() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Credit Unit Price</label>
+                  <label className="block text-slate-600 font-semibold mb-1">{t('sales.credit_unit_price')}</label>
                   <input
                     type="number"
                     step="0.01"

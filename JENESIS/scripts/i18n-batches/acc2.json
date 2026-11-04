@@ -1,0 +1,9 @@
+{
+  "accounting": {
+    "reversal_prompt": {
+      "en": "Please enter the reason for this journal entry reversal:",
+      "fr": "Veuillez saisir le motif de cette contre-passation :",
+      "rw": "Shyiramo impamvu yo gusubiza inyuma iyi jorunali:"
+    }
+  }
+}

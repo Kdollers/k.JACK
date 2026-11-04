@@ -1,3 +1,7 @@
 node_modules/
 .merge-work/
 *.log
+
+# Sandbox-only helpers (never packaged with the release):
+# restore-sandbox.sh / make-sqlite-shim.sh rebuild the dev environment after
+# the sandbox wipes git, node_modules, build/ and dist/.
