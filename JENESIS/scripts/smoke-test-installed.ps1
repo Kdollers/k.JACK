@@ -537,12 +537,25 @@ function Get-DesktopShortcuts {
 }
 
 function Wait-ForTitledWindow([string] $Pattern, [int] $TimeoutSec = 90) {
+  # Waiting blind is how a ninety-second timeout turns into a mystery. Every
+  # window title seen along the way is kept, and reported if the wait is given
+  # up: the usual cause is not that nothing opened, but that something opened
+  # under a different name.
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  $seen = New-Object 'System.Collections.Generic.HashSet[string]'
+  $nextReport = (Get-Date).AddSeconds(15)
   while ((Get-Date) -lt $deadline) {
-    $hit = @(Get-AppWindows | Where-Object { $_.Title -like "*$Pattern*" })
+    $all = @(Get-AppWindows)
+    foreach ($candidate in $all) { if ($candidate.Title) { [void]$seen.Add($candidate.Title) } }
+    $hit = @($all | Where-Object { $_.Title -like "*$Pattern*" })
     if ($hit.Count -gt 0) { return $hit[0] }
+    if ((Get-Date) -gt $nextReport) {
+      Write-Host ("    still waiting for '{0}'; windows seen: {1}" -f $Pattern, (@($seen) -join ' | ')) -ForegroundColor DarkGray
+      $nextReport = (Get-Date).AddSeconds(15)
+    }
     Start-Sleep -Milliseconds 500
   }
+  Write-Host ("    gave up waiting for '{0}'; windows seen: {1}" -f $Pattern, (@($seen) -join ' | ')) -ForegroundColor DarkGray
   return $null
 }
 
@@ -855,7 +868,10 @@ foreach ($appName in $script:expected.Keys) {
     $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match "--app=$appId" } | Select-Object -First 1
     Assert ($null -ne $shortcut) "The $appName shortcut was not found."
     $before = Get-ReadyCount
-    Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
+    # Printed, so a window that opens under the wrong name can be traced to the
+    # exact command line that opened it.
+    Write-Host ("    launching: {0} {1}" -f $shortcut.Target, $shortcut.Arguments) -ForegroundColor DarkGray
+    Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments) | Out-Null
     $window = Wait-ForTitledWindow $appName 90
     Assert ($null -ne $window) "No window titled '$appName' appeared: the shortcut did not open it."
     Assert-WindowIsReal $window $appName
