@@ -16,6 +16,7 @@ trace('modules loaded');
 
 const { securityHeaders } = require('./security');
 const { attachApplication } = require('./appScope');
+const networkDiscovery = require('./network-discovery');
 const { createLimiter, clientIp, MINUTE } = require('./rateLimit');
 const apiLimiter = createLimiter({ name: 'api', windowMs: MINUTE, max: 1200, keyFn: (req) => clientIp(req) });
 
@@ -104,11 +105,29 @@ function startServer(options = {}) {
     const server = app.listen(port, host, () => {
       const address = server.address();
       const actualPort = typeof address === 'object' && address ? address.port : port;
+
+      // Announce this computer on the network — but only while the switch is
+      // on. The beacon re-reads the setting as it goes, so turning the network
+      // off stops the announcements even without a restart.
+      const dataDir = networkDiscovery.registryPath
+        ? (networkConfig.dataDirectoryFromEnv() || (DB_PATH && DB_PATH !== ':memory:' ? require('path').dirname(DB_PATH) : null))
+        : null;
+      const beacon = networkDiscovery.startBeacon({
+        dataDir,
+        port: actualPort,
+        computerId: process.env.GENESIS_COMPUTER_ID || require('os').hostname(),
+        computerName: require('os').hostname(),
+        version: APP_VERSION,
+        isAllowed: () => (dataDir ? networkConfig.readNetworkConfig(dataDir).allowLan : false)
+      });
+
       resolve({
         server,
         host,
         port: actualPort,
+        beacon,
         close: () => new Promise((res) => {
+          if (beacon && beacon.stop) beacon.stop();
           server.close(() => {
             closeDb();
             res();

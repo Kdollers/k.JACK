@@ -2307,6 +2307,7 @@ router.post('/backup/reset-demo', requirePermission('demo:reset'), (req, res) =>
 const fsSync = require('fs');
 const startedAt = new Date().toISOString();
 const networkConfig = require('../network-config');
+const networkDiscovery = require('../network-discovery');
 
 function networkDataDir() {
   return networkConfig.dataDirectoryFromEnv() || (DB_PATH && DB_PATH !== ':memory:' ? path.dirname(DB_PATH) : null);
@@ -2358,6 +2359,174 @@ router.post('/system/network', requirePermission('network:manage'), (req, res) =
     updatedAt: written.updatedAt || null,
     restartRequired: true
   });
+});
+
+// ---------------------------------------------------------------------------
+// The other JENESIS computers: find them, keep them, watch them
+// (JENESIS Network & Maintenance)
+// ---------------------------------------------------------------------------
+/**
+ * Everything below reads and writes <data>/computers.json. The stored status is
+ * what was last measured; POST /system/computers/refresh measures it again.
+ * Probing is a network round trip to each address, so it is an action the user
+ * asks for rather than something every page load waits on.
+ */
+router.get('/system/computers', requirePermission('dashboard:read'), (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { computers, damaged } = networkDiscovery.readRegistry(dataDir);
+  const allowLan = networkConfig.readNetworkConfig(dataDir).allowLan;
+  res.json({ computers, damaged, allowLan, count: computers.length });
+});
+
+router.post('/system/computers/refresh', requirePermission('dashboard:read'), async (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { computers, damaged } = await networkDiscovery.refreshRegistry(dataDir, { expectVersion: APP_VERSION });
+  res.json({ computers, damaged, refreshedAt: new Date().toISOString() });
+});
+
+router.post('/system/computers/discover', requirePermission('network:manage'), async (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const config = networkConfig.readNetworkConfig(dataDir);
+  if (!config.allowLan) {
+    return res.status(409).json({
+      error: 'This computer is not allowed on the network yet.',
+      code: 'LAN_DISABLED',
+      message: networkDiscovery.DIAGNOSES.LAN_DISABLED
+    });
+  }
+  const found = await networkDiscovery.discover({ computerId: process.env.GENESIS_COMPUTER_ID });
+  const { computers } = networkDiscovery.readRegistry(dataDir);
+  // Mark the ones already known, so the interface can say "already added"
+  // instead of offering a duplicate.
+  const known = new Set(computers.map((c) => `${c.address}:${c.port}`));
+  res.json({
+    found: found.map((f) => ({ ...f, known: known.has(`${f.address}:${f.port}`) })),
+    count: found.length
+  });
+});
+
+router.post('/system/computers', requirePermission('network:manage'), async (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { name, address, port } = req.body || {};
+  if (!networkDiscovery.looksLikeAddress(address)) {
+    return res.status(400).json({
+      error: networkDiscovery.DIAGNOSES.BAD_ADDRESS, code: 'BAD_ADDRESS'
+    });
+  }
+  const portNumber = Number(port) || Number(process.env.GENESIS_PORT || 3000);
+  const probe = await networkDiscovery.probeComputer({ address: address.trim(), port: portNumber, expectVersion: APP_VERSION });
+  const { computer, computers } = networkDiscovery.addComputer(dataDir, {
+    name, address: address.trim(), port: portNumber
+  });
+  const { user, companyId } = getSessionContext(req);
+  logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'COMPUTER_ADD', computer.id,
+    `Registered the computer ${computer.name} (${computer.address}:${computer.port}) — ${probe.status}`);
+  res.json({ computer: { ...computer, lastStatus: probe.status, lastMessage: probe.message }, computers, probe });
+});
+
+router.delete('/system/computers/:id', requirePermission('network:manage'), (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { removed, computers } = networkDiscovery.forgetComputer(dataDir, req.params.id);
+  if (!removed) return res.status(404).json({ error: 'That computer is not in the list.', code: 'NOT_FOUND' });
+  const { user, companyId } = getSessionContext(req);
+  logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'COMPUTER_REMOVE', req.params.id, 'Forgot a network computer');
+  res.json({ computers, removed: true });
+});
+
+router.post('/system/computers/:id/test', requirePermission('dashboard:read'), async (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { computers } = networkDiscovery.readRegistry(dataDir);
+  const computer = computers.find((c) => c.id === req.params.id);
+  if (!computer) return res.status(404).json({ error: 'That computer is not in the list.', code: 'NOT_FOUND' });
+  const probe = await networkDiscovery.probeComputer({
+    address: computer.address, port: computer.port, expectVersion: APP_VERSION
+  });
+  networkDiscovery.updateComputer(dataDir, computer.id, {
+    lastStatus: probe.status,
+    lastSeenAt: probe.status === 'ONLINE' ? new Date().toISOString() : computer.lastSeenAt
+  });
+  res.json({ computer: { ...computer, lastStatus: probe.status }, probe });
+});
+
+/** Connect, disconnect and reconnect: only one computer is connected at a time. */
+router.post('/system/computers/:id/connect', requirePermission('network:manage'), async (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { computers } = networkDiscovery.readRegistry(dataDir);
+  const computer = computers.find((c) => c.id === req.params.id);
+  if (!computer) return res.status(404).json({ error: 'That computer is not in the list.', code: 'NOT_FOUND' });
+
+  const probe = await networkDiscovery.probeComputer({
+    address: computer.address, port: computer.port, expectVersion: APP_VERSION
+  });
+  if (probe.status !== 'ONLINE') {
+    networkDiscovery.updateComputer(dataDir, computer.id, { lastStatus: probe.status, connected: false });
+    return res.status(409).json({ error: probe.message, code: probe.code, probe });
+  }
+  // Only ever one active connection: drop the others, then mark this one.
+  for (const other of computers) {
+    if (other.id !== computer.id && other.connected) {
+      networkDiscovery.updateComputer(dataDir, other.id, { connected: false });
+    }
+  }
+  const { computers: updated } = networkDiscovery.updateComputer(dataDir, computer.id, {
+    connected: true,
+    lastStatus: 'ONLINE',
+    connectedAt: new Date().toISOString(),
+    lastSeenAt: new Date().toISOString()
+  });
+  const { user, companyId } = getSessionContext(req);
+  logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'COMPUTER_CONNECT', computer.id,
+    `Connected to ${computer.name} (${computer.address}:${computer.port})`);
+  res.json({
+    computers: updated,
+    computer: updated.find((c) => c.id === computer.id),
+    serverUrl: `http://${computer.address}:${computer.port}`
+  });
+});
+
+router.post('/system/computers/:id/disconnect', requirePermission('network:manage'), (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { computer, computers } = networkDiscovery.updateComputer(dataDir, req.params.id, { connected: false });
+  if (!computer) return res.status(404).json({ error: 'That computer is not in the list.', code: 'NOT_FOUND' });
+  const { user, companyId } = getSessionContext(req);
+  logAudit(companyId, user.id, user.full_name, 'SYSTEM', 'COMPUTER_DISCONNECT', computer.id,
+    `Disconnected from ${computer.name}`);
+  res.json({ computers, computer });
+});
+
+router.post('/system/computers/:id/reconnect', requirePermission('network:manage'), async (req, res) => {
+  const dataDir = networkDataDir();
+  if (!dataDir) return res.status(500).json({ error: 'The service has no data directory.' });
+  const { computers } = networkDiscovery.readRegistry(dataDir);
+  const computer = computers.find((c) => c.id === req.params.id);
+  if (!computer) return res.status(404).json({ error: 'That computer is not in the list.', code: 'NOT_FOUND' });
+  // Same work as connect, kept separate so the audit trail and the interface
+  // can tell a first connection from recovery after a drop.
+  const probe = await networkDiscovery.probeComputer({
+    address: computer.address, port: computer.port, expectVersion: APP_VERSION
+  });
+  if (probe.status !== 'ONLINE') {
+    networkDiscovery.updateComputer(dataDir, computer.id, { lastStatus: probe.status, connected: false });
+    return res.status(409).json({ error: probe.message, code: probe.code, probe });
+  }
+  for (const other of computers) {
+    if (other.id !== computer.id && other.connected) {
+      networkDiscovery.updateComputer(dataDir, other.id, { connected: false });
+    }
+  }
+  const { computers: updated } = networkDiscovery.updateComputer(dataDir, computer.id, {
+    connected: true, lastStatus: 'ONLINE',
+    connectedAt: new Date().toISOString(), lastSeenAt: new Date().toISOString()
+  });
+  res.json({ computers: updated, computer: updated.find((c) => c.id === computer.id), probe });
 });
 
 // ---------------------------------------------------------------------------
