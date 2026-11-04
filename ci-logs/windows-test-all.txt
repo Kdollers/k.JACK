@@ -1,0 +1,69 @@
+
+> genesis-accounting@0.5.4 test:all
+> npm run test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:appsrender && npm run test:separation && npm run test:network && npm run test:theme && npm run test:themeui && npm run test:ui-imports
+
+
+> genesis-accounting@0.5.4 test
+> node tests/accounting-engine.test.js
+
+--- STARTING ACCOUNTING ENGINE INTEGRITY TESTS ---
+✓ Initial Trial Balance balanced: Debits = 203680.02 Credits = 203680.02
+✓ Posted Sales Invoice: INV-2026-0007
+✓ Trial Balance balanced after sale: Debits = 207715.16 Credits = 207715.16
+✓ Received Customer Payment: PAY-2026-0012 Amount: 2596
+✓ Posted Purchase Bill: BILL-2026-0005
+✓ Recorded Supplier Payment: PAY-2026-0013
+✓ Posted Stock Adjustment: ADJ-2026-0004
+✓ Posted Physical Count: CNT-2026-0004
+✓ Balance Sheet balanced! Total Assets = 110806.46 Liab + Equity = 110806.46 Diff = 0
+✓ Dashboard KPI Stats calculated successfully: Sales = 18819.82 Purchases = 37288 Gross Profit = 2483.76 Net Profit = 433.76
+--- ALL ACCOUNTING ENGINE TESTS PASSED PERFECTLY! ---
+
+> genesis-accounting@0.5.4 test:auth
+> node tests/auth-security.test.js
+
+--- AUTHENTICATION & AUTHORIZATION TESTS ---
+  scenario: fresh
+  ✓ fresh database reports setup required and creates no demo accounts
+  ✓ every protected endpoint rejects anonymous requests
+  ✓ the x-user-id header does not grant access
+  ✓ setup rejects weak or invalid administrator details
+  ✓ setup creates one administrator and cannot be repeated
+  ✓ wrong passwords are rejected generically and lock the account after repeated failures
+  ✓ unknown usernames get the same response as wrong passwords
+  ✓ login issues a session token; /auth/me returns identity and permissions
+  ✓ session tokens are stored only as digests
+  ✓ the company list is limited to the session company
+  ✓ logout revokes the session token
+  ✓ idle and absolute session expiry are enforced
+  ✓ every route is guarded by a permission or explicitly authenticated-only
+  ✓ role matrix: each role can do its job and nothing more
+  ✓ a user cannot impersonate the administrator by sending a different user id
+  ✓ administrator cannot remove their own rights or disable themselves
+  ✓ changing a user role revokes that user's sessions
+  ✓ administrator-created users must change their password before using the system
+  ✓ demo reset endpoint is disabled and cannot drop data
+  ✓ backup import rejects malformed input before changing data
+  ✓ the permission matrix covers every role without unknown permissions
+  21 passed, 0 failed (fresh)
+node:internal/modules/cjs/loader:1031
+      throw new ERR_UNKNOWN_BUILTIN_MODULE(request);
+      ^
+
+Error [ERR_UNKNOWN_BUILTIN_MODULE]: No such built-in module: node:sqlite
+    at Module._load (node:internal/modules/cjs/loader:1031:13)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (D:\a\k.JACK\k.JACK\JENESIS\tests\auth-security.test.js:58:22)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'ERR_UNKNOWN_BUILTIN_MODULE'
+}
+
+Node.js v20.20.2
+✓ repository genesis.db unchanged
+--- 1 AUTH SCENARIO(S) FAILED ---
