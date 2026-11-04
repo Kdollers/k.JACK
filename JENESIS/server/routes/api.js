@@ -8,6 +8,7 @@ const { hashPassword, verifyPassword } = require('../passwords');
 const {
   authenticate,
   requirePermission,
+  requireAnyPermission,
   checkPasswordPolicy,
   createSession,
   revokeSession,
@@ -2088,7 +2089,7 @@ router.get('/reports/tax-report', requirePermission('reports:read'), (req, res) 
 // --------------------------------------------------------------------------
 // 12. TAX RATES
 // --------------------------------------------------------------------------
-router.get('/taxes', requirePermission('accounting:read'), (req, res) => {
+router.get('/taxes', requireAnyPermission('accounting:read', 'sales:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
   res.json(db.prepare('SELECT * FROM tax_rates WHERE company_id = ? ORDER BY rate DESC').all(companyId));

@@ -426,6 +426,68 @@ test('the shipped database is not modified by these tests', () => {
   assert.ok(fs.existsSync(SOURCE_DB));
 });
 
+// ---------------------------------------------------------------------------
+// A screen shared by two roles: the sales invoice needs the list of tax rates,
+// and tax rates are defined in accounting. The clerk must be able to read them
+// from JENESIS Seller; only the bookkeeper may change them. This is the one
+// route that has to answer to either role, so it is proved in both directions.
+// ---------------------------------------------------------------------------
+test('a sales clerk reads the tax rates from JENESIS Seller', async () => {
+  const { w, proc, port } = await scenario();
+  try {
+    const clerk = await signIn(port, w.usernames.sales);
+    const r = await request(port, 'GET', '/taxes', { token: clerk, headers: { 'X-JENESIS-App': 'seller' } });
+    assert.strictEqual(r.status, 200, `the clerk must be able to read tax rates: ${r.text}`);
+    assert.ok(Array.isArray(r.json), 'the tax rates are returned as a list');
+  } finally {
+    await proc.stop();
+    fs.rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test('a sales clerk still cannot create a tax rate', async () => {
+  const { w, proc, port } = await scenario();
+  try {
+    const clerk = await signIn(port, w.usernames.sales);
+    const r = await request(port, 'POST', '/taxes', {
+      token: clerk,
+      headers: { 'X-JENESIS-App': 'seller' },
+      body: { code: 'CLERK', name: 'Made by a clerk', rate: 5 }
+    });
+    assert.strictEqual(r.status, 403, `defining a tax rate stays with accounting: ${r.text}`);
+  } finally {
+    await proc.stop();
+    fs.rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test('the tax rates stay out of JENESIS Network & Maintenance', async () => {
+  const { w, proc, port } = await scenario();
+  try {
+    // Even a user whose role may read sales gets nothing from the green
+    // application: it has no business touching tax rates at all.
+    const clerk = await signIn(port, w.usernames.sales);
+    const r = await request(port, 'GET', '/taxes', { token: clerk, headers: { 'X-JENESIS-App': 'maintenance' } });
+    assert.strictEqual(r.status, 403, `maintenance must not be able to read tax rates: ${r.text}`);
+    assert.strictEqual(r.json && r.json.code, 'APP_SCOPE_FORBIDDEN');
+  } finally {
+    await proc.stop();
+    fs.rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test('a bookkeeper still reads the tax rates from JENESIS Accounting & Business', async () => {
+  const { w, proc, port } = await scenario();
+  try {
+    const bookkeeper = await signIn(port, w.usernames.accountant);
+    const r = await request(port, 'GET', '/taxes', { token: bookkeeper, headers: { 'X-JENESIS-App': 'admin' } });
+    assert.strictEqual(r.status, 200, `the change must not break the accounting side: ${r.text}`);
+  } finally {
+    await proc.stop();
+    fs.rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
 (async () => {
   for (const { name, fn } of pending) {
     try {

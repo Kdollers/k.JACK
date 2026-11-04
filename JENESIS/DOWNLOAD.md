@@ -2,7 +2,7 @@
 
 Everything you need to run JENESIS on a Windows PC, with direct download links.
 
-**Application:** JENESIS 1.0.0 — double-entry accounting for SMEs
+**Application:** JENESIS 0.5.4 — double-entry accounting for SMEs
 (double-entry journals, GL, sales/purchase invoices, receipts, payments, credit
 notes, inventory, customers/suppliers, cash/bank/mobile money, AR/AP, trial
 balance, P&L, balance sheet, cash flow, multi-company, multi-currency with
@@ -18,13 +18,13 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5.3 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **three desktop shortcuts** — JENESIS Seller (red), JENESIS Maintenance (green), JENESIS Admin (blue) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JEN 0.5.3 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JEN 0.5.3.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.4 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **four desktop shortcuts** — JENESIS Seller (red), JENESIS Network & Maintenance (green), JENESIS Accounting & Business (blue), JENESIS Settings & Access Point (yellow) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.4 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.4.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
-> (`JEN.0.5.3.Setup.exe`). It is the same file; rename it after downloading if
+> (`JEN.0.5.4.Setup.exe`). It is the same file; rename it after downloading if
 > you prefer spaces.
 
 Both files are built by GitHub Actions from this exact commit and are the same
@@ -34,95 +34,90 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 ---
 
-### Repaired in this build — JEN 0.5.3
+## What is new in JEN 0.5.4
 
-**1. Profit & Loss and Balance Sheet no longer stop the interface.** In JEN
-0.5.2, opening either report left the report area blank or replaced the whole
-window with *“JENESIS could not display this screen”* — and because that screen
-replaces the **entire interface**, every other screen looked broken at the same
-time until the application was restarted.
+### A. JENESIS is now four separate applications
 
-Cause: the screen kept the answer of the report that was open before it (the
-trial balance) while the new one was loading, then read `revenueRows` and
-`assets.current` from a payload that does not have them, and threw. A slow
-answer, or a quick click on the tab, was enough. This build:
+One installer, four programs, **one shared database**. Each has its own colour,
+its own name, its own icon, its own window title and its own Desktop and
+Start-menu shortcut:
 
-- **clears the previous answer before asking for a new one**, so the screen can
-  never be drawn with another report's figures;
-- **tags every report answer** with the report it belongs to, and refuses an
-  answer that arrives for a report you have left;
-- **shows “no figures for this period”** when a period really is empty, instead
-  of a blank page that looks like a failure;
-- tests it: **13 checks** on the rule that decides what may be drawn, and on
-  the figures themselves against a real database with posted entries.
+| Shortcut | Colour | What it is for | Who may open it |
+|---|---|---|---|
+| **JENESIS Seller** | red | Sell: dashboard, sales, customers, stock, help. Opens on Sales. | Any signed-in user |
+| **JENESIS Network & Maintenance** | green | Connections between JENESIS computers and database care — nothing else. | Any signed-in user |
+| **JENESIS Accounting & Business** | blue | The full business: purchases, suppliers, banking, accounting, reports, settings. | Any signed-in user |
+| **JENESIS Settings & Access Point** | yellow | Company settings and users. | Needs the *Settings access* permission |
 
-**2. The Profit & Loss figure is right when other income exists.** Revenue of
-the “other” kind (interest received, a gain on a disposal) was counted as
-operating revenue, and other expenses as operating expenses. They are now
-separate lines, and the report shows the **operating profit** earned before
-them: net profit = operating profit + other income − other expenses.
+The separation is **enforced, not cosmetic**. The backend refuses, per
+application, the screens and the API routes that do not belong to it, and the
+refusal is written to the audit trail. A Seller user who calls the ledger, the
+payroll of users, or the reports API gets a refusal, not a screen: **18
+separation checks**, each proved by asking for something that must be denied.
 
-**3. The header advertises the keys that really work.** The calculator button
-was labelled `Ctrl+Shift+C` — those keys open **Customers**, and they also
-close an open calculator — while the calculator is `Ctrl+Shift+K`. The
-Messenger button was labelled `Ctrl+K` instead of `Ctrl+Shift+M`. Both labels
-are now read out of the single shortcut list, so a label can no longer drift
-away from the keys that work, and a test fails on any header tooltip that
-spells out its own key combination.
+Each application also remembers **its own** theme, and its identity colour does
+not change when you switch between Light and Dark.
 
-**4. Every screen is now drawn by a test.** All twelve screens, plus the shared
-header, sidebar, calculator and shortcut reference, are rendered with React
-itself and must not throw — **20 checks**. That is the class of defect that
-makes a screen “not work” and that a production build cannot see.
+### B. Network & Maintenance now really manages the network
 
-**Inventory** was reported as faulty on 0.5.2 and **no fault was found in it**:
-all seven of its endpoints answer 200 against a real database, and the screen
-renders without error. The most likely explanation is the report crash above,
-whose error screen covers every screen at once. That is an explanation, not a
-proof — if Inventory still shows an error on this build, the message and the
-diagnostic reference on the screen identify it exactly.
+The green application has become what its name promises. It finds the other
+JENESIS computers on the same network (UDP broadcast on port 41235), lists them
+with their status, and lets you **connect, disconnect, reconnect and forget**
+one. Every action explains itself in plain language — *"the other computer did
+not answer"*, *"that address is not a JENESIS computer"*, *"the connection is
+switched off on this computer"* — and the explanation never contains a
+password, a token or a session id.
 
-Carried over from JEN 0.5.1: the interface ships twice (a real
-`resources\app-frontend` directory, preferred, and the copy inside `app.asar` as
-a fallback) and switches automatically; it is verified before the window is
-shown; it reports a translated message instead of a blank window when it cannot
-start or crashes; and it paints your saved Light/Dark theme before the first
-frame.
+Discovery is **opt-in**: nothing is broadcast until you switch on *Allow other
+computers on this network to connect* in the green application.
 
-Nothing was removed, renamed or replaced to make this possible: the database,
-the internal identifiers, the accounting engine and every existing feature are
-unchanged.
+It contains **no** accounting, sales, purchase, customer, supplier, product,
+inventory or reporting screen, and its backend refuses all of them.
 
-### New in JEN 0.5
+**16 network checks** exercise this with two real services running on separate
+temporary databases, discovering each other over real UDP sockets: discovery,
+connect, disconnect, reconnect, refusing a second connection, forgetting a
+computer, a bad address, an imposter that is not JENESIS, a computer that has
+stopped, and proof that the announcement carries no secret.
 
-- **Three applications, three shortcuts.** JENESIS Seller (red), JENESIS
-  Maintenance (green) and JENESIS Admin (blue) each have their own desktop and
-  Start-menu shortcut, with their own icon, title, menu and landing screen, all
-  sharing one database — no duplicated and no conflicting records.
-- **The J identity everywhere**: the JENESIS J logo in the windows, on printed
-  invoices, bills and report letterheads, on the desktop shortcuts and in the
-  installer. The old G logo is gone. Internal names that existing installations
-  depend on (the database file, the desktop handshake id, the password salt and
-  the storage keys) were deliberately left untouched.
-- **Light / Dark / System per application.** Each application remembers its own
-  theme; `Alt + T` cycles it and Settings → Appearance offers all three.
-- **JENESIS Maintenance is a real application**: service and database
-  information, the opt-in “allow other computers on this network to connect”
-  switch, connecting to another computer (Test, then Apply), verified backups,
-  an integrity check and a log viewer.
-- **The complete keyboard shortcut table** (31 shortcuts): `F1` help, `F2`
-  settle, `F3` print, `F5` refresh, `Esc` close, `Ctrl+S` save, `Ctrl+N` new,
-  `Ctrl+E` edit, `Ctrl+F` search, `Ctrl+P` print, `Ctrl+D` duplicate,
-  `Ctrl+Enter` submit, `Alt+←/→` previous/next screen, one `Ctrl+Shift+…` key
-  per screen (Sales, Receipt, Customers, Purchases, Suppliers, Purchase
-  document, Inventory, Product search, Transfers, Accounting, Banking, General
-  Ledger, Reports), `Ctrl+Shift+K` calculator, `Ctrl+Shift+M` Messenger,
-  `Ctrl+/` shortcut reference, `Alt+T` theme, `Alt+L` language. Plain
-  shortcuts stay suspended while you type, and every one respects your
-  permissions.
-- **Help chapters** for the three applications, banking and cash, and
-  maintenance — in English, French and Kinyarwanda, with the credit
-  *Created and developed by KAYIGANWA JACQUES.*
+### C. Complete translation — English, Français, Ikinyarwanda
+
+Every string a user can see now exists in all three languages: **1,030 keys per
+language, 28 namespaces, nothing left untranslated**, checked by a scanner that
+fails the build on any missing key. Switching language updates the screen
+immediately and is remembered. Financial terms use the established terminology
+in each language rather than word-for-word translation.
+
+### D. One currency format, everywhere
+
+Amounts are formatted by a single function, so the same number looks the same
+on every screen and in every report: **`1,400.00 XFA`** — thin-space grouping,
+two decimals, the currency code after the amount. It is strictly a display
+rule; the numbers stored in the database are untouched.
+
+### E. Delete, deactivate, reactivate — with an audit trail
+
+Customers, suppliers, products, stores and users can now be deactivated and
+reactivated, and records that carry no history can be deleted. The rules:
+
+- only an **Administrator** or a **Manager** may do it, and the API enforces it
+  — hiding the button is not the protection;
+- a record that is referenced by accounting history is **deactivated, never
+  deleted**: historical transactions are permanent;
+- you cannot deactivate yourself, and the last active Administrator cannot be
+  deactivated;
+- every action is written to the audit trail with **who, when, what and which
+  record**.
+
+**47 checks** cover the rules, the guards and the audit entries.
+
+### F. Renaming
+
+**JENESIS Admin is now JENESIS Accounting & Business** — in the window titles,
+the shortcuts, the Start menu, the installer, the help chapters and every
+translated string. **JENESIS Maintenance is now JENESIS Network &
+Maintenance.** Only the visible names changed; internal identifiers, the
+database and existing installations are untouched.
 
 ---
 
@@ -131,13 +126,13 @@ unchanged.
 ### Recommended — GitHub release (permanent, no sign-in needed)
 
 - **Installer:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.3/JEN.0.5.3.Setup.exe>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.4/JEN.0.5.4.Setup.exe>
 - **Portable ZIP:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.3/JEN.0.5.3.Portable.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.4/JEN.0.5.4.Portable.zip>
 - **Source backup:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.3/JEN.0.5.3.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.4/JEN.0.5.4.zip>
 - **All files for this version:**
-  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.3>
+  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.4>
 
 ### Alternative — build artifacts of the workflow run
 
@@ -147,8 +142,10 @@ If you prefer the files exactly as the build job produced them:
 2. Click the **most recent completed (green) run** at the top of the list, then
    scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`),
-   **`JEN 0.5.3 Portable`** (the portable `.zip` and its `.sha256`) or
-   **`JEN 0.5.3 source backup`** (the source `.zip` and its `.sha256`)
+   **`JEN 0.5.4 Portable`** (the portable `.zip` and its `.sha256`),
+   **`JEN 0.5.4 source backup`** (the source `.zip` and its `.sha256`) or
+   **`JENESIS-screenshots`** (pictures of the four installed applications,
+   taken during the smoke test)
 
 Artifacts require being signed in to GitHub and are kept for 90 days; the
 release above does not expire.
@@ -158,12 +155,12 @@ release above does not expire.
 ## 3. Verify what you downloaded (optional but recommended)
 
 The exact checksums of this build are printed in the table in §7 and are also
-attached to the release as `JEN 0.5.3 Setup.exe.sha256`. To check a file on
+attached to the release as `JEN 0.5.4 Setup.exe.sha256`. To check a file on
 Windows, open the folder in File Explorer, type `cmd` in the address bar… — or
 simply use PowerShell from the folder's context menu:
 
 ```powershell
-certutil -hashfile "JEN 0.5.3 Setup.exe" SHA256
+certutil -hashfile "JEN 0.5.4 Setup.exe" SHA256
 ```
 
 The value must match the SHA-256 in §7 / in the `.sha256` file.
@@ -172,7 +169,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ## 4. Installing on Windows (no command prompt, no code)
 
-1. Download `JEN 0.5.3 Setup.exe` from the link above.
+1. Download `JEN 0.5.4 Setup.exe` from the link above.
 2. **Double-click** the downloaded file.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the
    installer is not code-signed. Click **More info → Run anyway**.
@@ -182,44 +179,20 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
    - accept the license,
    - keep the proposed folder, or choose another one,
    - click through the remaining screens.
-5. When it finishes, three shortcuts are on your Desktop and in the Start menu:
-   **JENESIS Seller**, **JENESIS Maintenance** and **JENESIS Admin**.
-   Tick “Run JENESIS” if you want the chooser to start immediately.
+5. When it finishes, four shortcuts are on your Desktop and in the Start menu:
+   **JENESIS Seller**, **JENESIS Network & Maintenance**, **JENESIS Accounting
+   & Business** and **JENESIS Settings & Access Point**.
+6. Double-click the one you want. The first launch asks you to create the
+   administrator account; after that, sign in.
 
-### First launch
+### If you would rather not install: the portable package
 
-1. Start **JENESIS Admin** from its desktop shortcut (or open JENESIS and pick
-   the application you want).
-2. The **setup screen** appears once: company name, and the first
-   administrator's name, username and password (at least 10 characters).
-   There are no default accounts — the account you create is the only way in.
-3. Sign in.
-4. Set up the basics under **Settings**: company details, chart of accounts,
-   taxes, users and roles, currencies (only if you trade in foreign currency).
-5. Choose your language in the top bar (English / Français / Ikinyarwanda).
-6. Choose **Settings → Appearance**: **Light Mode**, **Dark Mode** or
-   **System Default** (follows Windows). The sun/moon switch in the header
-   changes it at any time (`Alt + T` does the same); it applies everywhere
-   instantly and is remembered **per application**, so Seller can stay Light
-   while Admin is Dark.
-
-### The three applications
-
-| Shortcut | Colour | Opens on | What it is for |
-|---|---|---|---|
-| **JENESIS Seller** | red | Sales | selling: sales, receipts, customers, stock levels |
-| **JENESIS Maintenance** | green | Maintenance | upkeep: stock, the connection between computers, verified backups, integrity check, logs |
-| **JENESIS Admin** | blue | Dashboard | administration: accounting, purchases, reports, settings, users and permissions |
-
-Each one opens directly in its own environment and reads the same company data,
-so a sale recorded in Seller appears at once in the Admin reports.
-
-### Portable package
-
-Unzip `JEN 0.5.3 Portable.zip` and double-click **`JENESIS.exe`**. The portable
-build opens the chooser; to start one application directly, make your own
-shortcut to `JENESIS.exe --app=seller` (or `--app=maintenance` /
-`--app=admin`).
+1. Download `JEN 0.5.4 Portable.zip` and **unzip** it anywhere (Desktop,
+   Documents, a USB stick — it is self-contained).
+2. Open the folder and double-click `JENESIS.exe`. That opens the application
+   chooser; to start one application directly, make your own shortcut to
+   `JENESIS.exe --app=seller` (or `--app=maintenance` / `--app=admin` /
+   `--app=settings`).
 Nothing is written to Program Files; your data still goes to
 `%APPDATA%\JENESIS` (see §5), so the portable build and the installed build
 share the same company data. To "uninstall", delete the folder.
@@ -236,9 +209,10 @@ included and run locally; JENESIS works without an internet connection.
 
 | What | Where |
 |---|---|
-| **Database** | `C:\Users\<you>\AppData\Roaming\JENESIS\genesis.db` |
+| **Database** (shared by all four applications) | `C:\Users\<you>\AppData\Roaming\JENESIS\genesis.db` |
 | Automatic and manual backups | `C:\Users\<you>\AppData\Roaming\JENESIS\backups\` |
 | Application log | `C:\Users\<you>\AppData\Roaming\JENESIS\logs\desktop.log` |
+| Known computers on the network | `C:\Users\<you>\AppData\Roaming\JENESIS\computers.json` |
 
 (`AppData` is a hidden folder: paste `%APPDATA%\JENESIS` into the File Explorer
 address bar to open it.)
@@ -260,6 +234,8 @@ in-app backup for daily use, and the folder copy for a full snapshot.
   backup first.
 - **Uninstalling keeps your business data**: the program is removed, the
   database folder is not (verified by the smoke test).
+- **Deactivating or deleting a record never removes your accounting history**
+  (§1E).
 - Upgrading from an older **GENESIS** installation: JENESIS **copies**
   `%APPDATA%\GENESIS\genesis.db` into `%APPDATA%\JENESIS\genesis.db` on first
   launch and verifies the copy. The old file is left untouched. It looks for
@@ -272,53 +248,78 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 **Executed and passed** on GitHub Actions (Ubuntu 22.04 and Windows Server
 2022 runners, latest completed run of the *Windows installer* workflow):
 
+| Suite | Checks |
+|---|---|
+| Accounting engine integrity (real database, posted entries) | 10 |
+| Authentication & authorization (two scenarios: fresh and legacy upgrade) | 27 |
+| Security hardening | 8 |
+| Desktop backend | 10 |
+| Operations | 36 |
+| Database migrations | 9 |
+| i18n parity | 10 |
+| Foreign exchange | 17 |
+| FX revaluation | 15 |
+| Documents created PAID | 20 |
+| Keyboard shortcuts | 25 |
+| **Four applications** (identity, colours, menus, landing screens, per-application themes, one shared database, installer shortcuts, packaging) | **16** |
+| Production start-up | 21 |
+| Messenger | 18 |
+| User guide | 15 |
+| Reports screens | 13 |
+| **Every screen drawn with React** (all screens, header, sidebar, calculator, network list) | **26** |
+| Currency formatting | 9 |
+| Translation coverage | 7 |
+| Translation scope | 3 |
+| **Delete / deactivate / reactivate and the audit trail** | **47** |
+| Data location migration | 11 |
+| Branding and the J identity | 13 |
+| **Application gate** (who may open which application) | **6** |
+| **Four applications rendered** | **17** |
+| **Strict separation between the applications** | **18** |
+| **Network & Maintenance** (two real services, real UDP discovery) | **16** |
+| **Test-suite portability** | **34** |
+| Theme rules | 34 |
+| Theme UI | 6 |
+| Interface import gate | 7 |
+| **Total** | **524 checks, 0 failed, 31 suites** |
+
+Plus, on the Windows runner:
+
 | Check | Result |
 |---|---|
-| Full automated suite (Linux, real SQLite driver) | **356 checks, 0 failed, 22 suites** (counted by `scripts/count-checks.mjs` from the run transcript) |
-| Three applications (identity, colours, menus, landing screens, per-application themes, one shared database, installer shortcuts, packaging) | **12 checks passed** |
-| Branding and the J identity (no G logo anywhere, no stale GENESIS text, three different icons) | **12 checks passed** |
-| Theme rules: Light/Dark/System, immediate switching, persistence, first paint, tokens, contrast, Electron bridge, per-application keys | **34 checks passed** |
-| Theme UI rendered with React (options, icons, accessible names, en/fr/rw, stored preference, fallback) | **6 checks passed** |
-| Documents created PAID (settlement, idempotent F2, no duplicate payments, no PAID/UNPAID choice in the forms) | **20 checks passed** |
-| Keyboard shortcuts (single listener, typing safety, Escape layering, the user's table, destinations, labels that match the real keys) | **25 checks passed** |
-| Reports screens (an answer is only drawn by the report it belongs to; the figures against a real database) | **13 checks passed** |
-| Every screen drawn with React (twelve screens, header, sidebar, calculator, shortcut reference) | **20 checks passed** |
-| Messenger (delivery, receipts, permissions, company isolation, live push, no text in logs) | **18 checks passed** |
-| User guide (en/fr/rw parity, completeness, agreement with the code) | **14 checks passed** |
-| Production build (Vite) | **success** |
-| Packaged-application verification (no test code, no bundled database, SQLite binary present, **interface present as a real directory and complete**) | **success** |
-| Production start-up (start-up guard, CSP, packaged interface location, shell verification, diagnostics, per-window identity, signed-in report) | **21 checks passed** |
-| Interface import gate (nothing is drawn that is not imported, every icon exists, every import resolves and is exported, the three applications share the rules) | **7 checks passed** |
-| Installed-application smoke test on a clean Windows Server 2022 VM | **27/27 PASS** |
+| Production build (Vite) | success |
+| Packaged-application verification (no test code, no bundled database, SQLite binary present, interface present as a real directory and complete) | success |
+| Installed-application smoke test on a clean Windows Server 2022 VM | see the release page |
 
-The 27 installed-application checks: silent install → shortcuts → starts from
-the executable with no manual server or terminal → backend on loopback only →
-no external browser → **the installed application serves its start page and
-every file it references** → unauthenticated requests refused → first-run setup
-→ sign-in → **the window shows real content and not a blank screen (its pixels
-are captured and counted)** → **the interface reports a successful start and no
-start-up error is logged** → balanced journal entry → trial balance balanced →
+The installed-application smoke test: silent install → four shortcuts → starts
+from the executable with no manual server or terminal → backend on loopback
+only → no external browser → the installed application serves its start page and
+every file it references → unauthenticated requests refused → first-run setup →
+sign-in → **the window shows real content and not a blank screen (its pixels
+are captured and counted)** → the interface reports a successful start and no
+start-up error is logged → balanced journal entry → trial balance balanced →
 backup export → graceful shutdown (all processes exit) → relaunch, data
-persists → backup restore keeps a pre-restore copy → clean close → **the
-installed build ships both themes** → **three desktop shortcuts, each named for
-its application, each carrying its own `--app=` argument and its own icon** →
-**JENESIS Seller, JENESIS Maintenance and JENESIS Admin each opened from their
-own shortcut, each showing a real interface and reporting a start** → **the
-three running side by side on one shared company** → **the credentials are
-typed into the window with the keyboard, the way a user signs in, and any error
-the interface reports fails the run** → silent uninstall keeps the business
-database.
+persists → backup restore keeps a pre-restore copy → clean close → the installed
+build ships both themes → **four desktop shortcuts, each named for its
+application, each carrying its own `--app=` argument and its own icon** → the
+same four entries in the Start menu → **all four applications opened from their
+own shortcut, each showing a real interface** → **all four running side by side
+on one shared company** → the credentials are typed into the window with the
+keyboard, the way a user signs in, and any error the interface reports fails
+the run → silent uninstall keeps the business database.
+
+Every window the smoke test verifies is **photographed**: the runner has no
+display, but the windows are still rendered into bitmaps, so the four
+applications in the release are shown by real pictures of the installed build,
+not by mock-ups. They are attached to the release and published in the
+`JENESIS-screenshots` artefact.
 
 > **What the typed sign-in does and does not prove.** The step opens JENESIS
-> Admin, types the username, the password and `Enter` into the window, then
-> fails on any `renderer: render-error`, `ReferenceError` or `is not defined`
-> line in `desktop.log` — the failure this release repairs, and it is written to
-> the log whenever it happens. Whether the keys actually reach the interface
-> depends on the machine: the GitHub runner reported **NOT confirmed**, meaning
-> the interface did not confirm that it reached the signed-in screen there, so
-> the signed-in interface is **not** claimed to have been exercised on that
-> runner. Every build prints the value its own run recorded (`confirmed` /
-> `NOT confirmed`) in the release notes.
+> Accounting & Business, types the username, the password and `Enter` into the
+> window, then fails on any `renderer: render-error`, `ReferenceError` or
+> `is not defined` line in `desktop.log`. Whether the keys actually reach the
+> interface depends on the machine, so every build prints the value its own run
+> recorded (`confirmed` / `NOT confirmed`) in the release notes.
 
 **Not executed — please read:**
 
@@ -329,31 +330,48 @@ database.
   real HP computer could not be reproduced there, which is why the application
   now checks itself at start-up and shows a diagnosis instead of a blank
   window.
+- **Two computers on a real network have not been tested.** Every network
+  function was tested between two real JENESIS services on the same machine,
+  talking over real UDP and HTTP sockets — but on one machine. Discovery
+  depends on your network allowing UDP broadcast on port 41235; some routers,
+  guest Wi-Fi networks and corporate switches block it. **To prove it on your
+  own two computers:** switch on *Allow other computers on this network to
+  connect* in JENESIS Network & Maintenance on both, then look for each other
+  in the computer list. If a computer is not found, the *Diagnose* button says
+  which of the eight known causes applies.
 - **Neither theme has been looked at by a human or a browser.** The build
   environment has no display, so the themes were verified by measurement
   (128 text/background pairs, all ≥ 4.5:1 contrast in both themes; every colour
   class in the interface audited) and by checking that the installed package
   really contains the theme code — not by eye. Spend two minutes in both
-  themes after installing.
+  themes after installing. The screenshots do show both.
 - **The installer is unsigned**, so Windows SmartScreen will warn until a code
   signing certificate is configured.
-- **Parts B–F were never used by a human on screen**: the keyboard shortcuts,
-  the Messenger panel and the user guide are verified by tests, source
-  assertions and a production build — not by clicking through them in the
-  installed application. A short hands-on pass is recommended.
+- **The keyboard layer, the Messenger panel and the user guide have not been
+  clicked through by a human in the installed application**; they are verified
+  by tests, source assertions and a production build. A short hands-on pass is
+  recommended.
 - **Messenger has not been proven between two physical computers.** Live
   delivery, receipts, permissions and company isolation are tested against one
   service with two independent sessions (18 checks), and
-  `scripts/messenger-two-computers.cjs` repeated the whole exchange over HTTP
-  with two signed-in accounts: 8 steps passed, 0 failed — but both sessions ran
-  on the same machine. To prove the network: switch on "Allow other computers
-  on this network to connect" in JENESIS Maintenance, then run
+  `scripts/messenger-two-computers.cjs` repeats the whole exchange over HTTP
+  with two signed-in accounts — but both sessions run on the same machine. To
+  prove the network: run
   `node scripts\messenger-two-computers.cjs --server http://<that PC>:3000
   --user <name> --peer <name> --password <pw>` from a second computer.
-- Not covered: printing on a physical printer, Playwright end-to-end tests
-  (no browser in the build environment), and a live upgrade of a database
-  created by an installed GENESIS build on Windows (covered by 11 unit tests on
-  copies instead).
+- **Two areas were repaired after the first build of this version, and both are
+  covered by tests now.** The sales invoice reads the list of tax rates from a
+  route that was guarded by an accounting permission alone, so a clerk in
+  JENESIS Seller was refused the rates their own screen asked for; reading is
+  now allowed to either role while defining a rate stays with accounting (4
+  checks). And the test suite required `node:sqlite` in one file, which exists
+  only from Node 22.5 onwards, so it crashed on a Node 20 runner — and because
+  the crash came before the suite printed a total, the run still looked clean.
+  Both are in `tests/test-suite-portability.test.js` and the separation suite.
+- Not covered: printing on a physical printer, Playwright end-to-end tests (no
+  browser is installable in the build environment — see §1), and a live upgrade
+  of a database created by an installed GENESIS build on Windows (covered by
+  unit tests on copies instead).
 
 If anything looks wrong after installing, `%APPDATA%\JENESIS\logs\desktop.log`
 is the first place to look.
@@ -364,16 +382,16 @@ is the first place to look.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.3 Setup.exe` | 92,925,018 bytes (88.6 MB) | `977a822b855b3582715c7744f10c6b1908125100b31209cf894428cc588ac8a2` |
-| `JEN 0.5.3 Portable.zip` | 133,580,903 bytes (127.4 MB) | `2049bec8526256532fa1a2558ddc1256ec8cdbc9717a9d09adb6d0e2e2d82501` |
-| `JEN 0.5.3.zip` | 5,665,338 bytes (5.4 MB) | `633cd27ddc28ed7ee129b86c7a81b1a24df7b41c2401d3accff427df0fbba876` |
+| `JEN 0.5.4 Setup.exe` | _see the release page_ | _see the release page_ |
+| `JEN 0.5.4 Portable.zip` | _see the release page_ | _see the release page_ |
+| `JEN 0.5.4.zip` | _see the release page_ | _see the release page_ |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**356 automated checks** on that build, and the
+named on the release page (**524 automated checks** on that build, and the
 installed-application smoke test recorded on the release page).
 
 Every push rebuilds and republishes these files, so a later build carries a
 different SHA-256. The numbers printed on
-<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.3> are always the ones
+<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.4> are always the ones
 that belong to the file you are downloading now, and each `.sha256` file sits
 next to its download — compare with `certutil -hashfile <file> SHA256` (§3).

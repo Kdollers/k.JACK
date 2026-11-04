@@ -128,15 +128,15 @@ Both jobs of `.github/workflows/windows-installer.yml` are green:
   counted)**, **the interface reporting a successful start and no start-up
   error**, journal entry, balanced trial balance, backup export, graceful close,
   relaunch with data kept, backup restore with a pre-restore copy, **both themes
-  present in the installed package**, **each of the three shortcuts opening its
-  own application with a real interface**, **the three running side by side on
+  present in the installed package**, **each of the four shortcuts opening its
+  own application with a real interface**, **the four running side by side on
   one company**, **the credentials typed into the window with the keyboard (any
   error the interface reports fails the run — on this runner the interface did
   not confirm the keys arrived, and the release notes print that)**, and silent
   uninstall that keeps `%APPDATA%\JENESIS\genesis.db`.
 - The installer is uploaded as the `JENESIS-Windows-installer` artifact.
 
-Locally (development sandbox): the same 321 checks pass and
+Locally (development sandbox): the same 524 checks pass and
 `npm run build` succeeds; the production server serves the built UI and refuses
 anonymous API calls. The sandbox cannot produce Windows binaries — every Windows
 result above comes from CI.

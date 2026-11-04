@@ -163,8 +163,14 @@ test('the announcement carries no token, password, user or database detail', asy
   const cb = await startComputer(b, 'wire');
   try {
     // Listen the way a colleague would, and read the raw packet off the wire.
-    // A broadcast comes back to the sender too, so the probe we sent is
-    // ignored and only an announcement is accepted.
+    //
+    // The listening socket is bound to a port chosen by the operating system,
+    // not to the discovery port. That is deliberate: on Windows a second
+    // socket bound to the same UDP port with SO_REUSEADDR takes delivery away
+    // from the first one, so a sniffer on the discovery port hears nothing
+    // while the service's own beacon receives the probe. An ephemeral port
+    // receives the answer to its own probe and behaves the same on both
+    // systems — it is also exactly how discover() itself listens.
     const payload = await new Promise((resolve) => {
       const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
       let done = false;
@@ -184,7 +190,7 @@ test('the announcement carries no token, password, user or database detail', asy
         finish(message.toString('utf8'));
       });
       socket.on('error', () => finish(null));
-      socket.bind(DISCOVERY_PORT, () => {
+      socket.bind(0, () => {
         try { socket.setBroadcast(true); } catch (_) {}
         const probe = Buffer.from(JSON.stringify({ protocol: networkDiscovery.PROTOCOL, type: 'probe' }));
         socket.send(probe, DISCOVERY_PORT, '255.255.255.255');

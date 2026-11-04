@@ -310,6 +310,58 @@ function authenticate(req, res, next) {
 }
 
 /** Route guard. Must run after authenticate(). */
+/**
+ * Allows the request when the user holds ANY of the given permissions.
+ *
+ * Needed where a screen is shared between two roles that do not overlap. The
+ * sales invoice needs the list of tax rates, and tax rates are configured in
+ * accounting: the clerk who writes the invoice must read them, while the
+ * bookkeeper who defines them must be the only one who may change them. So
+ * reading is allowed to either, and writing stays with accounting.
+ *
+ * The application scope is applied to each held permission in turn: the request
+ * is allowed if at least one of the permissions the user holds is permitted in
+ * the application the request came from.
+ */
+function requireAnyPermission(...permissions) {
+  for (const permission of permissions) {
+    if (!PERMISSIONS.includes(permission)) {
+      throw new Error(`Unknown permission in route definition: ${permission}`);
+    }
+  }
+  const guard = (req, res, next) => {
+    if (!req.auth) return res.status(401).json({ error: 'Authentication required.', code: 'AUTH_REQUIRED' });
+
+    const held = permissions.filter((p) => req.auth.permissions.has(p));
+    if (held.length === 0) {
+      recordRefusal({
+        req, code: 'FORBIDDEN', permission: permissions.join('|'),
+        userId: req.auth.user.id, userName: req.auth.user.username, companyId: req.auth.companyId
+      });
+      return res.status(403).json({ error: 'You do not have permission to perform this action.', code: 'FORBIDDEN', permission: permissions.join('|') });
+    }
+
+    const allowedHere = held.filter((p) => !(req.appId && isForbidden(req.appId, p)));
+    if (allowedHere.length === 0) {
+      recordRefusal({
+        req, code: 'APP_SCOPE_FORBIDDEN', permission: permissions.join('|'),
+        userId: req.auth.user.id, userName: req.auth.user.username, companyId: req.auth.companyId
+      });
+      return res.status(403).json({
+        error: 'This action belongs to another JENESIS application.',
+        code: 'APP_SCOPE_FORBIDDEN',
+        permission: permissions.join('|'),
+        app: req.appId
+      });
+    }
+
+    return next();
+  };
+  guard.permissions = permissions;
+  guard.permission = permissions[0]; // tests read this to prove every route is guarded
+  return guard;
+}
+
 function requirePermission(permission) {
   if (!PERMISSIONS.includes(permission)) {
     throw new Error(`Unknown permission in route definition: ${permission}`);
@@ -368,6 +420,7 @@ module.exports = {
   login,
   authenticate,
   requirePermission,
+  requireAnyPermission,
   permissionsFor,
   bearerToken
 };

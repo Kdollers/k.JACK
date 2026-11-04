@@ -20,11 +20,13 @@ prompt, no terminal and no development server are needed to use it.**
 2. Double-click it and follow the installer:
    - choose the installation folder (or accept the default),
    - tick "Create a desktop shortcut" if you want one.
-3. Click *Finish*. JENESIS creates a **JENESIS** shortcut on the desktop and in the
-   Start menu.
-4. Start **JENESIS** from that shortcut. The application opens its own window; the
-   backend starts automatically on a local (loopback) port. No browser is opened
-   and nothing else needs to be started.
+3. Click *Finish*. JENESIS creates **four shortcuts** on the desktop and in the
+   Start menu: **JENESIS Seller**, **JENESIS Network & Maintenance**, **JENESIS
+   Accounting & Business** and **JENESIS Settings & Access Point**.
+4. Start the one you want from its own shortcut. Each opens its own window in its
+   own colour, and all four share **one company database**; the backend starts
+   automatically on a local (loopback) port. No browser is opened and nothing
+   else needs to be started.
 
 > Windows SmartScreen may warn "Windows protected your PC" because the installer is
 > not code-signed. Click **More info → Run anyway**. Signing requires a code-signing
