@@ -1,56 +1,56 @@
-2026-11-04T23:11:52.535Z [trace] loading express
-2026-11-04T23:11:52.608Z [trace] loading cors
-2026-11-04T23:11:52.611Z [trace] loading routes
-2026-11-04T23:11:52.629Z [trace] loading db module (better-sqlite3)
-2026-11-04T23:11:52.629Z [trace] modules loaded
-2026-11-04T23:11:52.630Z backend process started (node v20.18.3, pid 1896, port 64394)
-2026-11-04T23:11:52.630Z [trace] opening database
-2026-11-04T23:11:52.630Z [db] mkdir C:\Users\runneradmin\AppData\Roaming\JENESIS
-2026-11-04T23:11:52.631Z [db] open C:\Users\runneradmin\AppData\Roaming\JENESIS\genesis.db
-2026-11-04T23:11:52.650Z [db] opened; setting journal_mode
-2026-11-04T23:11:52.735Z [db] journal_mode set; setting foreign_keys
-2026-11-04T23:11:52.735Z [db] initSchema
-2026-11-04T23:11:52.771Z [db] backupBeforeMigrations
-2026-11-04T23:11:52.802Z [db] runMigrations
-2026-11-04T23:11:52.831Z [db] seedDefaultData
-2026-11-04T23:11:52.879Z [db] database ready
-2026-11-04T23:11:52.880Z [trace] database ready
-2026-11-04T23:11:52.888Z listening on http://127.0.0.1:64394
-2026-11-04T23:11:56.942Z backend process exiting with code 0
-2026-11-04T23:11:59.419Z [trace] loading express
-2026-11-04T23:11:59.486Z [trace] loading cors
-2026-11-04T23:11:59.487Z [trace] loading routes
-2026-11-04T23:11:59.500Z [trace] loading db module (better-sqlite3)
-2026-11-04T23:11:59.500Z [trace] modules loaded
-2026-11-04T23:11:59.501Z backend process started (node v20.18.3, pid 6924, port 64432)
-2026-11-04T23:11:59.501Z [trace] opening database
-2026-11-04T23:11:59.501Z [db] mkdir C:\Users\runneradmin\AppData\Roaming\JENESIS
-2026-11-04T23:11:59.501Z [db] open C:\Users\runneradmin\AppData\Roaming\JENESIS\genesis.db
-2026-11-04T23:11:59.504Z [db] opened; setting journal_mode
-2026-11-04T23:11:59.506Z [db] journal_mode set; setting foreign_keys
-2026-11-04T23:11:59.506Z [db] initSchema
-2026-11-04T23:11:59.506Z [db] backupBeforeMigrations
-2026-11-04T23:11:59.506Z [db] runMigrations
-2026-11-04T23:11:59.507Z [db] seedDefaultData
-2026-11-04T23:11:59.507Z [db] database ready
-2026-11-04T23:11:59.507Z [trace] database ready
-2026-11-04T23:11:59.515Z listening on http://127.0.0.1:64432
-2026-11-04T23:12:00.011Z backend process exiting with code 0
-2026-11-04T23:12:00.599Z [trace] loading express
-2026-11-04T23:12:00.661Z [trace] loading cors
-2026-11-04T23:12:00.663Z [trace] loading routes
-2026-11-04T23:12:00.680Z [trace] loading db module (better-sqlite3)
-2026-11-04T23:12:00.680Z [trace] modules loaded
-2026-11-04T23:12:00.681Z backend process started (node v20.18.3, pid 7324, port 64453)
-2026-11-04T23:12:00.681Z [trace] opening database
-2026-11-04T23:12:00.681Z [db] mkdir C:\Users\runneradmin\AppData\Roaming\JENESIS
-2026-11-04T23:12:00.682Z [db] open C:\Users\runneradmin\AppData\Roaming\JENESIS\genesis.db
-2026-11-04T23:12:00.686Z [db] opened; setting journal_mode
-2026-11-04T23:12:00.687Z [db] journal_mode set; setting foreign_keys
-2026-11-04T23:12:00.688Z [db] initSchema
-2026-11-04T23:12:00.688Z [db] backupBeforeMigrations
-2026-11-04T23:12:00.688Z [db] runMigrations
-2026-11-04T23:12:00.688Z [db] seedDefaultData
-2026-11-04T23:12:00.689Z [db] database ready
-2026-11-04T23:12:00.689Z [trace] database ready
-2026-11-04T23:12:00.697Z listening on http://127.0.0.1:64453
+2026-11-04T23:23:03.939Z [trace] loading express
+2026-11-04T23:23:04.052Z [trace] loading cors
+2026-11-04T23:23:04.055Z [trace] loading routes
+2026-11-04T23:23:04.079Z [trace] loading db module (better-sqlite3)
+2026-11-04T23:23:04.080Z [trace] modules loaded
+2026-11-04T23:23:04.080Z backend process started (node v20.18.3, pid 2688, port 63480)
+2026-11-04T23:23:04.081Z [trace] opening database
+2026-11-04T23:23:04.081Z [db] mkdir C:\Users\runneradmin\AppData\Roaming\JENESIS
+2026-11-04T23:23:04.082Z [db] open C:\Users\runneradmin\AppData\Roaming\JENESIS\genesis.db
+2026-11-04T23:23:04.296Z [db] opened; setting journal_mode
+2026-11-04T23:23:04.344Z [db] journal_mode set; setting foreign_keys
+2026-11-04T23:23:04.344Z [db] initSchema
+2026-11-04T23:23:04.368Z [db] backupBeforeMigrations
+2026-11-04T23:23:04.413Z [db] runMigrations
+2026-11-04T23:23:04.446Z [db] seedDefaultData
+2026-11-04T23:23:04.525Z [db] database ready
+2026-11-04T23:23:04.525Z [trace] database ready
+2026-11-04T23:23:04.536Z listening on http://127.0.0.1:63480
+2026-11-04T23:23:12.686Z backend process exiting with code 0
+2026-11-04T23:23:15.925Z [trace] loading express
+2026-11-04T23:23:16.028Z [trace] loading cors
+2026-11-04T23:23:16.031Z [trace] loading routes
+2026-11-04T23:23:16.052Z [trace] loading db module (better-sqlite3)
+2026-11-04T23:23:16.052Z [trace] modules loaded
+2026-11-04T23:23:16.053Z backend process started (node v20.18.3, pid 3392, port 63518)
+2026-11-04T23:23:16.053Z [trace] opening database
+2026-11-04T23:23:16.053Z [db] mkdir C:\Users\runneradmin\AppData\Roaming\JENESIS
+2026-11-04T23:23:16.054Z [db] open C:\Users\runneradmin\AppData\Roaming\JENESIS\genesis.db
+2026-11-04T23:23:16.058Z [db] opened; setting journal_mode
+2026-11-04T23:23:16.060Z [db] journal_mode set; setting foreign_keys
+2026-11-04T23:23:16.061Z [db] initSchema
+2026-11-04T23:23:16.061Z [db] backupBeforeMigrations
+2026-11-04T23:23:16.062Z [db] runMigrations
+2026-11-04T23:23:16.062Z [db] seedDefaultData
+2026-11-04T23:23:16.063Z [db] database ready
+2026-11-04T23:23:16.063Z [trace] database ready
+2026-11-04T23:23:16.074Z listening on http://127.0.0.1:63518
+2026-11-04T23:23:19.014Z backend process exiting with code 0
+2026-11-04T23:23:19.737Z [trace] loading express
+2026-11-04T23:23:19.863Z [trace] loading cors
+2026-11-04T23:23:19.867Z [trace] loading routes
+2026-11-04T23:23:19.892Z [trace] loading db module (better-sqlite3)
+2026-11-04T23:23:19.893Z [trace] modules loaded
+2026-11-04T23:23:19.894Z backend process started (node v20.18.3, pid 1184, port 63545)
+2026-11-04T23:23:19.895Z [trace] opening database
+2026-11-04T23:23:19.895Z [db] mkdir C:\Users\runneradmin\AppData\Roaming\JENESIS
+2026-11-04T23:23:19.896Z [db] open C:\Users\runneradmin\AppData\Roaming\JENESIS\genesis.db
+2026-11-04T23:23:19.902Z [db] opened; setting journal_mode
+2026-11-04T23:23:19.904Z [db] journal_mode set; setting foreign_keys
+2026-11-04T23:23:19.904Z [db] initSchema
+2026-11-04T23:23:19.905Z [db] backupBeforeMigrations
+2026-11-04T23:23:19.905Z [db] runMigrations
+2026-11-04T23:23:19.906Z [db] seedDefaultData
+2026-11-04T23:23:19.906Z [db] database ready
+2026-11-04T23:23:19.907Z [trace] database ready
+2026-11-04T23:23:19.920Z listening on http://127.0.0.1:63545
