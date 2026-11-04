@@ -1,7 +1,7 @@
 {
   "name": "genesis-accounting",
   "productName": "JENESIS",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "JENESIS - Professional Business Accounting & Management Software",
   "author": "JENESIS",
   "license": "UNLICENSED",
@@ -32,7 +32,8 @@
     "test:datadir": "node tests/data-location-migration.test.js",
     "test:branding": "node tests/branding-consistency.test.js",
     "test:appgate": "node tests/app-gate.test.js",
-    "test:all": "npm run test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:theme && npm run test:themeui && npm run test:ui-imports",
+    "test:appsrender": "node tests/four-apps-render.test.js",
+    "test:all": "npm run test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:appsrender && npm run test:theme && npm run test:themeui && npm run test:ui-imports",
     "desktop": "electron .",
     "desktop:pack": "npm run build && electron-builder --win --dir",
     "desktop:dist": "npm run build && electron-builder --win nsis",
@@ -78,7 +79,7 @@
         }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "JEN 0.5.3 Setup.${ext}"
+      "artifactName": "JEN 0.5.4 Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,

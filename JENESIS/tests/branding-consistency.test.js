@@ -84,6 +84,21 @@ test('the internal identifiers that must not change are preserved', () => {
   assert.ok(read('server/db.js').includes("process.env.GENESIS_DB_PATH"), 'GENESIS_DB_PATH must still be honoured');
 });
 
+test('the version and the installer filename say the same number', () => {
+  // Every release renames the installer, and the name is typed into
+  // build.win.artifactName by hand. Bumping package.json and forgetting it
+  // produces an installer that installs the new build under the old release
+  // name, which is exactly the kind of thing nobody notices until a user
+  // reports two different versions with the same filename.
+  assert.ok(/^\d+\.\d+\.\d+$/.test(pkg.version), `the version must look like a version (got ${pkg.version})`);
+  const artifact = pkg.build.win.artifactName;
+  assert.ok(
+    artifact.includes(pkg.version),
+    `the installer must be named for this version: "${artifact}" does not contain ${pkg.version}`
+  );
+  assert.ok(artifact.startsWith('JEN '), `the installer must keep the JEN release name (got "${artifact}")`);
+});
+
 test('the browser tab and the packaged UI are titled JENESIS', () => {
   for (const file of ['index.html', 'dist/index.html']) {
     const html = read(file);
