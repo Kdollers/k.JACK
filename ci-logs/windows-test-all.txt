@@ -603,7 +603,11 @@ JENESIS translation scope tests
   ✓ an administrator cannot deactivate their own account
   ✓ the last active administrator cannot be deactivated by someone else
   ✓ the shipped database is not modified by these tests
---- 18 passed, 0 failed ---
+  ✓ a sales clerk reads the tax rates from JENESIS Seller
+  ✓ a sales clerk still cannot create a tax rate
+  ✓ the tax rates stay out of JENESIS Network & Maintenance
+  ✓ a bookkeeper still reads the tax rates from JENESIS Accounting & Business
+--- 22 passed, 0 failed ---
 
 > genesis-accounting@0.5.4 test:network
 > node tests/network-maintenance.test.js
@@ -612,8 +616,7 @@ JENESIS translation scope tests
   ✓ the network is off unless an administrator turns it on
   ✓ a JENESIS computer finds another one on the network
   ✓ discovery is refused while the network switch is off
-  ✗ the announcement carries no token, password, user or database detail
-      the computer must answer a probe on the network
+  ✓ the announcement carries no token, password, user or database detail
   ✓ a computer can be registered, probed and seen in the list
   ✓ registering the same address twice refreshes it instead of duplicating it
   ✓ a nonsense address is refused with a message, not stored
@@ -626,4 +629,111 @@ JENESIS translation scope tests
   ✓ nothing listening at an address is reported as refused, not as online
   ✓ the network screens need the network permission, not a business one
   ✓ the shipped database is never touched by these tests
---- 15 passed, 1 failed ---
+--- 16 passed, 0 failed ---
+
+> genesis-accounting@0.5.4 test:portability
+> node tests/test-suite-portability.test.js
+
+  - not run automatically: npm run test:e2e (drives a real browser with Playwright; neither the browser nor the Python package is installable in CI, so it stays a manual check)
+  ✓ accounting-engine.test.js does not require a version-specific module directly
+  ✓ app-gate.test.js does not require a version-specific module directly
+  ✓ app-separation.test.js does not require a version-specific module directly
+  ✓ auth-security.test.js does not require a version-specific module directly
+  ✓ branding-consistency.test.js does not require a version-specific module directly
+  ✓ data-location-migration.test.js does not require a version-specific module directly
+  ✓ desktop-backend.test.js does not require a version-specific module directly
+  ✓ four-apps-render.test.js does not require a version-specific module directly
+  ✓ four-apps.test.js does not require a version-specific module directly
+  ✓ fx-revaluation-integrity.test.js does not require a version-specific module directly
+  ✓ fx-settlement.test.js does not require a version-specific module directly
+  ✓ help-content.test.js does not require a version-specific module directly
+  ✓ i18n-parity.test.js does not require a version-specific module directly
+  ✓ messenger.test.js does not require a version-specific module directly
+  ✓ migrations-v2.test.js does not require a version-specific module directly
+  ✓ money-format.test.js does not require a version-specific module directly
+  ✓ network-maintenance.test.js does not require a version-specific module directly
+  ✓ operations.test.js does not require a version-specific module directly
+  ✓ production-boot.test.js does not require a version-specific module directly
+  ✓ record-lifecycle.test.js does not require a version-specific module directly
+  ✓ reports-screens.test.js does not require a version-specific module directly
+  ✓ screens-render.test.js does not require a version-specific module directly
+  ✓ security-hardening.test.js does not require a version-specific module directly
+  ✓ settlement-paid.test.js does not require a version-specific module directly
+  ✓ shortcuts.test.js does not require a version-specific module directly
+  ✓ test-suite-portability.test.js does not require a version-specific module directly
+  ✓ theme-render.test.js does not require a version-specific module directly
+  ✓ theme.test.js does not require a version-specific module directly
+  ✓ translation-coverage.test.js does not require a version-specific module directly
+  ✓ translation-scope.test.js does not require a version-specific module directly
+  ✓ ui-imports.test.js does not require a version-specific module directly
+  ✓ the shared opener reads genesis.db (31 tables via Database)
+  ✓ no exclusion is kept for a script that no longer exists
+  ✓ every test script either runs inside test:all or says why it cannot (31 scripts)
+  (driver: Database)
+--- 34 passed, 0 failed ---
+
+> genesis-accounting@0.5.4 test:theme
+> node tests/theme.test.js
+
+--- THEME TESTS (Light Mode / Dark Mode / System Default) ---
+  ✓ Light Mode and Dark Mode can both be selected and resolved
+  ✓ System Default follows the operating system
+  ✓ Light Mode is the documented default when nothing is stored
+  ✓ the selected theme is persisted and read back (reload and restart)
+  ✓ switching theme updates the document immediately (no reload)
+  ✓ the header switch moves between the two explicit themes
+  ✓ a stored Dark Mode is painted before the interface loads
+  ✓ System Default is honoured at first paint
+  ✓ each application paints its own remembered theme
+  ✓ an application without a preference of its own inherits the shared one
+  ✓ an unreadable or empty preference falls back to Light Mode
+  ✓ Light and Dark define exactly the same token names
+  ✓ the tokens cover every role the design system needs
+  ✓ Dark Mode backgrounds are dark and its text is light
+  ✓ every colour class used in the interface is themed for Dark Mode
+    27 screens/components audited, 749 colour usages, all themed
+  ✓ every screen of the application is audited for both themes
+  ✓ the interface audit covers every screen of the application
+  ✓ Light Mode keeps accounting text readable (WCAG AA contrast)
+  ✓ Dark Mode keeps accounting text readable (WCAG AA contrast)
+    133 text/background pairs measured in both themes
+  ✓ no text/background pair in the interface falls below 4.5:1 in either theme
+  ✓ cards, panels and shells stay distinguishable from their background
+  ✓ the theme provider is mounted above the whole application
+  ✓ the theme provider stores, resolves and paints the preference
+  ✓ the header switch and the Settings control share the same manager
+  ✓ Settings offers an Appearance section with all three options
+  ✓ the theme is translated in English, French and Kinyarwanda
+  ✓ changing the theme never touches the accounting backend
+  ✓ the server and the database schema are unchanged by theming
+  ✓ the desktop bridge exposes the theme without weakening security
+  ✓ the shell validates the theme it receives and tints the window
+  ✓ printing keeps the light palette whatever the theme is
+  ✓ reduced-motion preferences are respected
+  ✓ native controls follow the theme through color-scheme
+  ✓ the production stylesheet carries both palettes
+--- 34 passed, 0 failed ---
+
+> genesis-accounting@0.5.4 test:themeui
+> node tests/theme-render.test.js
+
+--- THEME RENDER TESTS (React, compiled with esbuild) ---
+  ✓ the theme UI compiles and renders
+  ✓ the Settings control offers Light, Dark and System with sun/moon/monitor icons
+  ✓ the control renders in French and Kinyarwanda
+  ✓ the stored preference is what the interface shows
+  ✓ an unknown stored value falls back to Light Mode
+  ✓ the header switch is a single button with an accessible name
+--- 6 passed, 0 failed ---
+
+> genesis-accounting@0.5.4 test:ui-imports
+> node tests/ui-imports.test.js
+
+  ✓ every component drawn in the interface is imported or declared
+  ✓ the Messenger icon in the header is imported where it is drawn
+  ✓ every icon imported from lucide-react exists in the installed package
+  ✓ every relative import resolves to a real file
+  ✓ every named import is really exported by the module it comes from
+  ✓ the three applications are covered by the same rules
+  ✓ an undefined component is reported by this checker (self-test)
+--- 7 passed, 0 failed ---
