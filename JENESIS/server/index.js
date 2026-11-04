@@ -15,6 +15,7 @@ const { getDb, closeDb, DB_PATH } = require('./db');
 trace('modules loaded');
 
 const { securityHeaders } = require('./security');
+const { attachApplication } = require('./appScope');
 const { createLimiter, clientIp, MINUTE } = require('./rateLimit');
 const apiLimiter = createLimiter({ name: 'api', windowMs: MINUTE, max: 1200, keyFn: (req) => clientIp(req) });
 
@@ -30,6 +31,10 @@ function createApp(options = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use(securityHeaders);
+  // Which of the four applications is calling, when it says so. Must be
+  // attached before authentication so the route guard can hold it to
+  // its own boundaries as well as to the user's role.
+  app.use(attachApplication);
   // Global per-client limit for the API as a backstop against runaway or hostile clients.
   app.use('/api', apiLimiter.middleware);
 

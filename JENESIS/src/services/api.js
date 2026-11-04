@@ -13,6 +13,8 @@
 const TOKEN_KEY = 'genesis_session_token';
 const SERVER_URL_KEY = 'jenesis_server_url';
 
+import { currentAppId } from '../appIdentity';
+
 /**
  * The address of the JENESIS service, or '' for "the service on this computer".
  * Stored per browser profile, so each window keeps its own choice.
@@ -98,9 +100,14 @@ export function translateError(t, err) {
 
 export async function apiRequest(url, options = {}) {
   const token = getSessionToken();
+  // Which of the four applications is asking. The service uses it to refuse a
+  // request that belongs to another application, so hiding a menu entry is not
+  // the only thing keeping them apart.
+  const appId = currentAppId();
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(appId ? { 'X-JENESIS-App': appId } : {}),
     ...(options.headers || {})
   };
 

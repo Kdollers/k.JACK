@@ -191,6 +191,30 @@ export function canOpenView(appId, viewId) {
 }
 
 /** Read `--app=seller` (or a bare `seller`) out of a command line. */
+/**
+ * Which application this window is, resolved the same way the shell decides
+ * it: the desktop bridge first, then `?app=` in the address, then the choice
+ * remembered from last time. Returns null when no application has been chosen
+ * yet — the launcher is showing.
+ *
+ * The API client uses this to tell the service which application a request
+ * comes from, so the service can hold each one to its own boundaries.
+ */
+export function currentAppId() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const bridge = window.genesisDesktop || window.jenesisDesktop;
+    const fromBridge = resolveAppId(bridge && bridge.app);
+    if (fromBridge) return fromBridge;
+    const fromQuery = new URLSearchParams(window.location.search).get('app');
+    const resolved = resolveAppId(fromQuery);
+    if (resolved) return resolved;
+    return resolveAppId(window.localStorage && window.localStorage.getItem(APP_STORAGE_KEY));
+  } catch (_) {
+    return null; // a window with no storage and no query is simply unchosen
+  }
+}
+
 export function appIdFromArgv(argv) {
   if (!Array.isArray(argv)) return null;
   for (const arg of argv) {

@@ -13,6 +13,7 @@
  */
 const crypto = require('crypto');
 const { getDb } = require('./db');
+const { isForbidden, recordRefusal } = require('./appScope');
 const { hashPassword, verifyPassword, legacyHash } = require('./passwords');
 
 const SESSION_IDLE_MINUTES = 30;
@@ -276,6 +277,11 @@ function authenticate(req, res, next) {
   const token = bearerToken(req);
   const resolved = resolveSession(token);
   if (!resolved) {
+    // Only recorded when credentials were actually presented: a health probe
+    // with no token is not an attempt to get in.
+    if (token) {
+      recordRefusal({ req, code: 'AUTH_REQUIRED', userId: null, userName: 'unauthenticated' });
+    }
     return res.status(401).json({ error: 'Authentication required.', code: 'AUTH_REQUIRED' });
   }
   const { session, user } = resolved;
@@ -283,6 +289,7 @@ function authenticate(req, res, next) {
   // The client may name a company, but only the company bound to the session is accessible.
   const requested = req.headers['x-company-id'];
   if (requested && requested !== session.company_id) {
+    recordRefusal({ req, code: 'COMPANY_FORBIDDEN', userId: user.id, userName: user.username, companyId: session.company_id });
     return res.status(403).json({ error: 'You do not have access to this company.', code: 'COMPANY_FORBIDDEN' });
   }
 
@@ -309,9 +316,32 @@ function requirePermission(permission) {
   }
   const guard = (req, res, next) => {
     if (!req.auth) return res.status(401).json({ error: 'Authentication required.', code: 'AUTH_REQUIRED' });
+
     if (!req.auth.permissions.has(permission)) {
+      recordRefusal({
+        req, code: 'FORBIDDEN', permission,
+        userId: req.auth.user.id, userName: req.auth.user.username, companyId: req.auth.companyId
+      });
       return res.status(403).json({ error: 'You do not have permission to perform this action.', code: 'FORBIDDEN', permission });
     }
+
+    // The role allows it — but the application the request came from may not.
+    // An administrator working inside JENESIS Seller cannot pull the general
+    // ledger from that window, and hiding the menu entry is not what stops
+    // them: refusing the request is.
+    if (req.appId && isForbidden(req.appId, permission)) {
+      recordRefusal({
+        req, code: 'APP_SCOPE_FORBIDDEN', permission,
+        userId: req.auth.user.id, userName: req.auth.user.username, companyId: req.auth.companyId
+      });
+      return res.status(403).json({
+        error: 'This action belongs to another JENESIS application.',
+        code: 'APP_SCOPE_FORBIDDEN',
+        permission,
+        app: req.appId
+      });
+    }
+
     return next();
   };
   guard.permission = permission; // read by tests to verify every route is guarded
