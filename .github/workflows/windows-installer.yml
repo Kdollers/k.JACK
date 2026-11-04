@@ -320,86 +320,74 @@ jobs:
 
           $releaseName = "JEN $version"
           $notes = @"
-          $releaseName — JENESIS desktop accounting application (Seller,
-          Maintenance, Admin). **This is the corrected build that repairs the
-          Profit & Loss and Balance Sheet screens and the keys the header
-          advertised for the calculator and Messenger.**
+          $releaseName — JENESIS desktop business and accounting software.
+          **Four applications in one installation, sharing one database.**
 
           **Install:** download ``$releaseName Setup.exe``, double-click it, accept
           the SmartScreen prompt (More info -> Run anyway), and follow the
-          installer. JENESIS then appears on the Desktop and in the Start menu —
-          no command prompt needed. See ``DOWNLOAD.md`` in the repository for
-          details, database location and backup instructions.
+          installer. **Four shortcuts** then appear on the Desktop and in the
+          Start menu, each with its own colour and icon — no command prompt
+          needed. See ``DOWNLOAD.md`` in the repository for details, database
+          location and backup instructions.
 
           **Portable:** ``$releaseName Portable.zip`` runs without installing
           (unzip, then double-click ``JENESIS.exe``).
 
-          ## What was repaired
+          ## The four applications
 
-          **1. Profit & Loss and Balance Sheet stopped the whole interface.**
-          Opening either report left the screen blank or replaced the whole
-          window with "JENESIS could not display this screen" — and because the
-          error screen covers the entire interface, every other screen looked
-          broken too until the window was restarted.
+          | Shortcut | What it is for |
+          |---|---|
+          | **JENESIS Seller** (red) | Selling: the dashboard, sales, customers and stock. No reports, no accounting. |
+          | **JENESIS Network & Maintenance** (green) | The network: finding the other JENESIS computers, connecting to them, the service, backups, integrity and logs. No business screens at all. |
+          | **JENESIS Accounting & Business** (blue) | The whole program: sales, purchases, inventory, banking, accounting and every report. Formerly called JENESIS Admin. |
+          | **JENESIS Settings & Access Point** (yellow) | Configuration: the company, the users and their permissions, taxes, currencies and backups. Administrators and managers only. |
 
-          Cause: the screen kept the answer of the report that was open before it
-          (the trial balance) while the new one was loading, then read
-          ``revenueRows`` and ``assets.current`` from a payload that does not
-          have them, and threw. A slow answer or a quick click on the tab was
-          enough.
+          All four open **the same company database**. The shortcuts only choose
+          which face of the same installation the window opens with.
 
-          This build:
+          ## What is new in 0.5.4
 
-          * **clears the previous answer before asking for a new one**, so the
-            screen can never be drawn with another report's figures;
-          * **tags every report answer** with the report it belongs to, and
-            refuses an answer that arrives for a report the user has left;
-          * **shows "no figures for this period"** when a period really is empty,
-            instead of a blank page that looks like a failure;
-          * tests it: 13 checks on the rule that decides what may be drawn, and
-            on the figures themselves against a real database with posted
-            entries.
+          **The interface is complete in English, French and Kinyarwanda.** The
+          scanner that audits every screen for untranslated text reports zero,
+          with nine documented exceptions (language names, ISO currency codes,
+          keyboard keys), each with a written reason.
 
-          **2. The Profit & Loss figure was wrong when other income existed.**
-          Revenue of the "other" kind (interest received, a gain on a disposal)
-          was reported as operating revenue, and other expenses as operating
-          expenses. They are now separate lines, and the report shows the
-          **operating profit** the business earned before them:
+          **Amounts are formatted in one place.** ``1,400.00 XFA`` — the number
+          and the currency separated by a space, produced by a single function
+          that never touches stored values.
 
-          net profit = operating profit + other income − other expenses.
+          **Records can be retired instead of lost.** Customers, suppliers,
+          products, stores and users can be deactivated, reactivated or deleted
+          by an administrator or a manager. Deleting a record that carries
+          history is refused and archive is offered instead — **accounting
+          transactions are never silently destroyed**. A user cannot switch off
+          their own account, and the last active administrator cannot be
+          removed at all.
 
-          **3. The header advertised the wrong keys.** The calculator button was
-          labelled ``Ctrl+Shift+C`` — those keys open **Customers**, and they also
-          close an open calculator — while the calculator is ``Ctrl+Shift+K``.
-          The Messenger button was labelled ``Ctrl+K`` instead of
-          ``Ctrl+Shift+M``. Both labels are now read out of the single shortcut
-          list, so a label cannot drift away from the keys that really work.
+          **JENESIS is now four applications** (above), each with its own name,
+          colour, icon, window title, Desktop shortcut and Start menu entry, and
+          each remembering its own Light/Dark choice.
 
-          Carried over from the previous build: the signed-in crash
-          (``ReferenceError: MessageSquare is not defined``) is repaired, no
-          interface file may draw a component it does not import (checked before
-          every production build), and ``genesis:get-app-info`` answers with the
-          application of the window that asked.
+          **The applications are held to their own boundaries.** Sharing one
+          database does not mean every window can reach everything: from
+          JENESIS Seller the reports cannot be opened even by an administrator,
+          and Network & Maintenance cannot read customers, suppliers, products,
+          stock, sales or accounting data. Refusals are recorded in the audit
+          trail — never the password or the session token.
 
-          ## What this build is
+          **Network & Maintenance finds the other computers.** It discovers the
+          JENESIS computers on the local network, keeps the ones you work with,
+          connects to and disconnects from them, and watches whether they are
+          still answering — with a plain-language reason when they are not
+          (switched off, JENESIS not running, something else on that address, or
+          a different version). The announcement it broadcasts carries only a
+          name, an address, a port and a version: **no token, no user, no
+          company, no database path**. Nothing is broadcast while the network
+          switch is off.
 
-          Built, verified and smoke-tested by GitHub Actions, run
-          ${{ github.run_id }}, commit ${{ github.sha }}.
-
-          * $checks automated checks pass (whole suite, real SQLite database).
-            Every screen is drawn by a test as well: the twelve screens and the
-            shared header, sidebar, calculator and shortcut reference are
-            rendered with React and must not throw.
-          * Installed-application smoke test: $smoke — silent install, desktop and
-            Start-menu shortcuts, the application starting on its own from the
-            executable, **the interface and all of its files being served**, the
-            window showing real content and not a blank screen, the interface
-            reporting a successful start, first-run setup, sign-in, a balanced
-            journal entry, backup and restore, clean shutdown, relaunch with the
-            data intact, and uninstall keeping the business database.
-          * Credentials typed into the window the way a user signs in: the
-            interface **$signin** it reached the signed-in screen (the run fails
-            on any error the interface reports, whether or not the keys arrive).
+          **JENESIS Admin is now JENESIS Accounting & Business** — everywhere:
+          the window title, the shortcuts, the installer, Help, and the English,
+          French and Kinyarwanda dictionaries.
 
           ## Checksums
 
@@ -412,18 +400,23 @@ jobs:
 
           ## Not verified
 
-          The installer is **unsigned** (Windows SmartScreen will warn) and has not
-          been run on a physical Windows PC — it is verified on a GitHub-hosted
-          Windows runner only. No screenshots were produced: the runner has no
-          display, so the window is checked by capturing its pixels instead.
+          The installer is **unsigned** (Windows SmartScreen will warn) and has
+          been verified on a GitHub-hosted Windows runner, **not on a physical
+          PC**. No screenshots were produced: the runner has no display, so the
+          windows are checked by capturing their pixels instead.
 
-          Inventory was reported as "not working" on the previous build. Its
-          endpoints and its screen were tested here and no fault was found; the
-          most likely explanation is the report crash above, whose error screen
-          covers every screen at once. It remains **unconfirmed**: if Inventory
-          still shows an error on this build, the message and the diagnostic
-          reference on the screen identify it exactly.
+          **Messenger between two separate physical computers is not proven by
+          this run.** The network mechanism is tested between two real services,
+          but two services on one machine is not two computers. The check for
+          that is ``scripts\messenger-two-computers.cjs`` — run it from a second
+          PC on your network against a running JENESIS.
 
+          Built, verified and smoke-tested by GitHub Actions, run
+          ${{ github.run_id }}, commit ${{ github.sha }}.
+          * $checks automated checks pass (whole suite, real SQLite database).
+          * Installed-application smoke test: $smoke.
+          * Credentials typed into the window the way a user signs in: the
+            interface **$signin** it reached the signed-in screen.
           "@
           $notes | Out-File -FilePath ..\release-notes.md -Encoding utf8
 

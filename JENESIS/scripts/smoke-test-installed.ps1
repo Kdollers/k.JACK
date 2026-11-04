@@ -662,94 +662,101 @@ Step 'Both themes ship in the installed application' {
   Write-Host '    installed build contains the theme bootstrap, the dark palette and the remapped utilities' -ForegroundColor DarkGray
 }
 
-Step 'The three applications have their own desktop shortcut, each naming its application' {
+Step 'The four applications have their own desktop shortcut, each naming its application' {
+  # The shortcut is read, not assumed: WScript.Shell opens the .lnk the
+  # installer really wrote and reports where it points, which argument it
+  # carries and which icon it shows. A shortcut with the right name and the
+  # wrong --app= would open the wrong application, so all four are checked.
   $script:shortcuts = Get-DesktopShortcuts
-  Assert ($script:shortcuts.Count -eq 3) "Expected three $AppName desktop shortcuts, found $($script:shortcuts.Count): $(($script:shortcuts.Name) -join ', ')"
-  $expected = @{ 'JENESIS Seller' = 'seller'; 'JENESIS Maintenance' = 'maintenance'; 'JENESIS Admin' = 'admin' }
-  foreach ($name in $expected.Keys) {
+  Assert ($script:shortcuts.Count -eq 4) "Expected four $AppName desktop shortcuts, found $($script:shortcuts.Count): $(($script:shortcuts.Name) -join ', ')"
+  $script:expected = [ordered]@{
+    'JENESIS Seller'                  = 'seller'
+    'JENESIS Network & Maintenance'   = 'maintenance'
+    'JENESIS Accounting & Business'   = 'admin'
+    'JENESIS Settings & Access Point' = 'settings'
+  }
+  foreach ($name in $script:expected.Keys) {
     $hit = $script:shortcuts | Where-Object { $_.Name -eq $name } | Select-Object -First 1
     Assert ($null -ne $hit) "No desktop shortcut named '$name' was created."
-    Assert ($hit.Arguments -match "--app=$($expected[$name])") "The '$name' shortcut does not name its application (arguments: '$($hit.Arguments)')."
-    Assert ($hit.Icon -match "$($expected[$name])\.ico") "The '$name' shortcut does not use its own icon ($($hit.Icon))."
-    Write-Host "    $name -> $($hit.Arguments) (icon $($hit.Icon))" -ForegroundColor DarkGray
+    Assert ($hit.Arguments -match "--app=$($script:expected[$name])") "The '$name' shortcut does not name its application (arguments: '$($hit.Arguments)')."
+    Assert ($hit.Icon -match "$($script:expected[$name])\.ico") "The '$name' shortcut does not use its own icon ($($hit.Icon))."
+    Assert ($hit.Target -match 'JENESIS\.exe$') "The '$name' shortcut does not launch the installed executable ($($hit.Target))."
+    Write-Host "    $name -> $($hit.Target) $($hit.Arguments) (icon $($hit.Icon))" -ForegroundColor DarkGray
   }
 }
 
-Step 'JENESIS Seller opens from its own shortcut, with its own interface' {
-  $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=seller' } | Select-Object -First 1
-  Assert ($null -ne $shortcut) 'The Seller shortcut was not found.'
-  $before = Get-ReadyCount
-  Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
-  $window = Wait-ForTitledWindow 'JENESIS Seller' 90
-  Assert ($null -ne $window) 'No window titled "JENESIS Seller" appeared: the shortcut did not open Seller.'
-  Assert-WindowIsReal $window 'JENESIS Seller'
-  Assert (Wait-ForInterfaceStart $before 90) 'Seller did not report that its interface started.'
-  Close-AppGracefully
+Step 'Every shortcut also appears in the Start menu, pointing at the same place' {
+  # A fresh COM object is needed here: the one inside Get-DesktopShortcuts is
+  # local to that function.
+  $shell = New-Object -ComObject WScript.Shell
+  $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
+  $entries = @(Get-ChildItem -Path $startMenu -Recurse -Filter "$AppName*.lnk" -ErrorAction SilentlyContinue)
+  Assert ($entries.Count -ge 4) "Expected at least four $AppName Start menu entries, found $($entries.Count)"
+  foreach ($name in $script:expected.Keys) {
+    $hit = $entries | Where-Object { $_.BaseName -eq $name } | Select-Object -First 1
+    Assert ($null -ne $hit) "No Start menu entry named '$name' was created."
+    $lnk = $shell.CreateShortcut($hit.FullName)
+    Assert ($lnk.Arguments -match "--app=$($script:expected[$name])") "The Start menu entry for '$name' does not name its application."
+    Assert ($lnk.TargetPath -match 'JENESIS\.exe$') "The Start menu entry for '$name' does not launch the installed executable."
+  }
 }
 
-Step 'JENESIS Maintenance opens from its own shortcut, with its own interface' {
-  $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=maintenance' } | Select-Object -First 1
-  Assert ($null -ne $shortcut) 'The Maintenance shortcut was not found.'
-  $before = Get-ReadyCount
-  Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
-  $window = Wait-ForTitledWindow 'JENESIS Maintenance' 90
-  Assert ($null -ne $window) 'No window titled "JENESIS Maintenance" appeared: the shortcut did not open Maintenance.'
-  Assert-WindowIsReal $window 'JENESIS Maintenance'
-  Assert (Wait-ForInterfaceStart $before 90) 'Maintenance did not report that its interface started.'
-  Close-AppGracefully
+# Each application is launched from the shortcut the installer wrote, and the
+# window that appears must carry that application's own title and real content.
+foreach ($name in $script:expected.Keys) {
+  $appId = $script:expected[$name]
+  Step "$name opens from its own shortcut, with its own interface" {
+    $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match "--app=$appId" } | Select-Object -First 1
+    Assert ($null -ne $shortcut) "The $name shortcut was not found."
+    $before = Get-ReadyCount
+    Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
+    $window = Wait-ForTitledWindow $name 90
+    Assert ($null -ne $window) "No window titled “$name” appeared: the shortcut did not open $name."
+    Assert-WindowIsReal $window $name
+    Assert (Wait-ForInterfaceStart $before 90) "$name did not report that its interface started."
+    Close-AppGracefully
+  }
 }
 
-Step 'JENESIS Admin opens from its own shortcut, with its own interface' {
-  $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=admin' } | Select-Object -First 1
-  Assert ($null -ne $shortcut) 'The Admin shortcut was not found.'
+Step 'The four applications run side by side, each in its own window' {
+  # One process, four windows, four identities, one database.
   $before = Get-ReadyCount
-  Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
-  $window = Wait-ForTitledWindow 'JENESIS Admin' 90
-  Assert ($null -ne $window) 'No window titled "JENESIS Admin" appeared: the shortcut did not open Admin.'
-  Assert-WindowIsReal $window 'JENESIS Admin'
-  Assert (Wait-ForInterfaceStart $before 90) 'Admin did not report that its interface started.'
-  Close-AppGracefully
-}
-
-Step 'The three applications run side by side, each in its own window' {
-  # One process, three windows, three identities, one database.
-  $before = Get-ReadyCount
-  foreach ($id in @('seller', 'maintenance', 'admin')) {
+  foreach ($id in $script:expected.Values) {
     $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match "--app=$id" } | Select-Object -First 1
     Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
     Start-Sleep -Seconds 6
   }
   $titles = @((Get-AppWindows | ForEach-Object { $_.Title }) | Sort-Object -Unique)
   Write-Host ("    windows open: {0}" -f ($titles -join ' | ')) -ForegroundColor DarkGray
-  Assert (@($titles | Where-Object { $_ -like '*Seller*' }).Count -ge 1) 'Seller is not open.'
-  Assert (@($titles | Where-Object { $_ -like '*Maintenance*' }).Count -ge 1) 'Maintenance is not open.'
-  Assert (@($titles | Where-Object { $_ -like '*Admin*' }).Count -ge 1) 'Admin is not open.'
+  foreach ($name in $script:expected.Keys) {
+    Assert (@($titles | Where-Object { $_ -eq $name }).Count -ge 1) "$name is not open."
+  }
   # Every window must have started its own interface.
-  $deadline = (Get-Date).AddSeconds(90)
-  while ((Get-Date) -lt $deadline -and ((Get-ReadyCount) -lt ($before + 3))) { Start-Sleep -Milliseconds 500 }
-  Assert ((Get-ReadyCount) -ge ($before + 3)) "Only $((Get-ReadyCount) - $before) of the three interfaces reported a start."
-  # They serve the same company: one database, not three.
+  $deadline = (Get-Date).AddSeconds(120)
+  while ((Get-Date) -lt $deadline -and ((Get-ReadyCount) -lt ($before + 4))) { Start-Sleep -Milliseconds 500 }
+  Assert ((Get-ReadyCount) -ge ($before + 4)) "Only $((Get-ReadyCount) - $before) of the four interfaces reported a start."
+  # They serve the same company: one database, not four.
   $url = Get-BackendUrlFromLog
   Assert ([bool]$url) 'The backend address of the running application was not found in the log.'
   $status = Invoke-Api $url 'GET' '/setup/status'
-  Assert ($status.needsSetup -eq $false) 'The company created earlier is not the one the three windows see.'
+  Assert ($status.needsSetup -eq $false) 'The company created earlier is not the one the four windows see.'
   Close-AppGracefully
 }
 
 Step 'Signing in through the interface reports no error in the interface' {
   # The defect this release repairs was only reachable through the interface:
-  # the shared header - the same one in all three applications - is drawn once
+  # the shared header - the same one in all four applications - is drawn once
   # a user is signed in, and it threw "ReferenceError: MessageSquare is not
   # defined". Calling the API never reached it, so the credentials are typed
   # into the window here, exactly as a user types them, and the interface must
   # then report the signed-in screen (renderer: signed-in) without any error.
   $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=admin' } | Select-Object -First 1
-  Assert ($null -ne $shortcut) 'The Admin shortcut was not found.'
+  Assert ($null -ne $shortcut) 'The Accounting & Business shortcut was not found.'
   $before = Get-ReadyCount
   Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
-  $window = Wait-ForTitledWindow 'JENESIS Admin' 90
-  Assert ($null -ne $window) 'No window titled "JENESIS Admin" appeared.'
-  Assert ((Wait-ForInterfaceStart $before 90)) 'Admin did not report that its interface started.'
+  $window = Wait-ForTitledWindow 'JENESIS Accounting & Business' 90
+  Assert ($null -ne $window) 'No window titled "JENESIS Accounting & Business" appeared.'
+  Assert ((Wait-ForInterfaceStart $before 90)) 'Accounting & Business did not report that its interface started.'
   # AppActivate is the documented way to give another application the keyboard;
   # the Win32 call below then confirms the window really is in front.
   try {
@@ -757,7 +764,7 @@ Step 'Signing in through the interface reports no error in the interface' {
     $proc = @(Get-AppProcesses | Select-Object -First 1)
     if ($proc.Count -gt 0) { [void][Microsoft.VisualBasic.Interaction]::AppActivate($proc.Id) }
   } catch { }
-  Assert ((Set-ForegroundWindow -Handle $window.Handle)) 'The JENESIS Admin window could not be brought to the front.'
+  Assert ((Set-ForegroundWindow -Handle $window.Handle)) 'The JENESIS Accounting & Business window could not be brought to the front.'
   Write-Host ("    the window holds the keyboard focus: {0}" -f ([Win32.Focus]::GetForegroundWindow() -eq $window.Handle)) -ForegroundColor DarkGray
   Start-Sleep -Milliseconds 1000
   Send-InterfaceKeys 'smoke.admin'  # the username field is focused when the sign-in screen opens
@@ -787,7 +794,7 @@ Step 'Signing in through the interface reports no error in the interface' {
     Write-Host '    NOTE: the interface did not confirm the signed-in screen, so the signed-in' -ForegroundColor Yellow
     Write-Host '    interface is NOT proven by this run (the typed keys may not have reached it).' -ForegroundColor Yellow
   }
-  Assert-WindowIsReal $window 'JENESIS Admin'
+  Assert-WindowIsReal $window 'JENESIS Accounting & Business'
 
   # Whatever the interface did with the keys, a crash inside it is written to
   # the log - and that is the failure this release repairs.

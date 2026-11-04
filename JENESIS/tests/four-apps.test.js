@@ -135,6 +135,46 @@ check('the applications carry their full names, and Admin has been renamed', () 
     'the installer must not still create a shortcut called "JENESIS Maintenance"');
 });
 
+check('the installer creates four shortcuts, each naming its application, argument and icon', () => {
+  // Reading the installer script is not the same as clicking the shortcuts —
+  // that can only be done on Windows — but it is worth being exact about it:
+  // a shortcut with the right name and the wrong --app= would open the wrong
+  // application, and a wrong icon filename would silently install no icon.
+  const nsis = read('build/installer.nsh');
+  const install = nsis.slice(nsis.indexOf('!macro customInstall'), nsis.indexOf('!macro customUnInstall'));
+  const calls = [...install.matchAll(/CreateJenesisShortcut "([^"]+)" "([^"]+)" "([^"]+)"/g)];
+  assert.strictEqual(calls.length, 4, `four shortcuts must be created, found ${calls.length}`);
+
+  const byId = {};
+  for (const [, appId, name, icon] of calls) {
+    byId[appId] = { name, icon };
+    assert.ok(appIdentity.APP_IDS.includes(appId), `"${appId}" is not one of the four applications`);
+    assert.strictEqual(name, appIdentity.appTitle(appId),
+      `the ${appId} shortcut must be named "${appIdentity.appTitle(appId)}", not "${name}"`);
+    assert.strictEqual(icon, `icon-${appId}.ico`,
+      `the ${appId} shortcut must carry icon-${appId}.ico, not "${icon}"`);
+    assert.ok(fs.existsSync(path.join(ROOT, 'build', icon)),
+      `${icon} is named by the installer but is missing from build/`);
+  }
+  assert.deepStrictEqual(Object.keys(byId).sort(), ['admin', 'maintenance', 'seller', 'settings'],
+    'every application must have a shortcut');
+
+  // The argument that chooses the application, and both places it is created.
+  const macro = nsis.slice(nsis.indexOf('!macro CreateJenesisShortcut'), nsis.indexOf('!macro DeleteJenesisShortcut'));
+  assert.ok(macro.includes('"--app=${APPID}"'), 'each shortcut must pass --app=<id> to the executable');
+  assert.ok(macro.includes('$DESKTOP\\${NAME}.lnk'), 'a Desktop shortcut must be created');
+  assert.ok(macro.includes('$SMPROGRAMS\\JENESIS\\${NAME}.lnk'), 'a Start Menu shortcut must be created');
+  assert.ok(macro.includes('$INSTDIR\\resources\\app-icons\\${ICONFILE}'),
+    'the shortcut icon must come from the packaged app-icons folder');
+
+  // Uninstalling must remove all four, and the two names they used to have.
+  const uninstall = nsis.slice(nsis.indexOf('!macro customUnInstall'));
+  for (const name of Object.values(byId).map((v) => v.name).concat(['JENESIS Maintenance', 'JENESIS Admin'])) {
+    assert.ok(uninstall.includes(`DeleteJenesisShortcut "${name}"`),
+      `uninstalling must remove the "${name}" shortcut`);
+  }
+});
+
 check('every application opens directly in its own environment', () => {
   assert.strictEqual(appIdentity.APPS.seller.defaultView, 'sales', 'Seller opens on Sales');
   assert.strictEqual(appIdentity.APPS.maintenance.defaultView, 'maintenance',
