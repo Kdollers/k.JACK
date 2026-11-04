@@ -1,8 +1,2 @@
-Add-Type: D:\a\k.JACK\k.JACK\JENESIS\scripts\smoke-test-installed.ps1:373
-Line |
- 373 |    Add-Type -Namespace Win32 -Name Snapshot -MemberDefinition @'
-     |    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     | (44,18): error CS0012: The type 'IImage' is defined in an assembly that is not referenced. You must add a
-     | reference to assembly 'System.Private.Windows.GdiPlus, Version=10.0.0.0, Culture=neutral,
-     | PublicKeyToken=b77a5c561934e089'.           using (System.Drawing.Image img =
-     | System.Drawing.Image.FromHbitmap(bmp)) {                  ^
+smoke-test-installed.ps1: The term '/**' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
