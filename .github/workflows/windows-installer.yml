@@ -99,6 +99,11 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $false
           npm run test:all 2>&1 | Tee-Object -FilePath test-all.log
           $code = $LASTEXITCODE
+          # Keep the transcript where a failure can be read on the branch: this
+          # step runs with JENESIS as its working directory, so ci-logs is one
+          # level up, next to the repository root.
+          New-Item -ItemType Directory -Force -Path ..\ci-logs | Out-Null
+          Copy-Item test-all.log ..\ci-logs\windows-test-all.log -Force
           $summary = (node scripts/count-checks.mjs test-all.log 2>&1 | Out-String).Trim()
           Write-Host $summary
           if ($code -ne 0) { throw "npm run test:all failed (exit $code)" }
