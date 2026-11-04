@@ -845,19 +845,23 @@ Step 'Every shortcut also appears in the Start menu, pointing at the same place'
 
 # Each application is launched from the shortcut the installer wrote, and the
 # window that appears must carry that application's own title and real content.
-foreach ($name in $script:expected.Keys) {
-  $appId = $script:expected[$name]
-  Step "$name opens from its own shortcut, with its own interface" {
+foreach ($appName in $script:expected.Keys) {
+  $appId = $script:expected[$appName]
+  # The block closes over the values it needs. Step's own parameter is called
+  # $Name, and PowerShell resolves variable names without regard to case, so a
+  # block that simply said $name would read the step's title instead of the
+  # application's name - and then wait for a window that can never appear.
+  Step "$appName opens from its own shortcut, with its own interface" {
     $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match "--app=$appId" } | Select-Object -First 1
-    Assert ($null -ne $shortcut) "The $name shortcut was not found."
+    Assert ($null -ne $shortcut) "The $appName shortcut was not found."
     $before = Get-ReadyCount
     Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
-    $window = Wait-ForTitledWindow $name 90
-    Assert ($null -ne $window) "No window titled “$name” appeared: the shortcut did not open $name."
-    Assert-WindowIsReal $window $name
-    Assert (Wait-ForInterfaceStart $before 90) "$name did not report that its interface started."
+    $window = Wait-ForTitledWindow $appName 90
+    Assert ($null -ne $window) "No window titled '$appName' appeared: the shortcut did not open it."
+    Assert-WindowIsReal $window $appName
+    Assert (Wait-ForInterfaceStart $before 90) "$appName did not report that its interface started."
     Close-AppGracefully
-  }
+  }.GetNewClosure()
 }
 
 Step 'The four applications run side by side, each in its own window' {
@@ -870,8 +874,8 @@ Step 'The four applications run side by side, each in its own window' {
   }
   $titles = @((Get-AppWindows | ForEach-Object { $_.Title }) | Sort-Object -Unique)
   Write-Host ("    windows open: {0}" -f ($titles -join ' | ')) -ForegroundColor DarkGray
-  foreach ($name in $script:expected.Keys) {
-    Assert (@($titles | Where-Object { $_ -eq $name }).Count -ge 1) "$name is not open."
+  foreach ($appName in $script:expected.Keys) {
+    Assert (@($titles | Where-Object { $_ -eq $appName }).Count -ge 1) "$appName is not open."
   }
   # Every window must have started its own interface.
   $deadline = (Get-Date).AddSeconds(120)
