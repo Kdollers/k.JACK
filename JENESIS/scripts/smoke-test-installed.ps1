@@ -361,6 +361,85 @@ if (-not ('Win32.Capture' -as [type])) {
 '@
 }
 
+# ---------------------------------------------------------------------------
+# Screenshots.
+#
+# The runner has no display, but PrintWindow still renders a window into a
+# bitmap even when it is covered. Saving that bitmap is the only way to show
+# what the four installed applications actually look like, so it is done for
+# every application window this test opens.
+# ---------------------------------------------------------------------------
+if (-not ('Win32.Snapshot' -as [type])) {
+  Add-Type -Namespace Win32 -Name Snapshot -MemberDefinition @'
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+    [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, uint nFlags);
+    [DllImport("user32.dll")] public static extern IntPtr GetWindowDC(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern IntPtr GetDC(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+    [DllImport("gdi32.dll")]  public static extern IntPtr CreateCompatibleDC(IntPtr hdc);
+    [DllImport("gdi32.dll")]  public static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int cx, int cy);
+    [DllImport("gdi32.dll")]  public static extern IntPtr SelectObject(IntPtr hdc, IntPtr h);
+    [DllImport("gdi32.dll")]  public static extern bool DeleteObject(IntPtr hObject);
+    [DllImport("gdi32.dll")]  public static extern bool DeleteDC(IntPtr hdc);
+    [DllImport("gdi32.dll")]  public static extern bool BitBlt(IntPtr hdcDest, int x, int y, int w, int h, IntPtr hdcSrc, int x1, int y1, uint rop);
+    public const uint PW_RENDERFULLCONTENT = 0x00000002;
+    public const uint SRCCOPY = 0x00CC0020;
+
+    /** Renders the window and writes it to a PNG file. True when it worked. */
+    public static bool Save(IntPtr hWnd, string path) {
+      RECT r;
+      if (!GetWindowRect(hWnd, out r)) return false;
+      int w = r.Right - r.Left;
+      int h = r.Bottom - r.Top;
+      if (w <= 0 || h <= 0) return false;
+      IntPtr screen = GetDC(IntPtr.Zero);
+      IntPtr mem = CreateCompatibleDC(screen);
+      IntPtr bmp = CreateCompatibleBitmap(screen, w, h);
+      IntPtr old = SelectObject(mem, bmp);
+      bool ok = PrintWindow(hWnd, mem, PW_RENDERFULLCONTENT);
+      if (!ok) {
+        IntPtr winDc = GetWindowDC(hWnd);
+        ok = BitBlt(mem, 0, 0, w, h, winDc, 0, 0, SRCCOPY);
+        ReleaseDC(hWnd, winDc);
+      }
+      bool saved = false;
+      if (ok) {
+        try {
+          using (System.Drawing.Image img = System.Drawing.Image.FromHbitmap(bmp)) {
+            img.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+            saved = true;
+          }
+        } catch { saved = false; }
+      }
+      SelectObject(mem, old);
+      DeleteObject(bmp);
+      DeleteDC(mem);
+      ReleaseDC(IntPtr.Zero, screen);
+      return saved;
+    }
+'@ -ReferencedAssemblies System.Drawing, System.Drawing.Common
+}
+
+$script:ShotDir = Join-Path (Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..')).Path 'release') 'screenshots'
+New-Item -ItemType Directory -Force -Path $script:ShotDir | Out-Null
+
+/** Saves a picture of a window, next to the installer, for the release. */
+function Save-WindowPicture($Window, [string] $FileName) {
+  $path = Join-Path $script:ShotDir $FileName
+  try {
+    if ([Win32.Snapshot]::Save($Window.Handle, $path)) {
+      Write-Host "    picture saved: $FileName" -ForegroundColor DarkGray
+      return $true
+    }
+    Write-Host "    picture could not be taken: $FileName" -ForegroundColor Yellow
+  } catch {
+    Write-Host "    picture failed: $($_.Exception.Message)" -ForegroundColor Yellow
+  }
+  return $false
+}
+
 function Get-WindowPixels([IntPtr] $Handle) {
   $bits = [Win32.Capture]::Grab($Handle)
   if (-not $bits) { return $null }
@@ -425,6 +504,12 @@ function Wait-ForInterfaceStart([int] $MoreThan, [int] $TimeoutSec = 90) {
 }
 
 function Assert-WindowIsReal($Window, [string] $What) {
+  # Every window this test checks is also photographed: the release should be
+  # able to show what the installed application looks like, not only claim it
+  # rendered. A failure to take the picture never fails the test - the pixel
+  # analysis below is the real check.
+  $safe = ($What -replace '[^A-Za-z0-9]+', '-').Trim('-')
+  if ($safe) { Save-WindowPicture -Window $Window -FileName "$safe.png" }
   $pixels = Get-WindowPixels -Handle $Window.Handle
   if (-not $pixels) { Start-Sleep -Seconds 5; $pixels = Get-WindowPixels -Handle $Window.Handle }
   Assert ($null -ne $pixels) "The $What window could not be captured."

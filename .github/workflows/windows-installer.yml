@@ -258,6 +258,18 @@ jobs:
             JENESIS/release/*.sha256
           if-no-files-found: ignore
 
+      # The runner has no display, but PrintWindow still renders each window
+      # into a bitmap. These are real pictures of the installed applications,
+      # and they are the only way this release can show them.
+      - name: Upload the screenshots of the installed applications
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: JENESIS-screenshots
+          path: |
+            JENESIS/release/screenshots/*.png
+          if-no-files-found: warn
+
       - name: Upload the portable package
         if: success()
         uses: actions/upload-artifact@v4
@@ -307,6 +319,11 @@ jobs:
           $assets = @()
           foreach ($pattern in '*.exe', '*.zip', '*.exe.sha256', '*.zip.sha256') {
             $assets += (Get-ChildItem release -Filter $pattern | ForEach-Object { $_.FullName })
+          }
+          # Real pictures of the four applications, taken from the installed
+          # windows during the smoke test.
+          if (Test-Path release\screenshots) {
+            $assets += (Get-ChildItem 'release\screenshots' -Filter '*.png' | ForEach-Object { $_.FullName })
           }
           if ($assets.Count -eq 0) { throw 'No downloadable files were produced.' }
 
