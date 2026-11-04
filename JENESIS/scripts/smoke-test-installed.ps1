@@ -531,7 +531,7 @@ function Write-WindowState {
   # What is actually on screen when something is expected to be: the processes,
   # their windows and the titles those windows carry.
   $procs = Get-AppProcesses
-  Write-Host ("    processes named $AppName: {0}" -f $procs.Count) -ForegroundColor DarkGray
+  Write-Host ("    processes named ${AppName}: {0}" -f $procs.Count) -ForegroundColor DarkGray
   foreach ($p in $procs) {
     $windows = @([Win32.WindowFinder]::WindowsOf($p.Id))
     foreach ($h in $windows) {
