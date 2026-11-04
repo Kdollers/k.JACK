@@ -34,14 +34,14 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
 ==> Full backup export is produced and contains the transaction
     PASS
 ==> Graceful shutdown: window closes and all processes exit
-    WM_CLOSE posted to pid 2888 handle 655836 title 'JENESIS — Professional Business Accounting & Management Software': True
+    WM_CLOSE posted to pid 3884 handle 393350 title 'JENESIS — Professional Business Accounting & Management Software': True
     PASS
 ==> Relaunch: business data persists after restart
     PASS
 ==> Backup restore protection: a restore first keeps a copy of the database
     PASS
 ==> Close again and confirm clean shutdown
-    WM_CLOSE posted to pid 7628 handle 458878 title 'JENESIS — Professional Business Accounting & Management Software': True
+    WM_CLOSE posted to pid 7448 handle 524422 title 'JENESIS — Professional Business Accounting & Management Software': True
     PASS
 ==> Both themes ship in the installed application
     installed build contains the theme bootstrap, the dark palette and the remapped utilities
@@ -55,54 +55,60 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
 ==> Every shortcut also appears in the Start menu, pointing at the same place
     PASS
 ==> JENESIS Seller opens from its own shortcut, with its own interface
+    launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=seller
+    still waiting for 'JENESIS Seller'; windows seen: 
+    still waiting for 'JENESIS Seller'; windows seen: 
+    still waiting for 'JENESIS Seller'; windows seen: 
+    still waiting for 'JENESIS Seller'; windows seen: 
+    still waiting for 'JENESIS Seller'; windows seen: 
+    gave up waiting for 'JENESIS Seller'; windows seen: 
     FAIL: No window titled 'JENESIS Seller' appeared: the shortcut did not open it.
     --- application log C:\Users\runneradmin\AppData\Roaming\JENESIS\logs\desktop.log (last 200 lines) ---
-    | 2026-11-04T23:23:03.553Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-04T23:23:03.802Z Interface candidates: resources=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-04T23:23:03.802Z Interface directory: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-04T23:23:04.536Z JENESIS server running at http://127.0.0.1:63480
-    | 2026-11-04T23:23:04.645Z Backend ready at http://127.0.0.1:63480/ (attempt 1)
-    | 2026-11-04T23:23:04.670Z Interface check: 5 file(s) reachable from C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-04T23:23:04.695Z Opening the JENESIS launcher.
-    | 2026-11-04T23:23:07.266Z Window finished loading.
-    | 2026-11-04T23:23:07.267Z Window ready to show.
-    | 2026-11-04T23:23:07.295Z Appearance set to light.
-    | 2026-11-04T23:23:07.386Z renderer: ready — the interface is mounted
-    | 2026-11-04T23:23:09.850Z Window closed.
-    | 2026-11-04T23:23:09.850Z All windows are closed.
-    | 2026-11-04T23:23:09.851Z Quit requested.
-    | 2026-11-04T23:23:09.851Z Stopping backend...
-    | 2026-11-04T23:23:11.851Z Still waiting for the backend to stop (running)...
-    | 2026-11-04T23:23:12.691Z Backend stopped.
-    | 2026-11-04T23:23:15.777Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-04T23:23:15.777Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261104-232315.db
-    | 2026-11-04T23:23:15.787Z Interface candidates: resources=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-04T23:23:15.787Z Interface directory: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-04T23:23:16.071Z JENESIS server running at http://127.0.0.1:63518
-    | 2026-11-04T23:23:16.143Z Backend ready at http://127.0.0.1:63518/ (attempt 1)
-    | 2026-11-04T23:23:16.164Z Interface check: 5 file(s) reachable from C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-04T23:23:16.184Z Opening the JENESIS launcher.
-    | 2026-11-04T23:23:16.358Z Window finished loading.
-    | 2026-11-04T23:23:16.369Z Appearance set to light.
-    | 2026-11-04T23:23:16.394Z Window ready to show.
-    | 2026-11-04T23:23:16.416Z renderer: ready — the interface is mounted
-    | 2026-11-04T23:23:18.978Z Window closed.
-    | 2026-11-04T23:23:18.978Z All windows are closed.
-    | 2026-11-04T23:23:18.978Z Quit requested.
-    | 2026-11-04T23:23:18.978Z Stopping backend...
-    | 2026-11-04T23:23:19.016Z Backend stopped.
-    | 2026-11-04T23:23:19.604Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-04T23:23:19.605Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261104-232319.db
-    | 2026-11-04T23:23:19.617Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-04T23:23:19.617Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-04T23:23:19.935Z JENESIS server running at http://127.0.0.1:63545
-    | 2026-11-04T23:23:19.967Z Backend ready at http://127.0.0.1:63545/ (attempt 1)
-    | 2026-11-04T23:23:19.992Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-04T23:23:20.014Z Opening JENESIS Seller.
-    | 2026-11-04T23:23:20.198Z Window finished loading.
-    | 2026-11-04T23:23:20.208Z Appearance set to light.
-    | 2026-11-04T23:23:20.213Z Window ready to show.
-    | 2026-11-04T23:23:20.241Z renderer: ready — the interface is mounted
+    | 2026-11-04T23:34:39.477Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
+    | 2026-11-04T23:34:39.849Z Interface candidates: resources=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
+    | 2026-11-04T23:34:39.849Z Interface directory: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
+    | 2026-11-04T23:34:40.567Z JENESIS server running at http://127.0.0.1:58436
+    | 2026-11-04T23:34:40.655Z Backend ready at http://127.0.0.1:58436/ (attempt 1)
+    | 2026-11-04T23:34:40.675Z Interface check: 5 file(s) reachable from C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
+    | 2026-11-04T23:34:40.701Z Opening the JENESIS launcher.
+    | 2026-11-04T23:34:45.640Z Window finished loading.
+    | 2026-11-04T23:34:45.641Z Window ready to show.
+    | 2026-11-04T23:34:45.664Z Appearance set to light.
+    | 2026-11-04T23:34:45.714Z renderer: ready — the interface is mounted
+    | 2026-11-04T23:34:46.605Z Window closed.
+    | 2026-11-04T23:34:46.605Z All windows are closed.
+    | 2026-11-04T23:34:46.605Z Quit requested.
+    | 2026-11-04T23:34:46.605Z Stopping backend...
+    | 2026-11-04T23:34:46.696Z Backend stopped.
+    | 2026-11-04T23:34:49.084Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
+    | 2026-11-04T23:34:49.085Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261104-233449.db
+    | 2026-11-04T23:34:49.095Z Interface candidates: resources=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
+    | 2026-11-04T23:34:49.095Z Interface directory: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
+    | 2026-11-04T23:34:49.320Z JENESIS server running at http://127.0.0.1:58478
+    | 2026-11-04T23:34:49.440Z Backend ready at http://127.0.0.1:58478/ (attempt 1)
+    | 2026-11-04T23:34:49.755Z Interface check: 5 file(s) reachable from C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
+    | 2026-11-04T23:34:49.775Z Opening the JENESIS launcher.
+    | 2026-11-04T23:34:50.460Z Window finished loading.
+    | 2026-11-04T23:34:50.461Z Window ready to show.
+    | 2026-11-04T23:34:50.478Z Appearance set to light.
+    | 2026-11-04T23:34:50.502Z renderer: ready — the interface is mounted
+    | 2026-11-04T23:34:50.868Z Window closed.
+    | 2026-11-04T23:34:50.868Z All windows are closed.
+    | 2026-11-04T23:34:50.868Z Quit requested.
+    | 2026-11-04T23:34:50.868Z Stopping backend...
+    | 2026-11-04T23:34:50.949Z Backend stopped.
+    | 2026-11-04T23:34:51.491Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
+    | 2026-11-04T23:34:51.491Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261104-233451.db
+    | 2026-11-04T23:34:51.502Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
+    | 2026-11-04T23:34:51.502Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
+    | 2026-11-04T23:34:51.773Z JENESIS server running at http://127.0.0.1:58499
+    | 2026-11-04T23:34:51.865Z Backend ready at http://127.0.0.1:58499/ (attempt 1)
+    | 2026-11-04T23:34:51.884Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
+    | 2026-11-04T23:34:51.903Z Opening JENESIS Seller.
+    | 2026-11-04T23:34:52.112Z Window finished loading.
+    | 2026-11-04T23:34:52.112Z Window ready to show.
+    | 2026-11-04T23:34:52.127Z Appearance set to light.
+    | 2026-11-04T23:34:52.129Z renderer: ready — the interface is mounted
 
 Summary
 
