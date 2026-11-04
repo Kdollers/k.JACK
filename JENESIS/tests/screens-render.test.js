@@ -172,7 +172,23 @@ const SCREENS = [
   { file: 'src/views/HelpView.jsx', name: 'Help', expect: /./, keys: ['help'] }
 ];
 
+/**
+ * The other-computer list, drawn with computers in every state it has to show:
+ * one answering, one that is switched off, one that is connected, one that has
+ * never been checked, and one that answered but is not JENESIS. Drawing an
+ * empty list is checked separately below.
+ */
+const COMPUTERS = [
+  { id: 'cmp-1', name: 'Shop counter 2', address: '192.168.1.20', port: 3000, lastStatus: 'ONLINE', lastSeenAt: '2026-11-04T09:00:00.000Z', connected: false },
+  { id: 'cmp-2', name: 'Store room PC', address: '192.168.1.21', port: 3000, lastStatus: 'UNREACHABLE', lastSeenAt: '2026-11-03T17:30:00.000Z', connected: false },
+  { id: 'cmp-3', name: 'Main office', address: '192.168.1.10', port: 3000, lastStatus: 'ONLINE', lastSeenAt: '2026-11-04T09:05:00.000Z', connected: true },
+  { id: 'cmp-4', name: 'Old laptop', address: '192.168.1.22', port: 3000, lastStatus: null, lastSeenAt: null, connected: false },
+  { id: 'cmp-5', name: 'Unknown box', address: '192.168.1.23', port: 3000, lastStatus: 'NOT_JENESIS', lastSeenAt: null, connected: false }
+];
+
 const OVERLAYS = [
+  { file: 'src/components/NetworkComputers.jsx', name: 'Network computers', expect: /computer-status|computers-empty/, props: { computers: COMPUTERS, canManage: true } },
+  { file: 'src/components/NetworkComputers.jsx', name: 'Network computers (empty)', expect: /computers-empty/, props: { computers: [], canManage: true } },
   { file: 'src/components/CalculatorModal.jsx', name: 'Calculator', expect: /0<\/div>|calculator/i, props: { onClose: () => {} } },
   { file: 'src/components/ShortcutsReference.jsx', name: 'Shortcut reference', expect: /Ctrl|Alt/ },
   { file: 'src/components/Navbar.jsx', name: 'Header', expect: /./ },
@@ -199,7 +215,7 @@ async function build() {
   ];
   const all = [
     ...SCREENS.map((s) => ({ ...s, exportName: `view_${path.basename(s.file, '.jsx')}` })),
-    ...OVERLAYS.map((s) => ({ ...s, exportName: `part_${path.basename(s.file, '.jsx')}` }))
+    ...OVERLAYS.map((s, i) => ({ ...s, exportName: `part_${i}` }))
   ];
   for (const s of all) {
     lines.push(`import ${s.exportName} from ${src(s.file)};`);
@@ -301,6 +317,49 @@ async function main() {
       assert.ok(html.includes(`>${key}<`), `the calculator must show the ${key} key`);
     }
     assert.ok(/data-testid="calculator-display"/.test(html), 'the calculator must show its display');
+  });
+
+  check('the other-computer list shows each computer, its address and its state', () => {
+    const html = renders['Network computers']();
+    for (const computer of COMPUTERS) {
+      assert.ok(html.includes(computer.name), `the list must show ${computer.name}`);
+      assert.ok(
+        html.includes(`${computer.address}:${computer.port}`),
+        `the list must show where ${computer.name} is (${computer.address}:${computer.port})`
+      );
+    }
+    // One is answering, one is switched off, one is not JENESIS at all, and one
+    // has never been checked: each must be readable as such.
+    assert.ok(/data-status="ONLINE"/.test(html), 'an answering computer must say so');
+    assert.ok(/data-status="UNREACHABLE"/.test(html), 'a computer that does not answer must say so');
+    assert.ok(/data-status="NOT_JENESIS"/.test(html), 'a service that is not JENESIS must be named as such');
+    assert.ok(/data-status="UNKNOWN"/.test(html), 'a computer never checked must not look checked');
+    assert.ok(html.includes('192.168.1.20'), 'the addresses must be readable');
+  });
+
+  check('the connected computer is marked, and only it', () => {
+    const html = renders['Network computers']();
+    const marks = (html.match(/data-testid="computer-connected"/g) || []).length;
+    assert.strictEqual(marks, 1, `exactly one computer is connected in this list (found ${marks})`);
+  });
+
+  check('every computer in the list can be tested, connected and forgotten', () => {
+    const html = renders['Network computers']();
+    // Five computers: each has a Test button, the connected one has Disconnect
+    // and Reconnect, the other four have Connect, and all five can be forgotten.
+    const connect = (html.match(/>Connect</g) || []).length;
+    const disconnect = (html.match(/>Disconnect</g) || []).length;
+    const reconnect = (html.match(/>Reconnect</g) || []).length;
+    assert.strictEqual(connect, 4, `four computers must offer Connect (found ${connect})`);
+    assert.strictEqual(disconnect, 1, `the connected computer must offer Disconnect (found ${disconnect})`);
+    assert.strictEqual(reconnect, 1, `the connected computer must offer Reconnect (found ${reconnect})`);
+    assert.strictEqual((html.match(/aria-label="Forget"/g) || []).length, 5, 'each computer must be forgettable');
+  });
+
+  check('an empty computer list says so instead of showing nothing', () => {
+    const html = renders['Network computers (empty)']();
+    assert.ok(/data-testid="computers-empty"/.test(html), 'the empty list must be marked');
+    assert.ok(html.length > 40, 'the empty list must still say something');
   });
 
   check('the header names the keys the shortcut list really uses', () => {

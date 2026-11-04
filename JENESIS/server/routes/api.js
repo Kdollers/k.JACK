@@ -2297,7 +2297,7 @@ router.post('/backup/reset-demo', requirePermission('demo:reset'), (req, res) =>
 });
 
 // ---------------------------------------------------------------------------
-// Network access (JENESIS Maintenance)
+// Network access (JENESIS Network & Maintenance)
 // ---------------------------------------------------------------------------
 // Off by default: the service answers on the loopback interface only, so the
 // accounting data cannot be reached from the network. Two computers can share
@@ -2530,7 +2530,7 @@ router.post('/system/computers/:id/reconnect', requirePermission('network:manage
 });
 
 // ---------------------------------------------------------------------------
-// Service information, file backups, logs and integrity (JENESIS Maintenance)
+// Service information, file backups, logs and integrity (JENESIS Network & Maintenance)
 // ---------------------------------------------------------------------------
 // Read-only diagnostics plus one safe, reversible action (a file copy of the
 // database). Nothing here deletes or rewrites business data.

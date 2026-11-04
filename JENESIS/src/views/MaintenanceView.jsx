@@ -2,14 +2,19 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import { apiRequest, getServerUrl, setServerUrl } from '../services/api';
+import NetworkComputers from '../components/NetworkComputers';
 import {
   Activity,
   Database,
   HardDriveDownload,
+  Monitor,
   Network,
+  Plus,
   RefreshCw,
+  Search,
   ShieldCheck,
   ScrollText,
+  Trash2,
   AlertTriangle,
   CheckCircle2,
   Plug,
@@ -33,11 +38,14 @@ import {
  * Nothing on this screen deletes or rewrites business data.
  */
 export default function MaintenanceView() {
-  const { showToast, refreshKey } = useApp();
+  const { showToast, refreshKey, hasPermission } = useApp();
   const { t } = useI18n();
 
   const [info, setInfo] = useState(null);
   const [network, setNetwork] = useState(null);
+  const [computers, setComputers] = useState([]);
+  const [found, setFound] = useState(null);
+  const [draft, setDraft] = useState({ name: '', address: '', port: '' });
   const [logs, setLogs] = useState(null);
   const [integrity, setIntegrity] = useState(null);
   const [busy, setBusy] = useState('');
@@ -46,12 +54,14 @@ export default function MaintenanceView() {
 
   const load = useCallback(async () => {
     try {
-      const [systemInfo, networkInfo] = await Promise.all([
+      const [systemInfo, networkInfo, computerList] = await Promise.all([
         apiRequest('/api/system/info'),
-        apiRequest('/api/system/network')
+        apiRequest('/api/system/network'),
+        apiRequest('/api/system/computers')
       ]);
       setInfo(systemInfo);
       setNetwork(networkInfo);
+      setComputers(computerList.computers || []);
     } catch (err) {
       showToast(err.message || String(err), 'error');
     }
@@ -114,6 +124,85 @@ export default function MaintenanceView() {
     showToast(
       url ? t('maintenance.using_remote', { url }) : t('maintenance.using_local'),
       'success'
+    );
+  };
+
+  // -------------------------------------------------------------------------
+  // The other computers: look for them, keep them, watch them, connect to them
+  // -------------------------------------------------------------------------
+  const discoverComputers = () => guard(
+    apiRequest('/api/system/computers/discover', { method: 'POST' }).then((res) => {
+      setFound(res.found || []);
+      if (!(res.found || []).length) showToast(t('maintenance.discover_none'), 'info');
+      load();
+    }),
+    'discover'
+  );
+
+  const addComputer = () => guard(
+    (async () => {
+      const address = String(draft.address || '').trim();
+      const port = Number(draft.port) || 3000;
+      const res = await apiRequest('/api/system/computers', {
+        method: 'POST',
+        body: JSON.stringify({ name: draft.name || address, address, port })
+      });
+      setDraft({ name: '', address: '', port: '' });
+      setComputers(res.computers || []);
+      showToast(t('maintenance.added', {
+        name: res.computer.name,
+        status: t(`maintenance.diag_${res.probe.status}`)
+      }), res.probe.status === 'ONLINE' ? 'success' : 'info');
+    })(),
+    'add'
+  );
+
+  const checkStatuses = () => guard(
+    apiRequest('/api/system/computers/refresh', { method: 'POST' }).then((res) => {
+      setComputers(res.computers || []);
+    }),
+    'check'
+  );
+
+  const testComputer = (id) => guard(
+    apiRequest(`/api/system/computers/${id}/test`, { method: 'POST' }).then((res) => {
+      setComputers((list) => list.map((c) => (c.id === id ? res.computer : c)));
+      showToast(t(`maintenance.diag_${res.probe.status}`), res.probe.status === 'ONLINE' ? 'success' : 'info');
+    }),
+    id
+  );
+
+  /**
+   * Connecting really does point this computer at the other one: the server
+   * address the whole application uses is the same address the address box
+   * above sets, so Messenger and the shared company follow the connection.
+   */
+  const connectComputer = (computer) => guard(
+    apiRequest(`/api/system/computers/${computer.id}/connect`, { method: 'POST' }).then((res) => {
+      setComputers(res.computers || []);
+      setServerUrl(res.serverUrl);
+      setServerAddress(res.serverUrl);
+      showToast(t('maintenance.connected_to', { name: computer.name }), 'success');
+    }),
+    computer.id
+  );
+
+  const disconnectComputer = (computer) => guard(
+    apiRequest(`/api/system/computers/${computer.id}/disconnect`, { method: 'POST' }).then((res) => {
+      setComputers(res.computers || []);
+      setServerUrl('');
+      showToast(t('maintenance.disconnected_from'), 'success');
+    }),
+    computer.id
+  );
+
+  const forgetComputer = (computer) => {
+    if (!window.confirm(t('maintenance.forget_confirm', { name: computer.name }))) return;
+    guard(
+      apiRequest(`/api/system/computers/${computer.id}`, { method: 'DELETE' }).then((res) => {
+        setComputers(res.computers || []);
+      }),
+      computer.id
     );
   };
 
@@ -241,6 +330,82 @@ export default function MaintenanceView() {
             </p>
           )}
         </div>
+      </section>
+
+      {/* The other computers on this network ---------------------------------- */}
+      <section className="bg-surface border border-line rounded-xl p-5">
+        <h2 className="text-sm font-bold flex items-center space-x-2 mb-1">
+          <Monitor className="w-4 h-4 j-text" />
+          <span>{t('maintenance.computers_title')}</span>
+        </h2>
+        <p className="text-xs text-[rgb(var(--j-ink-muted))] mb-4">{t('maintenance.computers_hint')}</p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            type="button"
+            onClick={discoverComputers}
+            disabled={busy === 'discover' || !hasPermission('network:manage')}
+            className="px-3 py-1.5 rounded-md text-white text-xs font-semibold j-bg hover:opacity-90 flex items-center space-x-1.5 disabled:opacity-50"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>{busy === 'discover' ? t('maintenance.discovering') : t('maintenance.discover')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={checkStatuses}
+            disabled={busy === 'check' || computers.length === 0}
+            className="px-3 py-1.5 rounded-md border border-line text-xs font-semibold hover:bg-surface-hover flex items-center space-x-1.5 disabled:opacity-50"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>{busy === 'check' ? t('maintenance.checking') : t('maintenance.check_again')}</span>
+          </button>
+        </div>
+
+        {found && found.length > 0 && (
+          <p className="text-xs mb-3 j-text font-semibold">{t('maintenance.discover_found', { count: found.length })}</p>
+        )}
+
+        {hasPermission('network:manage') && (
+          <div className="flex flex-col sm:flex-row gap-2 mb-4 pb-4 border-b border-line">
+            <input
+              value={draft.name}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              placeholder={t('maintenance.name_placeholder')}
+              className="flex-1 px-3 py-1.5 border border-line rounded-md bg-surface text-xs focus:outline-none focus:ring-1 j-ring"
+            />
+            <input
+              value={draft.address}
+              onChange={(e) => setDraft({ ...draft, address: e.target.value })}
+              placeholder="192.168.1.20"
+              className="sm:w-44 px-3 py-1.5 border border-line rounded-md bg-surface text-xs font-mono focus:outline-none focus:ring-1 j-ring"
+            />
+            <input
+              value={draft.port}
+              onChange={(e) => setDraft({ ...draft, port: e.target.value })}
+              placeholder="3000"
+              className="sm:w-24 px-3 py-1.5 border border-line rounded-md bg-surface text-xs font-mono focus:outline-none focus:ring-1 j-ring"
+            />
+            <button
+              type="button"
+              onClick={addComputer}
+              disabled={busy === 'add' || !draft.address}
+              className="px-3 py-1.5 rounded-md border border-line text-xs font-semibold hover:bg-surface-hover flex items-center space-x-1.5 disabled:opacity-50"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{t('maintenance.add')}</span>
+            </button>
+          </div>
+        )}
+
+        <NetworkComputers
+          computers={computers}
+          busy={busy}
+          canManage={hasPermission('network:manage')}
+          onTest={testComputer}
+          onConnect={connectComputer}
+          onDisconnect={disconnectComputer}
+          onForget={forgetComputer}
+        />
       </section>
 
       {/* Backups, checks and logs -------------------------------------------- */}

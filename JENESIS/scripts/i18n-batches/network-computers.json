@@ -1,0 +1,174 @@
+{
+  "maintenance": {
+    "computers_title": {
+      "en": "Computers on this network",
+      "fr": "Ordinateurs sur ce réseau",
+      "rw": "Mudasobwa ziri kuri uyu muyoboro"
+    },
+    "computers_hint": {
+      "en": "Look for the other computers running JENESIS, keep the ones you work with, and see at a glance which of them is answering.",
+      "fr": "Recherchez les autres ordinateurs exécutant JENESIS, conservez ceux avec lesquels vous travaillez et voyez d'un coup d'œil lesquels répondent.",
+      "rw": "Shakisha izindi mudasobwa zikoresha JENESIS, uzigumane ukorana na zo, kandi urebe ako kanya izo zirimo kwitaba."
+    },
+    "discover": {
+      "en": "Look for computers",
+      "fr": "Rechercher des ordinateurs",
+      "rw": "Shakisha mudasobwa"
+    },
+    "discovering": {
+      "en": "Looking…",
+      "fr": "Recherche…",
+      "rw": "Kurimo gushakisha…"
+    },
+    "discover_none": {
+      "en": "No other JENESIS computer answered. Check that it is switched on, that JENESIS is running there, and that its network switch is on.",
+      "fr": "Aucun autre ordinateur JENESIS n'a répondu. Vérifiez qu'il est allumé, que JENESIS y est lancé et que son interrupteur réseau est activé.",
+      "rw": "Nta yindi mudasobwa ya JENESIS yitabye. Reba ko ifunguye, ko JENESIS irimo kuyikoraho, kandi ko umuyoboro wayo wafunguwe."
+    },
+    "discover_found": {
+      "en": "{count} computer(s) answered",
+      "fr": "{count} ordinateur(s) a (ont) répondu",
+      "rw": "Mudasobwa {count} nizo zitabye"
+    },
+    "add_computer": {
+      "en": "Add a computer by address",
+      "fr": "Ajouter un ordinateur par adresse",
+      "rw": "Ongeraho mudasobwa ukoresheje aderesi"
+    },
+    "name_placeholder": {
+      "en": "Name (for example: Shop counter 2)",
+      "fr": "Nom (par exemple : Comptoir 2)",
+      "rw": "Izina (urugero: Kontaro ya 2)"
+    },
+    "add": {
+      "en": "Add",
+      "fr": "Ajouter",
+      "rw": "Ongeraho"
+    },
+    "no_computers": {
+      "en": "No computers kept yet. Look for them, or add one by address.",
+      "fr": "Aucun ordinateur conservé pour l'instant. Recherchez-les ou ajoutez-en un par adresse.",
+      "rw": "Nta mudasobwa irabikwa. Zishakisha, cyangwa wongereho imwe ukoresheje aderesi."
+    },
+    "status": {
+      "en": "Status",
+      "fr": "État",
+      "rw": "Imimerere"
+    },
+    "last_seen": {
+      "en": "Last seen",
+      "fr": "Vu pour la dernière fois",
+      "rw": "Igihe yabonetse bwa nyuma"
+    },
+    "never_seen": {
+      "en": "Never",
+      "fr": "Jamais",
+      "rw": "Nta na rimwe"
+    },
+    "check_again": {
+      "en": "Check again",
+      "fr": "Vérifier à nouveau",
+      "rw": "Ongera usuzume"
+    },
+    "checking": {
+      "en": "Checking…",
+      "fr": "Vérification…",
+      "rw": "Kurimo gusuzuma…"
+    },
+    "connect": {
+      "en": "Connect",
+      "fr": "Connecter",
+      "rw": "Huzura"
+    },
+    "connected": {
+      "en": "Connected",
+      "fr": "Connecté",
+      "rw": "Yahujwe"
+    },
+    "disconnect": {
+      "en": "Disconnect",
+      "fr": "Déconnecter",
+      "rw": "Hagarika ihuzwa"
+    },
+    "reconnect": {
+      "en": "Reconnect",
+      "fr": "Reconnecter",
+      "rw": "Ongera uhuze"
+    },
+    "forget": {
+      "en": "Forget",
+      "fr": "Oublier",
+      "rw": "Ibuka"
+    },
+    "forget_confirm": {
+      "en": "Forget {name}? It stays on the network; only this computer stops keeping it.",
+      "fr": "Oublier {name} ? Il reste sur le réseau ; seul cet ordinateur cesse de le conserver.",
+      "rw": "Kwibagirwa {name}? Isigara ku muyoboro; iyi mudasobwa yonyine ni yo ireka kuyibika."
+    },
+    "connecting": {
+      "en": "Connecting…",
+      "fr": "Connexion…",
+      "rw": "Kurimo guhuza…"
+    },
+    "connected_to": {
+      "en": "Connected to {name}. Messenger and the shared company now use this computer.",
+      "fr": "Connecté à {name}. Messenger et l'entreprise partagée utilisent désormais cet ordinateur.",
+      "rw": "Wahujwe na {name}. Messenger n'ikigo gisangiye ubu birimo gukoresha iyi mudasobwa."
+    },
+    "disconnected_from": {
+      "en": "Disconnected. This computer uses its own JENESIS service again.",
+      "fr": "Déconnecté. Cet ordinateur utilise à nouveau son propre service JENESIS.",
+      "rw": "Ihuzwa ryahagaritswe. Iyi mudasobwa yongeye gukoresha serivisi yayo bwite ya JENESIS."
+    },
+    "added": {
+      "en": "{name} added — {status}",
+      "fr": "{name} ajouté — {status}",
+      "rw": "{name} yongewemo — {status}"
+    },
+    "diag_ONLINE": {
+      "en": "Answering. It is running JENESIS and you can connect to it.",
+      "fr": "Répond. JENESIS y est lancé et vous pouvez vous y connecter.",
+      "rw": "Irimo kwitaba. JENESIS irimo kuyikoraho kandi ushobora kuyihuza."
+    },
+    "diag_UNREACHABLE": {
+      "en": "Nothing answered. It may be switched off, asleep, or not on this network.",
+      "fr": "Aucune réponse. Il est peut-être éteint, en veille ou absent de ce réseau.",
+      "rw": "Nta cyitabye. Ishobora kuba izimye, iri mu bitotsi, cyangwa itari kuri uyu muyoboro."
+    },
+    "diag_REFUSED": {
+      "en": "The computer is there but JENESIS is not running on it.",
+      "fr": "L'ordinateur est présent mais JENESIS n'y est pas lancé.",
+      "rw": "Mudasobwa irahari ariko JENESIS ntirimo kuyikoraho."
+    },
+    "diag_NOT_JENESIS": {
+      "en": "Something answered at that address, but it is not a JENESIS service.",
+      "fr": "Quelque chose a répondu à cette adresse, mais ce n'est pas un service JENESIS.",
+      "rw": "Hari ikintu cyitabye kuri iyo aderesi, ariko si serivisi ya JENESIS."
+    },
+    "diag_VERSION_MISMATCH": {
+      "en": "It runs a different version of JENESIS. Update both to the same version before sharing data.",
+      "fr": "Il exécute une autre version de JENESIS. Mettez les deux à jour avant de partager des données.",
+      "rw": "Ikoresha verisiyo itandukanye ya JENESIS. Zivugurure zombi mbere yo gusangira amakuru."
+    },
+    "diag_TIMEOUT": {
+      "en": "It did not answer in time. The network may be busy — try again.",
+      "fr": "Il n'a pas répondu à temps. Le réseau est peut-être occupé — réessayez.",
+      "rw": "Ntitabye ku gihe. Umuyoboro ushobora kuba uhugiye — ongera ugerageze."
+    },
+    "diag_BAD_ADDRESS": {
+      "en": "That address is not one a computer can be reached at. It should look like 192.168.1.20.",
+      "fr": "Cette adresse ne permet pas d'atteindre un ordinateur. Elle doit ressembler à 192.168.1.20.",
+      "rw": "Iyo aderesi ntishobora kugera kuri mudasobwa. Ikwiye kumera nka 192.168.1.20."
+    },
+    "diag_LAN_DISABLED": {
+      "en": "This computer is not allowed on the network yet. Turn the network switch on above.",
+      "fr": "Cet ordinateur n'est pas encore autorisé sur le réseau. Activez l'interrupteur réseau ci-dessus.",
+      "rw": "Iyi mudasobwa ntiremerwa ku muyoboro. Fungura umuyoboro haruguru."
+    },
+    "diag_UNKNOWN": {
+      "en": "Not checked yet.",
+      "fr": "Pas encore vérifié.",
+      "rw": "Ntirasuzumwa."
+    }
+  }
+}

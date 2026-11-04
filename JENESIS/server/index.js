@@ -84,7 +84,7 @@ function createApp(options = {}) {
  *
  * Binds the loopback interface by default: the accounting service is not
  * reachable from the network unless an administrator or a maintenance user
- * turned on "allow other computers to connect" in JENESIS Maintenance, which is
+ * turned on "allow other computers to connect" in JENESIS Network & Maintenance, which is
  * recorded next to the database (server/network-config.js).
  *
  * @returns {Promise<{ server: import('http').Server, port: number, host: string, close: () => Promise<void> }>}

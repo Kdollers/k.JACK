@@ -46,7 +46,7 @@ const PERMISSIONS = [
   // administrator and a manager may take a record out of service.
   'records:deactivate', 'records:delete',
   'messaging:read', 'messaging:write',
-  // JENESIS Maintenance: allow other computers on the network to reach the
+  // JENESIS Network & Maintenance: allow other computers on the network to reach the
   // service, and read the service log. Administrator and maintenance only.
   'network:manage', 'logs:read'
 ];

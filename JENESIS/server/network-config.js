@@ -6,7 +6,7 @@
  * accounting data has never been reachable from another machine. Two computers
  * can only exchange Messenger messages (and share one company database) when an
  * administrator or a maintenance user deliberately allows it here — the switch
- * lives in the JENESIS Maintenance application.
+ * lives in the JENESIS Network & Maintenance application.
  *
  * The choice is stored next to the database (<data>/network.json), never in the
  * installation folder, so it survives updates and is not shared between users.

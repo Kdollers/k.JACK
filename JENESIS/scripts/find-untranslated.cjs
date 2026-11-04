@@ -35,9 +35,9 @@ const SRC = (() => {
 const NOT_PROSE = /^[\s\d.,:;!?()%+\-*/=<>[\]{}'"'`|_&$#@~^\\]*$/;
 /** Proper nouns, codes and keyboard keys that must never be translated. */
 const KEEP_AS_IS = new Set([
-  'JENESIS', 'JENESIS Seller', 'JENESIS Maintenance', 'JENESIS Admin',
+  'JENESIS', 'JENESIS Seller', 'JENESIS Network & Maintenance',
   'JENESIS Accounting & Business', 'JENESIS Settings & Access Point',
-  'JENESIS Network & Maintenance', 'KAYIGANWA JACQUES', 'OK', 'PDF', 'CSV',
+  'KAYIGANWA JACQUES', 'OK', 'PDF', 'CSV',
   'JSON', 'SQL', 'URL', 'API', 'ID', 'PIN', 'Wi-Fi', 'LAN', 'IP', 'SMTP'
 ]);
 const KEY_LIKE = /^(Ctrl|Alt|Shift|Meta)\+|^F\d{1,2}$|^\d{4}-\d{2}-\d{2}$/;

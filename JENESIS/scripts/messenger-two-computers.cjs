@@ -12,7 +12,7 @@
  * HOW TO RUN IT (Windows, two computers)
  * ---------------------------------------------------------------------------
  * 1. On the computer that holds the data (computer A):
- *      - open JENESIS Maintenance,
+ *      - open JENESIS Network & Maintenance,
  *      - switch ON "Allow other computers on this network to connect",
  *      - note the address it shows (for example http://192.168.1.20:3000).
  * 2. On computer B (a second PC on the same network):
