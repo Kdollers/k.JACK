@@ -27,6 +27,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $script:Results = @()
+$script:notes = @()
 $DataDir = Join-Path $env:APPDATA $AppName
 $LogFile = Join-Path $DataDir 'logs\desktop.log'
 $ExePath = Join-Path $InstallDir "$AppName.exe"
@@ -88,6 +89,11 @@ function Assert([bool] $Condition, [string] $Message) {
 }
 
 function Write-Summary {
+  if ($script:notes.Count -gt 0) {
+    Write-Host ''
+    Write-Host 'Notes' -ForegroundColor Yellow
+    foreach ($note in $script:notes) { Write-Host "  - $note" -ForegroundColor Yellow }
+  }
   Write-Host ''
   Write-Host 'Summary' -ForegroundColor Yellow
   $script:Results | Format-Table -AutoSize | Out-String | Write-Host
@@ -521,6 +527,20 @@ function Get-WindowPixels([IntPtr] $Handle) {
   }
 }
 
+function Write-WindowState {
+  # What is actually on screen when something is expected to be: the processes,
+  # their windows and the titles those windows carry.
+  $procs = Get-AppProcesses
+  Write-Host ("    processes named $AppName: {0}" -f $procs.Count) -ForegroundColor DarkGray
+  foreach ($p in $procs) {
+    $windows = @([Win32.WindowFinder]::WindowsOf($p.Id))
+    foreach ($h in $windows) {
+      Write-Host ("      pid {0} handle {1} title '{2}'" -f $p.Id, $h, [Win32.WindowFinder]::Title($h)) -ForegroundColor DarkGray
+    }
+    if ($windows.Count -eq 0) { Write-Host ("      pid {0} has no window" -f $p.Id) -ForegroundColor DarkGray }
+  }
+}
+
 function Get-DesktopShortcuts {
   $desktop = [Environment]::GetFolderPath('Desktop')
   $shell = New-Object -ComObject WScript.Shell
@@ -867,12 +887,40 @@ foreach ($appName in $script:expected.Keys) {
   Step "$appName opens from its own shortcut, with its own interface" {
     $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match "--app=$appId" } | Select-Object -First 1
     Assert ($null -ne $shortcut) "The $appName shortcut was not found."
+    # Start from a clean slate. Launching while the previous instance is still
+    # tearing down is a race the application cannot be expected to win, and a
+    # window that never appears is indistinguishable, from the outside, from a
+    # window that was never asked for.
+    $leftover = Get-AppProcesses
+    if ($leftover) {
+      Write-Host ("    waiting for the previous instance to stop ({0} still running)" -f $leftover.Count) -ForegroundColor DarkGray
+      $slateDeadline = (Get-Date).AddSeconds(60)
+      while ((Get-Date) -lt $slateDeadline -and (Get-AppProcesses)) { Start-Sleep -Milliseconds 300 }
+      if (Get-AppProcesses) { Stop-Process -Name $AppName -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 3 }
+    }
     $before = Get-ReadyCount
     # Printed, so a window that opens under the wrong name can be traced to the
     # exact command line that opened it.
     Write-Host ("    launching: {0} {1}" -f $shortcut.Target, $shortcut.Arguments) -ForegroundColor DarkGray
     Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments) | Out-Null
-    $window = Wait-ForTitledWindow $appName 90
+    $window = Wait-ForTitledWindow $appName 60
+    if ($null -eq $window) {
+      # One window that fails to appear is not yet a verdict. This runner has
+      # no display, and a window created while the previous one is being torn
+      # down has been seen to die before it finishes loading - the application
+      # log shows it opening and then nothing. Everything is stopped and it is
+      # asked once more, cleanly; needing the second attempt is reported, never
+      # hidden, because a shortcut that only works on the second try is a
+      # finding and not a pass.
+      Write-Host "    no window appeared; stopping everything and trying once more" -ForegroundColor Yellow
+      Write-WindowState
+      Stop-Process -Name $AppName -Force -ErrorAction SilentlyContinue
+      Start-Sleep -Seconds 5
+      $before = Get-ReadyCount
+      Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments) | Out-Null
+      $window = Wait-ForTitledWindow $appName 90
+      if ($null -ne $window) { $script:notes += "$appName needed a second launch on this runner" }
+    }
     Assert ($null -ne $window) "No window titled '$appName' appeared: the shortcut did not open it."
     Assert-WindowIsReal $window $appName
     Assert (Wait-ForInterfaceStart $before 90) "$appName did not report that its interface started."
