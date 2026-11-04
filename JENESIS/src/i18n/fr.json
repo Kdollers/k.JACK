@@ -118,7 +118,8 @@
     "tax_pct": "Taxe %",
     "disc_pct": "Remise %",
     "tel": "Tél :",
-    "tin_short": "TIN :"
+    "tin_short": "TIN :",
+    "records_count": "{count} enregistrements"
   },
   "dashboard": {
     "title": "Tableau de Bord Financier et Opérationnel",
@@ -1028,5 +1029,36 @@
   "statement": {
     "account_info": "Informations du compte",
     "payment_credit": "Paiement / Crédit"
+  },
+  "records": {
+    "filter_active": "Actifs",
+    "filter_inactive": "Inactifs",
+    "filter_all": "Tous",
+    "filter_label": "Afficher",
+    "deactivate": "Désactiver",
+    "reactivate": "Réactiver",
+    "delete": "Supprimer",
+    "inactive_badge": "Inactif",
+    "confirm_delete_title": "Supprimer {kind}",
+    "confirm_delete_body": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
+    "confirm_deactivate_title": "Désactiver {kind}",
+    "confirm_deactivate_body": "Désactiver « {name} » ? Il ne sera plus proposé pour de nouvelles transactions. Ses documents, soldes et historique sont conservés.",
+    "confirm_reactivate_title": "Réactiver {kind}",
+    "confirm_reactivate_body": "Réactiver « {name} » ? Il sera de nouveau proposé pour de nouvelles transactions.",
+    "archive_instead_title": "Cet enregistrement ne peut pas être supprimé",
+    "archive_instead_body": "Il est lié à {count} enregistrement(s) de transaction, et l'historique comptable n'est jamais détruit. Désactivez-le plutôt : il disparaît des nouvelles transactions et chaque document passé est conservé à l'identique.",
+    "delete_anyway": "Supprimer quand même",
+    "deactivate_instead": "Désactiver plutôt",
+    "deleted_toast": "{kind} « {name} » supprimé.",
+    "deactivated_toast": "{kind} « {name} » désactivé. Son historique est intact.",
+    "reactivated_toast": "{kind} « {name} » réactivé.",
+    "user_sessions_ended": "{count} session(s) ouverte(s) fermée(s) immédiatement.",
+    "kind_customer": "le client",
+    "kind_supplier": "le fournisseur",
+    "kind_product": "l'article",
+    "kind_store": "le magasin",
+    "kind_user": "l'utilisateur",
+    "no_permission": "Seul un administrateur ou un gestionnaire peut retirer un enregistrement.",
+    "checking_history": "Vérification de l'historique..."
   }
 }

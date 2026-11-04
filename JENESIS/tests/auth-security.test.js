@@ -340,7 +340,16 @@ if (scenario === 'fresh') {
     for (const [role, perms] of Object.entries(ROLE_PERMISSIONS)) {
       for (const p of perms) assert.ok(PERMISSIONS.includes(p), `${role} has unknown permission ${p}`);
     }
-    assert.deepStrictEqual(ROLE_PERMISSIONS.manager.filter((p) => !p.endsWith(':read')), [], 'manager is read-only');
+    // A manager is read-only with one deliberate exception: retiring a record
+    // (deactivate / reactivate / delete) sits at administrator-and-manager
+    // level in the specification. Everything else a manager holds ends in
+    // :read; this asserts that list stays exactly that one exception.
+    const writePerms = ROLE_PERMISSIONS.manager.filter((p) => !p.endsWith(':read'));
+    assert.deepStrictEqual(
+      writePerms.slice().sort(),
+      ['records:deactivate', 'records:delete'],
+      `manager must be read-only apart from record retirement; found ${writePerms.join(', ')}`
+    );
   });
 }
 

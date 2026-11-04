@@ -36,6 +36,10 @@ const PERMISSIONS = [
   'accounting:read', 'accounting:write', 'journal:post', 'journal:reverse',
   'fx:read', 'fx:write', 'fx:revalue',
   'company:manage', 'users:manage', 'backup:export', 'backup:restore', 'demo:reset',
+  // Retiring a record (deactivate / reactivate / delete). Deliberately NOT
+  // granted to accountant, sales, purchases or inventory: only an
+  // administrator and a manager may take a record out of service.
+  'records:deactivate', 'records:delete',
   'messaging:read', 'messaging:write',
   // JENESIS Maintenance: allow other computers on the network to reach the
   // service, and read the service log. Administrator and maintenance only.
@@ -81,8 +85,12 @@ const ROLE_PERMISSIONS = {
     // The Maintenance application: the service, the network and the logs.
     'network:manage', 'logs:read'
   ],
-  // Managers have full visibility but cannot change or post anything.
-  manager: [...READ_ALL]
+  // Managers have full visibility but cannot change or post anything — with
+  // one exception: they may retire a record. That is the level the brief
+  // places delete/deactivate/reactivate at, and it is enforced here rather
+  // than by hiding buttons, so a manager's request cannot be forged by
+  // calling the API directly.
+  manager: [...READ_ALL, 'records:deactivate', 'records:delete']
 };
 
 const ROLES = Object.keys(ROLE_PERMISSIONS);
@@ -151,15 +159,18 @@ function revokeSession(token) {
     .run(nowIso(), digest(token));
 }
 
+/**
+ * Revokes every live session for a user. Returns how many were revoked, so a
+ * deactivation can report that open windows were closed immediately.
+ */
 function revokeUserSessions(userId, exceptSessionId = null) {
   const db = getDb();
   if (exceptSessionId) {
-    db.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL AND id <> ?')
-      .run(nowIso(), userId, exceptSessionId);
-  } else {
-    db.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL')
-      .run(nowIso(), userId);
+    return db.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL AND id <> ?')
+      .run(nowIso(), userId, exceptSessionId).changes;
   }
+  return db.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL')
+    .run(nowIso(), userId).changes;
 }
 
 /** Revokes every live session (used after a backup restore). */

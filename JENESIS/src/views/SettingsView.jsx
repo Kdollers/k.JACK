@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import { useTheme } from '../context/ThemeContext';
@@ -21,9 +21,10 @@ import {
   Palette,
   Info
 } from 'lucide-react';
+import RecordLifecycleControls, { RecordStatusFilter } from '../components/RecordLifecycle';
 
 export default function SettingsView() {
-  const { currentCompany, companies, switchCompany, users, showToast, refreshKey, triggerRefresh, logout } = useApp();
+  const { currentCompany, companies, switchCompany, showToast, refreshKey, triggerRefresh, logout } = useApp();
   const { lang, setLang, t } = useI18n();
   const { preference, systemPrefersDark } = useTheme();
 
@@ -31,6 +32,23 @@ export default function SettingsView() {
   const [auditLogs, setAuditLogs] = useState([]);
   const [taxes, setTaxes] = useState([]);
   const [loading, setLoading] = useState(false);
+  // Active / Inactive / All for the user list. The list is fetched here
+  // (rather than read from the context) so the filter is respected.
+  const [userStatus, setUserStatus] = useState('active');
+  const [userList, setUserList] = useState([]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const list = await apiRequest(`/api/auth/users?status=${userStatus}`);
+      setUserList(Array.isArray(list) ? list : []);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }, [userStatus, showToast]);
+
+  useEffect(() => {
+    if (activeTab === 'users') fetchUsers();
+  }, [activeTab, fetchUsers, refreshKey]);
 
   // Company Form
   const [companyForm, setCompanyForm] = useState({
@@ -613,13 +631,16 @@ export default function SettingsView() {
               <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_users')}</h2>
               <p className="text-[11px] text-slate-500">{t('settings.users_subtitle')}</p>
             </div>
-            <button
-              onClick={() => setShowUserModal(true)}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 shadow"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{t('settings.add_user')}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <RecordStatusFilter value={userStatus} onChange={setUserStatus} />
+              <button
+                onClick={() => setShowUserModal(true)}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 shadow"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{t('settings.add_user')}</span>
+              </button>
+            </div>
           </div>
 
           <table className="w-full text-left text-xs">
@@ -630,10 +651,11 @@ export default function SettingsView() {
                 <th className="py-2.5 px-4">{t('settings.role')}</th>
                 <th className="py-2.5 px-4">{t('common.email')}</th>
                 <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
+                <th className="py-2.5 px-4 text-center">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {users.map((u) => (
+              {userList.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-50">
                   <td className="py-3 px-4 font-bold text-slate-800">{u.full_name}</td>
                   <td className="py-3 px-4 font-mono text-slate-600">@{u.username}</td>
@@ -644,9 +666,19 @@ export default function SettingsView() {
                   </td>
                   <td className="py-3 px-4 text-slate-500">{u.email || '-'}</td>
                   <td className="py-3 px-4 text-center">
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-emerald-100 text-emerald-800">
-                      {t('common.active')}
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${u.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                      {u.active ? t('common.active') : t('common.inactive')}
                     </span>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <div className="flex items-center justify-center">
+                      <RecordLifecycleControls
+                        type="users"
+                        record={u}
+                        nameField="username"
+                        onChanged={fetchUsers}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

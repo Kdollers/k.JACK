@@ -49,6 +49,7 @@ const { asErrorResponse } = require('../utils');
 const reports = require('../reports');
 const settlement = require('../settlement');
 const messenger = require('../messenger');
+const records = require('../records');
 
 const APP_VERSION = require('../../package.json').version;
 const APP_NAME = 'JENESIS Business Management & Accounting Software';
@@ -76,6 +77,35 @@ router.use((req, res, next) => {
   if (PUBLIC_ROUTES.has(`${req.method} ${req.path}`)) return next();
   return authenticate(req, res, next);
 });
+
+
+/**
+ * Translates ?status=active|inactive|all into a SQL fragment.
+ *
+ * The default is 'active': a deactivated record must stop appearing in the
+ * pickers used to raise new invoices, bills, receipts and transfers, and those
+ * call these endpoints without any query string. A list screen that wants to
+ * show retired records asks for them explicitly with ?status=inactive|all.
+ */
+function statusClause(req, column = 'active') {
+  const status = String(req.query.status || 'active').toLowerCase();
+  if (status === 'all') return '';
+  if (status === 'inactive') return ` AND ${column} = 0`;
+  return ` AND ${column} = 1`;
+}
+
+/**
+ * Many list endpoints carry an optional ?status=. A test asserts they do, so a
+ * new endpoint cannot silently start returning retired records to a picker.
+ */
+const STATUS_FILTERED_ENDPOINTS = [
+  'GET /customers',
+  'GET /suppliers',
+  'GET /products',
+  'GET /inventory/warehouses',
+  'GET /auth/users'
+];
+module.exports.STATUS_FILTERED_ENDPOINTS = STATUS_FILTERED_ENDPOINTS;
 
 /** Returns the authenticated company and user for the current request. */
 function getSessionContext(req) {
@@ -194,7 +224,7 @@ router.get('/auth/users', requirePermission('users:manage'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const users = getDb().prepare(`
     SELECT id, username, full_name, email, role, active, must_change_password, last_login_at, created_at
-    FROM users WHERE company_id = ? ORDER BY full_name ASC
+    FROM users WHERE company_id = ?${statusClause(req)} ORDER BY full_name ASC
   `).all(companyId);
   res.json(users);
 });
@@ -471,6 +501,7 @@ router.get('/customers', requirePermission('contacts:read'), (req, res) => {
   const params = [companyId];
   // The anonymous walk-in customer is hidden from pickers/lists by default.
   if (req.query.include_walk_in !== '1') sql += ' AND is_walk_in = 0';
+  sql += statusClause(req);
   if (search) {
     sql += ' AND (name LIKE ? OR code LIKE ? OR phone LIKE ? OR email LIKE ?)';
     params.push(search, search, search, search);
@@ -546,6 +577,7 @@ router.get('/suppliers', requirePermission('contacts:read'), (req, res) => {
     sql += ' AND (name LIKE ? OR code LIKE ? OR phone LIKE ? OR email LIKE ?)';
     params.push(search, search, search, search);
   }
+  sql += statusClause(req);
   sql += ' ORDER BY name ASC';
   res.json(db.prepare(sql).all(...params));
 });
@@ -617,6 +649,7 @@ router.get('/products', requirePermission('inventory:read'), (req, res) => {
     sql += ' AND (name LIKE ? OR sku LIKE ? OR category LIKE ? OR barcode LIKE ?)';
     params.push(search, search, search, search);
   }
+  sql += statusClause(req);
   sql += ' ORDER BY category ASC, name ASC';
   res.json(db.prepare(sql).all(...params));
 });
@@ -860,7 +893,11 @@ router.post('/inventory/counts/:id/post', requirePermission('inventory:approve')
 // --- Multiple stores (warehouses) ---
 router.get('/inventory/warehouses', requirePermission('inventory:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
-  res.json(stores.listWarehouses(companyId, { includeInactive: req.query.include_inactive === '1' }));
+  // ?status= defaults to active so a deactivated store never appears in the
+  // store picker on a receipt, transfer or adjustment.
+  const status = String(req.query.status || 'active').toLowerCase();
+  res.json(stores.listWarehouses(companyId, { includeInactive: status !== 'active' })
+    .filter((w) => (status === 'all' ? true : status === 'inactive' ? !w.active : !!w.active)));
 });
 
 router.post('/inventory/warehouses', requirePermission('stores:manage'), (req, res) => {
@@ -2415,6 +2452,60 @@ router.post('/system/integrity', requirePermission('logs:read'), (req, res) => {
     postedEntries: unbalanced.n,
     ok: integrity.length === 1 && String(integrity[0]).toLowerCase() === 'ok' && foreignKeys.length === 0
   });
+});
+
+
+// --------------------------------------------------------------------------
+// RECORD LIFECYCLE — deactivate / reactivate / delete
+//
+// Admin and manager only (see the 'records:*' permissions); every other role
+// is refused here, not merely hidden from the screen. Nothing with history can
+// ever be deleted: a record that has been invoiced, billed, paid, moved or
+// journalled is deactivated instead, and the 409 tells the client to offer
+// that. Each action is written to the audit log.
+// --------------------------------------------------------------------------
+router.post('/records/:type/:id/deactivate', requirePermission('records:deactivate'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    const result = records.setActive({ type: req.params.type, id: req.params.id, companyId, user, active: false });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    records.toHttpError(err, res);
+  }
+});
+
+router.post('/records/:type/:id/reactivate', requirePermission('records:deactivate'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    const result = records.setActive({ type: req.params.type, id: req.params.id, companyId, user, active: true });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    records.toHttpError(err, res);
+  }
+});
+
+router.delete('/records/:type/:id', requirePermission('records:delete'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  try {
+    const result = records.remove({ type: req.params.type, id: req.params.id, companyId, user });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    records.toHttpError(err, res);
+  }
+});
+
+// How much history a record carries, so a screen can explain up front why it
+// can only be archived rather than offering a button that will be refused.
+router.get('/records/:type/:id/history', requirePermission('records:deactivate'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  try {
+    const record = records.getRecord(req.params.type, companyId, req.params.id);
+    if (!record) return res.status(404).json({ error: 'Record not found.', code: 'NOT_FOUND' });
+    const { total, references } = records.countHistory(req.params.type, companyId, req.params.id);
+    res.json({ total, references, canDelete: total === 0 });
+  } catch (err) {
+    records.toHttpError(err, res);
+  }
 });
 
 module.exports = router;

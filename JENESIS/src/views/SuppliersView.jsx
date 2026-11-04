@@ -4,6 +4,7 @@ import { useShortcutAction } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
 import { apiRequest } from '../services/api';
 import StatementModal from '../components/StatementModal';
+import RecordLifecycleControls, { RecordStatusFilter, InactiveBadge } from '../components/RecordLifecycle';
 import {
   Building,
   Plus,
@@ -25,6 +26,8 @@ export default function SuppliersView() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('list'); // 'list' or 'aging'
   const [agingData, setAgingData] = useState(null);
+  // Active / Inactive / All — retired suppliers are hidden by default.
+  const [statusFilter, setStatusFilter] = useState('active');
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -51,7 +54,7 @@ export default function SuppliersView() {
   const fetchSuppliers = async () => {
     setLoading(true);
     try {
-      const data = await apiRequest(`/api/suppliers?search=${encodeURIComponent(search)}`);
+      const data = await apiRequest(`/api/suppliers?search=${encodeURIComponent(search)}&status=${statusFilter}`);
       setSuppliers(data);
     } catch (err) {
       showToast(err.message, 'error');
@@ -72,7 +75,7 @@ export default function SuppliersView() {
   useEffect(() => {
     fetchSuppliers();
     if (activeTab === 'aging') fetchAging();
-  }, [currentCompany?.id, search, activeTab, refreshKey]);
+  }, [currentCompany?.id, search, activeTab, refreshKey, statusFilter]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -194,7 +197,10 @@ export default function SuppliersView() {
                 className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-            <div className="text-xs text-slate-500 font-medium">{suppliers.length} records</div>
+            <div className="flex items-center gap-2">
+              <RecordStatusFilter value={statusFilter} onChange={setStatusFilter} />
+              <div className="text-xs text-slate-500 font-medium">{t('common.records_count', { count: suppliers.length })}</div>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -222,7 +228,10 @@ export default function SuppliersView() {
                     <tr key={s.id} data-j-row={s.id} className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none" tabIndex={0}>
                       <td className="py-3 px-4 font-mono font-semibold text-blue-600">{s.code}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">
-                        <div>{s.name}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span>{s.name}</span>
+                          {!s.active && <InactiveBadge />}
+                        </div>
                         {s.tax_id && <div className="text-[10px] text-slate-400 font-mono">{t('common.tin_short')} {s.tax_id}</div>}
                       </td>
                       <td className="py-3 px-4 text-slate-600">{s.contact_person || '-'}</td>
@@ -266,6 +275,12 @@ export default function SuppliersView() {
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
+                          <RecordLifecycleControls
+                            type="suppliers"
+                            record={s}
+                            nameField="name"
+                            onChanged={fetchSuppliers}
+                          />
                         </div>
                       </td>
                     </tr>

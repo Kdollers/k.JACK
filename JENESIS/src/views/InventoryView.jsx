@@ -29,6 +29,7 @@ import {
   Save,
   RotateCcw
 } from 'lucide-react';
+import RecordLifecycleControls, { RecordStatusFilter, InactiveBadge } from '../components/RecordLifecycle';
 
 const COUNT_STATUSES = {
   DRAFT: 'bg-slate-100 text-slate-600 border-slate-200',
@@ -112,6 +113,10 @@ export default function InventoryView() {
   // Transfer form
   const [transferForm, setTransferForm] = useState({ fromWarehouseId: '', toWarehouseId: '', notes: '', lines: [] });
 
+  // Active / Inactive / All — retired products and stores are hidden by default.
+  const [productStatus, setProductStatus] = useState('active');
+  const [storeStatus, setStoreStatus] = useState('active');
+
   // Physical Count (workflow)
   const [countWarehouseId, setCountWarehouseId] = useState('');
   const [countLines, setCountLines] = useState([]);
@@ -120,24 +125,24 @@ export default function InventoryView() {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      setProducts(await apiRequest(`/api/products?search=${encodeURIComponent(search)}`));
+      setProducts(await apiRequest(`/api/products?search=${encodeURIComponent(search)}&status=${productStatus}`));
     } catch (err) {
       showToast(translateError(t, err), 'error');
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, productStatus]);
 
   const fetchWarehouses = useCallback(async () => {
     try {
-      const data = await apiRequest('/api/inventory/warehouses');
+      const data = await apiRequest(`/api/inventory/warehouses?status=${storeStatus}`);
       setWarehouses(data);
       return data;
     } catch (err) {
       console.error(err);
       return [];
     }
-  }, []);
+  }, [storeStatus]);
 
   const fetchStockLevels = useCallback(async () => {
     try {
@@ -544,7 +549,10 @@ export default function InventoryView() {
                 className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-            <div className="text-xs text-slate-500 font-medium">{products.length} {t('inventory.products_listed')}</div>
+            <div className="flex items-center gap-2">
+              <RecordStatusFilter value={productStatus} onChange={setProductStatus} />
+              <div className="text-xs text-slate-500 font-medium">{products.length} {t('inventory.products_listed')}</div>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -573,7 +581,10 @@ export default function InventoryView() {
                       <tr key={p.id} data-j-row={p.id} className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none" tabIndex={0}>
                         <td className="py-3 px-4 font-mono font-semibold text-blue-600">{p.sku}</td>
                         <td className="py-3 px-4 font-bold text-slate-800">
-                          <div>{p.name}</div>
+                          <div className="flex items-center gap-1.5">
+                            <span>{p.name}</span>
+                            {!p.active && <InactiveBadge />}
+                          </div>
                           <div className="text-[10px] text-slate-400">{isGoods ? p.unit : t('inventory.service')}</div>
                         </td>
                         <td className="py-3 px-4 text-slate-600 font-medium">{p.category}</td>
@@ -620,6 +631,12 @@ export default function InventoryView() {
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
+                          <RecordLifecycleControls
+                            type="products"
+                            record={p}
+                            nameField="name"
+                            onChanged={fetchProducts}
+                          />
                         </td>
                       </tr>
                     );
@@ -638,7 +655,10 @@ export default function InventoryView() {
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-800">{t('inventory.tab_stores')}</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-sm font-bold text-slate-800">{t('inventory.tab_stores')}</h2>
+                <RecordStatusFilter value={storeStatus} onChange={setStoreStatus} />
+              </div>
               {canManageStores && (
                 <button
                   onClick={() => {
@@ -688,6 +708,12 @@ export default function InventoryView() {
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
+                        <RecordLifecycleControls
+                          type="warehouses"
+                          record={w}
+                          nameField="name"
+                          onChanged={fetchWarehouses}
+                        />
                       </td>
                     )}
                   </tr>

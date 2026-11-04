@@ -1,0 +1,104 @@
+{
+  "records": {
+    "filter_active":   { "en": "Active",   "fr": "Actifs",    "rw": "Birakora" },
+    "filter_inactive": { "en": "Inactive", "fr": "Inactifs",  "rw": "Bitakora" },
+    "filter_all":      { "en": "All",      "fr": "Tous",      "rw": "Byose" },
+    "filter_label":    { "en": "Show",     "fr": "Afficher",  "rw": "Erekana" },
+
+    "deactivate":      { "en": "Deactivate", "fr": "Désactiver", "rw": "Hagarika" },
+    "reactivate":      { "en": "Reactivate", "fr": "Réactiver", "rw": "Ongera ukoreshe" },
+    "delete":          { "en": "Delete",     "fr": "Supprimer", "rw": "Siba" },
+
+    "inactive_badge":  { "en": "Inactive", "fr": "Inactif", "rw": "Ntibikora" },
+
+    "confirm_delete_title": {
+      "en": "Delete {kind}",
+      "fr": "Supprimer {kind}",
+      "rw": "Siba {kind}"
+    },
+    "confirm_delete_body": {
+      "en": "Permanently delete \"{name}\"? This cannot be undone.",
+      "fr": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
+      "rw": "Gusiba burundu « {name} »? Ibi ntibishobora gusubizwa inyuma."
+    },
+    "confirm_deactivate_title": {
+      "en": "Deactivate {kind}",
+      "fr": "Désactiver {kind}",
+      "rw": "Hagarika {kind}"
+    },
+    "confirm_deactivate_body": {
+      "en": "Deactivate \"{name}\"? It will no longer be offered for new transactions. Its existing documents, balances and history are kept.",
+      "fr": "Désactiver « {name} » ? Il ne sera plus proposé pour de nouvelles transactions. Ses documents, soldes et historique sont conservés.",
+      "rw": "Guhagarika « {name} »? Ntikizongera gutangwa mu bikorwa bishya. Inyandiko, amafaranga n'amateka yacyo biragumaho."
+    },
+    "confirm_reactivate_title": {
+      "en": "Reactivate {kind}",
+      "fr": "Réactiver {kind}",
+      "rw": "Ongera ukoreshe {kind}"
+    },
+    "confirm_reactivate_body": {
+      "en": "Reactivate \"{name}\"? It will be offered for new transactions again.",
+      "fr": "Réactiver « {name} » ? Il sera de nouveau proposé pour de nouvelles transactions.",
+      "rw": "Kongera gukoresha « {name} »? Bizongera gutangwa mu bikorwa bishya."
+    },
+
+    "archive_instead_title": {
+      "en": "This record cannot be deleted",
+      "fr": "Cet enregistrement ne peut pas être supprimé",
+      "rw": "Iyi nyandiko ntishobora gusibwa"
+    },
+    "archive_instead_body": {
+      "en": "It is linked to {count} transaction record(s), and accounting history is never destroyed. Deactivate it instead: it disappears from new transactions and every past document stays exactly as it was.",
+      "fr": "Il est lié à {count} enregistrement(s) de transaction, et l'historique comptable n'est jamais détruit. Désactivez-le plutôt : il disparaît des nouvelles transactions et chaque document passé est conservé à l'identique.",
+      "rw": "Ifitanye isano n'inyandiko {count} z'ibikorwa, kandi amateka y'ibaruramari ntasibwa. Ahubwo birahagarara: ntibizongera gutangwa mu bikorwa bishya kandi inyandiko zose zashize zigumaho uko zari zimeze."
+    },
+    "delete_anyway": {
+      "en": "Delete anyway",
+      "fr": "Supprimer quand même",
+      "rw": "Siba nubwo bimeze bityo"
+    },
+    "deactivate_instead": {
+      "en": "Deactivate instead",
+      "fr": "Désactiver plutôt",
+      "rw": "Ahubwo bihagarare"
+    },
+
+    "deleted_toast": {
+      "en": "{kind} \"{name}\" deleted.",
+      "fr": "{kind} « {name} » supprimé.",
+      "rw": "{kind} « {name} » yasibwe."
+    },
+    "deactivated_toast": {
+      "en": "{kind} \"{name}\" deactivated. Its history is intact.",
+      "fr": "{kind} « {name} » désactivé. Son historique est intact.",
+      "rw": "{kind} « {name} » ihagaritswe. Amateka yayo arahari."
+    },
+    "reactivated_toast": {
+      "en": "{kind} \"{name}\" reactivated.",
+      "fr": "{kind} « {name} » réactivé.",
+      "rw": "{kind} « {name} » yongeye gukoreshwa."
+    },
+    "user_sessions_ended": {
+      "en": "{count} open session(s) ended immediately.",
+      "fr": "{count} session(s) ouverte(s) fermée(s) immédiatement.",
+      "rw": "Ibyicaro {count} byari bifunguye byahise bifungwa."
+    },
+
+    "kind_customer":  { "en": "Customer",  "fr": "le client",       "rw": "Umukiriya" },
+    "kind_supplier":  { "en": "Supplier",  "fr": "le fournisseur",  "rw": "Umucuruzi" },
+    "kind_product":   { "en": "Product",   "fr": "l'article",       "rw": "Igicuruzwa" },
+    "kind_store":     { "en": "Store",     "fr": "le magasin",      "rw": "Ububiko" },
+    "kind_user":      { "en": "User",      "fr": "l'utilisateur",   "rw": "Ukoresha" },
+
+    "no_permission": {
+      "en": "Only an administrator or a manager can retire a record.",
+      "fr": "Seul un administrateur ou un gestionnaire peut retirer un enregistrement.",
+      "rw": "Umuyobozi cyangwa umucungezi ni we wenyine ushobora guhagarika inyandiko."
+    },
+    "checking_history": {
+      "en": "Checking history...",
+      "fr": "Vérification de l'historique...",
+      "rw": "Kugenzura amateka..."
+    }
+  }
+}

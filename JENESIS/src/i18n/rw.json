@@ -118,7 +118,8 @@
     "tax_pct": "Umusoro %",
     "disc_pct": "Igabanywa %",
     "tel": "Telefoni:",
-    "tin_short": "TIN:"
+    "tin_short": "TIN:",
+    "records_count": "Inyandiko {count}"
   },
   "dashboard": {
     "title": "Imbonerahamwe Nkuru y'Imari n'Ubucuruzi",
@@ -1028,5 +1029,36 @@
   "statement": {
     "account_info": "Amakuru ya konti",
     "payment_credit": "Ubwishyu / Inguzanyo"
+  },
+  "records": {
+    "filter_active": "Birakora",
+    "filter_inactive": "Bitakora",
+    "filter_all": "Byose",
+    "filter_label": "Erekana",
+    "deactivate": "Hagarika",
+    "reactivate": "Ongera ukoreshe",
+    "delete": "Siba",
+    "inactive_badge": "Ntibikora",
+    "confirm_delete_title": "Siba {kind}",
+    "confirm_delete_body": "Gusiba burundu « {name} »? Ibi ntibishobora gusubizwa inyuma.",
+    "confirm_deactivate_title": "Hagarika {kind}",
+    "confirm_deactivate_body": "Guhagarika « {name} »? Ntikizongera gutangwa mu bikorwa bishya. Inyandiko, amafaranga n'amateka yacyo biragumaho.",
+    "confirm_reactivate_title": "Ongera ukoreshe {kind}",
+    "confirm_reactivate_body": "Kongera gukoresha « {name} »? Bizongera gutangwa mu bikorwa bishya.",
+    "archive_instead_title": "Iyi nyandiko ntishobora gusibwa",
+    "archive_instead_body": "Ifitanye isano n'inyandiko {count} z'ibikorwa, kandi amateka y'ibaruramari ntasibwa. Ahubwo birahagarara: ntibizongera gutangwa mu bikorwa bishya kandi inyandiko zose zashize zigumaho uko zari zimeze.",
+    "delete_anyway": "Siba nubwo bimeze bityo",
+    "deactivate_instead": "Ahubwo bihagarare",
+    "deleted_toast": "{kind} « {name} » yasibwe.",
+    "deactivated_toast": "{kind} « {name} » ihagaritswe. Amateka yayo arahari.",
+    "reactivated_toast": "{kind} « {name} » yongeye gukoreshwa.",
+    "user_sessions_ended": "Ibyicaro {count} byari bifunguye byahise bifungwa.",
+    "kind_customer": "Umukiriya",
+    "kind_supplier": "Umucuruzi",
+    "kind_product": "Igicuruzwa",
+    "kind_store": "Ububiko",
+    "kind_user": "Ukoresha",
+    "no_permission": "Umuyobozi cyangwa umucungezi ni we wenyine ushobora guhagarika inyandiko.",
+    "checking_history": "Kugenzura amateka..."
   }
 }

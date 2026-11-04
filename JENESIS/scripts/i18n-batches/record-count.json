@@ -1,0 +1,9 @@
+{
+  "common": {
+    "records_count": {
+      "en": "{count} records",
+      "fr": "{count} enregistrements",
+      "rw": "Inyandiko {count}"
+    }
+  }
+}

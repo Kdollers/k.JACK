@@ -118,7 +118,8 @@
     "tax_pct": "Tax %",
     "disc_pct": "Disc %",
     "tel": "Tel:",
-    "tin_short": "TIN:"
+    "tin_short": "TIN:",
+    "records_count": "{count} records"
   },
   "dashboard": {
     "title": "Executive Financial Dashboard",
@@ -1028,5 +1029,36 @@
   "statement": {
     "account_info": "Account Info",
     "payment_credit": "Payment / Credit"
+  },
+  "records": {
+    "filter_active": "Active",
+    "filter_inactive": "Inactive",
+    "filter_all": "All",
+    "filter_label": "Show",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "delete": "Delete",
+    "inactive_badge": "Inactive",
+    "confirm_delete_title": "Delete {kind}",
+    "confirm_delete_body": "Permanently delete \"{name}\"? This cannot be undone.",
+    "confirm_deactivate_title": "Deactivate {kind}",
+    "confirm_deactivate_body": "Deactivate \"{name}\"? It will no longer be offered for new transactions. Its existing documents, balances and history are kept.",
+    "confirm_reactivate_title": "Reactivate {kind}",
+    "confirm_reactivate_body": "Reactivate \"{name}\"? It will be offered for new transactions again.",
+    "archive_instead_title": "This record cannot be deleted",
+    "archive_instead_body": "It is linked to {count} transaction record(s), and accounting history is never destroyed. Deactivate it instead: it disappears from new transactions and every past document stays exactly as it was.",
+    "delete_anyway": "Delete anyway",
+    "deactivate_instead": "Deactivate instead",
+    "deleted_toast": "{kind} \"{name}\" deleted.",
+    "deactivated_toast": "{kind} \"{name}\" deactivated. Its history is intact.",
+    "reactivated_toast": "{kind} \"{name}\" reactivated.",
+    "user_sessions_ended": "{count} open session(s) ended immediately.",
+    "kind_customer": "Customer",
+    "kind_supplier": "Supplier",
+    "kind_product": "Product",
+    "kind_store": "Store",
+    "kind_user": "User",
+    "no_permission": "Only an administrator or a manager can retire a record.",
+    "checking_history": "Checking history..."
   }
 }
