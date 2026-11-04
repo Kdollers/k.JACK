@@ -402,13 +402,31 @@ if (-not ('Win32.Snapshot' -as [type])) {
     public const uint PW_RENDERFULLCONTENT = 0x00000002;
     public const uint SRCCOPY = 0x00CC0020;
 
-    /** Renders the window and writes it to a PNG file. True when it worked. */
-    public static bool Save(IntPtr hWnd, string path) {
+    private static void PutU16(byte[] b, int off, ushort v) {
+      b[off] = (byte)(v & 0xFF);
+      b[off + 1] = (byte)((v >> 8) & 0xFF);
+    }
+
+    private static void PutU32(byte[] b, int off, uint v) {
+      b[off] = (byte)(v & 0xFF);
+      b[off + 1] = (byte)((v >> 8) & 0xFF);
+      b[off + 2] = (byte)((v >> 16) & 0xFF);
+      b[off + 3] = (byte)((v >> 24) & 0xFF);
+    }
+
+    /**
+     * Renders the window and returns a complete BMP file as bytes, or null.
+     * The file is assembled here rather than with System.Drawing because
+     * Image lives in an assembly that is not referenced on every Windows
+     * runner; writing it out is left to the caller, which has the whole
+     * framework available.
+     */
+    public static byte[] ToBmp(IntPtr hWnd) {
       RECT r;
-      if (!GetWindowRect(hWnd, out r)) return false;
+      if (!GetWindowRect(hWnd, out r)) return null;
       int w = r.Right - r.Left;
       int h = r.Bottom - r.Top;
-      if (w <= 0 || h <= 0) return false;
+      if (w <= 0 || h <= 0) return null;
       IntPtr screen = GetDC(IntPtr.Zero);
       IntPtr mem = CreateCompatibleDC(screen);
       IntPtr bmp = CreateCompatibleBitmap(screen, w, h);
@@ -419,7 +437,7 @@ if (-not ('Win32.Snapshot' -as [type])) {
         ok = BitBlt(mem, 0, 0, w, h, winDc, 0, 0, SRCCOPY);
         ReleaseDC(hWnd, winDc);
       }
-      bool saved = false;
+      byte[] file = null;
       if (ok) {
         BITMAPINFO info = new BITMAPINFO();
         info.bmiHeader = new BITMAPINFOHEADER();
@@ -433,39 +451,28 @@ if (-not ('Win32.Snapshot' -as [type])) {
         byte[] bits = new byte[w * h * 4];
         int rows = GetDIBits(mem, bmp, 0, (uint)h, bits, ref info, 0);
         if (rows != 0) {
-          // Written as a BMP, by hand. System.Drawing would be one line, but
-          // its Image type lives in an assembly that is not referenced on
-          // every Windows runner, and a screenshot that only works on some
-          // machines is worse than a plain uncompressed one that always does.
-          try {
-            using (System.IO.FileStream fs = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write)) {
-              using (System.IO.BinaryWriter wr = new System.IO.BinaryWriter(fs)) {
-                uint pixels = (uint)(w * h * 4);
-                wr.Write((byte)0x42); wr.Write((byte)0x4D);   // "BM"
-                wr.Write((uint)(54 + pixels));                 // whole file
-                wr.Write((ushort)0); wr.Write((ushort)0);      // reserved
-                wr.Write((uint)54);                            // where the pixels start
-                wr.Write((uint)40);                            // header size
-                wr.Write((int)w);
-                wr.Write((int)(-h));                           // negative: top row first
-                wr.Write((ushort)1);                           // one plane
-                wr.Write((ushort)32);                          // 32 bits per pixel
-                wr.Write((uint)0);                             // BI_RGB, not compressed
-                wr.Write(pixels);
-                wr.Write((int)0); wr.Write((int)0);            // pixels per metre
-                wr.Write((uint)0); wr.Write((uint)0);          // no palette
-                wr.Write(bits);
-              }
-            }
-            saved = true;
-          } catch (System.Exception) { saved = false; }
+          uint pixels = (uint)(w * h * 4);
+          file = new byte[54 + pixels];
+          file[0] = 0x42; file[1] = 0x4D;          // "BM"
+          PutU32(file, 2, (uint)(54 + pixels));    // whole file
+          PutU32(file, 10, 54);                    // where the pixels start
+          PutU32(file, 14, 40);                    // header size
+          PutU32(file, 18, (uint)w);
+          PutU32(file, 22, (uint)(-h));            // negative: the top row first
+          PutU16(file, 26, 1);                     // one plane
+          PutU16(file, 28, 32);                    // 32 bits per pixel
+          PutU32(file, 30, 0);                     // BI_RGB, not compressed
+          PutU32(file, 34, pixels);
+          PutU32(file, 38, 0); PutU32(file, 42, 0); // pixels per metre
+          PutU32(file, 46, 0); PutU32(file, 50, 0); // no palette
+          for (int i = 0; i < bits.Length; i++) file[54 + i] = bits[i];
         }
       }
       SelectObject(mem, old);
       DeleteObject(bmp);
       DeleteDC(mem);
       ReleaseDC(IntPtr.Zero, screen);
-      return saved;
+      return file;
     }
 '@
 }
@@ -473,11 +480,13 @@ if (-not ('Win32.Snapshot' -as [type])) {
 $script:ShotDir = Join-Path (Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..')).Path 'release') 'screenshots'
 New-Item -ItemType Directory -Force -Path $script:ShotDir | Out-Null
 
-/** Saves a picture of a window, next to the installer, for the release. */
+# Saves a picture of a window, next to the installer, for the release.
 function Save-WindowPicture($Window, [string] $FileName) {
   $path = Join-Path $script:ShotDir $FileName
   try {
-    if ([Win32.Snapshot]::Save($Window.Handle, $path)) {
+    $bytes = [Win32.Snapshot]::ToBmp($Window.Handle)
+    if ($bytes -and $bytes.Length -gt 54) {
+      [System.IO.File]::WriteAllBytes($path, $bytes)
       Write-Host "    picture saved: $FileName" -ForegroundColor DarkGray
       return $true
     }
