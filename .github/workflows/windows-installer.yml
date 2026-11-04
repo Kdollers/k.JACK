@@ -278,7 +278,7 @@ jobs:
         with:
           name: JENESIS-screenshots
           path: |
-            JENESIS/release/screenshots/*.png
+            JENESIS/release/screenshots/*.bmp
           if-no-files-found: warn
 
       - name: Upload the portable package
@@ -334,7 +334,7 @@ jobs:
           # Real pictures of the four applications, taken from the installed
           # windows during the smoke test.
           if (Test-Path release\screenshots) {
-            $assets += (Get-ChildItem 'release\screenshots' -Filter '*.png' | ForEach-Object { $_.FullName })
+            $assets += (Get-ChildItem 'release\screenshots' -Filter '*.bmp' | ForEach-Object { $_.FullName })
           }
           if ($assets.Count -eq 0) { throw 'No downloadable files were produced.' }
 

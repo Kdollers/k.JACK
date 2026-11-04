@@ -281,7 +281,7 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 | Theme rules | 34 |
 | Theme UI | 6 |
 | Interface import gate | 7 |
-| **Total** | **524 checks, 0 failed, 31 suites** |
+| **Total** | **528 checks, 0 failed, 31 suites** |
 
 Plus, on the Windows runner:
 
@@ -387,7 +387,7 @@ is the first place to look.
 | `JEN 0.5.4.zip` | _see the release page_ | _see the release page_ |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**524 automated checks** on that build, and the
+named on the release page (**528 automated checks** on that build, and the
 installed-application smoke test recorded on the release page).
 
 Every push rebuilds and republishes these files, so a later build carries a

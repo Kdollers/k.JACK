@@ -373,6 +373,20 @@ if (-not ('Win32.Snapshot' -as [type])) {
   Add-Type -Namespace Win32 -Name Snapshot -MemberDefinition @'
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BITMAPINFOHEADER {
+      public uint biSize; public int biWidth; public int biHeight; public ushort biPlanes;
+      public ushort biBitCount; public uint biCompression; public uint biSizeImage;
+      public int biXPelsPerMeter; public int biYPelsPerMeter; public uint biClrUsed; public uint biClrImportant;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BITMAPINFO {
+      public BITMAPINFOHEADER bmiHeader;
+      [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public uint[] bmiColors;
+    }
+
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, uint nFlags);
     [DllImport("user32.dll")] public static extern IntPtr GetWindowDC(IntPtr hWnd);
@@ -384,6 +398,7 @@ if (-not ('Win32.Snapshot' -as [type])) {
     [DllImport("gdi32.dll")]  public static extern bool DeleteObject(IntPtr hObject);
     [DllImport("gdi32.dll")]  public static extern bool DeleteDC(IntPtr hdc);
     [DllImport("gdi32.dll")]  public static extern bool BitBlt(IntPtr hdcDest, int x, int y, int w, int h, IntPtr hdcSrc, int x1, int y1, uint rop);
+    [DllImport("gdi32.dll")]  public static extern int GetDIBits(IntPtr hdc, IntPtr hbmp, uint uStartScan, uint cScanLines, byte[] lpvBits, ref BITMAPINFO lpbmi, uint uUsage);
     public const uint PW_RENDERFULLCONTENT = 0x00000002;
     public const uint SRCCOPY = 0x00CC0020;
 
@@ -406,12 +421,45 @@ if (-not ('Win32.Snapshot' -as [type])) {
       }
       bool saved = false;
       if (ok) {
-        try {
-          using (System.Drawing.Image img = System.Drawing.Image.FromHbitmap(bmp)) {
-            img.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+        BITMAPINFO info = new BITMAPINFO();
+        info.bmiHeader = new BITMAPINFOHEADER();
+        info.bmiHeader.biSize = (uint)Marshal.SizeOf(typeof(BITMAPINFOHEADER));
+        info.bmiHeader.biWidth = w;
+        info.bmiHeader.biHeight = -h;
+        info.bmiHeader.biPlanes = 1;
+        info.bmiHeader.biBitCount = 32;
+        info.bmiHeader.biCompression = 0;
+        info.bmiColors = new uint[3];
+        byte[] bits = new byte[w * h * 4];
+        int rows = GetDIBits(mem, bmp, 0, (uint)h, bits, ref info, 0);
+        if (rows != 0) {
+          // Written as a BMP, by hand. System.Drawing would be one line, but
+          // its Image type lives in an assembly that is not referenced on
+          // every Windows runner, and a screenshot that only works on some
+          // machines is worse than a plain uncompressed one that always does.
+          try {
+            using (System.IO.FileStream fs = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write)) {
+              using (System.IO.BinaryWriter wr = new System.IO.BinaryWriter(fs)) {
+                uint pixels = (uint)(w * h * 4);
+                wr.Write((byte)0x42); wr.Write((byte)0x4D);   // "BM"
+                wr.Write((uint)(54 + pixels));                 // whole file
+                wr.Write((ushort)0); wr.Write((ushort)0);      // reserved
+                wr.Write((uint)54);                            // where the pixels start
+                wr.Write((uint)40);                            // header size
+                wr.Write((int)w);
+                wr.Write((int)(-h));                           // negative: top row first
+                wr.Write((ushort)1);                           // one plane
+                wr.Write((ushort)32);                          // 32 bits per pixel
+                wr.Write((uint)0);                             // BI_RGB, not compressed
+                wr.Write(pixels);
+                wr.Write((int)0); wr.Write((int)0);            // pixels per metre
+                wr.Write((uint)0); wr.Write((uint)0);          // no palette
+                wr.Write(bits);
+              }
+            }
             saved = true;
-          }
-        } catch { saved = false; }
+          } catch (System.Exception) { saved = false; }
+        }
       }
       SelectObject(mem, old);
       DeleteObject(bmp);
@@ -419,7 +467,7 @@ if (-not ('Win32.Snapshot' -as [type])) {
       ReleaseDC(IntPtr.Zero, screen);
       return saved;
     }
-'@ -ReferencedAssemblies System.Drawing, System.Drawing.Common
+'@
 }
 
 $script:ShotDir = Join-Path (Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..')).Path 'release') 'screenshots'
@@ -509,7 +557,7 @@ function Assert-WindowIsReal($Window, [string] $What) {
   # rendered. A failure to take the picture never fails the test - the pixel
   # analysis below is the real check.
   $safe = ($What -replace '[^A-Za-z0-9]+', '-').Trim('-')
-  if ($safe) { Save-WindowPicture -Window $Window -FileName "$safe.png" }
+  if ($safe) { Save-WindowPicture -Window $Window -FileName "$safe.bmp" }
   $pixels = Get-WindowPixels -Handle $Window.Handle
   if (-not $pixels) { Start-Sleep -Seconds 5; $pixels = Get-WindowPixels -Handle $Window.Handle }
   Assert ($null -ne $pixels) "The $What window could not be captured."
