@@ -1051,11 +1051,25 @@ Step 'The four applications run side by side, each in its own window' {
   Assert ([bool]$url) 'The backend address of the running application was not found in the log.'
   $status = Invoke-Api $url 'GET' '/setup/status'
   Assert ($status.needsSetup -eq $false) 'The company created earlier is not the one the four windows see.'
-  # Photographed only here, with all four proven open and proven to be serving
-  # one company: a picture of four windows is evidence, a picture of one
-  # window taken four times is not.
+  # Photographed here, not one at a time earlier in the run: this is the moment
+  # when all four are proven open and proven to be serving one company.
+  #
+  # Each window is rendered separately because the whole desktop does not show
+  # them together: the windows are 1366x860 and the runner's screen is 1024x768,
+  # so they cover one another and a desktop capture shows only the last one.
+  # Four pictures of four windows open at the same instant is the evidence; a
+  # single picture of one window on top is not.
+  $together = 0
+  foreach ($appLabel in $script:expected.Keys) {
+    $open = @(Get-AppWindows | Where-Object { $_.Title -like "*$appLabel*" } | Select-Object -First 1)
+    if ($open.Count -eq 0) { continue }
+    $safe = ($appLabel -replace '[^A-Za-z0-9]+', '-').Trim('-')
+    if (Save-WindowPicture -Window $open[0] -FileName "$safe-together.bmp") { $together++ }
+  }
+  Write-Host ("    photographed together: $together of four") -ForegroundColor DarkGray
+  Assert ($together -eq 4) "only $together of the four applications could be photographed while they were open together."
   if (-not (Save-ScreenPicture 'JENESIS-Four-Applications.bmp')) {
-    $script:notes += 'the runner exposed no display, so the four applications were photographed one window at a time rather than together'
+    $script:notes += 'the desktop capture was blank or mostly covered; the four windows were photographed individually instead'
   }
   Close-AppGracefully
 }

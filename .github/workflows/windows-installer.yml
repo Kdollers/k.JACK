@@ -297,8 +297,12 @@ jobs:
           found=0
           for f in JENESIS/release/screenshots/*.bmp; do
             [ -f "$f" ] || continue
-            node JENESIS/scripts/shrink-screenshot.cjs "$f" "screenshots/$(basename "$f")" \
-              || cp "$f" "screenshots/$(basename "$f")"
+            name="$(basename "$f" .bmp)"
+            node JENESIS/scripts/shrink-screenshot.cjs "$f" "screenshots/$name.bmp" \
+              || cp "$f" "screenshots/$name.bmp"
+            # A PNG as well: a 32-bit BMP is what the runner can write without
+            # System.Drawing, but it is not what anyone can open afterwards.
+            node JENESIS/scripts/bmp-to-png.cjs "screenshots/$name.bmp" "screenshots/$name.png" || true
             found=1
           done
           if [ "$found" = "0" ]; then echo "no screenshots to publish"; exit 0; fi

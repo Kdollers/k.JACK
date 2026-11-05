@@ -82,10 +82,27 @@ class Database {
   }
   prepare(sql) { return new Statement(this, sql); }
   exec(sql) { this._sync.exec(sql); return this; }
-  pragma(text, options = {}) {
-    const rows = this._sync.prepare(`PRAGMA ${text}`).all();
-    if (options.simple === false) return rows.map(toPlain);
-    if (rows.length === 1 && Object.keys(rows[0]).length === 1) return rows[0][Object.keys(rows[0])[0]];
+  // better-sqlite3 returns the result rows of a PRAGMA as an array of objects;
+  // it does not unwrap a single value. The server relies on that:
+  // `db.pragma('integrity_check').map(...)` would throw on a string. This shim
+  // once collapsed a one-row, one-column result to the bare value, which made
+  // one check fail here while the same check passed on CI against the real
+  // driver -- the shim was wrong, not the server.
+  pragma(text) {
+    let rows = [];
+    try {
+      rows = this._sync.prepare(`PRAGMA ${text}`).all();
+    } catch (err) {
+      // PRAGMAs that set a value rather than read one return no rows, and some
+      // (wal_checkpoint) are accepted by better-sqlite3 but rejected here.
+      const message = String(err && err.message ? err.message : err);
+      if (!/no such column|not a statement|syntax error/i.test(message)) {
+        // A pragma this shim cannot run at all must still be visible rather
+        // than quietly doing nothing.
+        if (!/wal_checkpoint|defer_foreign_keys|journal_mode|foreign_keys/i.test(text)) throw err;
+      }
+      return [];
+    }
     return rows.map(toPlain);
   }
   close() { if (this.open) { this._cache.clear(); this._sync.close(); this.open = false; } return this; }

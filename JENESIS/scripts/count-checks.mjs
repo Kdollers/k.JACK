@@ -58,6 +58,30 @@ function countMarks(text) {
   return { passed, failed };
 }
 
+/**
+ * Whether a suite died rather than finished.
+ *
+ * This is the case the counter used to get wrong. It adds up what each suite
+ * *printed*, so a suite that crashed before printing a total contributed
+ * nothing: the total stayed clean and the run looked green. An exit code is
+ * still an exit code, but the number quoted in a release must not be one that
+ * a crash can hide inside.
+ */
+function crashSignature(text) {
+  const signatures = [
+    [/Error \[[A-Z_]+\]/, 'an error object'],
+    [/^\s*throw /m, 'an uncaught throw'],
+    [/Cannot find module ['"]/, 'a missing module'],
+    [/^\s*at .+:\d+:\d+/m, 'a stack trace'],
+    [/npm ERR!/, 'npm reporting a failure'],
+    [/AssertionError/, 'a failed assertion'],
+    [/is not a function/, 'a TypeError'],
+    [/Exit handler never called/i, 'a hang']
+  ];
+  for (const [pattern, label] of signatures) if (pattern.test(text)) return label;
+  return null;
+}
+
 const transcript = readInput(process.argv);
 if (!transcript.trim()) {
   console.error('count-checks: no transcript on stdin or in the given file');
@@ -72,6 +96,7 @@ let passed = 0;
 let failed = 0;
 let suites = 0;
 let uncounted = 0;
+let crashed = 0;
 
 for (const segment of segments) {
   const total = reportedTotal(segment);
@@ -83,7 +108,18 @@ for (const segment of segments) {
   }
   const marks = countMarks(segment);
   if (marks.passed === 0) {
-    uncounted += 1; // e.g. a suite that failed before printing anything
+    // Nothing countable, which is either a suite that prints its result in a
+    // shape this script does not know, or a suite that died. The difference
+    // decides whether the run is green, so it is not left to guesswork.
+    const why = crashSignature(segment);
+    if (why) {
+      crashed += 1;
+      failed += 1;
+      suites += 1;
+      console.error(`count-checks: a suite produced no results and shows ${why}; counting it as failed`);
+      continue;
+    }
+    uncounted += 1; // genuinely no results, and nothing that looks like a crash
     continue;
   }
   passed += marks.passed;
@@ -96,5 +132,8 @@ if (suites === 0) {
   process.exit(2);
 }
 
-console.log(`--- ${passed} checks passed, ${failed} failed --- (${suites} suites, ${uncounted} without output)`);
-process.exit(failed > 0 ? 1 : 0);
+console.log(
+  `--- ${passed} checks passed, ${failed} failed --- ` +
+  `(${suites} suites, ${uncounted} without output, ${crashed} crashed)`
+);
+process.exit(failed > 0 || crashed > 0 ? 1 : 0);

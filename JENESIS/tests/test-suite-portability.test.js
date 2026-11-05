@@ -92,6 +92,50 @@ check(
 );
 
 // ---------------------------------------------------------------------------
+// 3b. The counter must not be fooled by a suite that died.
+//
+// It adds up what each suite printed. A suite that crashed before printing
+// anything used to contribute nothing, so the total stayed clean while npm
+// returned non-zero. These run the counter against three synthetic transcripts
+// and check what it concludes.
+// ---------------------------------------------------------------------------
+function countChecks(transcript) {
+  const out = require('child_process').spawnSync(
+    process.execPath,
+    [path.join(__dirname, '..', 'scripts', 'count-checks.mjs'), '-'],
+    { input: transcript, encoding: 'utf8' }
+  );
+  return { code: out.status, text: `${out.stdout}${out.stderr}` };
+}
+
+const banner = '\n> genesis-accounting@0.5.4 test:all\n';
+const marker = '\n> genesis-accounting@0.5.4 test:example\n> node tests/example.test.js\n';
+
+check(
+  (() => {
+    const r = countChecks(banner + marker + '  \u2713 one\n  \u2713 two\n--- 2 passed, 0 failed ---\n');
+    return r.code === 0 && /2 checks passed, 0 failed/.test(r.text);
+  })(),
+  'a clean transcript is counted as clean'
+);
+
+check(
+  (() => {
+    const r = countChecks(banner + marker + "Error [ERR_UNKNOWN_BUILTIN_MODULE]: No such built-in module: node:sqlite\n    at Module._load (node:internal/modules/cjs/loader:1031:13)\n");
+    return r.code !== 0 && /crashed/.test(r.text);
+  })(),
+  'a suite that died is counted as a failure, not as nothing'
+);
+
+check(
+  (() => {
+    const r = countChecks(banner + marker + '  \u2713 one\n  \u2713 two\n--- 2 passed, 1 failed ---\n');
+    return r.code !== 0;
+  })(),
+  'a suite that reports a failure fails the run'
+);
+
+// ---------------------------------------------------------------------------
 // 4. Say plainly what does not run, so the transcript never overclaims.
 // ---------------------------------------------------------------------------
 for (const [name, reason] of Object.entries(DOCUMENTED_EXCLUSIONS)) {

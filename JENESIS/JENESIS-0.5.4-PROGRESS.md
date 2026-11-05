@@ -3,12 +3,14 @@
 Target: **0.5.4** (from 0.5.3). Developer: KAYIGANWA JACQUES.
 Branch: `arena/a2c625e8-k-jack`.
 
-Status: **modifications 1, 2, 3, 4 and 5 are complete and committed.**
-Modification 6, the QA sweep and the release packaging are not finished.
+Status: **all six modifications are complete, and JEN 0.5.4 is built and
+published.** The installer has been installed and used on a Windows Server 2022
+runner, and all four shortcuts have been launched.
 
-Test bar: **467 checks passed, 0 failed, 29 suites**
-(`NODE_OPTIONS=--experimental-sqlite npm run test:count`, run from `JENESIS/`).
-It was 356 at the start of 0.5.4. Anything that drops below 467 is a regression.
+Test bar: **528 checks passed, 0 failed, 31 suites**
+(`NODE_OPTIONS=--experimental-sqlite npm run test:count`, run from `JENESIS/`,
+and the same figure reported by the Windows runner on Node 20).
+It was 356 at the start of 0.5.4. Anything that drops below 528 is a regression.
 
 Version is **0.5.4** (`package.json`, and the installer filename with it).
 
@@ -23,9 +25,13 @@ Version is **0.5.4** (`package.json`, and the installer filename with it).
 | 3 | Delete / deactivate / reactivate | **DONE** — backend + all five screens |
 | 4 | Split into four sub-applications | **DONE** — four apps, four colours, four icon sets, four installer shortcuts |
 | 5 | Strict separation (UI, routing, API, DB, auth) | **DONE** — enforced in the route guard, refusals recorded |
-| 6 | Network & Maintenance overhaul | **PART ONE DONE** (backend + 16 tests; screens pending) |
+| 6 | Network & Maintenance overhaul | **DONE** — part one (backend, 16 checks) and part two (the screens, 102 keys, 4 render checks) |
 | — | Rename Admin → Accounting & Business | **DONE** — identity, shell, installer, help, en/fr/rw |
-| — | QA regression, installer, delivery | NOT STARTED |
+| — | QA regression, installer, delivery | **DONE** — 528 checks, installer built and installed, smoke test 29/29, JEN 0.5.4 published |
+
+Still unverified, and said so in the release notes: the physical PC, sign-in
+through the interface (the runner reported NOT confirmed), and two computers on
+a real network.
 
 ---
 
@@ -245,8 +251,10 @@ Never commit `node_modules/`; the shim lives there and is git-ignored.
 - The `node:sqlite` shim is test-only and is never shipped.
 - Typed sign-in is not confirmed by any automated run.
 - The Inventory screen error the user reported has not been reproduced.
-- The four Windows shortcuts have not been installed or clicked; they are
-  asserted from `build/installer.nsh`.
+- ~~The four Windows shortcuts have not been installed or clicked; they are
+  asserted from `build/installer.nsh`.~~ **Resolved.** The installer is now
+  built and installed on a Windows Server 2022 runner and every shortcut is
+  read back out of the `.lnk` file the installer wrote, then launched.
 
 ---
 
@@ -270,3 +278,143 @@ Two things now prevent it:
 
 Use `bash scripts/preview-server.sh` for any live verification.
 
+---
+
+## Modification 6 — Network & Maintenance (part two): the screens
+
+Part one built and proved the mechanism; part two puts it on a screen.
+
+**`src/components/NetworkComputers.jsx`** is new: it draws the computer list,
+one row per computer, with its name, address, when it was last seen and what
+state it is in (online, offline, not a JENESIS computer, refused, switched
+off). Every state carries a `data-testid` so a test can ask for it by name, and
+every row offers the actions its state allows.
+
+**`src/views/MaintenanceView.jsx`** grew the "Computers on this network"
+section: a search field, the list, and the buttons — **Find computers**,
+**Connect**, **Disconnect**, **Test**, **Forget** and **Diagnose**. It delegates
+the list itself to `NetworkComputers`.
+
+**102 new translation keys** (996 → 1,030 per language). Every message a
+diagnosis can produce is a translated string, not a literal in the component —
+including the eight reasons a computer may be unreachable. `node
+scripts/find-untranslated.cjs` reports **0**.
+
+**Four new render checks** in `tests/screens-render.test.js`, negatively proven:
+the file was temporarily broken in four different ways and each check was seen
+to fail before it was allowed to pass. The suite now renders 26 screens.
+
+**The renaming was finished** here: the window titles, the shortcuts, the Start
+menu, the installer, Help and all three dictionaries now say **JENESIS Network
+& Maintenance** and **JENESIS Accounting & Business**. Inside the interface,
+where the language is French or Kinyarwanda, the four applications are shown
+under their translated names; the names are exact and untranslated everywhere
+they identify the product.
+
+---
+
+## The installer, and the four shortcuts, verified on Windows
+
+This is the part that had only ever been asserted from configuration. It is now
+measured.
+
+`scripts/smoke-test-installed.ps1` was rewritten to know about four
+applications. It reads each `.lnk` with `WScript.Shell` and reports where it
+points, which argument it carries and which icon it shows — then **launches
+it** and waits for the window that must appear. All four pass:
+
+```
+JENESIS Seller                  -> JENESIS.exe --app=seller       icon-seller.ico
+JENESIS Network & Maintenance   -> JENESIS.exe --app=maintenance  icon-maintenance.ico
+JENESIS Accounting & Business   -> JENESIS.exe --app=admin        icon-admin.ico
+JENESIS Settings & Access Point -> JENESIS.exe --app=settings     icon-settings.ico
+```
+
+The same four names are then found in the Start menu, the four windows are
+opened together, and the backend is asked for `/setup/status` to prove that all
+four are serving **the same company** rather than four databases.
+
+### Faults found while making that happen
+
+Six, none of which were visible from the repository:
+
+1. **PowerShell variable shadowing.** The loop that launches each application
+   named its variable `$appName`; every helper that enumerates windows reads a
+   script-level `$AppName`. PowerShell ignores case, so inside that loop the
+   test asked Windows for processes named "JENESIS Seller" and found none.
+   Every window it then reported as missing was on screen the whole time. The
+   lookup now reads the script-level name explicitly and the loop variable was
+   renamed.
+2. **The same trap one level up:** the step's own parameter is `$Name`, so a
+   block that said `$name` inside a step read the step's title. Blocks now
+   close over their values with `GetNewClosure()`.
+3. **`System.Drawing` is not available.** The screenshot code would not compile
+   on the runner. The BMP is now assembled byte by byte from `GetDIBits`.
+4. **A C-style `/** */` comment** written outside the C# block, which
+   PowerShell reads as a command.
+5. **`$AppName:` in a string** is a scope reference, not text.
+6. **The window title is not the string it was created with.** Once the page
+   has loaded the window shows the document's title, so the seller window is
+   called `JENESIS Seller — JENESIS`. The check now looks for the name within
+   the title.
+
+### Screenshots
+
+The runner has no display, but `PrintWindow` still renders a window into a
+bitmap, so every window the smoke test verifies is photographed. The four
+pictures were then measured rather than merely saved: 1,255–1,671 distinct
+colours each, and each window carries **only its own identity colour** at about
+2% of its pixels, with 0.00% of the other three.
+
+The per-window path renders one window at a time, so a `ToScreenBmp` capture of
+the whole desktop was added for the moment when all four are open. It measures
+what it captured and discards the file — and says so — if the result is blank,
+because on a runner with no display a black rectangle would otherwise pass for
+a photograph.
+
+---
+
+## Defects repaired after the first green build
+
+Three were found by the Windows job rather than by anything local:
+
+- **`/api/taxes` refused the Seller.** The sales invoice reads the list of tax
+  rates from a route guarded by `accounting:read` alone, and the Seller role
+  does not hold it. A new `requireAnyPermission` guard allows the route when the
+  caller holds either `accounting:read` or `sales:read`, while `POST` stays with
+  `accounting:write` — the clerk may read the rates, only the bookkeeper may
+  define them. The application scope is applied to each held permission, so
+  JENESIS Network & Maintenance still gets nothing. Four checks prove it in
+  both directions.
+- **The suite only ran on Node 22.** `tests/auth-security.test.js` required
+  `node:sqlite` directly, which exists from Node 22.5 onwards. CI runs Node 20.
+  Database handles now come from `tests/open-database.cjs`, which uses
+  `better-sqlite3` when it is installed and falls back to `node:sqlite` when it
+  is not.
+- **A crashed suite could look green.** The Linux job ran the suite through a
+  pipe and kept only the exit code of the check counter at the far end. The
+  counter totals what each suite *printed*, so a suite that died before
+  printing anything left the total clean and the job green. The job now runs
+  with `pipefail`.
+
+`tests/test-suite-portability.test.js` (34 checks) keeps all three fixed: no
+test file may require a version-specific module outside the shared opener, the
+opener must actually work here, and every test script must either run inside
+`test:all` or print the reason it cannot. It found one immediately: `test:e2e`
+drives a real browser through Playwright, which cannot be installed in CI, and
+it now says so on every transcript instead of being quietly left out.
+
+---
+
+## Environment notes (updated)
+
+- The suite runs on **Node 20 and Node 22**. `node:sqlite` is a fallback, never
+  an assumption.
+- `electron-builder --win` cannot run here (native cross-compilation, and the
+  release assets it needs are not reachable). **Every installer statement in
+  this document comes from the `windows-2022` job**, never from this machine.
+- The `better-sqlite3` shim is a sandbox device. It is test-only, git-ignored,
+  rebuilt by `restore-sandbox.sh`, and never packaged.
+- Screenshots cannot be viewed here: there is no browser, and release assets
+  cannot be downloaded. A half-size copy of each is committed to the branch by
+  the workflow so the pictures can be inspected from outside.
