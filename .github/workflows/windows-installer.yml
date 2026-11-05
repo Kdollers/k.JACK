@@ -248,6 +248,15 @@ jobs:
           sha256sum "$release.zip" > "$release.zip.sha256"
           ls -l "$release.zip"
           cat "$release.zip.sha256"
+          # The download table is written before this step, so the source backup
+          # was the one published file missing from it. Add its row here rather
+          # than leave the release claiming two checksums out of three.
+          hash=$(cut -d' ' -f1 < "$release.zip.sha256")
+          size=$(stat -c %s "$release.zip")
+          mb=$(awk -v n="$size" 'BEGIN { printf "%.1f", n / 1048576 }')
+          echo "| \`$release.zip\` | $mb MB | \`$hash\` |" >> download-table.md
+          echo "--- download table ---"
+          cat download-table.md
 
       - name: Upload the source backup
         if: success()
