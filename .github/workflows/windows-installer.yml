@@ -243,7 +243,7 @@ jobs:
           # downloaded file should not have to go looking through the repository
           # for what changed, what was tested and what was not.
           foreach ($doc in @(
-            "$releaseName RELEASE NOTES.md",
+            "JEN $version RELEASE NOTES.md",
             'JENESIS-0.5.4-PROGRESS.md',
             'DOWNLOAD.md',
             'README.md'
@@ -405,7 +405,7 @@ jobs:
           }
           # The documentation of this build, published with the build.
           foreach ($doc in @(
-            "$releaseName RELEASE NOTES.md",
+            "JEN $version RELEASE NOTES.md",
             'JENESIS-0.5.4-PROGRESS.md',
             'DOWNLOAD.md',
             'README.md'
