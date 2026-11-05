@@ -239,6 +239,17 @@ jobs:
           Get-ChildItem release -Filter '*.sha256' | ForEach-Object { Copy-Item $_.FullName $folder -Force }
           if (Test-Path 'release\download-table.md') { Copy-Item 'release\download-table.md' $folder -Force }
           if (Test-Path "release\$releaseName.zip") { Copy-Item "release\$releaseName.zip" $folder -Force }
+          # The written record of the build travels with it. Someone holding the
+          # downloaded file should not have to go looking through the repository
+          # for what changed, what was tested and what was not.
+          foreach ($doc in @(
+            "$releaseName RELEASE NOTES.md",
+            'JENESIS-0.5.4-PROGRESS.md',
+            'DOWNLOAD.md',
+            'README.md'
+          )) {
+            if (Test-Path $doc) { Copy-Item $doc $folder -Force }
+          }
           Get-ChildItem $folder | ForEach-Object { Write-Host "release folder: $($_.Name)  $([math]::Round($_.Length / 1MB, 1)) MB" }
 
       - name: Package the source backup
@@ -321,6 +332,8 @@ jobs:
             # A PNG as well: a 32-bit BMP is what the runner can write without
             # System.Drawing, but it is not what anyone can open afterwards.
             node JENESIS/scripts/bmp-to-png.cjs "screenshots/$name.bmp" "screenshots/$name.png" || true
+            # And next to the full-size originals, so the release carries both.
+            node JENESIS/scripts/bmp-to-png.cjs "$f" "JENESIS/release/screenshots/$name.png" || true
             found=1
           done
           if [ "$found" = "0" ]; then echo "no screenshots to publish"; exit 0; fi
@@ -379,13 +392,25 @@ jobs:
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $tag = "v$version"
           $assets = @()
-          foreach ($pattern in '*.exe', '*.zip', '*.bmp', '*.sha256') {
+          foreach ($pattern in '*.exe', '*.zip', '*.sha256') {
             $assets += (Get-ChildItem release -Filter $pattern | ForEach-Object { $_.FullName })
           }
           # Real pictures of the four applications, taken from the installed
-          # windows during the smoke test.
+          # windows during the smoke test, in both formats: the BMP the runner
+          # can write and the PNG anyone can open.
           if (Test-Path release\screenshots) {
-            $assets += (Get-ChildItem 'release\screenshots' -Filter '*.bmp' | ForEach-Object { $_.FullName })
+            foreach ($pattern in '*.bmp', '*.png') {
+              $assets += (Get-ChildItem 'release\screenshots' -Filter $pattern | ForEach-Object { $_.FullName })
+            }
+          }
+          # The documentation of this build, published with the build.
+          foreach ($doc in @(
+            "$releaseName RELEASE NOTES.md",
+            'JENESIS-0.5.4-PROGRESS.md',
+            'DOWNLOAD.md',
+            'README.md'
+          )) {
+            if (Test-Path $doc) { $assets += (Resolve-Path $doc).Path }
           }
           if ($assets.Count -eq 0) { throw 'No downloadable files were produced.' }
 
