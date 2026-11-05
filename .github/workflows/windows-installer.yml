@@ -281,6 +281,35 @@ jobs:
             JENESIS/release/screenshots/*.bmp
           if-no-files-found: warn
 
+      # A release asset cannot be downloaded from every environment, so a
+      # half-size copy is committed here as well. That is the only way the
+      # pictures of the four applications can actually be looked at from the
+      # outside rather than merely being known to exist.
+      - name: Keep the screenshots on the branch
+        if: always()
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          mkdir -p screenshots
+          found=0
+          for f in JENESIS/release/screenshots/*.bmp; do
+            [ -f "$f" ] || continue
+            node JENESIS/scripts/shrink-screenshot.cjs "$f" "screenshots/$(basename "$f")" \
+              || cp "$f" "screenshots/$(basename "$f")"
+            found=1
+          done
+          if [ "$found" = "0" ]; then echo "no screenshots to publish"; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -A -f screenshots
+          if git diff --cached --quiet; then echo "the screenshots are unchanged"; else
+            git commit -m "ci: screenshots of the installed applications, run ${{ github.run_id }}"
+            git push origin HEAD:"${GITHUB_REF_NAME}"
+          fi
+
       - name: Upload the portable package
         if: success()
         uses: actions/upload-artifact@v4
@@ -328,7 +357,7 @@ jobs:
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $tag = "v$version"
           $assets = @()
-          foreach ($pattern in '*.exe', '*.zip', '*.exe.sha256', '*.zip.sha256') {
+          foreach ($pattern in '*.exe', '*.zip', '*.bmp', '*.sha256') {
             $assets += (Get-ChildItem release -Filter $pattern | ForEach-Object { $_.FullName })
           }
           # Real pictures of the four applications, taken from the installed
@@ -426,12 +455,28 @@ jobs:
           Verify a download with ``certutil -hashfile <file> SHA256`` and compare with
           the ``.sha256`` file shipped next to it.
 
+          ## Screenshots
+
+          The runner has no display, but a window can still be rendered into a
+          bitmap, so every window this build verifies is photographed. The four
+          pictures attached to this release are real images of the installed
+          applications, taken while the smoke test had them open — one per
+          application, window for window: ``JENESIS-Seller.bmp``,
+          ``JENESIS-Network-Maintenance.bmp``,
+          ``JENESIS-Accounting-Business.bmp`` and
+          ``JENESIS-Settings-Access-Point.bmp``. They are also published in the
+          ``JENESIS-screenshots`` artefact of the run.
+
+          They are the installed build, not a mock-up, but they are still a
+          machine's picture of a window: nobody has looked at these screens by
+          eye, and the two themes have never been seen by a person.
+
           ## Not verified
 
           The installer is **unsigned** (Windows SmartScreen will warn) and has
           been verified on a GitHub-hosted Windows runner, **not on a physical
-          PC**. No screenshots were produced: the runner has no display, so the
-          windows are checked by capturing their pixels instead.
+          PC**. Real PCs differ — antivirus, SmartScreen, graphics drivers and
+          user account control are all things this runner does not have.
 
           **Messenger between two separate physical computers is not proven by
           this run.** The network mechanism is tested between two real services,
