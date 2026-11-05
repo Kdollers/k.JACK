@@ -277,11 +277,11 @@ in-app backup for daily use, and the folder copy for a full snapshot.
 | **Four applications rendered** | **17** |
 | **Strict separation between the applications** | **18** |
 | **Network & Maintenance** (two real services, real UDP discovery) | **16** |
-| **Test-suite portability** | **34** |
+| **Test-suite portability** | **37** |
 | Theme rules | 34 |
 | Theme UI | 6 |
 | Interface import gate | 7 |
-| **Total** | **528 checks, 0 failed, 31 suites** |
+| **Total** | **531 checks, 0 failed, 31 suites** |
 
 Plus, on the Windows runner:
 
@@ -383,17 +383,17 @@ is the first place to look.
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
 These are the files published by the build this page describes — GitHub Actions
-run 41939563103, commit `e4c4bfd`. A later build carries different numbers; the
+run 41956480592, commit `4fb667a`. A later build carries different numbers; the
 ones on the release page always belong to the file you are downloading.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.4 Setup.exe` | 93,034,371 bytes (88.7 MB) | `11ab8809e7d95de17bdbd3dc0f8f04205ec6fbed8cd58d9bbaec23eae5a210a6` |
-| `JEN 0.5.4 Portable.zip` | 133,710,242 bytes (127.5 MB) | `1675bd8630dcc9a8165dd7ca1b17e6c5cd1b83cf856de6ddb158fb1ea8cc9875` |
-| `JEN 0.5.4.zip` | 5,873,562 bytes (5.6 MB) | _printed on the release page, and in `JEN 0.5.4.zip.sha256`_ |
+| `JEN 0.5.4 Setup.exe` | 93,034,416 bytes (88.7 MB) | `7a67e960a4c26aa1d4025f1694f7b363b22b907a0817a01c86dd9ebd99a26236` |
+| `JEN 0.5.4 Portable.zip` | 133,710,166 bytes (127.5 MB) | `e6cf194b5b5148cb4f325b8193b86541e007e328112bf85e0fe321ccf37cce89` |
+| `JEN 0.5.4.zip` | 6,018,009 bytes (5.7 MB) | `98eba6a27340b80317f6c6ea1dbe89b30606a815e28b4785c41e38736a33b9e9` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**528 automated checks** on that build, and the
+named on the release page (**531 automated checks** on that build, and the
 installed-application smoke test recorded on the release page).
 
 Every push rebuilds and republishes these files, so a later build carries a

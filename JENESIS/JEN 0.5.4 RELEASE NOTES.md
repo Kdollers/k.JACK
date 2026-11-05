@@ -6,8 +6,8 @@ KAYIGANWA JACQUES.
 Installer: `JEN 0.5.4 Setup.exe` · Portable: `JEN 0.5.4 Portable.zip` ·
 Source: `JEN 0.5.4.zip`
 
-Built by GitHub Actions, run **41939563103**, commit
-**`e4c4bfdbd5bedee4e02058ae416e34b5d5dbb135`**.
+Built by GitHub Actions, run **41956480592**, commit
+**`4fb667ad1a562110798b0e203fd724f3e66a0bda`**.
 
 ---
 
@@ -122,7 +122,7 @@ left untouched, so an upgrade changes nothing but the names.
 
 ## What was tested, and what passed
 
-**528 automated checks, 0 failed, 31 suites** — run on both the Linux
+**531 automated checks, 0 failed, 31 suites** — run on both the Linux
 (Ubuntu 22.04) and the Windows Server 2022 runner, on Node 20.
 
 | Suite | Checks |
@@ -154,7 +154,7 @@ left untouched, so an upgrade changes nothing but the names.
 | Four applications rendered | 17 |
 | Separation between the applications | 22 |
 | Network & Maintenance | 16 |
-| Test-suite portability | 34 |
+| Test-suite portability | 37 |
 | Theme rules | 34 |
 | Theme UI | 6 |
 | Interface import gate | 7 |
@@ -203,15 +203,32 @@ rather than merely saved:
 
 Each window carries its own identity colour and none of the others.
 
+The same four windows were photographed a second time **at the moment all four
+were open together** — the point in the smoke test where the four window titles
+have been read out of the running processes and the backend has confirmed they
+are all serving one company. Those four (`…-together.bmp`) show the same
+pattern: 1,236–1,436 distinct colours, and each carries only its own colour.
+
+A capture of the whole desktop was also taken and is published as
+`JENESIS-Four-Applications.bmp`. It is a real picture (3,298 distinct colours)
+but it does **not** show all four: the application windows are 1366×860 and the
+runner's screen is 1024×768, so they cover one another and only the last one
+opened is visible. That is why the four windows are photographed individually
+as well, and it is stated here rather than left to be discovered.
+
 ---
 
 ## Files and checksums
 
 | File | Size | SHA-256 |
 |---|---|---|
-| `JEN 0.5.4 Setup.exe` | 93,034,371 bytes (88.7 MB) | `11ab8809e7d95de17bdbd3dc0f8f04205ec6fbed8cd58d9bbaec23eae5a210a6` |
-| `JEN 0.5.4 Portable.zip` | 133,710,242 bytes (127.5 MB) | `1675bd8630dcc9a8165dd7ca1b17e6c5cd1b83cf856de6ddb158fb1ea8cc9875` |
-| `JEN 0.5.4.zip` | 5,873,562 bytes (5.6 MB) | in `JEN 0.5.4.zip.sha256`, on the release page |
+| `JEN 0.5.4 Setup.exe` | 93,034,416 bytes (88.7 MB) | `7a67e960a4c26aa1d4025f1694f7b363b22b907a0817a01c86dd9ebd99a26236` |
+| `JEN 0.5.4 Portable.zip` | 133,710,166 bytes (127.5 MB) | `e6cf194b5b5148cb4f325b8193b86541e007e328112bf85e0fe321ccf37cce89` |
+| `JEN 0.5.4.zip` | 6,018,009 bytes (5.7 MB) | `98eba6a27340b80317f6c6ea1dbe89b30606a815e28b4785c41e38736a33b9e9` |
+
+Every rebuild produces a different file and therefore a different checksum.
+These belong to the build named above; the numbers on the release page always
+belong to the file you are downloading.
 
 Verify a download with:
 
