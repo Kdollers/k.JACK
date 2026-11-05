@@ -21,6 +21,15 @@ on:
     branches:
       - 'main'
       - 'arena/**'
+    # Every build produces a different installer, and publishing replaces the
+    # files and their checksums. A change that cannot alter the binary -
+    # documentation, or the screenshots of a build that has already been made -
+    # must not trigger a rebuild, or the checksums quoted in the documentation
+    # are stale the moment they are written.
+    paths-ignore:
+      - '**.md'
+      - 'screenshots/**'
+      - 'ci-logs/**'
   pull_request:
   workflow_dispatch:
 
