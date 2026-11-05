@@ -943,8 +943,12 @@ Step 'The four applications run side by side, each in its own window' {
   }
   $titles = @((Get-AppWindows | ForEach-Object { $_.Title }) | Sort-Object -Unique)
   Write-Host ("    windows open: {0}" -f ($titles -join ' | ')) -ForegroundColor DarkGray
+  # Matched loosely, and deliberately so: once the page has loaded, the window
+  # carries the title of the document inside it, which is "JENESIS Seller -
+  # JENESIS" rather than the "JENESIS Seller" the shell was created with. The
+  # name of the application is what is being checked for, not the exact string.
   foreach ($appLabel in $script:expected.Keys) {
-    Assert (@($titles | Where-Object { $_ -eq $appLabel }).Count -ge 1) "$appLabel is not open."
+    Assert (@($titles | Where-Object { $_ -like "*$appLabel*" }).Count -ge 1) "$appLabel is not open."
   }
   # Every window must have started its own interface.
   $deadline = (Get-Date).AddSeconds(120)
