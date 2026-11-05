@@ -6,8 +6,8 @@ KAYIGANWA JACQUES.
 Installer: `JEN 0.5.4 Setup.exe` · Portable: `JEN 0.5.4 Portable.zip` ·
 Source: `JEN 0.5.4.zip`
 
-Built by GitHub Actions, run **41958448954**, commit
-**`f1f1239fe1719506fc91c00fa240c59cfff88eff`**.
+Built by GitHub Actions, run **41988436955**, commit
+**`122f671c90e704215d1212b3b984766487044db7`**.
 
 ---
 
@@ -218,13 +218,29 @@ as well, and it is stated here rather than left to be discovered.
 
 ---
 
+## What is in the release
+
+The release page carries **28 files**:
+
+| | |
+|---|---|
+| `JEN 0.5.4 Setup.exe` | the Windows installer (NSIS) — installs all four applications |
+| `JEN 0.5.4 Portable.zip` | the same application without installing: unzip, then `JENESIS.exe` |
+| `JEN 0.5.4.zip` | the source of this release (every tracked file) |
+| `.sha256` | one checksum file beside each of the three above |
+| 16 screenshots | the four applications, each as `.bmp` and `.png`; the four `…-together` ones were taken while all four windows were open; `JENESIS-Four-Applications` is the whole desktop |
+| `JEN 0.5.4 RELEASE NOTES.md` | this document |
+| `JENESIS-0.5.4-PROGRESS.md` | the implementation record for the whole version |
+| `DOWNLOAD.md` | installing, where your data lives, how to back it up |
+| `README.md` | the project description |
+
 ## Files and checksums
 
 | File | Size | SHA-256 |
 |---|---|---|
-| `JEN 0.5.4 Setup.exe` | 93,033,329 bytes (88.7 MB) | `84d568779b367a768c9c3b1478ab8c09a9193562fdd3094e012e0d8c859ab937` |
-| `JEN 0.5.4 Portable.zip` | 133,710,105 bytes (127.5 MB) | `f9675c79da48252529b014e9e24c7ff5f02f0ee4c892b2742df370a4b7bcbbc0` |
-| `JEN 0.5.4.zip` | 6,099,984 bytes (5.8 MB) | `699bd61b0995a4332cd74193578a2458998e30cbffa59226d8c622e37a0b9efa` |
+| `JEN 0.5.4 Setup.exe` | 93,033,910 bytes (88.7 MB) | `88488df9bf0c6a8e350bc1aeb9120321ff2d3fe971f2dc709a81e46e3e535ec7` |
+| `JEN 0.5.4 Portable.zip` | 133,710,301 bytes (127.5 MB) | `22ccaab0e55a27d52feeaa2c09e7249dc1bef0c1323cd2fc39e3529039e86a13` |
+| `JEN 0.5.4.zip` | 6,100,723 bytes (5.8 MB) | `e5235f82e3221c902380e0f3c99436b3b4386f83db901e826c9745f385aa43f8` |
 
 Every rebuild produces a different file and therefore a different checksum.
 These belong to the build named above; the numbers on the release page always
