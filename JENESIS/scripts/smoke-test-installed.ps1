@@ -129,7 +129,12 @@ function Wait-ForBackend([int] $AfterLines) {
 }
 
 function Get-AppProcesses {
-  return @(Get-Process -Name $AppName -ErrorAction SilentlyContinue)
+  # Qualified deliberately. PowerShell resolves variable names without regard to
+  # case, so a caller that happens to have its own $appName in scope would have
+  # this function look for a process called "JENESIS Seller" and find nothing --
+  # which reads, from the outside, exactly like an application that never
+  # opened. Reading the script-level name cannot be shadowed by a caller.
+  return @(Get-Process -Name $script:AppName -ErrorAction SilentlyContinue)
 }
 
 # ---------------------------------------------------------------------------
@@ -878,15 +883,15 @@ Step 'Every shortcut also appears in the Start menu, pointing at the same place'
 
 # Each application is launched from the shortcut the installer wrote, and the
 # window that appears must carry that application's own title and real content.
-foreach ($appName in $script:expected.Keys) {
-  $appId = $script:expected[$appName]
+foreach ($appLabel in $script:expected.Keys) {
+  $appId = $script:expected[$appLabel]
   # The block closes over the values it needs. Step's own parameter is called
   # $Name, and PowerShell resolves variable names without regard to case, so a
   # block that simply said $name would read the step's title instead of the
   # application's name - and then wait for a window that can never appear.
-  Step "$appName opens from its own shortcut, with its own interface" {
+  Step "$appLabel opens from its own shortcut, with its own interface" {
     $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match "--app=$appId" } | Select-Object -First 1
-    Assert ($null -ne $shortcut) "The $appName shortcut was not found."
+    Assert ($null -ne $shortcut) "The $appLabel shortcut was not found."
     # Start from a clean slate. Launching while the previous instance is still
     # tearing down is a race the application cannot be expected to win, and a
     # window that never appears is indistinguishable, from the outside, from a
@@ -896,14 +901,14 @@ foreach ($appName in $script:expected.Keys) {
       Write-Host ("    waiting for the previous instance to stop ({0} still running)" -f $leftover.Count) -ForegroundColor DarkGray
       $slateDeadline = (Get-Date).AddSeconds(60)
       while ((Get-Date) -lt $slateDeadline -and (Get-AppProcesses)) { Start-Sleep -Milliseconds 300 }
-      if (Get-AppProcesses) { Stop-Process -Name $AppName -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 3 }
+      if (Get-AppProcesses) { Stop-Process -Name $script:AppName -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 3 }
     }
     $before = Get-ReadyCount
     # Printed, so a window that opens under the wrong name can be traced to the
     # exact command line that opened it.
     Write-Host ("    launching: {0} {1}" -f $shortcut.Target, $shortcut.Arguments) -ForegroundColor DarkGray
     Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments) | Out-Null
-    $window = Wait-ForTitledWindow $appName 60
+    $window = Wait-ForTitledWindow $appLabel 60
     if ($null -eq $window) {
       # One window that fails to appear is not yet a verdict. This runner has
       # no display, and a window created while the previous one is being torn
@@ -914,16 +919,16 @@ foreach ($appName in $script:expected.Keys) {
       # finding and not a pass.
       Write-Host "    no window appeared; stopping everything and trying once more" -ForegroundColor Yellow
       Write-WindowState
-      Stop-Process -Name $AppName -Force -ErrorAction SilentlyContinue
+      Stop-Process -Name $script:AppName -Force -ErrorAction SilentlyContinue
       Start-Sleep -Seconds 5
       $before = Get-ReadyCount
       Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments) | Out-Null
-      $window = Wait-ForTitledWindow $appName 90
-      if ($null -ne $window) { $script:notes += "$appName needed a second launch on this runner" }
+      $window = Wait-ForTitledWindow $appLabel 90
+      if ($null -ne $window) { $script:notes += "$appLabel needed a second launch on this runner" }
     }
-    Assert ($null -ne $window) "No window titled '$appName' appeared: the shortcut did not open it."
-    Assert-WindowIsReal $window $appName
-    Assert (Wait-ForInterfaceStart $before 90) "$appName did not report that its interface started."
+    Assert ($null -ne $window) "No window titled '$appLabel' appeared: the shortcut did not open it."
+    Assert-WindowIsReal $window $appLabel
+    Assert (Wait-ForInterfaceStart $before 90) "$appLabel did not report that its interface started."
     Close-AppGracefully
   }.GetNewClosure()
 }
@@ -938,8 +943,8 @@ Step 'The four applications run side by side, each in its own window' {
   }
   $titles = @((Get-AppWindows | ForEach-Object { $_.Title }) | Sort-Object -Unique)
   Write-Host ("    windows open: {0}" -f ($titles -join ' | ')) -ForegroundColor DarkGray
-  foreach ($appName in $script:expected.Keys) {
-    Assert (@($titles | Where-Object { $_ -eq $appName }).Count -ge 1) "$appName is not open."
+  foreach ($appLabel in $script:expected.Keys) {
+    Assert (@($titles | Where-Object { $_ -eq $appLabel }).Count -ge 1) "$appLabel is not open."
   }
   # Every window must have started its own interface.
   $deadline = (Get-Date).AddSeconds(120)
