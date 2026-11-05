@@ -425,6 +425,78 @@ if (-not ('Win32.Snapshot' -as [type])) {
       b[off + 3] = (byte)((v >> 24) & 0xFF);
     }
 
+    [DllImport("user32.dll")] public static extern int GetSystemMetrics(int nIndex);
+
+    /**
+     * Wraps 32-bit pixels in a BMP file: a 54-byte header and the pixels.
+     * Assembled here rather than with System.Drawing, whose Image type lives in
+     * an assembly that is not referenced on every Windows runner.
+     */
+    private static byte[] Encode(byte[] bits, int w, int h) {
+      uint pixels = (uint)(w * h * 4);
+      byte[] file = new byte[54 + pixels];
+      file[0] = 0x42; file[1] = 0x4D;          // "BM"
+      PutU32(file, 2, (uint)(54 + pixels));    // whole file
+      PutU32(file, 10, 54);                    // where the pixels start
+      PutU32(file, 14, 40);                    // header size
+      PutU32(file, 18, (uint)w);
+      PutU32(file, 22, (uint)(-h));            // negative: the top row first
+      PutU16(file, 26, 1);                     // one plane
+      PutU16(file, 28, 32);                    // 32 bits per pixel
+      PutU32(file, 30, 0);                     // BI_RGB, not compressed
+      PutU32(file, 34, pixels);
+      PutU32(file, 38, 0); PutU32(file, 42, 0); // pixels per metre
+      PutU32(file, 46, 0); PutU32(file, 50, 0); // no palette
+      for (int i = 0; i < bits.Length; i++) file[54 + i] = bits[i];
+      return file;
+    }
+
+    /** Copies the pixels of a bitmap into a top-down 32-bit buffer. */
+    private static byte[] ReadBits(IntPtr mem, IntPtr bmp, int w, int h) {
+      BITMAPINFO info = new BITMAPINFO();
+      info.bmiHeader = new BITMAPINFOHEADER();
+      info.bmiHeader.biSize = (uint)Marshal.SizeOf(typeof(BITMAPINFOHEADER));
+      info.bmiHeader.biWidth = w;
+      info.bmiHeader.biHeight = -h;
+      info.bmiHeader.biPlanes = 1;
+      info.bmiHeader.biBitCount = 32;
+      info.bmiHeader.biCompression = 0;
+      info.bmiColors = new uint[3];
+      byte[] bits = new byte[w * h * 4];
+      int rows = GetDIBits(mem, bmp, 0, (uint)h, bits, ref info, 0);
+      return rows == 0 ? null : bits;
+    }
+
+    /**
+     * Captures the whole desktop and returns a BMP file as bytes, or null.
+     * This is the only picture that can show several applications at once: the
+     * per-window path renders one window at a time. What the screen actually
+     * holds on a runner with no display is measured by the caller, so a blank
+     * capture is reported as one rather than passing for a screenshot.
+     */
+    public static byte[] ToScreenBmp() {
+      int x = GetSystemMetrics(76);            // SM_XVIRTUALSCREEN
+      int y = GetSystemMetrics(77);            // SM_YVIRTUALSCREEN
+      int w = GetSystemMetrics(78);            // SM_CXVIRTUALSCREEN
+      int h = GetSystemMetrics(79);            // SM_CYVIRTUALSCREEN
+      if (w <= 0 || h <= 0) { x = 0; y = 0; w = GetSystemMetrics(0); h = GetSystemMetrics(1); }
+      if (w <= 0 || h <= 0) return null;
+      IntPtr screen = GetDC(IntPtr.Zero);
+      IntPtr mem = CreateCompatibleDC(screen);
+      IntPtr bmp = CreateCompatibleBitmap(screen, w, h);
+      IntPtr old = SelectObject(mem, bmp);
+      byte[] file = null;
+      if (BitBlt(mem, 0, 0, w, h, screen, x, y, SRCCOPY)) {
+        byte[] bits = ReadBits(mem, bmp, w, h);
+        if (bits != null) file = Encode(bits, w, h);
+      }
+      SelectObject(mem, old);
+      DeleteObject(bmp);
+      DeleteDC(mem);
+      ReleaseDC(IntPtr.Zero, screen);
+      return file;
+    }
+
     /**
      * Renders the window and returns a complete BMP file as bytes, or null.
      * The file is assembled here rather than with System.Drawing because
@@ -459,25 +531,8 @@ if (-not ('Win32.Snapshot' -as [type])) {
         info.bmiHeader.biBitCount = 32;
         info.bmiHeader.biCompression = 0;
         info.bmiColors = new uint[3];
-        byte[] bits = new byte[w * h * 4];
-        int rows = GetDIBits(mem, bmp, 0, (uint)h, bits, ref info, 0);
-        if (rows != 0) {
-          uint pixels = (uint)(w * h * 4);
-          file = new byte[54 + pixels];
-          file[0] = 0x42; file[1] = 0x4D;          // "BM"
-          PutU32(file, 2, (uint)(54 + pixels));    // whole file
-          PutU32(file, 10, 54);                    // where the pixels start
-          PutU32(file, 14, 40);                    // header size
-          PutU32(file, 18, (uint)w);
-          PutU32(file, 22, (uint)(-h));            // negative: the top row first
-          PutU16(file, 26, 1);                     // one plane
-          PutU16(file, 28, 32);                    // 32 bits per pixel
-          PutU32(file, 30, 0);                     // BI_RGB, not compressed
-          PutU32(file, 34, pixels);
-          PutU32(file, 38, 0); PutU32(file, 42, 0); // pixels per metre
-          PutU32(file, 46, 0); PutU32(file, 50, 0); // no palette
-          for (int i = 0; i < bits.Length; i++) file[54 + i] = bits[i];
-        }
+        byte[] bits = ReadBits(mem, bmp, w, h);
+        if (bits != null) file = Encode(bits, w, h);
       }
       SelectObject(mem, old);
       DeleteObject(bmp);
@@ -504,6 +559,43 @@ function Save-WindowPicture($Window, [string] $FileName) {
     Write-Host "    picture could not be taken: $FileName" -ForegroundColor Yellow
   } catch {
     Write-Host "    picture failed: $($_.Exception.Message)" -ForegroundColor Yellow
+  }
+  return $false
+}
+
+function Save-ScreenPicture([string] $FileName) {
+  # One picture of the whole desktop, taken while every application is open.
+  # The per-window path renders one window at a time, so this is the only image
+  # that can show them together.
+  $path = Join-Path $script:ShotDir $FileName
+  try {
+    $bytes = [Win32.Snapshot]::ToScreenBmp()
+    if (-not $bytes -or $bytes.Length -le 54) {
+      Write-Host "    the desktop could not be captured" -ForegroundColor Yellow
+      return $false
+    }
+    [System.IO.File]::WriteAllBytes($path, $bytes)
+    # Measured, because a runner with no display can produce a black rectangle
+    # that looks exactly like a screenshot and proves nothing.
+    $total = [math]::Floor(($bytes.Length - 54) / 4)
+    $distinct = New-Object 'System.Collections.Generic.HashSet[string]'
+    $blank = 0
+    for ($i = 54; $i -lt $bytes.Length - 28; $i += 28) {
+      $b = $bytes[$i]; $g = $bytes[$i + 1]; $r = $bytes[$i + 2]
+      if ($r -eq 0 -and $g -eq 0 -and $b -eq 0) { $blank++ }
+      [void]$distinct.Add("$r,$g,$b")
+    }
+    $sampled = [math]::Floor(($bytes.Length - 54) / 28)
+    Write-Host ("    desktop captured: {0} pixels, {1} distinct colours, {2}% black" -f `
+      $total, $distinct.Count, [math]::Round(100.0 * $blank / $sampled, 1)) -ForegroundColor DarkGray
+    if ($distinct.Count -lt 8) {
+      Write-Host "    the desktop capture is blank: this runner exposes no display" -ForegroundColor Yellow
+      Remove-Item $path -Force -ErrorAction SilentlyContinue
+      return $false
+    }
+    return $true
+  } catch {
+    Write-Host "    the desktop capture failed: $($_.Exception.Message)" -ForegroundColor Yellow
   }
   return $false
 }
@@ -959,6 +1051,12 @@ Step 'The four applications run side by side, each in its own window' {
   Assert ([bool]$url) 'The backend address of the running application was not found in the log.'
   $status = Invoke-Api $url 'GET' '/setup/status'
   Assert ($status.needsSetup -eq $false) 'The company created earlier is not the one the four windows see.'
+  # Photographed only here, with all four proven open and proven to be serving
+  # one company: a picture of four windows is evidence, a picture of one
+  # window taken four times is not.
+  if (-not (Save-ScreenPicture 'JENESIS-Four-Applications.bmp')) {
+    $script:notes += 'the runner exposed no display, so the four applications were photographed one window at a time rather than together'
+  }
   Close-AppGracefully
 }
 
