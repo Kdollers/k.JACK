@@ -2,7 +2,7 @@
 
 Everything you need to run JENESIS on a Windows PC, with direct download links.
 
-**Application:** JENESIS 0.5.4 — double-entry accounting for SMEs
+**Application:** JENESIS 0.5.5 — double-entry accounting for SMEs
 (double-entry journals, GL, sales/purchase invoices, receipts, payments, credit
 notes, inventory, customers/suppliers, cash/bank/mobile money, AR/AP, trial
 balance, P&L, balance sheet, cash flow, multi-company, multi-currency with
@@ -18,13 +18,13 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5.4 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **four desktop shortcuts** — JENESIS Seller (red), JENESIS Network & Maintenance (green), JENESIS Accounting & Business (blue), JENESIS Settings & Access Point (yellow) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JEN 0.5.4 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JEN 0.5.4.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.5 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **four desktop shortcuts** — JENESIS Seller (red), JENESIS Network & Maintenance (green), JENESIS Accounting & Business (blue), JENESIS Settings & Access Point (yellow) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.5 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JEN 0.5.5.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
-> (`JEN.0.5.4.Setup.exe`). It is the same file; rename it after downloading if
+> (`JEN.0.5.5.Setup.exe`). It is the same file; rename it after downloading if
 > you prefer spaces.
 
 Both files are built by GitHub Actions from this exact commit and are the same
@@ -34,90 +34,108 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 ---
 
-## What is new in JEN 0.5.4
+## What is new in JEN 0.5.5
 
-### A. JENESIS is now four separate applications
+### A. Right-click now works, everywhere
 
-One installer, four programs, **one shared database**. Each has its own colour,
-its own name, its own icon, its own window title and its own Desktop and
-Start-menu shortcut:
+Right-click did nothing anywhere in JENESIS. It now opens a menu with **Copy,
+Cut, Paste, Edit, Delete, Deactivate, Activate and Select All**, showing only
+the ones that make sense for the row under the cursor, in **all four
+applications** — on customers, suppliers, products, sales, purchases, banking,
+accounting, the audit trail, the other-computer list and the settings panels.
 
-| Shortcut | Colour | What it is for | Who may open it |
-|---|---|---|---|
-| **JENESIS Seller** | red | Sell: dashboard, sales, customers, stock, help. Opens on Sales. | Any signed-in user |
-| **JENESIS Network & Maintenance** | green | Connections between JENESIS computers and database care — nothing else. | Any signed-in user |
-| **JENESIS Accounting & Business** | blue | The full business: purchases, suppliers, banking, accounting, reports, settings. | Any signed-in user |
-| **JENESIS Settings & Access Point** | yellow | Company settings and users. | Needs the *Settings access* permission |
+- **Only what is relevant.** A deactivated row offers Activate, not
+  Deactivate. A trial-balance figure or an audit entry offers Copy and nothing
+  else: they are history, not records.
+- **Roles decide what you see, and the server decides what you get.** The menu
+  is never the only gate.
+- **Destructive actions always ask first**, and the question names the record.
+- **An accounting record is never destroyed.** A record carrying accounting
+  history is refused deletion with the reason, and the menu offers deactivation
+  instead. Journal entries, accounts, audit rows and trial-balance figures are
+  marked protected and say so.
+- **The menu wears the colour of the application it opens in** — red, green,
+  blue or yellow, in Light and Dark.
+- **Keyboard shortcuts and ordinary left-click are untouched**, and a shortcut
+  does not fire while the menu is open.
 
-The separation is **enforced, not cosmetic**. The backend refuses, per
-application, the screens and the API routes that do not belong to it, and the
-refusal is written to the audit trail. A Seller user who calls the ledger, the
-payroll of users, or the reports API gets a refusal, not a screen: **18
-separation checks**, each proved by asking for something that must be denied.
+**28 checks** cover the actions, the rules, the confirmations, the guard on
+accounting records and the colour of every application.
 
-Each application also remembers **its own** theme, and its identity colour does
-not change when you switch between Light and Dark.
+### B. JENESIS Seller has its own dashboard
 
-### B. Network & Maintenance now really manages the network
+A screen built around the day at the counter:
 
-The green application has become what its name promises. It finds the other
-JENESIS computers on the same network (UDP broadcast on port 41235), lists them
-with their status, and lets you **connect, disconnect, reconnect and forget**
-one. Every action explains itself in plain language — *"the other computer did
-not answer"*, *"that address is not a JENESIS computer"*, *"the connection is
-switched off on this computer"* — and the explanation never contains a
-password, a token or a session id.
+| | |
+|---|---|
+| **New Sale** / **New Receipt** | Opens the sales form with the intent carried over |
+| **Sales History** | Recent documents with numbers, customers, balances and a print button |
+| **Customer Management** | The people who buy |
+| **Product Search** | By name or SKU: the price and whether it is on the shelf — **no cost price** |
+| **Available Stock** | Read-only, with what needs restocking |
+| **Receipt Printing** | From the sales history |
+| **Daily Sales Summary** | How many, how much, how much cash, how much on credit, and the week behind it |
+| **Cash Register Information** | Which till accounts there are and what is in them |
 
-Discovery is **opt-in**: nothing is broadcast until you switch on *Allow other
-computers on this network to connect* in the green application.
+**Seller no longer shows** the accounting dashboard, the profit and loss, the
+balance sheet, the trial balance, the general ledger, payables, receivables,
+administrative reports, company configuration, user management or admin
+settings.
 
-It contains **no** accounting, sales, purchase, customer, supplier, product,
-inventory or reporting screen, and its backend refuses all of them.
+And it is **not only hidden**. Hiding a menu is not a defence: the
+accounting dashboard used to answer on a permission every role holds, which is
+exactly how the accounting figures could still be read from a Seller window
+after its menu entry was taken away. A test found it by asking the server. The
+route now requires an accounting permission, the menu entry follows the
+application, and the accounting dashboard says so plainly when the figures are
+not yours to read.
 
-**16 network checks** exercise this with two real services running on separate
-temporary databases, discovering each other over real UDP sockets: discovery,
-connect, disconnect, reconnect, refusing a second connection, forgetting a
-computer, a bad address, an imposter that is not JENESIS, a computer that has
-stopped, and proof that the announcement carries no secret.
+**One database, as before.** A sale written in JENESIS Seller is posted by the
+same engine, moves the same stock, writes the same journal entries and takes
+the same money into the same till. A test writes a sale from a Seller window
+and reads it back as the accountant.
 
-### C. Complete translation — English, Français, Ikinyarwanda
+**9 checks**, plus the 24 separation checks, plus a render test that reads the
+dashboard's markup and fails on the words *net profit*, *gross margin*,
+*balance sheet*, *trial balance*, *general ledger*, *accounts payable*,
+*accounts receivable*, *cost of goods* or *profit and loss*.
 
-Every string a user can see now exists in all three languages: **1,030 keys per
-language, 28 namespaces, nothing left untranslated**, checked by a scanner that
-fails the build on any missing key. Switching language updates the screen
-immediately and is remembered. Financial terms use the established terminology
-in each language rather than word-for-word translation.
+### C. JENESIS Settings & Access Point owns the settings
 
-### D. One currency format, everywhere
+All of it in the yellow application, and **removed from Accounting & Business
+rather than copied** — there is exactly one settings screen in the project, and
+every existing configuration was preserved.
 
-Amounts are formatted by a single function, so the same number looks the same
-on every screen and in every report: **`1,400.00 XFA`** — thin-space grouping,
-two decimals, the currency code after the amount. It is strictly a display
-rule; the numbers stored in the database are untouched.
+- **User accounts.** Create, rename, deactivate, reactivate, delete; set your
+  own password; an administrator resets a forgotten one. An account that is
+  part of the company's history cannot be deleted, only deactivated. An
+  administrator cannot delete themselves.
+- **The Access Point.** Which of the four applications each user may open, and
+  which permissions they hold beyond their role or lose from it. Enforced on
+  the very next request; closing an application also signs its open windows
+  out.
+- **Tax rates.** Create, edit, delete, deactivate, reactivate, active and
+  inactive listed separately, with these safeguards:
 
-### E. Delete, deactivate, reactivate — with an audit trail
+  | | |
+  |---|---|
+  | A rate used in transactions **cannot be deleted** | refused with `TAX_IN_USE`, naming where it is used |
+  | Deactivation **changes nothing** in documents already raised | only the active flag flips |
+  | Inactive rates are **not offered** for new transactions | the active list is the default |
+  | Historical invoices and reports **keep their original rates** | the rate is stored on the document itself |
+  | Reactivation **makes it available again** | immediately |
+  | Every change is **written to the audit trail** | against the `TAXES` module |
 
-Customers, suppliers, products, stores and users can now be deactivated and
-reactivated, and records that carry no history can be deleted. The rules:
+- **Company settings** — information, identification, currency.
+- **General settings** — language (English / Français / Ikinyarwanda),
+  Light/Dark/System theme, application preferences.
+- **Centralized synchronization.** Every configuration change bumps a number,
+  and an already-open window notices it move and reads its permissions again,
+  so a permission withdrawn here takes effect in the other applications without
+  a restart.
 
-- only an **Administrator** or a **Manager** may do it, and the API enforces it
-  — hiding the button is not the protection;
-- a record that is referenced by accounting history is **deactivated, never
-  deleted**: historical transactions are permanent;
-- you cannot deactivate yourself, and the last active Administrator cannot be
-  deactivated;
-- every action is written to the audit trail with **who, when, what and which
-  record**.
-
-**47 checks** cover the rules, the guards and the audit entries.
-
-### F. Renaming
-
-**JENESIS Admin is now JENESIS Accounting & Business** — in the window titles,
-the shortcuts, the Start menu, the installer, the help chapters and every
-translated string. **JENESIS Maintenance is now JENESIS Network &
-Maintenance.** Only the visible names changed; internal identifiers, the
-database and existing installations are untouched.
+**17 checks** prove the safeguards, the accounts, the access point and the
+synchronization against a real server on a real copy of the database.
 
 ---
 
@@ -126,13 +144,13 @@ database and existing installations are untouched.
 ### Recommended — GitHub release (permanent, no sign-in needed)
 
 - **Installer:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.4/JEN.0.5.4.Setup.exe>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.5/JEN.0.5.5.Setup.exe>
 - **Portable ZIP:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.4/JEN.0.5.4.Portable.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.5/JEN.0.5.5.Portable.zip>
 - **Source backup:**
-  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.4/JEN.0.5.4.zip>
+  <https://github.com/Kdollers/k.JACK/releases/download/v0.5.5/JEN.0.5.5.zip>
 - **All files for this version:**
-  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.4>
+  <https://github.com/Kdollers/k.JACK/releases/tag/v0.5.5>
 
 ### Alternative — build artifacts of the workflow run
 
@@ -142,8 +160,8 @@ If you prefer the files exactly as the build job produced them:
 2. Click the **most recent completed (green) run** at the top of the list, then
    scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`),
-   **`JEN 0.5.4 Portable`** (the portable `.zip` and its `.sha256`),
-   **`JEN 0.5.4 source backup`** (the source `.zip` and its `.sha256`) or
+   **`JEN 0.5.5 Portable`** (the portable `.zip` and its `.sha256`),
+   **`JEN 0.5.5 source backup`** (the source `.zip` and its `.sha256`) or
    **`JENESIS-screenshots`** (pictures of the four installed applications,
    taken during the smoke test)
 
@@ -155,12 +173,12 @@ release above does not expire.
 ## 3. Verify what you downloaded (optional but recommended)
 
 The exact checksums of this build are printed in the table in §7 and are also
-attached to the release as `JEN 0.5.4 Setup.exe.sha256`. To check a file on
+attached to the release as `JEN 0.5.5 Setup.exe.sha256`. To check a file on
 Windows, open the folder in File Explorer, type `cmd` in the address bar… — or
 simply use PowerShell from the folder's context menu:
 
 ```powershell
-certutil -hashfile "JEN 0.5.4 Setup.exe" SHA256
+certutil -hashfile "JEN 0.5.5 Setup.exe" SHA256
 ```
 
 The value must match the SHA-256 in §7 / in the `.sha256` file.
@@ -169,7 +187,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ## 4. Installing on Windows (no command prompt, no code)
 
-1. Download `JEN 0.5.4 Setup.exe` from the link above.
+1. Download `JEN 0.5.5 Setup.exe` from the link above.
 2. **Double-click** the downloaded file.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the
    installer is not code-signed. Click **More info → Run anyway**.
@@ -187,7 +205,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ### If you would rather not install: the portable package
 
-1. Download `JEN 0.5.4 Portable.zip` and **unzip** it anywhere (Desktop,
+1. Download `JEN 0.5.5 Portable.zip` and **unzip** it anywhere (Desktop,
    Documents, a USB stick — it is self-contained).
 2. Open the folder and double-click `JENESIS.exe`. That opens the application
    chooser; to start one application directly, make your own shortcut to
@@ -383,21 +401,21 @@ is the first place to look.
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
 These are the files published by the build this page describes — GitHub Actions
-run 41988436955, commit `122f671`. A later build carries different numbers; the
+run 42413730696, commit `14cf87b`. A later build carries different numbers; the
 ones on the release page always belong to the file you are downloading.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.4 Setup.exe` | 93,033,910 bytes (88.7 MB) | `88488df9bf0c6a8e350bc1aeb9120321ff2d3fe971f2dc709a81e46e3e535ec7` |
-| `JEN 0.5.4 Portable.zip` | 133,710,301 bytes (127.5 MB) | `22ccaab0e55a27d52feeaa2c09e7249dc1bef0c1323cd2fc39e3529039e86a13` |
-| `JEN 0.5.4.zip` | 6,100,723 bytes (5.8 MB) | `e5235f82e3221c902380e0f3c99436b3b4386f83db901e826c9745f385aa43f8` |
+| `JEN 0.5.5 Setup.exe` | 93,070,749 bytes (88.8 MB) | `df5802c40e200d87bb81c0c1626a952326930f8ede7fe349ffc98940d41fea18` |
+| `JEN 0.5.5 Portable.zip` | 133,759,389 bytes (127.6 MB) | `aabde354c4de4dc5e5cf594480be94d5b73fd82c4f1d154408fbc16e31621046` |
+| `JEN 0.5.5.zip` | 6,175,151 bytes (5.9 MB) | `e0a53425f6b5e0e071d5f0f2af50f359d478d62a2924f50c7e1438a0c489af67` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**531 automated checks** on that build, and the
-installed-application smoke test recorded on the release page).
+named on the release page (**595 automated checks** on that build, and the
+installed-application smoke test recorded on the release page, 29/29 PASS).
 
 Every push rebuilds and republishes these files, so a later build carries a
 different SHA-256. The numbers printed on
-<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.4> are always the ones
+<https://github.com/Kdollers/k.JACK/releases/tag/v0.5.5> are always the ones
 that belong to the file you are downloading now, and each `.sha256` file sits
 next to its download — compare with `certutil -hashfile <file> SHA256` (§3).

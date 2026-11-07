@@ -1139,6 +1139,72 @@ Step 'Signing in through the interface reports no error in the interface' {
   Close-AppGracefully
 }
 
+Step 'The signed-in screens this release is about are photographed' {
+  # 0.5.5. The four windows are already photographed, but only on the sign-in
+  # screen: a runner has nobody to type the password. This step types it, so
+  # the two screens this release is about - the Seller's OWN dashboard and
+  # JENESIS Settings & Access Point - are photographed the way a user sees
+  # them.
+  #
+  # Nothing here asserts that the typed keys reached the window. That has never
+  # been reliable on a runner with no display, and pretending otherwise is how
+  # a release comes to claim a screen it never showed. If the keys do not get
+  # through, the picture still shows what is really on the screen and the step
+  # says which it was.
+  foreach ($pair in @(
+      @{ Label = 'JENESIS Seller';                   App = 'seller';   Shot = 'JENESIS-Seller-Dashboard.bmp' },
+      @{ Label = 'JENESIS Settings & Access Point';  App = 'settings'; Shot = 'JENESIS-Settings-Signed-In.bmp' }
+    )) {
+    $label = $pair.Label
+    $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match "--app=$($pair.App)" } | Select-Object -First 1
+    Assert ($null -ne $shortcut) "The $label shortcut was not found."
+    Stop-Process -Name $script:AppName -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 3
+
+    # Counted, not searched: the log already holds the sign-ins of the earlier
+    # steps, so only a NEW line means this window signed in.
+    $signinsBefore = 0
+    if (Test-Path $LogFile) { $signinsBefore = @(Select-String -Path $LogFile -Pattern 'renderer: signed-in').Count }
+
+    $before = Get-ReadyCount
+    Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments) | Out-Null
+    $window = Wait-ForTitledWindow $label 90
+    if ($null -eq $window) {
+      $script:notes += "$label did not open for its signed-in photograph on this runner"
+      continue
+    }
+    Assert ((Wait-ForInterfaceStart $before 90)) "$label did not report that its interface started."
+    [void](Set-ForegroundWindow -Handle $window.Handle)
+    Start-Sleep -Milliseconds 1500
+    Send-InterfaceKeys 'smoke.admin'
+    Send-InterfaceKeys '{TAB}'
+    Send-InterfaceKeys $script:Password
+    Send-InterfaceKeys '{ENTER}'
+
+    $deadline = (Get-Date).AddSeconds(90)
+    $signedIn = $false
+    while ((Get-Date) -lt $deadline -and -not $signedIn) {
+      if (Test-Path $LogFile) {
+        $signedIn = (@(Select-String -Path $LogFile -Pattern 'renderer: signed-in').Count) -gt $signinsBefore
+      }
+      if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
+    }
+    # A moment for the screen to settle before it is photographed, so the
+    # picture is of the dashboard and not of the sign-in form fading out.
+    Start-Sleep -Seconds 5
+    if (Save-WindowPicture -Window $window -FileName $pair.Shot) {
+      if ($signedIn) {
+        Write-Host "    $label signed in and photographed" -ForegroundColor DarkGray
+      } else {
+        $script:notes += "$label was photographed on the sign-in screen: the typed keys were not confirmed to have reached it"
+      }
+    } else {
+      $script:notes += "$label could not be photographed"
+    }
+    Close-AppGracefully
+  }
+}
+
 Step 'Silent uninstall removes the program but keeps business data' {
   $uninstaller = Join-Path $InstallDir "Uninstall $AppName.exe" 
   Assert (Test-Path $uninstaller) 'Uninstaller not found.'

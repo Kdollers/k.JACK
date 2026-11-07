@@ -244,7 +244,7 @@ jobs:
           # for what changed, what was tested and what was not.
           foreach ($doc in @(
             "JEN $version RELEASE NOTES.md",
-            'JENESIS-0.5.4-PROGRESS.md',
+            "JENESIS-$version-PROGRESS.md",
             'DOWNLOAD.md',
             'README.md'
           )) {
@@ -406,7 +406,7 @@ jobs:
           # The documentation of this build, published with the build.
           foreach ($doc in @(
             "JEN $version RELEASE NOTES.md",
-            'JENESIS-0.5.4-PROGRESS.md',
+            "JENESIS-$version-PROGRESS.md",
             'DOWNLOAD.md',
             'README.md'
           )) {
@@ -449,49 +449,42 @@ jobs:
           All four open **the same company database**. The shortcuts only choose
           which face of the same installation the window opens with.
 
-          ## What is new in 0.5.4
+          ## What is new in 0.5.5
 
-          **The interface is complete in English, French and Kinyarwanda.** The
-          scanner that audits every screen for untranslated text reports zero,
-          with nine documented exceptions (language names, ISO currency codes,
-          keyboard keys), each with a written reason.
+          **Right-click works everywhere.** Copy, Cut, Paste, Edit, Delete,
+          Deactivate, Activate and Select All on the records of all four
+          applications, showing only what makes sense for the row under the
+          cursor. Destructive actions always ask first, and the question names
+          the record. Your role decides what appears — and the server asks the
+          same question, so the menu is never the only gate. An accounting
+          record is **never destroyed**: it is deactivated, and the menu says
+          why. The menu is drawn in the colour of the application it opens in,
+          and no keyboard shortcut was taken away.
 
-          **Amounts are formatted in one place.** ``1,400.00 XFA`` — the number
-          and the currency separated by a space, produced by a single function
-          that never touches stored values.
+          **JENESIS Seller has its own dashboard.** A screen built around the
+          day at the counter: new sale, sales history, customers, product
+          search, availability, stock (read-only), receipt printing, the day's
+          takings and the cash register. The accounting dashboard, the profit
+          and loss, the balance sheet, the trial balance, the general ledger,
+          the payables and the receivables are **not on it** — and are now
+          **refused by the server** too, so they cannot be reached by typing a
+          request by hand either. Sales still post into the one shared
+          accounting database: stock, the ledger and the till move together.
 
-          **Records can be retired instead of lost.** Customers, suppliers,
-          products, stores and users can be deactivated, reactivated or deleted
-          by an administrator or a manager. Deleting a record that carries
-          history is refused and archive is offered instead — **accounting
-          transactions are never silently destroyed**. A user cannot switch off
-          their own account, and the last active administrator cannot be
-          removed at all.
+          **JENESIS Settings & Access Point owns the settings.** User accounts
+          (create, rename, reset a forgotten password, deactivate, delete),
+          access to each of the four applications, roles and individual
+          permissions, tax rates, the company record, language and theme — all
+          of it in the yellow application, and **removed from Accounting &
+          Business rather than copied**. A tax rate that has been used in a
+          transaction **cannot be deleted**, only deactivated; deactivating it
+          changes **nothing** in any document already raised; a retired rate is
+          no longer offered for new transactions; every change is written to
+          the audit trail. Every change is numbered, and an open window
+          notices the number move and reads its permissions again.
 
-          **JENESIS is now four applications** (above), each with its own name,
-          colour, icon, window title, Desktop shortcut and Start menu entry, and
-          each remembering its own Light/Dark choice.
-
-          **The applications are held to their own boundaries.** Sharing one
-          database does not mean every window can reach everything: from
-          JENESIS Seller the reports cannot be opened even by an administrator,
-          and Network & Maintenance cannot read customers, suppliers, products,
-          stock, sales or accounting data. Refusals are recorded in the audit
-          trail — never the password or the session token.
-
-          **Network & Maintenance finds the other computers.** It discovers the
-          JENESIS computers on the local network, keeps the ones you work with,
-          connects to and disconnects from them, and watches whether they are
-          still answering — with a plain-language reason when they are not
-          (switched off, JENESIS not running, something else on that address, or
-          a different version). The announcement it broadcasts carries only a
-          name, an address, a port and a version: **no token, no user, no
-          company, no database path**. Nothing is broadcast while the network
-          switch is off.
-
-          **JENESIS Admin is now JENESIS Accounting & Business** — everywhere:
-          the window title, the shortcuts, the installer, Help, and the English,
-          French and Kinyarwanda dictionaries.
+          **595 automated checks** in 34 suites, and a 29/29 smoke test of the
+          installed applications.
 
           ## Checksums
 
@@ -513,6 +506,14 @@ jobs:
           ``JENESIS-Accounting-Business.bmp`` and
           ``JENESIS-Settings-Access-Point.bmp``. They are also published in the
           ``JENESIS-screenshots`` artefact of the run.
+
+          ``JENESIS-Seller-Dashboard.bmp`` and
+          ``JENESIS-Settings-Signed-In.bmp`` are taken after the smoke test
+          typed the password into the window, so they show the two screens this
+          release is about as a signed-in user sees them. If the keyboard
+          automation did not reach the window on that runner, the step says so
+          in the notes of the run and the picture is of the sign-in screen
+          instead.
 
           They are the installed build, not a mock-up, but they are still a
           machine's picture of a window: nobody has looked at these screens by

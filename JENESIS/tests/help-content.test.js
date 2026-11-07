@@ -61,7 +61,11 @@ const S = loadShortcuts();
 
 const REQUIRED_SECTIONS = [
   'welcome', 'signin', 'navigation', 'sales', 'purchases', 'inventory',
-  'calculator', 'messenger', 'appearance', 'shortcuts', 'accounting',
+  'calculator', 'messenger', 'appearance', 'shortcuts',
+  // JENESIS 0.5.5: how to use the right-click menu, and how the Seller's own
+  // counter works now that it is no longer the accounting dashboard.
+  'contextmenu', 'seller',
+  'accounting',
   'settings', 'backup', 'troubleshooting', 'roles', 'developers'
 ];
 

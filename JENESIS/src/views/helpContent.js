@@ -252,6 +252,45 @@ export const HELP = {
           'Permissions apply to shortcuts too: a user who may not post or settle sees a refusal message, exactly as if they had clicked the button.'
         ]
       },
+      contextmenu: {
+        title: 'Right-click on a record',
+        purpose: 'Do to one row what you would otherwise hunt for in a toolbar: copy it, open it, retire it, or bring it back.',
+        where: 'Any list of records in any of the four applications — customers, suppliers, products, sales, purchases, banking, accounting, the audit trail, the other-computer list and the settings panels.',
+        steps: [
+          'Right-click the row you want. The menu opens with only the actions that make sense for that row.',
+          'Copy puts the record on the clipboard as text, so it can be pasted into a letter or a message.',
+          'Edit opens the same editor the row\u2019s own button opens.',
+          'Deactivate retires a record you no longer use; Activate brings it back. Neither touches its history.',
+          'Delete removes a record that nothing depends on, and asks you to confirm first, naming the record.',
+          'Select All selects every row in the list, for copying or printing.'
+        ],
+        expected: 'The action happens to the row you right-clicked, and a message tells you what was done — or why it was refused.',
+        notes: [
+          'Your role decides what you are offered, and the server asks the same question, so the menu is never the only gate.',
+          'An accounting record is never destroyed. A record carrying accounting history is deactivated instead, and the menu says so.',
+          'Figures that are not records — a trial-balance row, an audit entry — can be copied out but never edited or removed, because they are history.',
+          'The menu is drawn in the colour of the application you are in, and no keyboard shortcut was taken away to make room for it.'
+        ]
+      },
+      seller: {
+        title: 'JENESIS Seller — the counter',
+        purpose: 'Sell all day without seeing the accountant\u2019s figures, while every sale still lands in the same books.',
+        where: 'JENESIS Seller (red) — Dashboard, Sales, Customers, Inventory, Help.',
+        steps: [
+          'The dashboard is the day: how many sales, how much taken, how much in cash and how much on credit, and the week behind it.',
+          'New Sale opens the sales form; New Receipt opens it ready to print.',
+          'Product Search finds an item by name or code and answers with its price and whether it is on the shelf.',
+          'Available Stock shows what there is. It is read-only: prices and quantities are changed in JENESIS Accounting & Business.',
+          'Sales History lists the recent documents and prints a receipt for any of them.',
+          'Cash Register Information shows the till accounts and what is in them.'
+        ],
+        expected: 'A sale made here moves stock, writes the accounting entries and takes the money into the till — the accountant sees it in the same database, immediately.',
+        notes: [
+          'Seller does not show, and cannot reach, the accounting dashboard, the profit and loss, the balance sheet, the trial balance, the general ledger, the payables or the receivables. They are refused by the server, not merely hidden.',
+          'A cost price is never shown here.',
+          'Seller has no company or user settings: those live in JENESIS Settings & Access Point (yellow).'
+        ]
+      },
       accounting: {
         title: 'Accounting and reports',
         purpose: 'See the real financial situation: every document is posted as a balanced double-entry transaction, and the reports are built from those entries.',
@@ -270,15 +309,18 @@ export const HELP = {
       settings: {
         title: 'Settings, users and permissions',
         purpose: 'Adapt the program to your company and give each person only the rights they need.',
-        where: 'Settings → Company, Users, Taxes, Audit, Currencies, Backup, Appearance.',
+        where: 'JENESIS Settings & Access Point (yellow) — Company, Users, Taxes, Currencies, Audit, Backup, Appearance.',
         steps: [
           'Company: name, address, base currency and accounting policies.',
-          'Users: create a user, give a role (admin, accountant, sales, purchases, inventory, manager) and deactivate a user who leaves.',
-          'Taxes and Currencies: the rates used by your documents and the exchange rates.',
-          'Audit: review who did what and when.'
+          'Users: create a user, give a role (admin, accountant, sales, purchases, inventory, manager) and deactivate a user who leaves. A forgotten password is reset here, without knowing the old one.',
+          'Access: choose which of the four applications each person may open, and grant or withdraw individual permissions on top of their role. Closing an application signs its open windows out.',
+          'Taxes: create, edit, deactivate and reactivate rates, and see active and inactive separately.',
+          'Currencies: the exchange rates used by your documents.',
+          'Audit: review who did what and when — including every change made to a tax rate or to someone\u2019s access.'
         ],
         expected: 'Each user sees and can do only what their role allows — both in the interface and on the server.',
         notes: [
+          'A tax rate that has been used in a document cannot be deleted: deactivate it instead. Deactivating one changes nothing in the documents already raised — they keep the rate they were made with — and the retired rate is simply no longer offered for new ones.',
           'Administrators should be few: an administrator can do everything, including restoring a backup.',
           'Never share a password; create one user per person so the audit log is meaningful.'
         ]
@@ -604,6 +646,45 @@ export const HELP = {
           'Les permissions s\'appliquent aussi aux raccourcis : un utilisateur qui ne peut pas comptabiliser ou régler voit un message de refus, exactement comme s\'il avait cliqué sur le bouton.'
         ]
       },
+      contextmenu: {
+        title: 'Le clic droit sur un enregistrement',
+        purpose: 'Faire sur une ligne ce que vous chercheriez sinon dans une barre d\u2019outils : la copier, l\u2019ouvrir, la retirer ou la remettre en service.',
+        where: 'Toute liste d\u2019enregistrements dans les quatre applications — clients, fournisseurs, produits, ventes, achats, banque, comptabilité, piste d\u2019audit, liste des autres ordinateurs et panneaux des paramètres.',
+        steps: [
+          'Faites un clic droit sur la ligne voulue. Le menu s\u2019ouvre avec uniquement les actions qui ont un sens pour cette ligne.',
+          'Copier place l\u2019enregistrement dans le presse-papiers sous forme de texte, pour le coller dans une lettre ou un message.',
+          'Modifier ouvre le même éditeur que le bouton de la ligne.',
+          'Désactiver retire un enregistrement dont vous ne vous servez plus ; Activer le remet en service. Aucune des deux n\u2019efface son historique.',
+          'Supprimer efface un enregistrement dont rien ne dépend, et demande confirmation en le nommant.',
+          'Tout sélectionner sélectionne toutes les lignes de la liste, pour les copier ou les imprimer.'
+        ],
+        expected: 'L\u2019action s\u2019applique à la ligne sur laquelle vous avez cliqué, et un message indique ce qui a été fait — ou pourquoi c\u2019a été refusé.',
+        notes: [
+          'Votre rôle décide de ce qui vous est proposé, et le serveur pose la même question : le menu n\u2019est jamais le seul gardien.',
+          'Un enregistrement comptable n\u2019est jamais détruit. Un enregistrement qui porte un historique comptable est désactivé à la place, et le menu le dit.',
+          'Les chiffres qui ne sont pas des enregistrements — une ligne de balance générale, une entrée d\u2019audit — peuvent être copiés mais jamais modifiés ni supprimés, car ce sont des archives.',
+          'Le menu est dessiné dans la couleur de l\u2019application où vous êtes, et aucun raccourci clavier n\u2019a été supprimé pour lui faire place.'
+        ]
+      },
+      seller: {
+        title: 'JENESIS Vendeur — le comptoir',
+        purpose: 'Vendre toute la journée sans voir les chiffres du comptable, tout en gardant chaque vente dans les mêmes livres.',
+        where: 'JENESIS Vendeur (rouge) — Tableau de bord, Ventes, Clients, Stock, Aide.',
+        steps: [
+          'Le tableau de bord, c\u2019est la journée : combien de ventes, combien encaissé, combien en espèces et combien à crédit, et la semaine derrière.',
+          'Nouvelle vente ouvre le formulaire de vente ; Nouveau reçu l\u2019ouvre prêt à imprimer.',
+          'Recherche de produit trouve un article par nom ou par code et répond par son prix et s\u2019il est en rayon.',
+          'Stock disponible montre ce qu\u2019il y a. Il est en lecture seule : les prix et les quantités se modifient dans JENESIS Comptabilité & Gestion.',
+          'Historique des ventes liste les documents récents et imprime un reçu pour chacun.',
+          'Informations de caisse montre les comptes de caisse et ce qu\u2019ils contiennent.'
+        ],
+        expected: 'Une vente faite ici meut le stock, écrit les écritures comptables et fait entrer l\u2019argent en caisse — le comptable la voit dans la même base de données, immédiatement.',
+        notes: [
+          'Le Vendeur n\u2019affiche pas, et ne peut pas atteindre, le tableau de bord comptable, le compte de résultat, le bilan, la balance générale, le grand livre, les dettes ni les créances. Ils sont refusés par le serveur, pas seulement cachés.',
+          'Un prix de revient n\u2019est jamais affiché ici.',
+          'Le Vendeur n\u2019a pas de paramètres de société ni d\u2019utilisateurs : ceux-ci sont dans JENESIS Paramètres & Point d\u2019accès (jaune).'
+        ]
+      },
       accounting: {
         title: 'Comptabilité et rapports',
         purpose: 'Voir la situation financière réelle : chaque document est comptabilisé en partie double équilibrée, et les rapports sont construits à partir de ces écritures.',
@@ -622,15 +703,18 @@ export const HELP = {
       settings: {
         title: 'Paramètres, utilisateurs et permissions',
         purpose: 'Adapter le programme à votre société et donner à chacun uniquement les droits nécessaires.',
-        where: 'Paramètres → Société, Utilisateurs, Taxes, Audit, Devises, Sauvegarde, Apparence.',
+        where: 'JENESIS Paramètres & Point d\u2019accès (jaune) — Société, Utilisateurs, Taxes, Devises, Audit, Sauvegarde, Apparence.',
         steps: [
           'Société : nom, adresse, devise de base et règles comptables.',
-          'Utilisateurs : créez un utilisateur, donnez un rôle (admin, comptable, ventes, achats, stock, gestionnaire) et désactivez un utilisateur qui part.',
-          'Taxes et Devises : les taux utilisés par vos documents et les cours de change.',
-          'Audit : consultez qui a fait quoi et quand.'
+          'Utilisateurs : créez un utilisateur, donnez un rôle (admin, comptable, ventes, achats, stock, gestionnaire) et désactivez un utilisateur qui part. Un mot de passe oublié se réinitialise ici, sans connaître l\'ancien.',
+          'Accès : choisissez laquelle des quatre applications chacun peut ouvrir, et accordez ou retirez des permissions individuelles en plus de son rôle. Fermer une application déconnecte ses fenêtres ouvertes.',
+          'Taxes : créez, modifiez, désactivez et réactivez les taux, et voyez les actifs et les inactifs séparément.',
+          'Devises : les cours de change utilisés par vos documents.',
+          'Audit : consultez qui a fait quoi et quand — y compris chaque modification d\'un taux de taxe ou des accès de quelqu\'un.'
         ],
         expected: 'Chaque utilisateur voit et peut faire uniquement ce que son rôle autorise — dans l\'interface comme sur le serveur.',
         notes: [
+          'Un taux de taxe qui a servi dans un document ne peut pas être supprimé : désactivez-le à la place. Le désactiver ne change rien aux documents déjà établis — ils gardent le taux avec lequel ils ont été faits — et le taux retiré n\u2019est simplement plus proposé pour les nouveaux.',
           'Les administrateurs doivent être peu nombreux : un administrateur peut tout faire, y compris restaurer une sauvegarde.',
           'Ne partagez jamais un mot de passe ; créez un utilisateur par personne pour que le journal d\'audit ait un sens.'
         ]
@@ -956,6 +1040,45 @@ export const HELP = {
           'Uburenganzira bukurikizwa no ku tubuto: ukoresha udashobora kwinjiza cyangwa kwishyura abona ubutumwa bwo kwangirwa, nk\'uko byagenda iyo akanda buto.'
         ]
       },
+      contextmenu: {
+        title: 'Gukanda iburyo ku nyandiko',
+        purpose: 'Gukorera ku murongo icyo wajya gushakira mu bikoresho: kuwukoporora, kuwufungura, kuwuhagarika cyangwa kuwusubiza mu bikorwa.',
+        where: 'Urutonde urwo ari rwo rwose rw\u2019inyandiko muri porogaramu enye — abakiriya, abatanga ibicuruzwa, ibicuruzwa, ibyagurishijwe, ibyaguwe, banki, ibaramuramari, inyandiko y\u2019igenzura, urutonde rw\u2019andi makompyuta n\u2019ibice by\u2019igenamiterere.',
+        steps: [
+          'Kanda iburyo ku murongo ushaka. Menu ifungura irimo gusa ibikorwa bifite icyo bisobanura kuri uwo murongo.',
+          'Gukoporora bishyira inyandiko mu gikoresho cyo gukoporora nk\u2019inyandiko isanzwe, kugira ngo ishyirwe mu ibaruwa cyangwa ubutumwa.',
+          'Guhindura bifungura umwanditsi umwe nk\u2019uwo buto bw\u2019uwo murongo bufungura.',
+          'Kuzimya bivanaho inyandiko utagikoresha; Kuzimura birayisubiza mu bikorwa. Nta na kimwe gihanagura amateka yayo.',
+          'Gusiba bisiba inyandiko nta cyo ishingiyeho, kandi bibanza kubaza, bikavuga izina ry\u2019iyo nyandiko.',
+          'Guhitamo byose bihitamo imirongo yose yo ku rutonde, kugira ngo ikopororwe cyangwa icapwe.'
+        ],
+        expected: 'Igikorwa gikorerwa ku murongo wakandaweho, kandi ubutumwa bukakubwira ibyakozwe — cyangwa impamvu byanzwe.',
+        notes: [
+          'Urwego rwawe ruhitamo ibyo werekanirwa, na seriveri ikabaza ikibazo kimwe: menu si yo nzira yonyine yo kurinda.',
+          'Inyandiko y\u2019ibaramuramari ntisibwa na rimwe. Inyandiko ifite amateka y\u2019ibaramuramari irazimwa ahubwo, kandi menu ikabivuga.',
+          'Imibare itari inyandiko — umurongo wa balance générale, inyandiko y\u2019igenzura — ishobora gukopororwa ariko ntishobora guhindurwa cyangwa gusibwa, kuko ari amateka.',
+          'Menu ishushanywa mu ibara rya porogaramu urimo, kandi nta nzira-ngufi ya clavier yavanyweho ngo iyihere umwanya.'
+        ]
+      },
+      seller: {
+        title: 'JENESIS Umucuruzi — aho kugurishiriza',
+        purpose: 'Kugurisha umunsi wose utabona imibare y\u2019umubaramari, mu gihe buri cyagurishijwe kiguma mu bitabo bimwe.',
+        where: 'JENESIS Umucuruzi (umutuku) — Imbonerahamwe, Ibyagurishijwe, Abakiriya, Ububiko, Ubufasha.',
+        steps: [
+          'Imbonerahamwe ni umunsi: ibyagurishijwe bingahe, angahe yakiriwe, angahe mu ntoki n\u2019angahe ku ideni, n\u2019icyumweru kiri inyuma.',
+          'Igurishwa rishya rifungura formulaire yo kugurisha; Inyemezabwishyu nshya irayifungura yiteguye gucapwa.',
+          'Gushakisha igicuruzwa gishakisha ikintu ku izina cyangwa ku kode kikagusubiza igiciro cyacyo n\u2019aho kiri.',
+          'Ububiko buboneka bwerekana ibihari. Bwasomwa gusa: ibiciro n\u2019ingano bihindurwa muri JENESIS Ibaruramari & Ubucuruzi.',
+          'Amateka yo kugurisha atondeka inyandiko za vuba kandi agacapa inyemezabwishyu kuri buri imwe.',
+          'Amakuru ya caisse yerekana ama-konte ya caisse n\u2019ibiyarimo.'
+        ],
+        expected: 'Icyagurishijwe hano kinyura mu bubiko, cyandika inyandiko z\u2019ibaramuramari kikinjiza amafaranga muri caisse — umubaramari akabibona mu bubiko bumwe bw\u2019amakuru, ako kanya.',
+        notes: [
+          'Umucuruzi ntiyerekana, kandi ntashobora kugera ku mbonerahamwe y\u2019ibaramuramari, inyungu n\u2019igihombo, bilan, balance générale, grand livre, amadeni yishyurwa cyangwa ayishyurwa. Birangwa na seriveri, ntibihishwe gusa.',
+          'Igiciro cy\u2019igura ntikigere cyerekanwa hano.',
+          'Umucuruzi nta genamiterere rya sosiyete cyangwa ry\u2019abakoresha afite: ibyo biri muri JENESIS Igenamiterere & Ahantu ho Kwinjirira (umuhondo).'
+        ]
+      },
       accounting: {
         title: 'Ibaruramari na raporo',
         purpose: 'Kureba imiterere nyayo y\'amafaranga: buri nyandiko yinjizwa mu ibaruramari riringaniye, kandi raporo zubakwa kuri izo nyandiko.',
@@ -974,15 +1097,18 @@ export const HELP = {
       settings: {
         title: 'Igenamiterere, abakoresha n\'uburenganzira',
         purpose: 'Guhuza porogaramu na sosiyete yawe no guha buri muntu gusa uburenganzira akeneye.',
-        where: 'Igenamiterere → Sosiyete, Abakoresha, Imisoro, Igenzura, Amadovize, Ububiko, Isura.',
+        where: 'JENESIS Igenamiterere & Ahantu ho Kwinjirira (umuhondo) — Sosiyete, Abakoresha, Imisoro, Amadovize, Igenzura, Ububiko, Isura.',
         steps: [
           'Sosiyete: izina, aderesi, ifaranga shingiro n\'amategeko y\'ibaruramari.',
-          'Abakoresha: kora ukoresha, umuhe uruhare (umuyobozi, umubitsi, ubucuruzi, amagura, ububiko, umucungamutungo) kandi uhagarike ukoresha ugiye.',
-          'Imisoro n\'Amadovize: ibipimo bikoreshwa n\'inyandiko zawe n\'ibiciro by\'ivunjisha.',
-          'Igenzura: reba uwakoze iki n\'igihe.'
+          'Abakoresha: kora ukoresha, umuhe uruhare (umuyobozi, umubitsi, ubucuruzi, amagura, ububiko, umucungamutungo) kandi uhagarike ukoresha ugiye. Ijambo ry\'ibanga ryibagiranye rihindurwa hano, utazi irya kera.',
+          'Uburenganzira: hitamo porogaramu enye buri muntu ashobora gufungura, kandi wongere cyangwa ukureho uburenganzira ku giti cye hejuru y\'uruhare rwe. Gufunga porogaramu bisohora amadirishya yayo afunguye.',
+          'Imisoro: kora, hindura, zimya kandi uhembure ibipimo, urebe ibikora n\'ibidakora ukwayo.',
+          'Amadovize: ibiciro by\'ivunjisha bikoreshwa n\'inyandiko zawe.',
+          'Igenzura: reba uwakoze iki n\'igihe — harimo n\'ihinduka ryose ryakozwe ku gipimo cy\'umusoro cyangwa ku burenganzira bw\'umuntu.'
         ],
         expected: 'Buri ukoresha areba kandi ashobora gukora gusa ibyo uruhare rwe rwemera — haba mu ishusho no kuri seriveri.',
         notes: [
+          'Igipimo cy\'umusoro cyakoreshejwe mu nyandiko ntigishobora gusibwa: kizimye ahubwo. Kukizimya ntigihindura inyandiko zamaze gukorwa — zigumana igipimo zakoreweho — kandi icyo gipimo ntikiba kigihabwa ibishya.',
           'Abayobozi bagomba kuba bake: umuyobozi ashobora gukora byose, harimo no gusubiza ububiko.',
           'Ntuzigere usangira ijambo ry\'ibanga; kora ukoresha umwe kuri buri muntu kugira ngo igitabo cy\'igenzura kigire icyo kivuze.'
         ]
@@ -1085,6 +1211,8 @@ export const HELP_ORDER = [
   'messenger',
   'appearance',
   'shortcuts',
+  'contextmenu',
+  'seller',
   'accounting',
   'settings',
   'backup',

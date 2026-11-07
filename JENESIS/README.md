@@ -17,11 +17,11 @@ Messenger**, documents that are **created PAID**, and a trilingual
 - **Installation, upgrade and first launch**: [`INSTALL.md`](INSTALL.md)
 - **Desktop packaging and CI**: [`DESKTOP.md`](DESKTOP.md)
 
-Status: **321 automated checks pass** (locally and on Linux CI, with the real
+Status: **595 automated checks pass** (locally and on Linux CI, with the real
 SQLite driver) and the **Windows installer is built and smoke-tested on a
-GitHub-hosted Windows runner** on every push — `JEN 0.5.2 Setup.exe`
-(~92.6 MB) is **published as a GitHub release** together with
-`JEN 0.5.2 Portable.zip` (~127 MB) and SHA-256 checksums. Get them from
+GitHub-hosted Windows runner** on every push — `JEN 0.5.5 Setup.exe`
+(~88.8 MB) is **published as a GitHub release** together with
+`JEN 0.5.5 Portable.zip` (~127.6 MB) and SHA-256 checksums. Get them from
 [`DOWNLOAD.md`](DOWNLOAD.md) or the release page. It is unsigned and has not
 been run on a physical PC, and **no human or browser engine has looked at the
 rendered interface** (the sandbox has no display; themes are verified by tests,
@@ -194,7 +194,7 @@ The server will start on port `3000` (e.g., `http://localhost:3000`).
 ```bat
 build-installer.bat          :: or: npm ci && npm run desktop:dist
 ```
-Produces `release\JEN 0.5.2 Setup.exe`. See [`INSTALL.md`](INSTALL.md).
+Produces `release\JEN 0.5.5 Setup.exe`. See [`INSTALL.md`](INSTALL.md).
 
 ---
 
