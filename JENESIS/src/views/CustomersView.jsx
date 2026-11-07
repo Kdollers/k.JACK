@@ -5,6 +5,7 @@ import { useI18n } from '../i18n';
 import { apiRequest } from '../services/api';
 import StatementModal from '../components/StatementModal';
 import RecordLifecycleControls, { RecordStatusFilter, InactiveBadge } from '../components/RecordLifecycle';
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
 import {
   Users,
   Plus,
@@ -23,6 +24,8 @@ import {
 export default function CustomersView() {
   const { currentCompany, formatCurrency, showToast, refreshKey, setActiveView, activeView } = useApp();
   const { t } = useI18n();
+  // Right-click on a customer: copy, edit, deactivate, reactivate, delete.
+  const recordMenu = useRecordMenu();
 
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -233,7 +236,20 @@ export default function CustomersView() {
                   </tr>
                 ) : customers.length > 0 ? (
                   customers.map((c) => (
-                    <tr key={c.id} data-j-row={c.id} className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none" tabIndex={0}>
+                    <tr
+                      key={c.id}
+                      data-j-row={c.id}
+                      className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none"
+                      tabIndex={0}
+                      onContextMenu={(event) => recordMenu.openRecord(event, {
+                        type: 'customers',
+                        record: c,
+                        nameField: 'name',
+                        kindLabel: t('records.kind_customer'),
+                        fields: ['code', 'name', 'contact_person', 'email', 'phone', 'address', 'tax_id'],
+                        onEdit: openEdit
+                      })}
+                    >
                       <td className="py-3 px-4 font-mono font-semibold text-blue-600">{c.code}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">
                         <div className="flex items-center gap-1.5">

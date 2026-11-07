@@ -23,14 +23,21 @@ import {
 } from 'lucide-react';
 import RecordLifecycleControls, { RecordStatusFilter } from '../components/RecordLifecycle';
 
+
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
+import UsersPanel from '../components/settings/UsersPanel';
+import TaxesPanel from '../components/settings/TaxesPanel';
+
 export default function SettingsView() {
   const { currentCompany, companies, switchCompany, showToast, refreshKey, triggerRefresh, logout } = useApp();
   const { lang, setLang, t } = useI18n();
+  // Right-click on a user, a tax rate or a currency: copy, edit, deactivate,
+  // reactivate or delete — each only when this user may do it.
+  const recordMenu = useRecordMenu();
   const { preference, systemPrefersDark } = useTheme();
 
   const [activeTab, setActiveTab] = useState('company'); // 'company', 'users', 'taxes', 'audit', 'currencies', 'backup', 'appearance'
   const [auditLogs, setAuditLogs] = useState([]);
-  const [taxes, setTaxes] = useState([]);
   const [loading, setLoading] = useState(false);
   // Active / Inactive / All for the user list. The list is fetched here
   // (rather than read from the context) so the filter is respected.
@@ -92,13 +99,6 @@ export default function SettingsView() {
     role: 'accountant'
   });
 
-  // Tax Modal
-  const [showTaxModal, setShowTaxModal] = useState(false);
-  const [taxForm, setTaxForm] = useState({
-    code: '',
-    name: '',
-    rate: 18.0
-  });
 
   useEffect(() => {
     if (currentCompany) {
@@ -122,14 +122,6 @@ export default function SettingsView() {
     }
   }, [currentCompany]);
 
-  const fetchTaxes = async () => {
-    try {
-      const data = await apiRequest('/api/taxes');
-      setTaxes(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const fetchAuditLogs = async () => {
     try {
@@ -141,8 +133,7 @@ export default function SettingsView() {
   };
 
   useEffect(() => {
-    if (activeTab === 'taxes') fetchTaxes();
-    else if (activeTab === 'audit') fetchAuditLogs();
+    if (activeTab === 'audit') fetchAuditLogs();
     else if (activeTab === 'currencies') {
       fetchCurrencies();
       apiRequest('/api/fx/revaluations').then(setRevaluations).catch(() => setRevaluations([]));
@@ -194,21 +185,6 @@ export default function SettingsView() {
     }
   };
 
-  const handleCreateTax = async (e) => {
-    e.preventDefault();
-    try {
-      await apiRequest('/api/taxes', {
-        method: 'POST',
-        body: JSON.stringify(taxForm)
-      });
-      showToast(t('settings.tax_configured_toast'), 'success');
-      setShowTaxModal(false);
-      setTaxForm({ code: '', name: '', rate: 18 });
-      fetchTaxes();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
 
   const handleDownloadBackup = async () => {
     try {
@@ -624,112 +600,10 @@ export default function SettingsView() {
       )}
 
       {/* 2. Users & Roles Tab */}
-      {activeTab === 'users' && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_users')}</h2>
-              <p className="text-[11px] text-slate-500">{t('settings.users_subtitle')}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <RecordStatusFilter value={userStatus} onChange={setUserStatus} />
-              <button
-                onClick={() => setShowUserModal(true)}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 shadow"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>{t('settings.add_user')}</span>
-              </button>
-            </div>
-          </div>
-
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
-              <tr>
-                <th className="py-2.5 px-4">{t('auth.full_name')}</th>
-                <th className="py-2.5 px-4">{t('auth.username')}</th>
-                <th className="py-2.5 px-4">{t('settings.role')}</th>
-                <th className="py-2.5 px-4">{t('common.email')}</th>
-                <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
-                <th className="py-2.5 px-4 text-center">{t('common.actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {userList.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50">
-                  <td className="py-3 px-4 font-bold text-slate-800">{u.full_name}</td>
-                  <td className="py-3 px-4 font-mono text-slate-600">@{u.username}</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-slate-500">{u.email || '-'}</td>
-                  <td className="py-3 px-4 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${u.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
-                      {u.active ? t('common.active') : t('common.inactive')}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex items-center justify-center">
-                      <RecordLifecycleControls
-                        type="users"
-                        record={u}
-                        nameField="username"
-                        onChanged={fetchUsers}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {activeTab === 'users' && <UsersPanel />}
 
       {/* 3. Tax Rates Tab */}
-      {activeTab === 'taxes' && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_taxes')}</h2>
-              <p className="text-[11px] text-slate-500">{t('settings.taxes_subtitle')}</p>
-            </div>
-            <button
-              onClick={() => setShowTaxModal(true)}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 shadow"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{t('settings.add_tax_rate')}</span>
-            </button>
-          </div>
-
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
-              <tr>
-                <th className="py-2.5 px-4">{t('common.code')}</th>
-                <th className="py-2.5 px-4">{t('common.name')}</th>
-                <th className="py-2.5 px-4 text-right">{t('settings.tax_rate_percent')}</th>
-                <th className="py-2.5 px-4 text-center">{t('common.status')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {taxes.map((tItem) => (
-                <tr key={tItem.id} className="hover:bg-slate-50">
-                  <td className="py-3 px-4 font-mono font-bold text-blue-600">{tItem.code}</td>
-                  <td className="py-3 px-4 font-bold text-slate-800">{tItem.name}</td>
-                  <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">{tItem.rate}%</td>
-                  <td className="py-3 px-4 text-center">
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-emerald-100 text-emerald-800">
-                      {t('common.active')}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {activeTab === 'taxes' && <TaxesPanel />}
 
       {/* 4. Audit Trail Tab */}
       {/* 2b. Currencies & Exchange Rates Tab */}
@@ -758,7 +632,18 @@ export default function SettingsView() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {currencies.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50">
+                  <tr
+                    key={c.id}
+                    className="hover:bg-slate-50"
+                    onContextMenu={(event) => recordMenu.openRecord(event, {
+                      type: 'currencies',
+                      record: c,
+                      nameField: 'code',
+                      kindLabel: t('settings.currency'),
+                      editPermission: 'fx:write',
+                      fields: ['code', 'name', 'symbol', 'decimal_places']
+                    })}
+                  >
                     <td className="py-2.5 px-4 font-mono font-bold text-slate-800">{c.code}</td>
                     <td className="py-2.5 px-4 text-slate-600">{c.name}</td>
                     <td className="py-2.5 px-4">{c.symbol || '—'}</td>
@@ -1001,7 +886,22 @@ export default function SettingsView() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {auditLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-50">
+                // An audit row is the record that something happened. It can be
+                // copied out — to explain, to report, to hand to an auditor —
+                // and it can never be edited or removed from here.
+                <tr
+                  key={log.id}
+                  className="hover:bg-slate-50"
+                  onContextMenu={(event) => recordMenu.openRecord(event, {
+                    type: 'audit_logs',
+                    record: log,
+                    nameField: 'action',
+                    kindLabel: t('settings.audit'),
+                    fields: ['timestamp', 'user_name', 'module', 'action', 'description'],
+                    isProtected: true,
+                    protectionNote: t('contextmenu.immutable_note')
+                  })}
+                >
                   <td className="py-2.5 px-4 text-slate-500 font-mono text-[11px]">{log.timestamp}</td>
                   <td className="py-2.5 px-4 font-medium text-slate-800">{log.user_name}</td>
                   <td className="py-2.5 px-4">
@@ -1265,76 +1165,6 @@ export default function SettingsView() {
         </div>
       )}
 
-      {/* Tax Modal */}
-      {showTaxModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden">
-            <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
-              <h3 className="font-bold text-sm">{t('settings.add_tax_rate')}</h3>
-              <button
-                onClick={() => setShowTaxModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateTax} className="p-5 space-y-3.5 text-xs">
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">{t('common.code')} *</label>
-                <input
-                  type="text"
-                  required
-                  value={taxForm.code}
-                  onChange={(e) => setTaxForm({ ...taxForm, code: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                  placeholder={t('settings.tax_code_placeholder')}
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">{t('settings.tax_description')} *</label>
-                <input
-                  type="text"
-                  required
-                  value={taxForm.name}
-                  onChange={(e) => setTaxForm({ ...taxForm, name: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder={t('settings.tax_desc_placeholder')}
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">{t('settings.tax_rate_pct')} *</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  value={taxForm.rate}
-                  onChange={(e) => setTaxForm({ ...taxForm, rate: Number(e.target.value) })}
-                  className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold"
-                />
-              </div>
-
-              <div className="border-t border-slate-200 pt-3 flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowTaxModal(false)}
-                  className="px-3 py-1.5 border border-slate-300 rounded-md text-slate-700 hover:bg-slate-50 transition font-medium"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition font-semibold"
-                >
-                  Add Rate
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

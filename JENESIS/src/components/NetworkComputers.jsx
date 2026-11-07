@@ -1,5 +1,6 @@
 import React from 'react';
 import { useI18n } from '../i18n';
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
 import { Trash2 } from 'lucide-react';
 
 /**
@@ -36,6 +37,9 @@ export default function NetworkComputers({
   onForget
 }) {
   const { t } = useI18n();
+  // Right-click on a computer: copy its details, test it, connect, disconnect
+  // or forget it — each only when this user may, and only where it applies.
+  const recordMenu = useRecordMenu();
 
   if (!computers.length) {
     return (
@@ -48,7 +52,45 @@ export default function NetworkComputers({
   return (
     <ul data-testid="computers-list" className="divide-y divide-line">
       {computers.map((computer) => (
-        <li key={computer.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
+        <li
+          key={computer.id}
+          className="py-3 flex flex-col sm:flex-row sm:items-center gap-2"
+          onContextMenu={(event) => {
+            if (!canManage) return;
+            const actions = [];
+            if (onTest) {
+              actions.push({
+                id: 'edit',
+                label: t('maintenance.test'),
+                run: () => onTest(computer)
+              });
+            }
+            if (computer.connected) {
+              if (onDisconnect) {
+                actions.push({
+                  id: 'deactivate',
+                  label: t('maintenance.disconnect'),
+                  run: () => onDisconnect(computer)
+                });
+              }
+            } else if (onConnect) {
+              actions.push({
+                id: 'activate',
+                label: t('maintenance.connect'),
+                run: () => onConnect(computer)
+              });
+            }
+            recordMenu.openRecord(event, {
+              type: 'computers',
+              record: computer,
+              nameField: 'name',
+              kindLabel: t('maintenance.computer'),
+              canEdit: false,
+              fields: ['name', 'address', 'port', 'lastStatus', 'connected'],
+              extra: actions
+            });
+          }}
+        >
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 flex-wrap">
               <span className="text-xs font-semibold truncate">{computer.name}</span>

@@ -19,9 +19,13 @@ import {
   PackageCheck
 } from 'lucide-react';
 
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
+
 export default function PurchasesView() {
   const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, hasPermission } = useApp();
   const { t } = useI18n();
+  // Right-click on a purchase document: copy it, copy a value. Deleting a
+  const recordMenu = useRecordMenu();
 
   const [activeTab, setActiveTab] = useState('bills'); // 'bills', 'orders', 'receipts', 'returns'
   const [bills, setBills] = useState([]);
@@ -560,7 +564,17 @@ export default function PurchasesView() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {orders.length > 0 ? orders.map((o) => (
-                  <tr key={o.id} className="hover:bg-slate-50">
+                  <tr
+                    key={o.id}
+                    className="hover:bg-slate-50"
+                    onContextMenu={(event) => recordMenu.openRecord(event, {
+                      type: 'purchase_orders',
+                      record: o,
+                      nameField: 'po_number',
+                      kindLabel: t('purchases.order'),
+                      fields: ['po_number', 'date', 'supplier_name', 'total', 'status']
+                    })}
+                  >
                     <td className="py-2.5 px-4 font-mono font-bold text-indigo-600">{o.po_number}</td>
                     <td className="py-2.5 px-4 text-slate-600">{formatDate(o.date)}</td>
                     <td className="py-2.5 px-4 font-semibold text-slate-800">{o.supplier_name}</td>
@@ -610,7 +624,17 @@ export default function PurchasesView() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {receipts.length > 0 ? receipts.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50">
+                  <tr
+                    key={r.id}
+                    className="hover:bg-slate-50"
+                    onContextMenu={(event) => recordMenu.openRecord(event, {
+                      type: 'goods_receipts',
+                      record: r,
+                      nameField: 'receipt_number',
+                      kindLabel: t('purchases.receipt'),
+                      fields: ['receipt_number', 'date', 'supplier_name', 'total', 'status']
+                    })}
+                  >
                     <td className="py-2.5 px-4 font-mono font-bold text-emerald-700">{r.receipt_number}</td>
                     <td className="py-2.5 px-4 text-slate-600">{formatDate(r.date)}</td>
                     <td className="py-2.5 px-4 font-semibold text-slate-800">{r.supplier_name || '—'}</td>
@@ -660,7 +684,17 @@ export default function PurchasesView() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {returns.length > 0 ? returns.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50">
+                  <tr
+                    key={r.id}
+                    className="hover:bg-slate-50"
+                    onContextMenu={(event) => recordMenu.openRecord(event, {
+                      type: 'purchase_returns',
+                      record: r,
+                      nameField: 'return_number',
+                      kindLabel: t('purchases.return'),
+                      fields: ['return_number', 'date', 'supplier_name', 'total']
+                    })}
+                  >
                     <td className="py-2.5 px-4 font-mono font-bold text-rose-600">{r.return_number}</td>
                     <td className="py-2.5 px-4 text-slate-600">{formatDate(r.date)}</td>
                     <td className="py-2.5 px-4 font-semibold text-slate-800">{r.supplier_name}</td>

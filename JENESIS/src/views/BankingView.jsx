@@ -60,9 +60,13 @@ function DenominationLines({ lines, onChange, t }) {
   );
 }
 
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
+
 export default function BankingView() {
   const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, hasPermission } = useApp();
   const { t } = useI18n();
+  // Right-click on a payment or a cash session: copy it, copy a value.
+  const recordMenu = useRecordMenu();
 
   const [activeTab, setActiveTab] = useState('accounts'); // 'accounts', 'payments', 'cash'
   const [bankAccounts, setBankAccounts] = useState([]);
@@ -441,7 +445,17 @@ export default function BankingView() {
                   payments.map((p) => {
                     const isReceipt = p.payment_type === 'CUSTOMER_RECEIPT' || p.payment_type === 'DIRECT_INCOME';
                     return (
-                      <tr key={p.id} className="hover:bg-slate-50">
+                      <tr
+                        key={p.id}
+                        className="hover:bg-slate-50"
+                        onContextMenu={(event) => recordMenu.openRecord(event, {
+                          type: 'payments',
+                          record: p,
+                          nameField: 'payment_number',
+                          kindLabel: t('banking.payment'),
+                          fields: ['payment_number', 'date', 'amount', 'method', 'reference']
+                        })}
+                      >
                         <td className="py-3 px-4 text-slate-600">{formatDate(p.date)}</td>
                         <td className="py-3 px-4 font-mono font-bold text-slate-800">{p.payment_number}</td>
                         <td className="py-3 px-4">
@@ -533,7 +547,17 @@ export default function BankingView() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {cashSessions.length > 0 ? cashSessions.map((cs) => (
-                    <tr key={cs.id} className="hover:bg-slate-50">
+                    <tr
+                      key={cs.id}
+                      className="hover:bg-slate-50"
+                      onContextMenu={(event) => recordMenu.openRecord(event, {
+                        type: 'cash_sessions',
+                        record: cs,
+                        nameField: 'session_number',
+                        kindLabel: t('banking.cash_session'),
+                        fields: ['session_number', 'bank_name', 'opened_by_name', 'opened_at', 'status']
+                      })}
+                    >
                       <td className="py-2.5 px-4 font-mono font-bold text-amber-700">{cs.session_number}</td>
                       <td className="py-2.5 px-4 text-slate-700">{cs.bank_name}</td>
                       <td className="py-2.5 px-4 text-slate-600">{cs.opened_by_name || '—'}<div className="text-[10px] text-slate-400">{cs.opened_at}</div></td>

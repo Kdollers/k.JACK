@@ -47,7 +47,7 @@ export const APPS = {
     iconPng: 'build/icon-seller.png',
     favicon: '/favicon-seller.png',
     accent: { light: '#dc2626', dark: '#f87171', deep: '#450a0a' },
-    defaultView: 'sales',
+    defaultView: 'dashboard',
     views: ['dashboard', 'sales', 'customers', 'inventory', 'help']
   },
   maintenance: {
@@ -79,9 +79,13 @@ export const APPS = {
     favicon: '/favicon-admin.png',
     accent: { light: '#2563eb', dark: '#60a5fa', deep: '#0b1f4b' },
     defaultView: 'dashboard',
+    // Configuration is no longer here. Company, users, permissions, taxes,
+    // currencies and appearance belong to JENESIS Settings & Access Point,
+    // where they are managed once for all four applications instead of being
+    // duplicated in this one and drifting out of step with it.
     views: [
       'dashboard', 'sales', 'purchases', 'inventory', 'customers', 'suppliers',
-      'banking', 'accounting', 'reports', 'settings', 'maintenance', 'help'
+      'banking', 'accounting', 'reports', 'maintenance', 'help'
     ]
   },
   settings: {

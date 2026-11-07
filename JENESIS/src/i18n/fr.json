@@ -119,7 +119,8 @@
     "disc_pct": "Remise %",
     "tel": "Tél :",
     "tin_short": "TIN :",
-    "records_count": "{count} enregistrements"
+    "records_count": "{count} enregistrements",
+    "searching": "Recherche…"
   },
   "dashboard": {
     "title": "Tableau de Bord Financier et Opérationnel",
@@ -159,7 +160,9 @@
     "cash_label": "Espèces :",
     "bank_label": "Banque :",
     "gross_margin": "Marge brute :",
-    "min_short": "Min :"
+    "min_short": "Min :",
+    "not_permitted_title": "Ces chiffres ne vous sont pas destinés",
+    "not_permitted_body": "Le tableau de bord de l'entreprise affiche le compte de résultat, les créances et les dettes. Demandez les chiffres dont vous avez besoin à un administrateur ou à un comptable, ou ouvrez JENESIS Comptabilité & Gestion avec un rôle qui peut les lire."
   },
   "customers": {
     "title": "Gestion des Clients",
@@ -373,7 +376,9 @@
     "credit_reason": "Motif du crédit / du retour",
     "returned_product_optional": "Produit retourné (facultatif)",
     "select_product_option": "-- Sélectionner un produit --",
-    "credit_unit_price": "Prix unitaire du crédit"
+    "credit_unit_price": "Prix unitaire du crédit",
+    "quote": "devis",
+    "credit_note": "avoir"
   },
   "purchases": {
     "title": "Achats et Dépenses Fournisseurs",
@@ -424,7 +429,10 @@
     "vendor_ref": "Réf. fournisseur",
     "vendor_invoice_placeholder": "ex. FACT-FOURN-9988",
     "item_service": "Article / Service",
-    "vat_input_label": "TVA déductible (taxe récupérable) :"
+    "vat_input_label": "TVA déductible (taxe récupérable) :",
+    "order": "commande d'achat",
+    "receipt": "bon de réception",
+    "return": "retour d'achat"
   },
   "banking": {
     "title": "Trésorerie et Règlements",
@@ -499,7 +507,9 @@
     "method_card": "Carte de crédit / débit",
     "payment_reference": "Référence de paiement",
     "eg_payment_ref": "ex. ID MoMo, Chèque n°",
-    "acc_short": "Cpte :"
+    "acc_short": "Cpte :",
+    "payment": "paiement",
+    "cash_session": "session de caisse"
   },
   "accounting": {
     "title": "Comptabilité Générale et Grand Livre",
@@ -542,7 +552,7 @@
     "txn_purpose_placeholder": "Objet de la transaction",
     "journal_lines": "Lignes d'écriture (débits et crédits)",
     "accounting_lines": "Lignes comptables",
-    "account": "Compte",
+    "account": "compte",
     "add_new_account": "Ajouter un nouveau compte au plan comptable",
     "account_code": "Code du compte",
     "account_name": "Nom du compte",
@@ -556,7 +566,8 @@
     "reversed_toast": "Écriture contrepassée ! Contre-écriture {number} générée",
     "reversal_prompt": "Veuillez saisir le motif de cette contre-passation :",
     "journal_entry_hash": "Écriture n°",
-    "source": "Source :"
+    "source": "Source :",
+    "journal_entry": "écriture de journal"
   },
   "reports": {
     "title": "États Financiers et Rapports",
@@ -729,7 +740,48 @@
     "company_created_toast": "Société {name} créée ! Plan comptable initialisé.",
     "user_created_toast": "Utilisateur {username} créé avec succès",
     "tax_configured_toast": "Taux de taxe configuré avec succès",
-    "add_new_user": "Ajouter un nouvel utilisateur"
+    "add_new_user": "Ajouter un nouvel utilisateur",
+    "tax_rate": "Taux de taxe",
+    "currency": "Devise",
+    "access_applications": "Applications que cet utilisateur peut ouvrir",
+    "access_applications_hint": "Une application fermée refuse cet utilisateur dès sa prochaine demande, même dans une fenêtre déjà ouverte.",
+    "access_permissions": "Autorisations en plus du rôle",
+    "access_permissions_hint": "« Rôle » vient de leur rôle. Cochez une fois pour ajouter une autorisation, cochez encore pour en retirer une. Réinitialiser les ramène exactement à leur rôle.",
+    "access_reset": "Revenir au rôle",
+    "access_saved_toast": "Accès enregistré pour {username}. {sessions} fenêtre(s) ouverte(s) ont été déconnectées pour que le changement prenne effet immédiatement.",
+    "manage_access": "Gérer les accès",
+    "cannot_delete_self": "Vous ne pouvez pas supprimer votre propre compte.",
+    "no_users": "Aucun compte ne correspond à ce filtre.",
+    "password_leave_blank": "Nouveau mot de passe (laissez vide pour conserver l'actuel)",
+    "password_reset_toast": "Le mot de passe de {username} a été changé. {sessions} fenêtre(s) ouverte(s) ont été déconnectées.",
+    "reset_password": "Réinitialiser le mot de passe",
+    "reset_password_title": "Définir un nouveau mot de passe",
+    "reset_password_body": "Saisissez le nouveau mot de passe de {username}. Il devra le changer à sa prochaine connexion, et toutes ses fenêtres ouvertes sont déconnectées maintenant.",
+    "user_updated_toast": "Le compte a été mis à jour.",
+    "user_deleted_toast": "Le compte {username} a été supprimé.",
+    "user_edit_title": "Modifier le compte",
+    "user_in_use_title": "Ce compte ne peut pas être supprimé",
+    "tax_confirm_deactivate_title": "Désactiver ce taux de taxe ?",
+    "tax_confirm_deactivate_body": "« {code} » ne sera plus proposé pour les nouvelles factures. Chaque document déjà établi conserve le taux avec lequel il a été établi.",
+    "tax_confirm_delete_title": "Supprimer ce taux de taxe ?",
+    "tax_confirm_delete_body": "« {code} » sera définitivement supprimé. Cela n'est possible que si rien ne l'a utilisé.",
+    "tax_created_toast": "Le taux de taxe a été créé.",
+    "tax_updated_toast": "Le taux de taxe a été mis à jour.",
+    "tax_deactivate": "Désactiver",
+    "tax_deactivate_instead": "Le désactiver plutôt",
+    "tax_deactivated_toast": "Le taux de taxe a été désactivé. Il n'apparaît plus sur les nouveaux documents.",
+    "tax_delete": "Supprimer",
+    "tax_deleted_toast": "Le taux de taxe a été supprimé.",
+    "tax_edit_title": "Modifier le taux de taxe",
+    "tax_history_note": "Un taux de taxe utilisé sur une facture, une commande, un devis ou un bon ne peut pas être supprimé — seulement désactivé. Les taux retirés restent listés ici pour pouvoir être réactivés.",
+    "tax_in_use_title": "Ce taux de taxe ne peut pas être supprimé",
+    "tax_none": "Aucun taux de taxe ne correspond à ce filtre.",
+    "tax_reactivate": "Réactiver",
+    "tax_reactivated_toast": "Le taux de taxe est de nouveau proposé pour les nouveaux documents.",
+    "tax_filter_active": "Actifs",
+    "tax_filter_inactive": "Inactifs",
+    "tax_filter_all": "Tous",
+    "audit": "Entrée d'audit"
   },
   "auth": {
     "app_tagline": "Gestion et comptabilité d’entreprise",
@@ -1046,7 +1098,8 @@
     "diag_TIMEOUT": "Il n'a pas répondu à temps. Le réseau est peut-être occupé — réessayez.",
     "diag_BAD_ADDRESS": "Cette adresse ne permet pas d'atteindre un ordinateur. Elle doit ressembler à 192.168.1.20.",
     "diag_LAN_DISABLED": "Cet ordinateur n'est pas encore autorisé sur le réseau. Activez l'interrupteur réseau ci-dessus.",
-    "diag_UNKNOWN": "Pas encore vérifié."
+    "diag_UNKNOWN": "Pas encore vérifié.",
+    "computer": "ordinateur"
   },
   "aging": {
     "current_not_due": "Courant (non échu)",
@@ -1101,5 +1154,74 @@
     "kind_user": "l'utilisateur",
     "no_permission": "Seul un administrateur ou un gestionnaire peut retirer un enregistrement.",
     "checking_history": "Vérification de l'historique..."
+  },
+  "contextmenu": {
+    "title": "Actions",
+    "record": "enregistrement",
+    "copy": "Copier",
+    "copy_value": "Copier cette valeur",
+    "copy_all": "Tout copier",
+    "cut": "Couper",
+    "paste": "Coller",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "deactivate": "Désactiver",
+    "activate": "Activer",
+    "select_all": "Tout sélectionner",
+    "copied_toast": "Copié dans le presse-papiers.",
+    "copy_failed_toast": "Copié dans JENESIS. Le presse-papiers du système n'a pas pu être atteint.",
+    "protected_note": "Les écritures comptables sont conservées. Désactivez-la plutôt.",
+    "no_permission": "Vous n'avez pas la permission de faire ceci.",
+    "paste_here": "Coller {name}",
+    "selected_toast": "{count} lignes sélectionnées.",
+    "immutable_note": "Ceci est historique. Elle peut être copiée, jamais modifiée ni supprimée."
+  },
+  "seller": {
+    "title": "Le comptoir",
+    "subtitle": "Les ventes du jour, ce qui est en rayon, et ce qu'il y a en caisse.",
+    "new_sale": "Nouvelle vente",
+    "new_sale_hint": "Établir un reçu et encaisser",
+    "sales_history": "Historique des ventes",
+    "sales_history_hint": "Chaque reçu établi depuis cette fenêtre",
+    "customers": "Clients",
+    "customers_hint": "Ajouter un client ou en trouver un",
+    "stock": "Stock",
+    "stock_hint": "Ce qui est disponible, en lecture seule",
+    "sales_today": "Vendu aujourd'hui",
+    "sales_count": "ventes",
+    "cash_today": "Espèces reçues",
+    "cash_today_hint": "Encaissé dans la caisse aujourd'hui",
+    "credit_today": "À crédit",
+    "credit_today_hint": "Vendu aujourd'hui, à payer plus tard",
+    "restock": "À réapprovisionner",
+    "restock_hint": "Au minimum ou en dessous",
+    "find_product": "Chercher un produit",
+    "found": "trouvé(s)",
+    "price": "Prix",
+    "on_hand": "En stock",
+    "availability": "Disponible",
+    "avail_in_stock": "En stock",
+    "avail_low": "Bas",
+    "avail_out": "Épuisé",
+    "no_match": "Aucun produit ne correspond à votre saisie.",
+    "type_to_search": "Tapez un nom, un code ou un code-barres.",
+    "stock_readonly": "Les prix et les quantités sont affichés tels qu'ils sont. Leur modification se fait dans JENESIS Comptabilité & Gestion.",
+    "search_placeholder": "Nom, code ou code-barres…",
+    "register": "Caisse",
+    "register_open": "La caisse est ouverte",
+    "register_closed": "Aucune caisse ouverte",
+    "register_name": "Caisse",
+    "register_number": "Session",
+    "register_opened": "Ouverte le",
+    "opening_float": "Fonds de caisse",
+    "register_note": "L'ouverture, la fermeture et le comptage d'une caisse se font dans JENESIS Comptabilité & Gestion.",
+    "recent_sales": "Ventes récentes",
+    "all_sales": "Toutes les ventes",
+    "customer": "Client",
+    "walk_in": "Client de passage",
+    "print_receipt": "Imprimer ce reçu",
+    "no_sales_yet": "Aucune vente n'a encore été enregistrée aujourd'hui.",
+    "daily_summary": "Les sept derniers jours",
+    "needs_restock": "À réapprovisionner"
   }
 }

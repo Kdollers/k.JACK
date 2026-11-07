@@ -119,7 +119,8 @@
     "disc_pct": "Disc %",
     "tel": "Tel:",
     "tin_short": "TIN:",
-    "records_count": "{count} records"
+    "records_count": "{count} records",
+    "searching": "Searching…"
   },
   "dashboard": {
     "title": "Executive Financial Dashboard",
@@ -159,7 +160,9 @@
     "cash_label": "Cash:",
     "bank_label": "Bank:",
     "gross_margin": "Gross Margin:",
-    "min_short": "Min:"
+    "min_short": "Min:",
+    "not_permitted_title": "These figures are not yours to read",
+    "not_permitted_body": "The company dashboard carries the profit and loss, the receivables and the payables. Ask an administrator or an accountant for the figures you need, or open JENESIS Accounting & Business with a role that may read them."
   },
   "customers": {
     "title": "Customer Management",
@@ -373,7 +376,9 @@
     "credit_reason": "Reason for Credit / Return",
     "returned_product_optional": "Returned Product (Optional)",
     "select_product_option": "-- Select Product --",
-    "credit_unit_price": "Credit Unit Price"
+    "credit_unit_price": "Credit Unit Price",
+    "quote": "quote",
+    "credit_note": "credit note"
   },
   "purchases": {
     "title": "Purchases & Vendor Bills",
@@ -424,7 +429,10 @@
     "vendor_ref": "Vendor Ref",
     "vendor_invoice_placeholder": "e.g. VEND-INV-9988",
     "item_service": "Item / Service",
-    "vat_input_label": "VAT Input (Deductible Tax):"
+    "vat_input_label": "VAT Input (Deductible Tax):",
+    "order": "purchase order",
+    "receipt": "goods receipt",
+    "return": "purchase return"
   },
   "banking": {
     "title": "Payments & Banking",
@@ -499,7 +507,9 @@
     "method_card": "Credit / Debit Card",
     "payment_reference": "Payment Reference",
     "eg_payment_ref": "e.g. MoMo ID, Cheque #",
-    "acc_short": "Acc:"
+    "acc_short": "Acc:",
+    "payment": "payment",
+    "cash_session": "cash session"
   },
   "accounting": {
     "title": "General Ledger & Accounting",
@@ -542,7 +552,7 @@
     "txn_purpose_placeholder": "Transaction purpose",
     "journal_lines": "Journal Lines (Debits & Credits)",
     "accounting_lines": "Accounting Lines",
-    "account": "Account",
+    "account": "account",
     "add_new_account": "Add New Account to Chart of Accounts",
     "account_code": "Account Code",
     "account_name": "Account Name",
@@ -556,7 +566,8 @@
     "reversed_toast": "Entry reversed! Generated reversal journal entry {number}",
     "reversal_prompt": "Please enter the reason for this journal entry reversal:",
     "journal_entry_hash": "Journal Entry #",
-    "source": "Source:"
+    "source": "Source:",
+    "journal_entry": "journal entry"
   },
   "reports": {
     "title": "Financial Reports & Statements",
@@ -729,7 +740,48 @@
     "company_created_toast": "Company {name} created! Chart of accounts initialized.",
     "user_created_toast": "User {username} created successfully",
     "tax_configured_toast": "Tax rate configured successfully",
-    "add_new_user": "Add New User"
+    "add_new_user": "Add New User",
+    "tax_rate": "Tax rate",
+    "currency": "Currency",
+    "access_applications": "Applications this user may open",
+    "access_applications_hint": "A closed application refuses this user on their very next request, even in a window that is already open.",
+    "access_permissions": "Permissions beyond the role",
+    "access_permissions_hint": "“Role” comes from their role. Tick once to add a permission, tick again to take one away. Reset returns them to exactly their role.",
+    "access_reset": "Back to the role",
+    "access_saved_toast": "Access saved for {username}. {sessions} open window(s) were signed out so the change takes effect at once.",
+    "manage_access": "Manage access",
+    "cannot_delete_self": "You cannot delete your own account.",
+    "no_users": "No account matches this filter.",
+    "password_leave_blank": "New password (leave blank to keep the current one)",
+    "password_reset_toast": "The password of {username} was changed. {sessions} open window(s) were signed out.",
+    "reset_password": "Reset password",
+    "reset_password_title": "Set a new password",
+    "reset_password_body": "Type the new password for {username}. They will be asked to change it the next time they sign in, and every window they have open is signed out now.",
+    "user_updated_toast": "The account was updated.",
+    "user_deleted_toast": "The account {username} was removed.",
+    "user_edit_title": "Edit the account",
+    "user_in_use_title": "This account cannot be deleted",
+    "tax_confirm_deactivate_title": "Deactivate this tax rate?",
+    "tax_confirm_deactivate_body": "“{code}” will no longer be offered for new invoices and bills. Every document already raised keeps the rate it was raised with.",
+    "tax_confirm_delete_title": "Delete this tax rate?",
+    "tax_confirm_delete_body": "“{code}” will be removed for good. This is only possible while nothing has used it.",
+    "tax_created_toast": "The tax rate was created.",
+    "tax_updated_toast": "The tax rate was updated.",
+    "tax_deactivate": "Deactivate",
+    "tax_deactivate_instead": "Deactivate it instead",
+    "tax_deactivated_toast": "The tax rate was deactivated. It no longer appears on new documents.",
+    "tax_delete": "Delete",
+    "tax_deleted_toast": "The tax rate was deleted.",
+    "tax_edit_title": "Edit the tax rate",
+    "tax_history_note": "A tax rate that has been used on an invoice, a bill, a quote or an order cannot be deleted — only deactivated. Retired rates stay listed here so they can be brought back.",
+    "tax_in_use_title": "This tax rate cannot be deleted",
+    "tax_none": "No tax rate matches this filter.",
+    "tax_reactivate": "Reactivate",
+    "tax_reactivated_toast": "The tax rate is offered for new documents again.",
+    "tax_filter_active": "Active",
+    "tax_filter_inactive": "Inactive",
+    "tax_filter_all": "All",
+    "audit": "Audit entry"
   },
   "auth": {
     "app_tagline": "Business accounting & management",
@@ -1046,7 +1098,8 @@
     "diag_TIMEOUT": "It did not answer in time. The network may be busy — try again.",
     "diag_BAD_ADDRESS": "That address is not one a computer can be reached at. It should look like 192.168.1.20.",
     "diag_LAN_DISABLED": "This computer is not allowed on the network yet. Turn the network switch on above.",
-    "diag_UNKNOWN": "Not checked yet."
+    "diag_UNKNOWN": "Not checked yet.",
+    "computer": "computer"
   },
   "aging": {
     "current_not_due": "Current (Not Due)",
@@ -1101,5 +1154,74 @@
     "kind_user": "User",
     "no_permission": "Only an administrator or a manager can retire a record.",
     "checking_history": "Checking history..."
+  },
+  "contextmenu": {
+    "title": "Actions",
+    "record": "record",
+    "copy": "Copy",
+    "copy_value": "Copy this value",
+    "copy_all": "Copy all",
+    "cut": "Cut",
+    "paste": "Paste",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "select_all": "Select all",
+    "copied_toast": "Copied to the clipboard.",
+    "copy_failed_toast": "Copied inside JENESIS. The system clipboard could not be reached.",
+    "protected_note": "Accounting records are kept. Deactivate it instead.",
+    "no_permission": "You do not have permission to do this.",
+    "paste_here": "Paste {name}",
+    "selected_toast": "{count} rows selected.",
+    "immutable_note": "This is history. It can be copied out, never changed or removed."
+  },
+  "seller": {
+    "title": "The counter",
+    "subtitle": "Today's sales, what is on the shelf, and what is in the till.",
+    "new_sale": "New sale",
+    "new_sale_hint": "Write a receipt and take the payment",
+    "sales_history": "Sales history",
+    "sales_history_hint": "Every receipt written from this window",
+    "customers": "Customers",
+    "customers_hint": "Add a customer or find one",
+    "stock": "Stock",
+    "stock_hint": "What is available, read only",
+    "sales_today": "Sold today",
+    "sales_count": "sales",
+    "cash_today": "Cash taken",
+    "cash_today_hint": "Paid into the till today",
+    "credit_today": "On credit",
+    "credit_today_hint": "Sold today, to be paid later",
+    "restock": "Needs restocking",
+    "restock_hint": "At or below the minimum",
+    "find_product": "Find a product",
+    "found": "found",
+    "price": "Price",
+    "on_hand": "On hand",
+    "availability": "Available",
+    "avail_in_stock": "In stock",
+    "avail_low": "Low",
+    "avail_out": "Out",
+    "no_match": "No product matches what you typed.",
+    "type_to_search": "Type a name, a code or a barcode.",
+    "stock_readonly": "Prices and quantities are shown as they are. Changing them is done in JENESIS Accounting & Business.",
+    "search_placeholder": "Name, code or barcode…",
+    "register": "Cash register",
+    "register_open": "The till is open",
+    "register_closed": "No till is open",
+    "register_name": "Register",
+    "register_number": "Session",
+    "register_opened": "Opened",
+    "opening_float": "Opening float",
+    "register_note": "Opening and closing a till, and counting it, are done in JENESIS Accounting & Business.",
+    "recent_sales": "Recent sales",
+    "all_sales": "All sales",
+    "customer": "Customer",
+    "walk_in": "Walk-in customer",
+    "print_receipt": "Print this receipt",
+    "no_sales_yet": "No sale has been written yet today.",
+    "daily_summary": "The last seven days",
+    "needs_restock": "Needs restocking"
   }
 }

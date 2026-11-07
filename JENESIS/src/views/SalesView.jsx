@@ -20,9 +20,20 @@ import {
   ArrowRight
 } from 'lucide-react';
 
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
+import { consumeNewSaleRequest } from '../sellerIntents';
+
 export default function SalesView() {
   const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, setActiveView, hasPermission } = useApp();
   const { t } = useI18n();
+  // Right-click on a sales document: copy it, copy a value, view it. Deleting an
+  const recordMenu = useRecordMenu();
+
+  // JENESIS Seller's dashboard opens this screen with the invoice form already
+  // started, rather than the dashboard carrying a second copy of that form.
+  useEffect(() => {
+    if (consumeNewSaleRequest()) setShowNewInvoiceModal(true);
+  }, []);
 
   const [activeTab, setActiveTab] = useState('invoices'); // 'invoices', 'quotes', 'orders', 'credit_notes'
   const [invoices, setInvoices] = useState([]);
@@ -532,6 +543,14 @@ export default function SalesView() {
                       className={`hover:bg-slate-50 transition cursor-pointer ${
                         selectedInvoiceId === inv.id ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : ''
                       }`}
+                      onContextMenu={(event) => recordMenu.openRecord(event, {
+                        type: 'sales_invoices',
+                        record: inv,
+                        nameField: 'invoice_number',
+                        kindLabel: t('sales.title'),
+                        fields: ['invoice_number', 'date', 'due_date', 'customer_name', 'total', 'status'],
+                        onEdit: (row) => setSelectedInvoiceId(row.id)
+                      })}
                     >
                       <td className="py-3 px-4 font-mono font-bold text-blue-600">{inv.invoice_number}</td>
                       <td className="py-3 px-4 text-slate-600">{formatDate(inv.date)}</td>
@@ -652,7 +671,17 @@ export default function SalesView() {
               <tbody className="divide-y divide-slate-100">
                 {quotes && quotes.length > 0 ? (
                   quotes.map((q) => (
-                    <tr key={q.id} className="hover:bg-slate-50">
+                    <tr
+                      key={q.id}
+                      className="hover:bg-slate-50"
+                      onContextMenu={(event) => recordMenu.openRecord(event, {
+                        type: 'quotes',
+                        record: q,
+                        nameField: 'quote_number',
+                        kindLabel: t('sales.quote'),
+                        fields: ['quote_number', 'date', 'customer_name', 'total', 'status']
+                      })}
+                    >
                       <td className="py-3 px-4 font-mono font-bold text-blue-600">{q.quote_number}</td>
                       <td className="py-3 px-4 text-slate-600">{formatDate(q.date)}</td>
                       <td className="py-3 px-4 text-slate-500">{formatDate(q.valid_until)}</td>
@@ -716,7 +745,17 @@ export default function SalesView() {
               <tbody className="divide-y divide-slate-100">
                 {creditNotes && creditNotes.length > 0 ? (
                   creditNotes.map((cn) => (
-                    <tr key={cn.id} className="hover:bg-slate-50">
+                    <tr
+                      key={cn.id}
+                      className="hover:bg-slate-50"
+                      onContextMenu={(event) => recordMenu.openRecord(event, {
+                        type: 'credit_notes',
+                        record: cn,
+                        nameField: 'credit_note_number',
+                        kindLabel: t('sales.credit_note'),
+                        fields: ['credit_note_number', 'date', 'customer_name', 'total']
+                      })}
+                    >
                       <td className="py-3 px-4 font-mono font-bold text-rose-600">{cn.credit_note_number}</td>
                       <td className="py-3 px-4 text-slate-600">{formatDate(cn.date)}</td>
                       <td className="py-3 px-4 font-semibold text-slate-800">{cn.customer_name}</td>

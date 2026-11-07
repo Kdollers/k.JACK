@@ -152,6 +152,35 @@ function recordRefusal({ req, code, permission, userId, userName, companyId }) {
   }
 }
 
+/**
+ * Refuses a request from an application the user may not open.
+ *
+ * JENESIS Settings & Access Point decides, per user, which of the four
+ * applications they may use. The interface acts on the same information — the
+ * launcher and the sidebar do not offer what is closed — but a user must not
+ * be able to walk around that by pointing a window at another application and
+ * calling its API directly. So the service asks the same question.
+ */
+function enforceApplicationAccess(req, res, next) {
+  const appId = req.appId;
+  if (!appId || !req.auth) return next();
+  const access = req.auth.appAccess;
+  if (!access) return next();
+
+  if (access[appId] === false) {
+    recordRefusal({
+      req, code: 'APP_ACCESS_DENIED', permission: null,
+      userId: req.auth.user.id, userName: req.auth.user.username, companyId: req.auth.companyId
+    });
+    return res.status(403).json({
+      error: 'You do not have access to this JENESIS application.',
+      code: 'APP_ACCESS_DENIED',
+      app: appId
+    });
+  }
+  return next();
+}
+
 module.exports = {
   APP_IDS,
   APP_FORBIDDEN,
@@ -159,5 +188,6 @@ module.exports = {
   isForbidden,
   appIdFromRequest,
   attachApplication,
+  enforceApplicationAccess,
   recordRefusal
 };

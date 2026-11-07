@@ -1,137 +1,140 @@
 {
-  "name": "genesis-accounting",
+ "name": "genesis-accounting",
+ "productName": "JENESIS",
+ "version": "0.5.5",
+ "description": "JENESIS - Professional Business Accounting & Management Software",
+ "author": "JENESIS",
+ "license": "UNLICENSED",
+ "private": true,
+ "main": "electron/main.cjs",
+ "scripts": {
+  "start": "node server/index.js",
+  "dev:server": "node server/index.js",
+  "build:client": "vite build",
+  "build": "npm run test:ui-imports && vite build",
+  "test": "node tests/accounting-engine.test.js",
+  "test:desktop": "node tests/desktop-backend.test.js",
+  "test:ops": "node tests/operations.test.js",
+  "test:migrations": "node tests/migrations-v2.test.js",
+  "test:i18n": "node tests/i18n-parity.test.js",
+  "test:fx": "node tests/fx-settlement.test.js",
+  "test:settlement": "node tests/settlement-paid.test.js",
+  "test:shortcuts": "node tests/shortcuts.test.js",
+  "test:messenger": "node tests/messenger.test.js",
+  "test:help": "node tests/help-content.test.js",
+  "test:reports": "node tests/reports-screens.test.js",
+  "test:screens": "node tests/screens-render.test.js",
+  "test:money": "node tests/money-format.test.js",
+  "test:translations": "node tests/translation-coverage.test.js",
+  "test:translationscope": "node tests/translation-scope.test.js",
+  "test:records": "node tests/record-lifecycle.test.js",
+  "test:fxreval": "node tests/fx-revaluation-integrity.test.js",
+  "test:datadir": "node tests/data-location-migration.test.js",
+  "test:branding": "node tests/branding-consistency.test.js",
+  "test:appgate": "node tests/app-gate.test.js",
+  "test:appsrender": "node tests/four-apps-render.test.js",
+  "test:separation": "node tests/app-separation.test.js",
+  "test:portability": "node tests/test-suite-portability.test.js",
+  "test:network": "node tests/network-maintenance.test.js",
+  "test:all": "npm run test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:appsrender && npm run test:separation && npm run test:network && npm run test:contextmenu && npm run test:seller && npm run test:accesspoint && npm run test:portability && npm run test:theme && npm run test:themeui && npm run test:ui-imports",
+  "desktop": "electron .",
+  "desktop:pack": "npm run build && electron-builder --win --dir",
+  "desktop:dist": "npm run build && electron-builder --win nsis",
+  "test:auth": "node tests/auth-security.test.js",
+  "test:security": "node tests/security-hardening.test.js",
+  "test:e2e": "python3 tests/e2e/auth_ui_test.py",
+  "test:theme": "node tests/theme.test.js",
+  "test:themeui": "node tests/theme-render.test.js",
+  "test:count": "npm run test:all 2>&1 | node scripts/count-checks.mjs",
+  "test:fourapps": "node tests/four-apps.test.js",
+  "test:prod": "node tests/production-boot.test.js",
+  "test:ui-imports": "node tests/ui-imports.test.js",
+  "test:contextmenu": "node tests/context-menu.test.js",
+  "test:seller": "node tests/seller-dashboard.test.js",
+  "test:accesspoint": "node tests/access-point.test.js"
+ },
+ "build": {
+  "appId": "com.jenesis.accounting",
   "productName": "JENESIS",
-  "version": "0.5.4",
-  "description": "JENESIS - Professional Business Accounting & Management Software",
-  "author": "JENESIS",
-  "license": "UNLICENSED",
-  "private": true,
-  "main": "electron/main.cjs",
-  "scripts": {
-    "start": "node server/index.js",
-    "dev:server": "node server/index.js",
-    "build:client": "vite build",
-    "build": "npm run test:ui-imports && vite build",
-    "test": "node tests/accounting-engine.test.js",
-    "test:desktop": "node tests/desktop-backend.test.js",
-    "test:ops": "node tests/operations.test.js",
-    "test:migrations": "node tests/migrations-v2.test.js",
-    "test:i18n": "node tests/i18n-parity.test.js",
-    "test:fx": "node tests/fx-settlement.test.js",
-    "test:settlement": "node tests/settlement-paid.test.js",
-    "test:shortcuts": "node tests/shortcuts.test.js",
-    "test:messenger": "node tests/messenger.test.js",
-    "test:help": "node tests/help-content.test.js",
-    "test:reports": "node tests/reports-screens.test.js",
-    "test:screens": "node tests/screens-render.test.js",
-    "test:money": "node tests/money-format.test.js",
-    "test:translations": "node tests/translation-coverage.test.js",
-    "test:translationscope": "node tests/translation-scope.test.js",
-    "test:records": "node tests/record-lifecycle.test.js",
-    "test:fxreval": "node tests/fx-revaluation-integrity.test.js",
-    "test:datadir": "node tests/data-location-migration.test.js",
-    "test:branding": "node tests/branding-consistency.test.js",
-    "test:appgate": "node tests/app-gate.test.js",
-    "test:appsrender": "node tests/four-apps-render.test.js",
-    "test:separation": "node tests/app-separation.test.js",
-    "test:portability": "node tests/test-suite-portability.test.js",
-    "test:network": "node tests/network-maintenance.test.js",
-    "test:all": "npm run test && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:appsrender && npm run test:separation && npm run test:network && npm run test:portability && npm run test:theme && npm run test:themeui && npm run test:ui-imports",
-    "desktop": "electron .",
-    "desktop:pack": "npm run build && electron-builder --win --dir",
-    "desktop:dist": "npm run build && electron-builder --win nsis",
-    "test:auth": "node tests/auth-security.test.js",
-    "test:security": "node tests/security-hardening.test.js",
-    "test:e2e": "python3 tests/e2e/auth_ui_test.py",
-    "test:theme": "node tests/theme.test.js",
-    "test:themeui": "node tests/theme-render.test.js",
-    "test:count": "npm run test:all 2>&1 | node scripts/count-checks.mjs",
-    "test:fourapps": "node tests/four-apps.test.js",
-    "test:prod": "node tests/production-boot.test.js",
-    "test:ui-imports": "node tests/ui-imports.test.js"
+  "copyright": "Copyright (c) JENESIS",
+  "directories": {
+   "output": "release",
+   "buildResources": "build"
   },
-  "build": {
-    "appId": "com.jenesis.accounting",
-    "productName": "JENESIS",
-    "copyright": "Copyright (c) JENESIS",
-    "directories": {
-      "output": "release",
-      "buildResources": "build"
-    },
-    "files": [
-      "electron/**/*",
-      "server/**/*",
-      "dist/**/*",
-      "build/icon-*.ico",
-      "build/icon-*.png",
-      "package.json",
-      "build/icon.ico",
-      "!**/*.map",
-      "!**/tests/**"
-    ],
-    "asarUnpack": [
-      "**/*.node"
-    ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "build/icon.ico",
-      "artifactName": "JEN 0.5.4 Setup.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "allowElevation": true,
-      "createDesktopShortcut": false,
-      "createStartMenuShortcut": true,
-      "shortcutName": "JENESIS",
-      "uninstallDisplayName": "JENESIS",
-      "deleteAppDataOnUninstall": false,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "include": "build/installer.nsh"
-    },
-    "extraResources": [
-      {
-        "from": "build",
-        "to": "app-icons",
-        "filter": [
-          "icon-*.ico"
-        ]
-      },
-      {
-        "from": "dist",
-        "to": "app-frontend",
-        "filter": [
-          "**/*"
-        ]
-      }
+  "files": [
+   "electron/**/*",
+   "server/**/*",
+   "dist/**/*",
+   "build/icon-*.ico",
+   "build/icon-*.png",
+   "package.json",
+   "build/icon.ico",
+   "!**/*.map",
+   "!**/tests/**"
+  ],
+  "asarUnpack": [
+   "**/*.node"
+  ],
+  "win": {
+   "target": [
+    {
+     "target": "nsis",
+     "arch": [
+      "x64"
+     ]
+    }
+   ],
+   "icon": "build/icon.ico",
+   "artifactName": "JEN 0.5.5 Setup.${ext}"
+  },
+  "nsis": {
+   "oneClick": false,
+   "perMachine": false,
+   "allowToChangeInstallationDirectory": true,
+   "allowElevation": true,
+   "createDesktopShortcut": false,
+   "createStartMenuShortcut": true,
+   "shortcutName": "JENESIS",
+   "uninstallDisplayName": "JENESIS",
+   "deleteAppDataOnUninstall": false,
+   "installerIcon": "build/icon.ico",
+   "uninstallerIcon": "build/icon.ico",
+   "include": "build/installer.nsh"
+  },
+  "extraResources": [
+   {
+    "from": "build",
+    "to": "app-icons",
+    "filter": [
+     "icon-*.ico"
     ]
-  },
-  "dependencies": {
-    "better-sqlite3": "^12.11.1",
-    "cors": "^2.8.5",
-    "express": "^4.21.2"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
-    "clsx": "^2.1.1",
-    "electron": "^33.4.11",
-    "electron-builder": "^25.1.8",
-    "lucide-react": "^0.475.0",
-    "postcss": "^8.5.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.6.0",
-    "tailwindcss": "^3.4.17",
-    "vite": "^6.1.0"
-  }
+   },
+   {
+    "from": "dist",
+    "to": "app-frontend",
+    "filter": [
+     "**/*"
+    ]
+   }
+  ]
+ },
+ "dependencies": {
+  "better-sqlite3": "^12.11.1",
+  "cors": "^2.8.5",
+  "express": "^4.21.2"
+ },
+ "devDependencies": {
+  "@vitejs/plugin-react": "^4.3.4",
+  "autoprefixer": "^10.4.20",
+  "clsx": "^2.1.1",
+  "electron": "^33.4.11",
+  "electron-builder": "^25.1.8",
+  "lucide-react": "^0.475.0",
+  "postcss": "^8.5.1",
+  "react": "^18.3.1",
+  "react-dom": "^18.3.1",
+  "tailwind-merge": "^2.6.0",
+  "tailwindcss": "^3.4.17",
+  "vite": "^6.1.0"
+ }
 }

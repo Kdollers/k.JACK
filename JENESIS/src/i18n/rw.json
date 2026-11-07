@@ -119,7 +119,8 @@
     "disc_pct": "Igabanywa %",
     "tel": "Telefoni:",
     "tin_short": "TIN:",
-    "records_count": "Inyandiko {count}"
+    "records_count": "Inyandiko {count}",
+    "searching": "Birashakishwa…"
   },
   "dashboard": {
     "title": "Imbonerahamwe Nkuru y'Imari n'Ubucuruzi",
@@ -159,7 +160,9 @@
     "cash_label": "Amafaranga mu ntoki:",
     "bank_label": "Banki:",
     "gross_margin": "Inyungu rusange:",
-    "min_short": "Ntoya:"
+    "min_short": "Ntoya:",
+    "not_permitted_title": "Iyi mibare ntikwemerewe kuyisoma",
+    "not_permitted_body": "Imbonerahamwe y'ikigo yerekana inyungu n'igihombo, amadeni yishyurwa n'ayishyurwa. Saba umuyobozi cyangwa umubaramari imibare ukeneye, cyangwa ufungure JENESIS Ibaruramari & Ubucuruzi ufite urwego rwemerewe kuyisoma."
   },
   "customers": {
     "title": "Gucunga Abakiriya",
@@ -373,7 +376,9 @@
     "credit_reason": "Impamvu yo gusubiza / kugaruza",
     "returned_product_optional": "Igicuruzwa cyagarujwe (ntabwo ari ngombwa)",
     "select_product_option": "-- Hitamo igicuruzwa --",
-    "credit_unit_price": "Igiciro ku gice cy'inguzanyo"
+    "credit_unit_price": "Igiciro ku gice cy'inguzanyo",
+    "quote": "igereranyo",
+    "credit_note": "inyemezabuguzi y'ideni"
   },
   "purchases": {
     "title": "Ibyaguzwe n'Inyemezabwishyu z'Abagemura",
@@ -424,7 +429,10 @@
     "vendor_ref": "Nomero y'umucuruzi",
     "vendor_invoice_placeholder": "urugero: INYEMEZO-9988",
     "item_service": "Igicuruzwa / Serivisi",
-    "vat_input_label": "TVA yishyuwe ku byaguze (ishobora gukurwaho):"
+    "vat_input_label": "TVA yishyuwe ku byaguze (ishobora gukurwaho):",
+    "order": "itegeko ryo kugura",
+    "receipt": "inyemezabwakire",
+    "return": "kugaruza ibyaguze"
   },
   "banking": {
     "title": "Ubwishyu, Amafaranga na Banki",
@@ -499,7 +507,9 @@
     "method_card": "Ikarita yo kubikuza / kwishyura",
     "payment_reference": "Nomero y'ubwishyu",
     "eg_payment_ref": "urugero: Nimero ya MoMo, Sheki #",
-    "acc_short": "Konti:"
+    "acc_short": "Konti:",
+    "payment": "ubwishyu",
+    "cash_session": "igihe cy'isanduku"
   },
   "accounting": {
     "title": "Ibaruramari Rusange n'Igitabo Kinini",
@@ -542,7 +552,7 @@
     "txn_purpose_placeholder": "Impamvu y'igikorwa",
     "journal_lines": "Imirongo ya Jorunali (Débit na Crédit)",
     "accounting_lines": "Imirongo y'ibaruramari",
-    "account": "Konti",
+    "account": "konti",
     "add_new_account": "Ongeraho Konti nshya mu gitabo cya Konti",
     "account_code": "Kode ya Konti",
     "account_name": "Izina rya Konti",
@@ -556,7 +566,8 @@
     "reversed_toast": "Ijuru ryasubijwe inyuma! Haremwe ijuru ryo gusubiza {number}",
     "reversal_prompt": "Shyiramo impamvu yo gusubiza inyuma iyi jorunali:",
     "journal_entry_hash": "Ijuru #",
-    "source": "Inkomoko:"
+    "source": "Inkomoko:",
+    "journal_entry": "inyandiko y'ibaruramari"
   },
   "reports": {
     "title": "Raporo z'Imari z'Ubucuruzi",
@@ -729,7 +740,48 @@
     "company_created_toast": "Ikigo {name} cyaremwe! Igitabo cy'ama Konti cyatangijwe.",
     "user_created_toast": "Ukoresha {username} yaremwe neza",
     "tax_configured_toast": "Igipimo cy'umusoro cyashyizweho neza",
-    "add_new_user": "Ongeraho ukoresha mushya"
+    "add_new_user": "Ongeraho ukoresha mushya",
+    "tax_rate": "Igipimo cy'umusoro",
+    "currency": "Ifaranga",
+    "access_applications": "Porogaramu uyu akoresha ashobora gufungura",
+    "access_applications_hint": "Porogaramu ifunze yanga uyu mukoresha ku busabe bwe bukurikira, no mu idirishya risanzwe rifunguye.",
+    "access_permissions": "Uburenganzira burenze urwego",
+    "access_permissions_hint": "« Urwego » rituruka ku rwego rwabo. Kanda rimwe kugira ngo wongere uburenganzira, kande ukundi kugira ngo ubukureho. Gusubiza ku ntangiriro bibagarura ku rwego rwabo.",
+    "access_reset": "Subira ku rwego",
+    "access_saved_toast": "Uburenganzira bwa {username} bwarabitswe. Amadirishya {sessions} yari afunguye yasohojwe kugira ngo impinduka zikurikireho.",
+    "manage_access": "Genzura uburyo bwo kwinjira",
+    "cannot_delete_self": "Ntushobora gusiba konti yawe bwite.",
+    "no_users": "Nta konti ihuye n'iri hitamo.",
+    "password_leave_blank": "Ijambo ry'ibanga rishya (risige ubusa kugira ngo rigumane iryari risanzwe)",
+    "password_reset_toast": "Ijambo ry'ibanga rya {username} rarahinduwe. Amadirishya {sessions} yari afunguye yasohojwe.",
+    "reset_password": "Subiza ijambo ry'ibanga ku ntangiriro",
+    "reset_password_title": "Shyiraho ijambo ry'ibanga rishya",
+    "reset_password_body": "Andika ijambo ry'ibanga rishya rya {username}. Bazasabwa kurihindura ubutaha binjira, kandi amadirishya yabo yose afunguye arasohoka ubu.",
+    "user_updated_toast": "Konti yarahinduwe.",
+    "user_deleted_toast": "Konti ya {username} yarasibwe.",
+    "user_edit_title": "Hindura konti",
+    "user_in_use_title": "Iyi konti ntishobora gusibwa",
+    "tax_confirm_deactivate_title": "Zimya iki gipimo cy'umusoro?",
+    "tax_confirm_deactivate_body": "« {code} » ntikizongera gutangwa ku nyemezabuguzi nshya. Inyandiko zose zamaze kwandikwa zigumana igipimo cyakoreshejwe.",
+    "tax_confirm_delete_title": "Siba iki gipimo cy'umusoro?",
+    "tax_confirm_delete_body": "« {code} » kizasibwa burundu. Ibi bishoboka gusa mu gihe nta cyakoresheje.",
+    "tax_created_toast": "Igipimo cy'umusoro cyaremwe.",
+    "tax_updated_toast": "Igipimo cy'umusoro cyarahinduwe.",
+    "tax_deactivate": "Zimya",
+    "tax_deactivate_instead": "Kuzimya ahubwo",
+    "tax_deactivated_toast": "Igipimo cy'umusoro cyarazimwe. Ntikigaragara ku nyandiko nshya.",
+    "tax_delete": "Siba",
+    "tax_deleted_toast": "Igipimo cy'umusoro cyarasibwe.",
+    "tax_edit_title": "Hindura igipimo cy'umusoro",
+    "tax_history_note": "Igipimo cy'umusoro cyakoreshejwe ku nyemezabuguzi, ku itegeko cyangwa ku igereranyo ntigishobora gusibwa — ahubwo kirazimwa. Ibipimo byazimwe bikomeza kwerekanwa hano kugira ngo bishobore gusubizwa.",
+    "tax_in_use_title": "Iki gipimo cy'umusoro ntigishobora gusibwa",
+    "tax_none": "Nta gipimo cy'umusoro gihuye n'iri hitamo.",
+    "tax_reactivate": "Zamura",
+    "tax_reactivated_toast": "Igipimo cy'umusoro cyongeye gutangwa ku nyandiko nshya.",
+    "tax_filter_active": "Birakora",
+    "tax_filter_inactive": "Ntibikora",
+    "tax_filter_all": "Byose",
+    "audit": "Inyandiko y'igenzura"
   },
   "auth": {
     "app_tagline": "Imicungire n’ibaruramari ry’ubucuruzi",
@@ -1046,7 +1098,8 @@
     "diag_TIMEOUT": "Ntitabye ku gihe. Umuyoboro ushobora kuba uhugiye — ongera ugerageze.",
     "diag_BAD_ADDRESS": "Iyo aderesi ntishobora kugera kuri mudasobwa. Ikwiye kumera nka 192.168.1.20.",
     "diag_LAN_DISABLED": "Iyi mudasobwa ntiremerwa ku muyoboro. Fungura umuyoboro haruguru.",
-    "diag_UNKNOWN": "Ntirasuzumwa."
+    "diag_UNKNOWN": "Ntirasuzumwa.",
+    "computer": "mudasobwa"
   },
   "aging": {
     "current_not_due": "Igihe kitaragera",
@@ -1101,5 +1154,74 @@
     "kind_user": "Ukoresha",
     "no_permission": "Umuyobozi cyangwa umucungezi ni we wenyine ushobora guhagarika inyandiko.",
     "checking_history": "Kugenzura amateka..."
+  },
+  "contextmenu": {
+    "title": "Ibikorwa",
+    "record": "inyandiko",
+    "copy": "Koporora",
+    "copy_value": "Koporora iyi nyandiko",
+    "copy_all": "Koporora byose",
+    "cut": "Guca",
+    "paste": "Kurundanya",
+    "edit": "Guhindura",
+    "delete": "Gusiba",
+    "deactivate": "Kuzimya",
+    "activate": "Kuzamura",
+    "select_all": "Guhitamo byose",
+    "copied_toast": "Byakoporowe mu bubiko bw'agateganyo.",
+    "copy_failed_toast": "Byakoporowe muri JENESIS. Ububiko bwa sisitemu ntibwagerwaho.",
+    "protected_note": "Inyandiko z'ibaruramari zirinda. Zimye ahubwo.",
+    "no_permission": "Nta burenganzira ufite bwo gukora ibi.",
+    "paste_here": "Kurundanya {name}",
+    "selected_toast": "Imirongo {count} yatoranyijwe.",
+    "immutable_note": "Iyi ni amateka. Ishobora gukopororwa, ntishobora guhindurwa cyangwa gukurwaho."
+  },
+  "seller": {
+    "title": "Aho bagurishiriza",
+    "subtitle": "Ibyagurishijwe uyu munsi, ibiri mu bubiko, n'ibiri mu isanduku.",
+    "new_sale": "Igurisha rishya",
+    "new_sale_hint": "Andika inyemezabuguzi wakire amafaranga",
+    "sales_history": "Amateka y'igurisha",
+    "sales_history_hint": "Inyemezabuguzi zose zanditswe hano",
+    "customers": "Abakiriya",
+    "customers_hint": "Ongeraho umukiriya cyangwa umushake",
+    "stock": "Ububiko",
+    "stock_hint": "Ibiboneka, gusoma gusa",
+    "sales_today": "Byagurishijwe uyu munsi",
+    "sales_count": "ibigurishwa",
+    "cash_today": "Amafaranga yakiriwe",
+    "cash_today_hint": "Yinjiye mu isanduku uyu munsi",
+    "credit_today": "Ku ideni",
+    "credit_today_hint": "Byagurishijwe uyu munsi, bizishyurwa nyuma",
+    "restock": "Bikeneye kuzuzwa",
+    "restock_hint": "Ku gipimo ntarengwa cyo hasi",
+    "find_product": "Shakisha igicuruzwa",
+    "found": "byabonetse",
+    "price": "Igiciro",
+    "on_hand": "Mu bubiko",
+    "availability": "Kirahari",
+    "avail_in_stock": "Kirahari",
+    "avail_low": "Gike",
+    "avail_out": "Ntikirimo",
+    "no_match": "Nta gicuruzwa gihuye n'ibyo wanditse.",
+    "type_to_search": "Andika izina, kode cyangwa barcode.",
+    "stock_readonly": "Ibiciro n'ingano byerekanwa uko biri. Kubihindura bikorerwa muri JENESIS Ibaruramari & Ubucuruzi.",
+    "search_placeholder": "Izina, kode cyangwa barcode…",
+    "register": "Isanduku y'amafaranga",
+    "register_open": "Isanduku irafunguye",
+    "register_closed": "Nta sanduku ifunguye",
+    "register_name": "Isanduku",
+    "register_number": "Igihe cy'akazi",
+    "register_opened": "Yafunguwe",
+    "opening_float": "Amafaranga yo gutangira",
+    "register_note": "Gufungura, gufunga no kubara isanduku bikorerwa muri JENESIS Ibaruramari & Ubucuruzi.",
+    "recent_sales": "Ibyagurishijwe vuba",
+    "all_sales": "Ibyagurishijwe byose",
+    "customer": "Umukiriya",
+    "walk_in": "Umukiriya w'inzira",
+    "print_receipt": "Capa iyi nyemezabuguzi",
+    "no_sales_yet": "Nta gurisha ryanditswe uyu munsi.",
+    "daily_summary": "Iminsi irindwi ishize",
+    "needs_restock": "Bikeneye kuzuzwa"
   }
 }

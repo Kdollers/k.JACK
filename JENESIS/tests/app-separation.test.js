@@ -264,12 +264,35 @@ test("a Seller's own dashboard and sales screens still open", async () => {
   const { w, proc, port } = await scenario();
   try {
     const seller = await signIn(port, w.usernames.sales);
-    // The dashboard is the Seller's home screen; it must not be collateral
-    // damage of keeping the reports out.
-    for (const route of ['/reports/dashboard', '/sales/invoices', '/customers']) {
+    // The counter, its customers and its history must not be collateral damage
+    // of keeping the accounting out.
+    for (const route of ['/sales/invoices', '/customers', '/seller/dashboard', '/seller/products']) {
       const r = await request(port, 'GET', route, { token: seller, headers: { 'X-JENESIS-App': 'seller' } });
       assert.strictEqual(r.status, 200, `${route} must open for a Seller in the Seller app: ${r.text}`);
     }
+  } finally {
+    await proc.stop();
+  }
+});
+
+test("the accounting dashboard is not the Seller's dashboard", async () => {
+  const { w, proc, port } = await scenario();
+  try {
+    const seller = await signIn(port, w.usernames.sales);
+    // 0.5.5. The accounting dashboard carries the profit and loss, the
+    // receivables and the payables, and the Seller is entitled to none of it.
+    // It used to answer on dashboard:read alone — a permission every role
+    // holds — which is how the accounting figures came to be read from a
+    // Seller window even after its menu entry was taken away.
+    const r = await request(port, 'GET', '/reports/dashboard', { token: seller, headers: { 'X-JENESIS-App': 'seller' } });
+    assert.strictEqual(r.status, 403, `the accounting dashboard must not answer a Seller window: ${r.text}`);
+    assert.strictEqual(r.json.code, 'FORBIDDEN');
+
+    // An accountant, on the other hand, still has their dashboard — in
+    // JENESIS Accounting & Business, which is where it belongs.
+    const accountant = await signIn(port, w.usernames.accountant);
+    const ok = await request(port, 'GET', '/reports/dashboard', { token: accountant, headers: { 'X-JENESIS-App': 'admin' } });
+    assert.strictEqual(ok.status, 200, `the accounting dashboard must still answer an accountant: ${ok.text}`);
   } finally {
     await proc.stop();
   }
@@ -464,12 +487,33 @@ test('a sales clerk still cannot create a tax rate', async () => {
 test('the tax rates stay out of JENESIS Network & Maintenance', async () => {
   const { w, proc, port } = await scenario();
   try {
-    // Even a user whose role may read sales gets nothing from the green
-    // application: it has no business touching tax rates at all.
-    const clerk = await signIn(port, w.usernames.sales);
-    const r = await request(port, 'GET', '/taxes', { token: clerk, headers: { 'X-JENESIS-App': 'maintenance' } });
+    // The inventory officer genuinely works in the green application (their
+    // role carries network:manage and logs:read), so this is the honest test of
+    // the application boundary: they are allowed INTO Network & Maintenance,
+    // and still get nothing from the tax rates, which are not its business.
+    const technician = await signIn(port, w.usernames.inventory);
+    const r = await request(port, 'GET', '/taxes', { token: technician, headers: { 'X-JENESIS-App': 'maintenance' } });
     assert.strictEqual(r.status, 403, `maintenance must not be able to read tax rates: ${r.text}`);
     assert.strictEqual(r.json && r.json.code, 'APP_SCOPE_FORBIDDEN');
+  } finally {
+    await proc.stop();
+    fs.rmSync(w.dir, { recursive: true, force: true });
+  }
+});
+
+test('a user is refused an application Settings & Access Point has closed to them', async () => {
+  const { w, proc, port } = await scenario();
+  try {
+    // The sales role was never given the maintenance application, so the
+    // answer is a refusal of the APPLICATION rather than of the permission.
+    // Both refusals are 403 and both are correct; this one is decided per user
+    // in JENESIS Settings & Access Point and is proved here so a future change
+    // cannot quietly let anyone into any application.
+    const clerk = await signIn(port, w.usernames.sales);
+    const r = await request(port, 'GET', '/taxes', { token: clerk, headers: { 'X-JENESIS-App': 'maintenance' } });
+    assert.strictEqual(r.status, 403, `an application closed to a user stays closed: ${r.text}`);
+    assert.strictEqual(r.json && r.json.code, 'APP_ACCESS_DENIED');
+    assert.strictEqual(r.json && r.json.app, 'maintenance');
   } finally {
     await proc.stop();
     fs.rmSync(w.dir, { recursive: true, force: true });

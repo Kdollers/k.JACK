@@ -156,21 +156,35 @@ export function setServerUrl() {}
 export function downloadAuthenticated() { return Promise.resolve(); }
 `;
 
-/** The screens, and what must be visible in each one's markup. */
-const SCREENS = [
-  { file: 'src/views/DashboardView.jsx', name: 'Dashboard', expect: /JENESIS|dashboard/i, keys: ['dashboard'] },
-  { file: 'src/views/SalesView.jsx', name: 'Sales', expect: /./, keys: ['sales'] },
-  { file: 'src/views/PurchasesView.jsx', name: 'Purchases', expect: /./, keys: ['purchases'] },
-  { file: 'src/views/InventoryView.jsx', name: 'Inventory', expect: /./, keys: ['inventory'] },
-  { file: 'src/views/ReportsView.jsx', name: 'Reports', expect: /./, keys: ['reports'] },
-  { file: 'src/views/AccountingView.jsx', name: 'Accounting', expect: /./, keys: ['accounting'] },
-  { file: 'src/views/BankingView.jsx', name: 'Banking', expect: /./, keys: ['banking'] },
-  { file: 'src/views/CustomersView.jsx', name: 'Customers', expect: /./, keys: ['customers'] },
-  { file: 'src/views/SuppliersView.jsx', name: 'Suppliers', expect: /./, keys: ['suppliers'] },
-  { file: 'src/views/SettingsView.jsx', name: 'Settings', expect: /./, keys: ['settings'] },
-  { file: 'src/views/MaintenanceView.jsx', name: 'Maintenance', expect: /./, keys: ['maintenance'] },
-  { file: 'src/views/HelpView.jsx', name: 'Help', expect: /./, keys: ['help'] }
-];
+/**
+ * One day's trading at the counter, in the shape the Seller's own endpoint
+ * returns it. Handed to the dashboard so the drawing can be read back.
+ */
+const SELLER_DAY = {
+  date: '2026-11-07',
+  today: { count: 12, total: 348000, tax: 52800, paid: 348000, cash: 210000, credit: 138000 },
+  week: [
+    { date: '2026-11-01', count: 8, total: 120000 },
+    { date: '2026-11-02', count: 11, total: 205000 },
+    { date: '2026-11-03', count: 6, total: 98000 },
+    { date: '2026-11-04', count: 14, total: 302000 },
+    { date: '2026-11-05', count: 9, total: 154000 },
+    { date: '2026-11-06', count: 10, total: 188000 },
+    { date: '2026-11-07', count: 12, total: 348000 }
+  ],
+  recentSales: [
+    { id: 'inv-1', number: 'INV-2026-0101', date: '2026-11-07', customer: 'Horizon Logistics Ltd', total: 48000, paid: 48000, balance: 0, status: 'PAID' },
+    { id: 'inv-2', number: 'INV-2026-0102', date: '2026-11-07', customer: null, total: 12500, paid: 12500, balance: 0, status: 'PAID' }
+  ],
+  stock: {
+    lowStock: [
+      { id: 'prd-1', sku: 'SKU-001', name: 'Ledger notebook', unit: 'pcs', onHand: 2, minimum: 10, price: 2500 }
+    ],
+    units: 1420,
+    lowStockCount: 1
+  },
+  register: { open: false, accounts: [{ id: 'acc-1', name: 'Main till', number: null, currency: 'XAF', balance: 210000 }], total: 210000, note: 'NO_OPEN_SESSION' }
+};
 
 /**
  * The other-computer list, drawn with computers in every state it has to show:
@@ -184,6 +198,33 @@ const COMPUTERS = [
   { id: 'cmp-3', name: 'Main office', address: '192.168.1.10', port: 3000, lastStatus: 'ONLINE', lastSeenAt: '2026-11-04T09:05:00.000Z', connected: true },
   { id: 'cmp-4', name: 'Old laptop', address: '192.168.1.22', port: 3000, lastStatus: null, lastSeenAt: null, connected: false },
   { id: 'cmp-5', name: 'Unknown box', address: '192.168.1.23', port: 3000, lastStatus: 'NOT_JENESIS', lastSeenAt: null, connected: false }
+];
+
+/** The screens, and what must be visible in each one's markup. */
+const SCREENS = [
+  { file: 'src/views/DashboardView.jsx', name: 'Dashboard', expect: /JENESIS|dashboard/i, keys: ['dashboard'] },
+  { file: 'src/views/SalesView.jsx', name: 'Sales', expect: /./, keys: ['sales'] },
+  { file: 'src/views/PurchasesView.jsx', name: 'Purchases', expect: /./, keys: ['purchases'] },
+  { file: 'src/views/InventoryView.jsx', name: 'Inventory', expect: /./, keys: ['inventory'] },
+  { file: 'src/views/ReportsView.jsx', name: 'Reports', expect: /./, keys: ['reports'] },
+  { file: 'src/views/AccountingView.jsx', name: 'Accounting', expect: /./, keys: ['accounting'] },
+  { file: 'src/views/BankingView.jsx', name: 'Banking', expect: /./, keys: ['banking'] },
+  { file: 'src/views/CustomersView.jsx', name: 'Customers', expect: /./, keys: ['customers'] },
+  { file: 'src/views/SuppliersView.jsx', name: 'Suppliers', expect: /./, keys: ['suppliers'] },
+  { file: 'src/views/SettingsView.jsx', name: 'Settings', expect: /./, keys: ['settings'] },
+  { file: 'src/views/MaintenanceView.jsx', name: 'Maintenance', expect: /./, keys: ['maintenance'] },
+  { file: 'src/views/HelpView.jsx', name: 'Help', expect: /./, keys: ['help'] },
+  // JENESIS 0.5.5: the Seller's own screen, and the two panels that moved the
+  // settings into JENESIS Settings & Access Point.
+  {
+    file: 'src/views/SellerDashboardView.jsx',
+    name: 'Seller dashboard',
+    expect: /sold today|Cash taken|Find a product|Cash register/i,
+    keys: ['seller'],
+    props: { initialData: SELLER_DAY }
+  },
+  { file: 'src/components/settings/TaxesPanel.jsx', name: 'Tax rates panel', expect: /./, keys: ['settings'] },
+  { file: 'src/components/settings/UsersPanel.jsx', name: 'Users panel', expect: /./, keys: ['settings'] }
 ];
 
 const OVERLAYS = [
@@ -302,6 +343,34 @@ async function main() {
       assert.ok(!/>undefined<|NaN/.test(html), `${screen.name} must not print "undefined" or "NaN"`);
     });
   }
+
+  // JENESIS 0.5.5, modification 2. The Seller's screen is not the accounting
+  // dashboard with the furniture rearranged: it is a different set of
+  // questions, and the answers the accountant needs are simply not on it.
+  check('the Seller dashboard answers the counter, and never the accountant', () => {
+    const html = renders['Seller dashboard']();
+    for (const word of ['sold today', 'Cash taken', 'Find a product', 'Cash register', 'Sales history', 'Needs restocking']) {
+      assert.ok(
+        new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(html),
+        `the Seller dashboard must answer the counter's question \"${word}\"`
+      );
+    }
+    for (const forbidden of ['net profit', 'gross margin', 'balance sheet', 'trial balance', 'general ledger',
+      'accounts payable', 'accounts receivable', 'cost of goods', 'profit and loss']) {
+      assert.ok(
+        !new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(html),
+        `the Seller dashboard must not speak of \"${forbidden}\"`
+      );
+    }
+  });
+
+  check('the Seller dashboard shows the day it was given, not a placeholder', () => {
+    const html = renders['Seller dashboard']();
+    assert.ok(html.includes('INV-2026-0101'), 'the recent sales are listed');
+    assert.ok(html.includes('Horizon Logistics Ltd'), 'with the customer who bought');
+    assert.ok(html.includes('Ledger notebook'), 'and what is running low');
+    assert.ok(html.includes('12'), 'and how many sales were made today');
+  });
 
   for (const part of OVERLAYS) {
     check(`${part.name} draws without an error`, () => {

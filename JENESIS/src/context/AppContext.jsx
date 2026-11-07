@@ -128,6 +128,57 @@ export function AppProvider({ children }) {
     return () => { cancelled = true; };
   }, [refreshKey, authState]);
 
+  /**
+   * Centralized synchronization.
+   *
+   * JENESIS Settings & Access Point changes the company record, the users, the
+   * permissions and the tax rates. The other three applications may already be
+   * open and signed in, in other windows, and they must not go on working from
+   * a copy of those settings that is hours old.
+   *
+   * So every change is given a number by the service, and this window compares
+   * the number it last saw with the one the service reports. When they differ
+   * the window re-reads who the user is, what they may do and which company
+   * they are in. That is how deactivating a user, changing a permission or
+   * renaming the company takes effect here without a restart.
+   *
+   * Only a number crosses the wire; each application then asks for the pieces
+   * it is allowed to see. Nothing is duplicated in a window.
+   */
+  useEffect(() => {
+    if (authState !== 'ready') return undefined;
+    let cancelled = false;
+    let lastSeen = null;
+
+    const check = async () => {
+      try {
+        const { version } = await apiRequest('/api/system/config-version');
+        if (cancelled) return;
+        if (lastSeen === null) { lastSeen = version; return; }
+        if (version === lastSeen) return;
+        lastSeen = version;
+        // Something in the shared configuration changed. Re-read the session:
+        // permissions, company, and then let every screen refresh itself.
+        const me = await apiRequest('/api/auth/me');
+        if (cancelled) return;
+        setCurrentUser(me.user);
+        setCurrentCompany(me.company || null);
+        setCompanies(me.company ? [me.company] : []);
+        setPermissions(me.permissions || []);
+        if (me.user && me.user.must_change_password) setAuthState('change-password');
+        triggerRefresh();
+      } catch (_) {
+        // A missed check is not an error the user needs to see: the next one
+        // is twenty seconds away, and nothing here is the only defence — the
+        // service re-reads the permissions on every single request.
+      }
+    };
+
+    const timer = setInterval(check, 20000);
+    check();
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [authState, triggerRefresh]);
+
   const login = async (username, password) => {
     setAuthError(null);
     const res = await apiRequest('/api/auth/login', {

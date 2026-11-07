@@ -17,9 +17,13 @@ import {
   Filter
 } from 'lucide-react';
 
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
+
 export default function AccountingView() {
   const { currentCompany, formatCurrency, formatDate, showToast, refreshKey } = useApp();
   const { t } = useI18n();
+  // Right-click on an account or a journal entry: copy it, copy a value.
+  const recordMenu = useRecordMenu();
 
   const [activeTab, setActiveTab] = useState('accounts'); // 'accounts', 'journal', 'ledger'
 
@@ -302,7 +306,17 @@ export default function AccountingView() {
                 {accounts
                   .filter((a) => !search || a.code.includes(search) || a.name.toLowerCase().includes(search.toLowerCase()))
                   .map((a) => (
-                    <tr key={a.id} className="hover:bg-slate-50 transition">
+                    <tr
+                      key={a.id}
+                      className="hover:bg-slate-50 transition"
+                      onContextMenu={(event) => recordMenu.openRecord(event, {
+                        type: 'accounts',
+                        record: a,
+                        nameField: 'name',
+                        kindLabel: t('accounting.account'),
+                        fields: ['code', 'name', 'type', 'currency_code']
+                      })}
+                    >
                       <td className="py-3 px-4 font-mono font-bold text-blue-600">{a.code}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">{a.name}</td>
                       <td className="py-3 px-4">
@@ -365,7 +379,17 @@ export default function AccountingView() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {journalEntries.map((je) => (
-                  <tr key={je.id} className="hover:bg-slate-50 transition">
+                  <tr
+                    key={je.id}
+                    className="hover:bg-slate-50 transition"
+                    onContextMenu={(event) => recordMenu.openRecord(event, {
+                      type: 'journal_entries',
+                      record: je,
+                      nameField: 'entry_number',
+                      kindLabel: t('accounting.journal_entry'),
+                      fields: ['entry_number', 'date', 'reference', 'memo', 'status']
+                    })}
+                  >
                     <td className="py-3 px-4 font-mono font-bold text-blue-600">{je.entry_number}</td>
                     <td className="py-3 px-4 text-slate-600">{formatDate(je.date)}</td>
                     <td className="py-3 px-4 font-mono text-slate-500">{je.reference || '-'}</td>

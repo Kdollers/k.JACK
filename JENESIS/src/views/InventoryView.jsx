@@ -30,6 +30,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import RecordLifecycleControls, { RecordStatusFilter, InactiveBadge } from '../components/RecordLifecycle';
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
 
 const COUNT_STATUSES = {
   DRAFT: 'bg-slate-100 text-slate-600 border-slate-200',
@@ -68,6 +69,8 @@ function StatusBadge({ status, map }) {
 export default function InventoryView() {
   const { currentCompany, formatCurrency, formatDate, showToast, refreshKey, hasPermission, activeView } = useApp();
   const { t } = useI18n();
+  // Right-click on a product: copy, edit, deactivate, reactivate, delete.
+  const recordMenu = useRecordMenu();
 
   // 'products' | 'stores' | 'transfers' | 'adjust' | 'count' | 'movements' | 'valuation'
   const [activeTab, setActiveTab] = useState('products');
@@ -578,7 +581,21 @@ export default function InventoryView() {
                     const isOut = isGoods && p.current_stock <= 0;
                     const isLow = isGoods && !isOut && p.current_stock <= p.min_stock_level;
                     return (
-                      <tr key={p.id} data-j-row={p.id} className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none" tabIndex={0}>
+                      <tr
+                        key={p.id}
+                        data-j-row={p.id}
+                        className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none"
+                        tabIndex={0}
+                        onContextMenu={(event) => recordMenu.openRecord(event, {
+                          type: 'products',
+                          record: p,
+                          nameField: 'name',
+                          kindLabel: t('records.kind_product'),
+                          editPermission: 'inventory:write',
+                          fields: ['sku', 'name', 'category', 'unit', 'sale_price', 'cost_price'],
+                          onEdit: openEditProduct
+                        })}
+                      >
                         <td className="py-3 px-4 font-mono font-semibold text-blue-600">{p.sku}</td>
                         <td className="py-3 px-4 font-bold text-slate-800">
                           <div className="flex items-center gap-1.5">

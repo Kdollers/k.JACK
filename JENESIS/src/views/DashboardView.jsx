@@ -15,7 +15,8 @@ import {
   Package,
   Clock,
   CheckCircle,
-  Calendar
+  Calendar,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function DashboardView() {
@@ -24,6 +25,11 @@ export default function DashboardView() {
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Set when the service refuses the figures. The accounting dashboard carries
+  // the profit and loss, so it is an accounting screen and not everybody may
+  // read it. A screen full of zeros would look like a company with no trade;
+  // saying so is both truer and safer.
+  const [refused, setRefused] = useState(false);
   const [period, setPeriod] = useState('year'); // 'month', 'quarter', 'year', 'all'
 
   const fetchDashboard = async () => {
@@ -45,9 +51,12 @@ export default function DashboardView() {
       }
 
       const data = await apiRequest(`/api/reports/dashboard?startDate=${startDate}&endDate=${endDate}`);
+      setRefused(false);
       setStats(data);
     } catch (err) {
-      console.error('Failed to fetch dashboard data', err);
+      if (err && err.status === 403) setRefused(true);
+      else console.error('Failed to fetch dashboard data', err);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -56,6 +65,23 @@ export default function DashboardView() {
   useEffect(() => {
     fetchDashboard();
   }, [currentCompany?.id, period, refreshKey]);
+
+  if (refused) {
+    return (
+      <div className="space-y-6">
+        <div className="border-b border-line pb-4">
+          <h1 className="text-xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+        </div>
+        <div className="bg-surface border border-line rounded-xl p-8 text-center">
+          <ShieldAlert className="w-8 h-8 mx-auto j-text mb-3" />
+          <h2 className="text-sm font-bold">{t('dashboard.not_permitted_title')}</h2>
+          <p className="mt-1.5 text-xs text-[rgb(var(--j-ink-muted))] max-w-md mx-auto">
+            {t('dashboard.not_permitted_body')}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

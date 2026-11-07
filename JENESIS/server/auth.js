@@ -15,6 +15,10 @@ const crypto = require('crypto');
 const { getDb } = require('./db');
 const { isForbidden, recordRefusal } = require('./appScope');
 const { hashPassword, verifyPassword, legacyHash } = require('./passwords');
+const {
+  effectivePermissions,
+  appAccessFor
+} = require('./accessPoint');
 
 const SESSION_IDLE_MINUTES = 30;
 const SESSION_ABSOLUTE_HOURS = 12;
@@ -293,11 +297,29 @@ function authenticate(req, res, next) {
     return res.status(403).json({ error: 'You do not have access to this company.', code: 'COMPANY_FORBIDDEN' });
   }
 
+  // The role is the starting point, not the whole answer. JENESIS Settings &
+  // Access Point may have granted this one user an extra permission, taken one
+  // away, or closed one of the four applications to them — and the service is
+  // where that must be honoured, so it cannot be walked around by signing in.
+  // Hiding a menu entry was never the defence; refusing the request is.
+  const rolePermissions = permissionsFor(user.role);
+  const permissions = effectivePermissions(getDb(), {
+    companyId: session.company_id,
+    userId: user.id,
+    role: user.role
+  });
+
   req.auth = {
     user,
     session,
     companyId: session.company_id,
-    permissions: permissionsFor(user.role)
+    rolePermissions,
+    permissions,
+    appAccess: appAccessFor(getDb(), {
+      companyId: session.company_id,
+      userId: user.id,
+      rolePermissions
+    })
   };
 
   if (user.must_change_password) {
@@ -404,6 +426,7 @@ module.exports = {
   PERMISSIONS,
   ROLES,
   ROLE_PERMISSIONS,
+  permissionsFor,
   MIN_PASSWORD_LENGTH,
   SESSION_IDLE_MINUTES,
   SESSION_ABSOLUTE_HOURS,

@@ -176,7 +176,9 @@ check('the installer creates four shortcuts, each naming its application, argume
 });
 
 check('every application opens directly in its own environment', () => {
-  assert.strictEqual(appIdentity.APPS.seller.defaultView, 'sales', 'Seller opens on Sales');
+  // The Seller opens on its OWN dashboard: the counter, not the accounting
+  // desk it used to be shown. Same database — a different question.
+  assert.strictEqual(appIdentity.APPS.seller.defaultView, 'dashboard', 'Seller opens on its own dashboard');
   assert.strictEqual(appIdentity.APPS.maintenance.defaultView, 'maintenance',
     'Network & Maintenance opens on its own screen');
   assert.strictEqual(appIdentity.APPS.admin.defaultView, 'dashboard',
@@ -190,8 +192,8 @@ check('every application opens directly in its own environment', () => {
       `${id} always offers the screen it opens on`);
   }
   // A remembered screen is honoured only inside the application that offers it.
-  assert.strictEqual(appIdentity.landingViewFor('seller', 'reports'), 'sales',
-    'a Seller user who last looked at Reports lands on Sales');
+  assert.strictEqual(appIdentity.landingViewFor('seller', 'reports'), 'dashboard',
+    'a Seller user who last looked at Reports lands on the Seller dashboard');
   assert.strictEqual(appIdentity.landingViewFor('admin', 'reports'), 'reports');
 });
 
@@ -203,10 +205,17 @@ check('no application renders a screen it does not own', () => {
   assert.strictEqual(appIdentity.canOpenView('maintenance', 'maintenance'), true);
   assert.strictEqual(appIdentity.canOpenView('settings', 'reports'), false);
   assert.strictEqual(appIdentity.canOpenView('settings', 'settings'), true);
-  for (const view of ['sales', 'purchases', 'accounting', 'reports', 'settings', 'maintenance']) {
+  for (const view of ['sales', 'purchases', 'accounting', 'reports', 'maintenance']) {
     assert.strictEqual(appIdentity.canOpenView('admin', view), true,
       `Accounting & Business offers ${view}`);
   }
+  // Configuration has moved out: company, users, permissions, taxes and
+  // currencies are managed once, in JENESIS Settings & Access Point, instead
+  // of being duplicated here and drifting out of step with the copy there.
+  assert.strictEqual(appIdentity.canOpenView('admin', 'settings'), false,
+    'Accounting & Business no longer offers settings');
+  assert.strictEqual(appIdentity.canOpenView('settings', 'settings'), true,
+    'settings live in Settings & Access Point');
   // Enforced in the interface, not only in the menu.
   const app = read('src/App.jsx');
   assert.ok(app.includes('canOpen'), 'the shell refuses a screen the application does not own');

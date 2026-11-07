@@ -51,6 +51,12 @@ const reports = require('../reports');
 const settlement = require('../settlement');
 const messenger = require('../messenger');
 const records = require('../records');
+const taxRates = require('../taxRates');
+const sellerRoutes = require('./seller');
+const accessPoint = require('../accessPoint');
+const {
+  enforceApplicationAccess
+} = require('../appScope');
 
 const APP_VERSION = require('../../package.json').version;
 const APP_NAME = 'JENESIS Business Management & Accounting Software';
@@ -77,6 +83,15 @@ const PUBLIC_ROUTES = new Set([
 router.use((req, res, next) => {
   if (PUBLIC_ROUTES.has(`${req.method} ${req.path}`)) return next();
   return authenticate(req, res, next);
+});
+
+// Second question, asked of every signed-in request: may this user open the
+// application the request says it comes from? Closing an application to
+// someone in Settings & Access Point takes effect here — on the very next
+// request — whether or not their window has been restarted.
+router.use((req, res, next) => {
+  if (!req.auth) return next();
+  return enforceApplicationAccess(req, res, next);
 });
 
 
@@ -223,11 +238,21 @@ router.post('/setup/initialize', setupLimiter.middleware, (req, res) => {
 
 router.get('/auth/users', requirePermission('users:manage'), (req, res) => {
   const { companyId } = getSessionContext(req);
-  const users = getDb().prepare(`
+  const db = getDb();
+  const users = db.prepare(`
     SELECT id, username, full_name, email, role, active, must_change_password, last_login_at, created_at
     FROM users WHERE company_id = ?${statusClause(req)} ORDER BY full_name ASC
   `).all(companyId);
-  res.json(users);
+  // The Access Point view of each user: which of the four applications they
+  // may open, and what has been granted or revoked on top of their role.
+  const { ROLE_PERMISSIONS } = require('../auth');
+  res.json(users.map((u) => ({
+    ...u,
+    apps: accessPoint.appAccessFor(db, {
+      companyId, userId: u.id, rolePermissions: new Set(ROLE_PERMISSIONS[u.role] || [])
+    }),
+    overrides: accessPoint.permissionOverrides(db, { companyId, userId: u.id })
+  })));
 });
 
 router.post('/auth/users', requirePermission('users:manage'), (req, res) => {
@@ -259,10 +284,25 @@ router.post('/auth/users', requirePermission('users:manage'), (req, res) => {
 
 router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
   const { companyId, user: currentUser } = getSessionContext(req);
-  const { full_name, email, role, active, password } = req.body || {};
+  const { full_name, email, role, active, password, username } = req.body || {};
   const db = getDb();
   const target = db.prepare('SELECT * FROM users WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
   if (!target) return res.status(404).json({ error: 'User not found.', code: 'NOT_FOUND' });
+
+  // A username identifies the account, so it is checked like one: not blank,
+  // and not already somebody else's.
+  let newUsername = target.username;
+  if (username !== undefined && String(username).trim() !== String(target.username)) {
+    newUsername = String(username).trim();
+    if (!newUsername) {
+      return res.status(400).json({ error: 'The username cannot be empty.', code: 'USERNAME_EMPTY' });
+    }
+    const taken = db.prepare('SELECT id FROM users WHERE company_id = ? AND username = ? AND id <> ?')
+      .get(companyId, newUsername, target.id);
+    if (taken) {
+      return res.status(400).json({ error: 'That username is already used by another account.', code: 'USERNAME_TAKEN' });
+    }
+  }
 
   if (role !== undefined && !ROLES.includes(role)) {
     return res.status(400).json({ error: 'Unknown role.', code: 'ROLE_INVALID' });
@@ -289,8 +329,8 @@ router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
 
   try {
     db.transaction(() => {
-      db.prepare('UPDATE users SET full_name = ?, email = ?, role = ?, active = ? WHERE id = ?')
-        .run(full_name ?? target.full_name, email ?? target.email, newRole, newActive, target.id);
+      db.prepare('UPDATE users SET username = ?, full_name = ?, email = ?, role = ?, active = ? WHERE id = ?')
+        .run(newUsername, full_name ?? target.full_name, email ?? target.email, newRole, newActive, target.id);
       if (password) {
         const policy = checkPasswordPolicy(password, target.username);
         if (policy) throw Object.assign(new Error(policy.error), { code: policy.code });
@@ -302,11 +342,194 @@ router.put('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
       revokeUserSessions(target.id);
     }
     logAudit(companyId, currentUser.id, currentUser.full_name, 'USERS', 'UPDATE', target.id,
-      `Updated user ${target.username}: role=${newRole}, active=${newActive}${password ? ', password reset' : ''}`);
-    res.json({ success: true });
+      `Updated user ${target.username}: username=${newUsername}, role=${newRole}, active=${newActive}${password ? ', password reset' : ''}`);
+    accessPoint.recordConfigEvent(db, companyId, 'users');
+    res.json({ success: true, username: newUsername });
   } catch (err) {
     res.status(400).json({ error: err.message, code: err.code || 'USER_UPDATE_FAILED' });
   }
+});
+
+// --------------------------------------------------------------------------
+// 1b. THE ACCESS POINT — applications, permissions, passwords
+// --------------------------------------------------------------------------
+
+/**
+ * Resets another user's password.
+ *
+ * This is the "forgotten password" path: an authorised administrator sets a
+ * fresh password without knowing the old one. The account is marked as needing
+ * a change and every open session is ended, so the new password is the only
+ * way in from that moment.
+ */
+router.post('/auth/users/:id/reset-password', requirePermission('users:manage'), (req, res) => {
+  const { companyId, user: currentUser } = getSessionContext(req);
+  const { password, must_change_password } = req.body || {};
+  const db = getDb();
+  const target = db.prepare('SELECT * FROM users WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
+  if (!target) return res.status(404).json({ error: 'User not found.', code: 'NOT_FOUND' });
+
+  const policy = checkPasswordPolicy(password, target.username);
+  if (policy) return res.status(400).json({ error: policy.error, code: policy.code });
+
+  db.prepare(`
+    UPDATE users SET password_hash = ?, must_change_password = ?, failed_login_count = 0, locked_until = NULL
+    WHERE id = ?
+  `).run(hashPassword(password), must_change_password === false ? 0 : 1, target.id);
+
+  const revoked = revokeUserSessions(target.id);
+  logAudit(companyId, currentUser.id, currentUser.full_name, 'USERS', 'PASSWORD_RESET', target.id,
+    `Reset the password of ${target.username}`);
+  accessPoint.recordConfigEvent(db, companyId, 'users');
+  res.json({ success: true, revokedSessions: revoked, mustChangePassword: must_change_password !== false });
+});
+
+/**
+ * Deletes an account — only one that has never been used.
+ *
+ * A user who has signed in, or whose name is on a single line of the audit
+ * trail, is part of the company's history: removing the row would make that
+ * history unreadable. The answer is 409 USER_HAS_HISTORY and an offer to
+ * deactivate the account instead, which stops all access and keeps the record.
+ *
+ * The two guards that already protect the PUT route protect this one too: an
+ * administrator cannot delete themselves, and the last active administrator
+ * can never be removed.
+ */
+router.delete('/auth/users/:id', requirePermission('users:manage'), (req, res) => {
+  const { companyId, user: currentUser } = getSessionContext(req);
+  const db = getDb();
+  const target = db.prepare('SELECT * FROM users WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
+  if (!target) return res.status(404).json({ error: 'User not found.', code: 'NOT_FOUND' });
+
+  if (target.id === currentUser.id) {
+    return res.status(400).json({ error: 'You cannot delete your own account.', code: 'SELF_LOCKOUT' });
+  }
+  if (target.role === 'admin') {
+    const otherAdmins = db.prepare(
+      `SELECT COUNT(*) AS n FROM users WHERE company_id = ? AND role = 'admin' AND active = 1 AND id <> ?`
+    ).get(companyId, target.id).n;
+    if (otherAdmins === 0) {
+      return res.status(400).json({ error: 'At least one active administrator must remain.', code: 'LAST_ADMIN' });
+    }
+  }
+
+  const auditRows = db.prepare('SELECT COUNT(*) AS n FROM audit_logs WHERE user_id = ?').get(target.id).n;
+  const messages = db.prepare('SELECT COUNT(*) AS n FROM messages WHERE sender_id = ? OR recipient_id = ?')
+    .get(target.id, target.id).n;
+  const history = Number(auditRows) + Number(messages || 0);
+
+  if (history > 0 || target.last_login_at) {
+    return res.status(409).json({
+      error: `“${target.username}” appears in the company's records (${auditRows} audit entries` +
+        `${target.last_login_at ? ', and has signed in' : ''}), so the account cannot be deleted. ` +
+        'Deactivate it instead: access stops immediately and the history stays readable.',
+      code: 'USER_HAS_HISTORY',
+      auditEntries: Number(auditRows)
+    });
+  }
+
+  revokeUserSessions(target.id);
+  db.prepare('DELETE FROM user_app_access WHERE company_id = ? AND user_id = ?').run(companyId, target.id);
+  db.prepare('DELETE FROM user_permissions WHERE company_id = ? AND user_id = ?').run(companyId, target.id);
+  db.prepare('DELETE FROM users WHERE id = ? AND company_id = ?').run(target.id, companyId);
+
+  logAudit(companyId, currentUser.id, currentUser.full_name, 'USERS', 'DELETE', target.id,
+    `Deleted the unused account ${target.username}`);
+  accessPoint.recordConfigEvent(db, companyId, 'users');
+  res.json({ success: true, deleted: target.id });
+});
+
+/**
+ * Sets which of the four applications a user may open, and which permissions
+ * they hold beyond their role.
+ *
+ * This is the Access Point proper. Everything decided here is stored in the
+ * shared database and read by the service on every request, so it takes effect
+ * on the next call — in a window that is already open — and a user cannot walk
+ * around it by pointing a window at another application.
+ */
+router.put('/auth/users/:id/access', requirePermission('users:manage'), (req, res) => {
+  const { companyId, user: currentUser } = getSessionContext(req);
+  const { apps, grants, revokes, clearOverrides } = req.body || {};
+  const db = getDb();
+  const target = db.prepare('SELECT * FROM users WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
+  if (!target) return res.status(404).json({ error: 'User not found.', code: 'NOT_FOUND' });
+
+  try {
+    db.transaction(() => {
+      if (apps && typeof apps === 'object') {
+        for (const appId of Object.keys(apps)) {
+          accessPoint.setAppAccess(db, {
+            companyId, userId: target.id, appId, allowed: !!apps[appId], actorId: currentUser.id
+          });
+        }
+      }
+      // The lists are the whole truth, so a permission absent from both is
+      // simply left to the role — the way it was before anyone touched it.
+      if (clearOverrides) {
+        db.prepare('DELETE FROM user_permissions WHERE company_id = ? AND user_id = ?').run(companyId, target.id);
+      }
+      if (Array.isArray(grants)) {
+        for (const permission of grants) {
+          accessPoint.setPermissionOverride(db, {
+            companyId, userId: target.id, permission, effect: 'grant', actorId: currentUser.id
+          });
+        }
+      }
+      if (Array.isArray(revokes)) {
+        for (const permission of revokes) {
+          accessPoint.setPermissionOverride(db, {
+            companyId, userId: target.id, permission, effect: 'revoke', actorId: currentUser.id
+          });
+        }
+      }
+    })();
+
+    logAudit(companyId, currentUser.id, currentUser.full_name, 'USERS', 'ACCESS_UPDATE', target.id,
+      `Changed the access of ${target.username}: applications and permissions updated`);
+    accessPoint.recordConfigEvent(db, companyId, 'permissions');
+    // Their open windows work from the permissions they were given at sign-in,
+    // so they are ended: the next sign-in reads the new ones.
+    const revokedSessions = revokeUserSessions(target.id);
+    res.json({ success: true, revokedSessions });
+  } catch (err) {
+    res.status(400).json({ error: err.message, code: err.code || 'ACCESS_UPDATE_FAILED' });
+  }
+});
+
+/**
+ * What the Access Point can grant.
+ *
+ * The four applications, the roles and every permission the service knows —
+ * sent to JENESIS Settings & Access Point so the screens list exactly what the
+ * service enforces. A list kept only in the interface would drift from the one
+ * the service checks, and then a box could be ticked that means nothing.
+ */
+router.get('/auth/access-catalogue', requirePermission('users:manage'), (req, res) => {
+  const { PERMISSIONS, ROLES } = require('../auth');
+  const { APP_IDS } = require('../appScope');
+  res.json({ apps: APP_IDS, roles: ROLES, permissions: PERMISSIONS });
+});
+
+/** What this user may open and hold, exactly as the service will enforce it. */
+router.get('/auth/users/:id/access', requirePermission('users:manage'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const db = getDb();
+  const target = db.prepare('SELECT * FROM users WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
+  if (!target) return res.status(404).json({ error: 'User not found.', code: 'NOT_FOUND' });
+  const { ROLE_PERMISSIONS } = require('../auth');
+  res.json({
+    id: target.id,
+    role: target.role,
+    apps: accessPoint.appAccessFor(db, {
+      companyId, userId: target.id, rolePermissions: new Set(ROLE_PERMISSIONS[target.role] || [])
+    }),
+    permissions: [...accessPoint.effectivePermissions(db, {
+      companyId, userId: target.id, role: target.role
+    })].sort(),
+    overrides: accessPoint.permissionOverrides(db, { companyId, userId: target.id })
+  });
 });
 
 // --------------------------------------------------------------------------
@@ -354,6 +577,9 @@ router.put('/companies/current', requirePermission('company:manage'), (req, res)
     );
 
     logAudit(companyId, user.id, user.full_name, 'COMPANY', 'UPDATE', companyId, `Updated company profile ${name}`);
+    // The company record is shared configuration: every other window must
+    // re-read it (name, currency, decimals) instead of showing the old one.
+    accessPoint.recordConfigEvent(db, companyId, 'company');
     res.json({ success: true });
   } catch (err) {
     res.status(400).json(asErrorResponse(err));
@@ -1999,7 +2225,15 @@ router.post('/journal-entries/:id/reverse', requirePermission('journal:reverse')
 // --------------------------------------------------------------------------
 // 11. FINANCIAL REPORTS
 // --------------------------------------------------------------------------
-router.get('/reports/dashboard', requirePermission('dashboard:read'), (req, res) => {
+// The accounting dashboard carries the profit and loss, the balance sheet
+// totals, the receivables and the payables. It is therefore an ACCOUNTING
+// screen, and it asks for the same permission the reports do.
+//
+// It used to be gated on dashboard:read alone, which every role holds — and
+// that is precisely how JENESIS Seller came to be showing the accounting
+// dashboard: the menu entry was gone from the Seller, but the request still
+// answered. Hiding a screen is never the defence. Refusing the request is.
+router.get('/reports/dashboard', requireAnyPermission('reports:read', 'accounting:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const { startDate, endDate } = req.query;
   try {
@@ -2088,11 +2322,20 @@ router.get('/reports/tax-report', requirePermission('reports:read'), (req, res) 
 
 // --------------------------------------------------------------------------
 // 12. TAX RATES
+//
+// Owned by JENESIS Settings & Access Point. Readable by whoever raises an
+// invoice or keeps the books; changeable only by whoever keeps the books.
+//
+// The list defaults to ACTIVE rates. That default is the safeguard: the
+// drop-down on a new invoice reads this endpoint without a query string, so a
+// rate that has been deactivated stops being offered for new transactions the
+// moment it is deactivated. The Settings screen asks for ?status=all so it can
+// still show — and reactivate — the retired ones.
 // --------------------------------------------------------------------------
 router.get('/taxes', requireAnyPermission('accounting:read', 'sales:read'), (req, res) => {
   const { companyId } = getSessionContext(req);
   const db = getDb();
-  res.json(db.prepare('SELECT * FROM tax_rates WHERE company_id = ? ORDER BY rate DESC').all(companyId));
+  res.json(taxRates.listTaxRates(db, companyId, req.query.status));
 });
 
 router.post('/taxes', requirePermission('accounting:write'), (req, res) => {
@@ -2111,10 +2354,108 @@ router.post('/taxes', requirePermission('accounting:write'), (req, res) => {
     `).run(id, companyId, code, name, Number(rate), is_inclusive ? 1 : 0, sales_tax_account_id || null, purchase_tax_account_id || null);
 
     logAudit(companyId, user.id, user.full_name, 'TAXES', 'CREATE', id, `Created tax rate ${code} (${rate}%)`);
+    accessPoint.recordConfigEvent(db, companyId, 'taxes');
     res.json({ id, code, name, rate });
   } catch (err) {
     res.status(400).json(asErrorResponse(err));
   }
+});
+
+/** Edit a rate's code, name, percentage and accounts. Not its active flag. */
+router.put('/taxes/:id', requirePermission('accounting:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const { code, name, rate, sales_tax_account_id, purchase_tax_account_id, is_inclusive } = req.body || {};
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM tax_rates WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
+  if (!existing) return res.status(404).json({ error: 'Tax rate not found.', code: 'NOT_FOUND' });
+
+  if (rate !== undefined && rate !== null && rate !== '' && !Number.isFinite(Number(rate))) {
+    return res.status(400).json({ error: 'The rate must be a number.', code: 'RATE_INVALID' });
+  }
+
+  try {
+    db.prepare(`
+      UPDATE tax_rates SET
+        code = ?, name = ?, rate = ?, is_inclusive = ?,
+        sales_tax_account_id = ?, purchase_tax_account_id = ?
+      WHERE id = ? AND company_id = ?
+    `).run(
+      code ?? existing.code,
+      name ?? existing.name,
+      rate === undefined || rate === null || rate === '' ? existing.rate : Number(rate),
+      is_inclusive === undefined ? existing.is_inclusive : (is_inclusive ? 1 : 0),
+      sales_tax_account_id === undefined ? existing.sales_tax_account_id : (sales_tax_account_id || null),
+      purchase_tax_account_id === undefined ? existing.purchase_tax_account_id : (purchase_tax_account_id || null),
+      existing.id,
+      companyId
+    );
+    logAudit(companyId, user.id, user.full_name, 'TAXES', 'UPDATE', existing.id,
+      `Edited tax rate ${existing.code} → ${code ?? existing.code} (${rate === undefined ? existing.rate : rate}%)`);
+    accessPoint.recordConfigEvent(db, companyId, 'taxes');
+    res.json({ id: existing.id, success: true });
+  } catch (err) {
+    res.status(400).json(asErrorResponse(err));
+  }
+});
+
+/** Takes a rate out of the list offered for NEW transactions. History is untouched. */
+router.post('/taxes/:id/deactivate', requirePermission('accounting:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const db = getDb();
+  try {
+    const result = taxRates.setTaxRateActive(db, {
+      companyId, taxId: req.params.id, active: false, user
+    });
+    accessPoint.recordConfigEvent(db, companyId, 'taxes');
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 400).json(asErrorResponse(err));
+  }
+});
+
+/** Puts a retired rate back on the list for new transactions. */
+router.post('/taxes/:id/reactivate', requirePermission('accounting:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const db = getDb();
+  try {
+    const result = taxRates.setTaxRateActive(db, {
+      companyId, taxId: req.params.id, active: true, user
+    });
+    accessPoint.recordConfigEvent(db, companyId, 'taxes');
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 400).json(asErrorResponse(err));
+  }
+});
+
+/**
+ * Deletes a rate — only when nothing has ever referred to it.
+ *
+ * A rate that has been used on an invoice, a bill, a quote or an order, or is
+ * still the default on a product, is answered with 409 TAX_IN_USE and an
+ * explanation naming where. The Settings screen then offers deactivation
+ * instead, which is what the user actually wanted.
+ */
+router.delete('/taxes/:id', requirePermission('accounting:write'), (req, res) => {
+  const { companyId, user } = getSessionContext(req);
+  const db = getDb();
+  try {
+    const result = taxRates.deleteTaxRate(db, { companyId, taxId: req.params.id, user });
+    accessPoint.recordConfigEvent(db, companyId, 'taxes');
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 400).json(asErrorResponse(err));
+  }
+});
+
+/** How many documents use this rate — asked before the delete button is offered. */
+router.get('/taxes/:id/usage', requirePermission('accounting:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  const db = getDb();
+  const rate = db.prepare('SELECT * FROM tax_rates WHERE id = ? AND company_id = ?').get(req.params.id, companyId);
+  if (!rate) return res.status(404).json({ error: 'Tax rate not found.', code: 'NOT_FOUND' });
+  const usage = taxRates.taxUsage(db, req.params.id);
+  res.json({ id: rate.id, code: rate.code, ...usage, sentence: taxRates.usageSentence(usage) });
 });
 
 // --------------------------------------------------------------------------
@@ -2573,6 +2914,25 @@ router.get('/system/info', requirePermission('dashboard:read'), (req, res) => {
   });
 });
 
+/**
+ * The number the four applications compare, to notice a change made in another
+ * window.
+ *
+ * JENESIS Settings & Access Point changes the company, the users, the
+ * permissions and the tax rates. The other three applications may already be
+ * open and signed in on other windows, and they must not go on working from a
+ * copy of those settings that is an hour old. So every change is given a
+ * number here; a window remembers the number it last saw and re-reads what it
+ * needs when this one moves.
+ *
+ * The answer is deliberately tiny: a number, and nothing else. No settings are
+ * sent, because each application asks for the ones it is allowed to see.
+ */
+router.get('/system/config-version', requirePermission('dashboard:read'), (req, res) => {
+  const { companyId } = getSessionContext(req);
+  res.json({ version: accessPoint.configVersion(getDb(), companyId) });
+});
+
 // A verified file copy of the database: the kind of backup that can be put back
 // with a simple file copy, as well as the JSON export used for migration.
 router.post('/system/backup', requirePermission('backup:export'), (req, res) => {
@@ -2677,5 +3037,11 @@ router.get('/records/:type/:id/history', requirePermission('records:deactivate')
     records.toHttpError(err, res);
   }
 });
+
+
+// --------------------------------------------------------------------------
+// 20. JENESIS SELLER — the counter, and nothing but the counter
+// --------------------------------------------------------------------------
+router.use(sellerRoutes);
 
 module.exports = router;

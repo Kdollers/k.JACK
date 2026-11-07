@@ -5,6 +5,7 @@ import { useI18n } from '../i18n';
 import { apiRequest } from '../services/api';
 import StatementModal from '../components/StatementModal';
 import RecordLifecycleControls, { RecordStatusFilter, InactiveBadge } from '../components/RecordLifecycle';
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
 import {
   Building,
   Plus,
@@ -20,6 +21,8 @@ import {
 export default function SuppliersView() {
   const { currentCompany, formatCurrency, showToast, refreshKey, activeView } = useApp();
   const { t } = useI18n();
+  // Right-click on a supplier: copy, edit, deactivate, reactivate, delete.
+  const recordMenu = useRecordMenu();
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -225,7 +228,21 @@ export default function SuppliersView() {
                   </tr>
                 ) : suppliers.length > 0 ? (
                   suppliers.map((s) => (
-                    <tr key={s.id} data-j-row={s.id} className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none" tabIndex={0}>
+                    <tr
+                      key={s.id}
+                      data-j-row={s.id}
+                      className="hover:bg-slate-50 transition focus:bg-surface-hover outline-none"
+                      tabIndex={0}
+                      onContextMenu={(event) => recordMenu.openRecord(event, {
+                        type: 'suppliers',
+                        record: s,
+                        nameField: 'name',
+                        kindLabel: t('records.kind_supplier'),
+                        editPermission: 'contacts:write',
+                        fields: ['code', 'name', 'contact_person', 'email', 'phone', 'address', 'tax_id'],
+                        onEdit: openEdit
+                      })}
+                    >
                       <td className="py-3 px-4 font-mono font-semibold text-blue-600">{s.code}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">
                         <div className="flex items-center gap-1.5">

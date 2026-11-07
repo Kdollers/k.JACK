@@ -5,6 +5,9 @@ import { AppModeProvider, useAppMode, appTitle } from './context/AppModeContext'
 import { accessPermissionFor } from './appIdentity';
 import { useI18n } from './i18n';
 import { ShortcutsProvider } from './context/ShortcutsContext';
+import { ContextMenuProvider } from './context/ContextMenuContext';
+import { useRecordMenu } from './contextmenu/useRecordMenu';
+import { isEditableTarget, hasTextSelection } from './contextmenu/clipboard';
 import { I18nProvider } from './i18n';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -13,6 +16,7 @@ import AppOverlays from './components/AppOverlays';
 import { LoginScreen, SetupScreen, ChangePasswordScreen, BackendUnavailable } from './components/AuthScreens';
 
 import DashboardView from './views/DashboardView';
+import SellerDashboardView from './views/SellerDashboardView';
 import CustomersView from './views/CustomersView';
 import SuppliersView from './views/SuppliersView';
 import InventoryView from './views/InventoryView';
@@ -35,6 +39,19 @@ function AppContent() {
   const { activeView, loading, authState, authError, setActiveView, hasPermission, logout } = useApp();
   const { appId, isLauncher, app, canOpen, landingView } = useAppMode();
   const { t } = useI18n();
+
+  /**
+   * Right-clicking anywhere that has no menu of its own — the page background,
+   * a heading, the empty space under a table — still gets one. A row or a
+   * field opens its own and marks the event handled, so nothing is opened
+   * twice.
+   */
+  const fallbackMenu = useRecordMenu();
+  const onBackgroundContextMenu = (event) => {
+    if (!event || event.defaultPrevented) return;
+    if (isEditableTarget(event.target)) fallbackMenu.openText(event, { editable: true });
+    else fallbackMenu.openText(event, { editable: false, selection: hasTextSelection() });
+  };
 
   // No application was requested: offer the four of them. The installed
   // shortcuts never reach this screen — they name their application.
@@ -112,8 +129,16 @@ function AppContent() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8 max-w-7xl mx-auto w-full">
-          {activeView === 'dashboard' && <DashboardView />}
+        <main
+          className="flex-1 overflow-y-auto p-6 lg:p-8 max-w-7xl mx-auto w-full"
+          onContextMenu={onBackgroundContextMenu}
+        >
+          {/* The dashboard belongs to the application. JENESIS Seller asks
+              what it sold today and what it can sell now; JENESIS Accounting &
+              Business keeps the books. Same database, different question. */}
+          {activeView === 'dashboard' && (appId === 'seller'
+            ? <SellerDashboardView />
+            : <DashboardView />)}
           {activeView === 'customers' && <CustomersView />}
           {activeView === 'suppliers' && <SuppliersView />}
           {activeView === 'inventory' && <InventoryView />}
@@ -161,7 +186,11 @@ function ThemedProviders() {
             {/* ShortcutsProvider sits inside AppProvider (it navigates and toasts)
                 and above AppContent so every screen can register shortcuts. */}
             <ShortcutsProvider>
-              <AppContent />
+              {/* Inside the shortcut provider: the menu registers an Escape
+                  layer, so Escape closes the menu and nothing underneath it. */}
+              <ContextMenuProvider>
+                <AppContent />
+              </ContextMenuProvider>
             </ShortcutsProvider>
           </AppProvider>
         </AppErrorBoundary>

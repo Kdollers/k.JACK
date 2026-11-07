@@ -393,6 +393,54 @@ const MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(company_id, sender_id, recipient_id, created_at);
       `);
     }
+  },
+  {
+    version: 6,
+    name: 'access point: per-user application access, permission grants and revocations, configuration events',
+    up(db) {
+      // JENESIS Settings & Access Point decides, per user, which of the four
+      // applications they may open and which permissions they hold beyond
+      // their role. Both are stored here — in the shared database — so there
+      // is exactly one copy of the truth and no application keeps its own.
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS user_app_access (
+          id TEXT PRIMARY KEY,
+          company_id TEXT NOT NULL REFERENCES companies(id),
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          app_id TEXT NOT NULL,
+          allowed INTEGER NOT NULL DEFAULT 1,
+          updated_at TEXT,
+          updated_by TEXT,
+          UNIQUE(company_id, user_id, app_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS user_permissions (
+          id TEXT PRIMARY KEY,
+          company_id TEXT NOT NULL REFERENCES companies(id),
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          permission TEXT NOT NULL,
+          effect TEXT NOT NULL,           -- 'grant' adds to the role, 'revoke' takes away
+          updated_at TEXT,
+          updated_by TEXT,
+          UNIQUE(company_id, user_id, permission)
+        );
+
+        -- Every configuration change gets a number. A window that is already
+        -- open compares the number it last saw with this one and re-reads what
+        -- it needs, so a permission changed in Settings & Access Point takes
+        -- effect in a Seller window that is already signed in.
+        CREATE TABLE IF NOT EXISTS config_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          company_id TEXT NOT NULL,
+          scope TEXT NOT NULL,
+          changed_at TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_user_app_access_user ON user_app_access(company_id, user_id);
+        CREATE INDEX IF NOT EXISTS idx_user_permissions_user ON user_permissions(company_id, user_id);
+        CREATE INDEX IF NOT EXISTS idx_config_events_company ON config_events(company_id, id);
+      `);
+    }
   }
 ];
 

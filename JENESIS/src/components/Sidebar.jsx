@@ -20,10 +20,21 @@ import {
 export default function Sidebar() {
   const { activeView, setActiveView, hasPermission } = useApp();
   const { t } = useI18n();
+  const { app } = useAppMode();
 
   // Visibility only. The backend enforces the same permissions on every API call.
   const allItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: t('nav.dashboard'), perm: 'dashboard:read' },
+    // The dashboard is the front page of whichever application this window is.
+    // In JENESIS Seller it is the counter, and selling is all it needs. In
+    // JENESIS Accounting & Business it carries the profit and loss, so it asks
+    // for the same permission the reports do — a clerk who may not see the
+    // margin is not shown a screen that exists to display it.
+    {
+      id: 'dashboard',
+      icon: LayoutDashboard,
+      label: t('nav.dashboard'),
+      perm: app && app.id === 'seller' ? ['sales:read'] : ['reports:read', 'accounting:read']
+    },
     { id: 'customers', icon: Users, label: t('nav.customers'), perm: 'contacts:read' },
     { id: 'suppliers', icon: Building, label: t('nav.suppliers'), perm: 'contacts:read' },
     { id: 'inventory', icon: Package, label: t('nav.inventory'), perm: 'inventory:read' },
@@ -39,7 +50,6 @@ export default function Sidebar() {
   // Two filters: the application this window is (JENESIS Seller does not offer
   // the general ledger) and the permissions of the signed-in user. The backend
   // enforces the same permissions on every call.
-  const { app } = useAppMode();
   const menuItems = allItems
     .filter((item) => (app ? app.views.includes(item.id) : true))
     .filter((item) =>

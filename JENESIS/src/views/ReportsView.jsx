@@ -15,6 +15,7 @@ import {
 import { useAppMode } from '../context/AppModeContext';
 import JenesisLogo from '../components/JenesisLogo';
 import { amountOf, payloadBelongsTo, rowsOf } from '../reportShapes';
+import { useRecordMenu } from '../contextmenu/useRecordMenu';
 
 export default function ReportsView() {
   const { currentCompany, formatCurrency, formatDate, showToast, refreshKey } = useApp();
@@ -22,6 +23,7 @@ export default function ReportsView() {
   const { app } = useAppMode();
   const markTone = app?.tone || 'brand';
   const { t } = useI18n();
+  const recordMenu = useRecordMenu();
 
   const [activeReport, setActiveReport] = useState('trial_balance'); // 'trial_balance', 'pnl', 'balance_sheet', 'cash_flow', 'tax'
   const [data, setData] = useState(null);
@@ -299,7 +301,22 @@ export default function ReportsView() {
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
                 {rowsOf(data, 'trial_balance', 'rows').map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50">
+                  // A trial-balance row is a figure the ledger added up, not a
+                  // record anybody keeps: it can be copied into a note, and it
+                  // can never be edited, deleted or retired.
+                  <tr
+                    key={row.id}
+                    className="hover:bg-slate-50"
+                    onContextMenu={(event) => recordMenu.openRecord(event, {
+                      type: 'trial_balance',
+                      record: row,
+                      nameField: 'name',
+                      kindLabel: t('reports.trial_balance'),
+                      fields: ['code', 'name', 'type', 'netDebit', 'netCredit'],
+                      isProtected: true,
+                      protectionNote: t('contextmenu.immutable_note')
+                    })}
+                  >
                     <td className="py-2 px-3 font-bold text-blue-600">{row.code}</td>
                     <td className="py-2 px-3 font-sans font-medium text-slate-800">{row.name}</td>
                     <td className="py-2 px-3 font-sans text-slate-500 text-[11px]">{row.type}</td>
