@@ -5,3 +5,6 @@ node_modules/
 .DS_Store
 release/
 backups/
+
+# Working copy of the database for the sandbox preview
+.preview/

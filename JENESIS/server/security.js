@@ -20,13 +20,30 @@ const CONTENT_SECURITY_POLICY = [
   "form-action 'self'"
 ].join('; ');
 
+/**
+ * The sandbox has no screen, so the only way to show the running application
+ * there is inside the workspace's preview frame. JENESIS_PREVIEW_EMBED opens
+ * the two headers that forbid embedding and nothing else.
+ *
+ * The installed application never sets it — the desktop window loads the
+ * interface from its own loopback server and is never embedded anywhere — so
+ * the constant above, and every header every response carries, is unchanged
+ * for anybody who installs JENESIS.
+ */
+const EMBEDDED_PREVIEW = process.env.JENESIS_PREVIEW_EMBED === '1';
+
 function securityHeaders(req, res, next) {
-  res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+  res.setHeader(
+    'Content-Security-Policy',
+    EMBEDDED_PREVIEW
+      ? CONTENT_SECURITY_POLICY.replace("frame-ancestors 'none'", 'frame-ancestors https:')
+      : CONTENT_SECURITY_POLICY
+  );
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  if (!EMBEDDED_PREVIEW) res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  if (!EMBEDDED_PREVIEW) res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
   // API responses contain business data: never cache them.
   if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
