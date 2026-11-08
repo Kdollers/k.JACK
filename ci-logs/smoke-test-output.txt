@@ -34,14 +34,14 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
 ==> Full backup export is produced and contains the transaction
     PASS
 ==> Graceful shutdown: window closes and all processes exit
-    WM_CLOSE posted to pid 3704 handle 459066 title 'JENESIS — Professional Business Accounting & Management Software': True
+    WM_CLOSE posted to pid 2960 handle 262370 title 'JENESIS — Professional Business Accounting & Management Software': True
     PASS
 ==> Relaunch: business data persists after restart
     PASS
 ==> Backup restore protection: a restore first keeps a copy of the database
     PASS
 ==> Close again and confirm clean shutdown
-    WM_CLOSE posted to pid 2564 handle 328114 title 'JENESIS — Professional Business Accounting & Management Software': True
+    WM_CLOSE posted to pid 5084 handle 590260 title 'JENESIS — Professional Business Accounting & Management Software': True
     PASS
 ==> Both themes ship in the installed application
     installed build contains the theme bootstrap, the dark palette and the remapped utilities
@@ -58,28 +58,28 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
     launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=seller
     picture saved: JENESIS-Seller.bmp
     JENESIS Seller: 106496 sampled pixels, 452 distinct colours, 19.5% pure white
-    WM_CLOSE posted to pid 2096 handle 262634 title 'JENESIS Seller — JENESIS': True
+    WM_CLOSE posted to pid 1460 handle 393408 title 'JENESIS Seller — JENESIS': True
     PASS
 True
 ==> JENESIS Network & Maintenance opens from its own shortcut, with its own interface
     launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=maintenance
     picture saved: JENESIS-Network-Maintenance.bmp
     JENESIS Network & Maintenance: 106496 sampled pixels, 485 distinct colours, 19.5% pure white
-    WM_CLOSE posted to pid 7204 handle 459200 title 'JENESIS Network & Maintenance — JENESIS': True
+    WM_CLOSE posted to pid 8112 handle 786706 title 'JENESIS Network & Maintenance — JENESIS': True
     PASS
 True
 ==> JENESIS Accounting & Business opens from its own shortcut, with its own interface
     launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=admin
     picture saved: JENESIS-Accounting-Business.bmp
     JENESIS Accounting & Business: 106496 sampled pixels, 473 distinct colours, 19.5% pure white
-    WM_CLOSE posted to pid 4000 handle 524892 title 'JENESIS Accounting & Business — JENESIS': True
+    WM_CLOSE posted to pid 4076 handle 786928 title 'JENESIS Accounting & Business — JENESIS': True
     PASS
 True
 ==> JENESIS Settings & Access Point opens from its own shortcut, with its own interface
     launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=settings
     picture saved: JENESIS-Settings-Access-Point.bmp
     JENESIS Settings & Access Point: 106496 sampled pixels, 495 distinct colours, 19.5% pure white
-    WM_CLOSE posted to pid 4744 handle 524890 title 'JENESIS Settings & Access Point — JENESIS': True
+    WM_CLOSE posted to pid 2084 handle 655866 title 'JENESIS Settings & Access Point — JENESIS': True
     PASS
 True
 ==> The four applications run side by side, each in its own window
@@ -89,48 +89,48 @@ True
     picture saved: JENESIS-Accounting-Business-together.bmp
     picture saved: JENESIS-Settings-Access-Point-together.bmp
     photographed together: 4 of four
-    desktop captured: 786432 pixels, 1434 distinct colours, 0% black
-    WM_CLOSE posted to pid 7092 handle 66194 title 'JENESIS Settings & Access Point — JENESIS': True
-    WM_CLOSE posted to pid 7092 handle 524912 title 'JENESIS Accounting & Business — JENESIS': True
-    WM_CLOSE posted to pid 7092 handle 66170 title 'JENESIS Network & Maintenance — JENESIS': True
-    WM_CLOSE posted to pid 7092 handle 655850 title 'JENESIS Seller — JENESIS': True
+    desktop captured: 786432 pixels, 1432 distinct colours, 0% black
+    WM_CLOSE posted to pid 7760 handle 262758 title 'JENESIS Settings & Access Point — JENESIS': True
+    WM_CLOSE posted to pid 7760 handle 131644 title 'JENESIS Accounting & Business — JENESIS': True
+    WM_CLOSE posted to pid 7760 handle 66118 title 'JENESIS Network & Maintenance — JENESIS': True
+    WM_CLOSE posted to pid 7760 handle 1049012 title 'JENESIS Seller — JENESIS': True
     PASS
 ==> Signing in through the interface reports no error in the interface
-    cdp: focused , signed in False - no text field on the sign-in screen
-    NOTE: the interface did not confirm the signed-in screen, so the signed-in
-    interface is NOT proven by this run (no route delivered the credentials).
+    cdp: focused INPUT:text, signed in True - the signed-in shell is on screen
+    the interface reported the signed-in screen: credentials delivered via the DevTools Protocol
     picture saved: JENESIS-Accounting-Business.bmp
-    JENESIS Accounting & Business: 106496 sampled pixels, 521 distinct colours, 20.2% pure white
+    JENESIS Accounting & Business: 106496 sampled pixels, 1955 distinct colours, 29.9% pure white
     last lines of C:\Users\runneradmin\AppData\Roaming\JENESIS\logs\desktop.log
-    |2026-11-08T06:44:09.165Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    |2026-11-08T06:44:09.165Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261108-064409.db
-    |2026-11-08T06:44:09.172Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    |2026-11-08T06:44:09.172Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    |2026-11-08T06:44:09.354Z JENESIS server running at http://127.0.0.1:59353
-    |2026-11-08T06:44:09.359Z Backend ready at http://127.0.0.1:59353/ (attempt 1)
-    |2026-11-08T06:44:09.375Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    |2026-11-08T06:44:09.392Z Opening JENESIS Accounting & Business.
-    |2026-11-08T06:44:09.515Z Window finished loading.
-    |2026-11-08T06:44:09.521Z Appearance set to light.
-    |2026-11-08T06:44:09.526Z renderer: ready — the interface is mounted
-    |2026-11-08T06:44:09.526Z Window ready to show.
-    WM_CLOSE posted to pid 5140 handle 786954 title 'JENESIS Accounting & Business — JENESIS': True
+    |2026-11-08T06:56:32.776Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261108-065632.db
+    |2026-11-08T06:56:32.789Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
+    |2026-11-08T06:56:32.789Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
+    |2026-11-08T06:56:33.057Z JENESIS server running at http://127.0.0.1:58102
+    |2026-11-08T06:56:33.142Z Backend ready at http://127.0.0.1:58102/ (attempt 1)
+    |2026-11-08T06:56:33.164Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
+    |2026-11-08T06:56:33.186Z Opening JENESIS Accounting & Business.
+    |2026-11-08T06:56:33.349Z Window finished loading.
+    |2026-11-08T06:56:33.350Z Window ready to show.
+    |2026-11-08T06:56:33.375Z Appearance set to light.
+    |2026-11-08T06:56:33.377Z renderer: ready — the interface is mounted
+    |2026-11-08T06:56:34.634Z renderer: signed-in — the signed-in interface is displayed
+    WM_CLOSE posted to pid 504 handle 786884 title 'JENESIS Accounting & Business — JENESIS': True
     PASS
 True
 ==> The signed-in screens this release is about are photographed
     cdp: focused INPUT:text, signed in True - the signed-in shell is on screen
     picture saved: JENESIS-Seller-Dashboard.bmp
     JENESIS Seller signed in and photographed (credentials delivered via the DevTools Protocol)
-    WM_CLOSE posted to pid 7160 handle 1245498 title 'JENESIS Seller — JENESIS': True
+    WM_CLOSE posted to pid 2012 handle 1180142 title 'JENESIS Seller — JENESIS': True
     cdp: focused INPUT:text, signed in True - the signed-in shell is on screen
     picture saved: JENESIS-Settings-Signed-In.bmp
     JENESIS Settings & Access Point signed in and photographed (credentials delivered via the DevTools Protocol)
-    WM_CLOSE posted to pid 4872 handle 787050 title 'JENESIS Settings & Access Point — JENESIS': True
+    WM_CLOSE posted to pid 6572 handle 1180144 title 'JENESIS Settings & Access Point — JENESIS': True
     PASS
 ==> Silent uninstall removes the program but keeps business data
     PASS
 
 Notes
+  - the typed sign-in reached the signed-in screen (via the DevTools Protocol): the shared header is drawn
   - JENESIS Seller reached the signed-in screen and was photographed (via the DevTools Protocol)
   - JENESIS Settings & Access Point reached the signed-in screen and was photographed (via the DevTools Protocol)
 
