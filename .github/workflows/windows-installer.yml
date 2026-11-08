@@ -249,11 +249,12 @@ jobs:
             --run "$GITHUB_RUN_ID" --commit "$(git -C "$GITHUB_WORKSPACE" rev-parse --short HEAD)"
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
+          # Stage the stamped documents and archive that tree. git archive will
+          # take a tree, not only a commit, so the archive gets the stamped
+          # documents without a commit being made for the archive's sake.
           git add -A -f "JENESIS/DOWNLOAD.md" "JENESIS/$release RELEASE NOTES.md" "JENESIS/JENESIS-$version-PROGRESS.md"
-          if git diff --cached --quiet; then echo "the documents already name this build"; else
-            git commit -q -m "docs: name build $GITHUB_RUN_ID in the documents it publishes"
-          fi
-          git archive --format=zip -o "JENESIS/release/$release.zip" HEAD ":(exclude)JENESIS/dist"
+          tree=$(git write-tree)
+          git archive --format=zip -o "JENESIS/release/$release.zip" "$tree" ":(exclude)JENESIS/dist"
           cd JENESIS/release
           sha256sum "$release.zip" > "$release.zip.sha256"
           ls -l "$release.zip"
@@ -281,6 +282,14 @@ jobs:
           echo "--- the download table as the document will publish it ---"
           grep -n '^| `JEN ' "$GITHUB_WORKSPACE/JENESIS/DOWNLOAD.md" || true
           grep -n 'run [0-9]*, commit' "$GITHUB_WORKSPACE/JENESIS/DOWNLOAD.md" | head -2 || true
+
+          # Now that every file has been measured, commit the finished
+          # documents. The copy in the repository should end up carrying all
+          # three checksums, not only the two known when the archive was cut.
+          git add -A -f "JENESIS/DOWNLOAD.md" "JENESIS/$release RELEASE NOTES.md" "JENESIS/JENESIS-$version-PROGRESS.md"
+          if git diff --cached --quiet; then echo "the documents already carry this build's numbers"; else
+            git commit -q -m "docs: checksums and build reference for run $GITHUB_RUN_ID"
+          fi
 
       - name: Stage the release folder
         if: success()
