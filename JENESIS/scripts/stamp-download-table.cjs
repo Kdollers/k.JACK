@@ -23,6 +23,14 @@
  *         --dir      release          (optional: where the built files are)
  *         --run      <github run id>
  *         --commit   <short sha>
+ *         --also     <another document>   (repeatable)
+ *
+ * The checksum rows only exist in DOWNLOAD.md, but the build reference does
+ * not: the release notes and the progress report name the run they belong to
+ * as well, and a document published beside a build should name that build.
+ * Every document given with --also has its build reference stamped the same
+ * way, so no published document can end up describing a different build than
+ * the one it is attached to.
  */
 const fs = require('fs');
 const path = require('path');
@@ -32,11 +40,21 @@ function arg(name, fallback) {
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 }
 
+/** Every value of a flag that may be given more than once. */
+function args(name) {
+  const out = [];
+  process.argv.forEach((value, i) => {
+    if (value === `--${name}` && process.argv[i + 1]) out.push(process.argv[i + 1]);
+  });
+  return out;
+}
+
 const tablePath = arg('table', path.join('release', 'download-table.md'));
 const downloadPath = arg('download', 'DOWNLOAD.md');
 const run = arg('run', process.env.GITHUB_RUN_ID || '');
 const commit = arg('commit', (process.env.GITHUB_SHA || '').slice(0, 7));
 const releaseDir = arg('dir', path.dirname(tablePath));
+const alsoPaths = args('also').filter((p) => fs.existsSync(p));
 
 if (!fs.existsSync(tablePath)) {
   console.log(`stamp-download-table: no ${tablePath} — the build did not measure anything, so nothing was stamped.`);
@@ -90,18 +108,46 @@ for (const row of measured) {
   }
 }
 
-// 2. Which build these numbers belong to.
+// 2. Which build these numbers belong to. The same sentence appears in every
+//    published document, in three slightly different dresses:
+//      run 42452429402, commit `1848a4c`
+//      run **42452429402**, commit **`1848a4c`**
+//      Run **42452429402**, commit `1848a4c`
+//    One pattern covers all three and puts back whatever emphasis it found.
+const buildLine = /([Rr]un\s+)(\*{0,2})(\d+)(\*{0,2})(,\s+commit\s+)(\*{0,2})(`[0-9a-f]+`)(\*{0,2})/g;
+const stampBuild = (text) => text.replace(buildLine, (_m, a, b, _id, c, d, e, _hash, f) => `${a}${b}${run}${c}${d}${e}\`${commit}\`${f}`);
+
+const stamped = [];
 if (run && commit) {
   const before = doc;
-  doc = doc.replace(/run \d+, commit `[0-9a-f]+`/g, `run ${run}, commit \`${commit}\``);
-  if (doc !== before) replaced += 1;
+  doc = stampBuild(doc);
+  if (doc !== before) { replaced += 1; stamped.push(downloadPath); }
+}
+
+fs.writeFileSync(downloadPath, doc);
+
+// 3. The other documents published with the build: same build, same run id.
+if (run && commit) {
+  for (const p of alsoPaths) {
+    if (p === downloadPath) continue;
+    const text = fs.readFileSync(p, 'utf8');
+    const next = stampBuild(text);
+    if (next === text) {
+      // Either it already names this build, or it names no build at all.
+      const says = buildLine.test(text) || /[Rr]un\s+\*{0,2}\d/.test(text);
+      console.log(`  ${p}: ${says ? 'already names this build' : 'no build reference found'} — left alone`);
+      continue;
+    }
+    fs.writeFileSync(p, next);
+    replaced += 1;
+    stamped.push(p);
+    console.log(`  ${p}: build reference stamped`);
+  }
 }
 
 if (replaced === 0) {
   console.log('stamp-download-table: no matching rows or build line in DOWNLOAD.md — nothing was stamped.');
   process.exit(0);
 }
-
-fs.writeFileSync(downloadPath, doc);
-console.log(`stamp-download-table: ${replaced} place(s) stamped with the measurements of run ${run || '?'}.`);
+console.log(`stamp-download-table: ${replaced} place(s) stamped with the measurements of run ${run || '?'} (${stamped.length} document(s)).`);
 for (const row of measured) console.log(`  ${row.name}  ${describe(row.name, row.size)}  ${row.hash}`);

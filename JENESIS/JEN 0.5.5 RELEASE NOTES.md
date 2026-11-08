@@ -6,7 +6,7 @@ KAYIGANWA JACQUES.
 Installer: `JEN 0.5.5 Setup.exe` · Portable: `JEN 0.5.5 Portable.zip` ·
 Source: `JEN 0.5.5.zip`
 
-Built by GitHub Actions, run **42447376042**, commit **`7de3421`**.
+Built by GitHub Actions, run **42452429402**, commit **`1848a4c`**.
 
 ---
 
@@ -166,6 +166,41 @@ Each is published with a `.sha256` next to it. Verify with
 
 ---
 
+## Signing in through the interface — now proven
+
+This was the one thing the release had to keep admitting it could not show.
+A Windows runner has no display and therefore no keyboard, so `SendKeys` had
+nothing to type into and messages posted straight into the window were ignored
+by Chromium's input pipeline. Both routes were tried and both failed, and the
+build said so.
+
+Electron speaks the **Chromium DevTools Protocol**, so the credentials are now
+delivered the way a browser automation tool delivers them: find the page, focus
+the first text field, then send real events with `Input.insertText` and
+`Input.dispatchKeyEvent`. React sees genuine key and input events — which is
+the point, because setting `input.value` in the DOM would change the box
+without telling React anything.
+
+What run 42452429402 recorded on the installed application:
+
+| Check | Result |
+|---|---|
+| Credentials delivered, field focused (`INPUT:text`) | PASS |
+| The interface reported the signed-in shell | PASS — via the DevTools Protocol |
+| `renderer: signed-in` in the application's own log | 3 times, one per application |
+| Window photographed after signing in | 473 distinct colours before → **1,955 after** |
+| `release/interface-signin.txt` | `confirmed via the DevTools Protocol` |
+
+Both pictures — `JENESIS-Seller-Dashboard.bmp` and
+`JENESIS-Settings-Signed-In.bmp` — are therefore the signed-in screens they
+claim to be, not the sign-in screen.
+
+Held back honestly: this is a machine driving a window on a **runner**. No
+human has typed into the application on a real computer, and item 5 below is
+unchanged by it.
+
+---
+
 ## What has NOT been verified — please read
 
 Stated plainly, because a release that hides its own limits is worse than one
@@ -178,29 +213,18 @@ that admits them.
    them.**
 2. **The two themes have never been seen.** Dark and Light are both drawn and
    both tested for contrast, but nobody has looked at either.
-3. **Signing in through the interface.** The smoke test delivers the
-   credentials into the running window on the installed application and waits
-   for the interface to report the signed-in screen. A runner has no keyboard,
-   so it tries three routes in turn — the **Chromium DevTools Protocol** (real
-   input events, the way a browser automation tool does it), **SendKeys**, and
-   **WM_CHAR posted into the window** — and records which one worked. The
-   verdict is written to `release/interface-signin.txt` and printed on the
-   release page. Login through the installed application's own API is proven
-   separately and always: a session token is issued and `/auth/me` answers
-   with the administrator.
-
-4. **Messenger between two separate physical computers is not proven.** Two
+3. **Messenger between two separate physical computers is not proven.** Two
    real services on one machine is not two computers.
-5. **The installer is unsigned.** Windows SmartScreen will warn (More info →
+4. **The installer is unsigned.** Windows SmartScreen will warn (More info →
    Run anyway).
-6. **Nothing has been run on a physical PC** — only on GitHub-hosted Windows
+5. **Nothing has been run on a physical PC** — only on GitHub-hosted Windows
    runners. Antivirus, SmartScreen, graphics drivers and user account control
    are all things this runner does not have.
-7. **Printing is untested.** No printer.
-8. **No live Windows database migration test.** Migration 6 was applied to a
+6. **Printing is untested.** No printer.
+7. **No live Windows database migration test.** Migration 6 was applied to a
    copy and every migration from 1 to 6 replays cleanly, but a real company
    database upgrading in place has not been watched.
-9. **Right-click was never clicked by a person.** Every action is exercised in
+8. **Right-click was never clicked by a person.** Every action is exercised in
    code and over HTTP; whether the menu lands where the cursor is on a real
    screen is unverified.
 
