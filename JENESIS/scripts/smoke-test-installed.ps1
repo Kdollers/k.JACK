@@ -254,6 +254,72 @@ function Send-InterfaceKeys([string] $Text) {
 
 try { Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop } catch { }
 
+# ---------------------------------------------------------------------------
+# Typing into the window without the keyboard.
+#
+# SendKeys posts to whatever window currently holds the keyboard. On a runner
+# with no display there is often nothing holding it, and SetForegroundWindow
+# is not allowed to steal it either - which is why the typed sign-in has never
+# been confirmed here.
+#
+# WM_CHAR and WM_KEYDOWN are different: they are posted straight into the
+# message queue of one particular window, so it does not matter what is in
+# front. The messages go to the window's renderer - the child that belongs to
+# Chromium - because that is the one listening for them.
+# ---------------------------------------------------------------------------
+if (-not ('Win32.Typer' -as [type])) {
+  Add-Type -Namespace Win32 -Name Typer -MemberDefinition @'
+    public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+    [DllImport("user32.dll")] public static extern bool EnumChildWindows(IntPtr hWnd, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+    [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr hWnd, System.Text.StringBuilder sb, int max);
+'@
+}
+
+function Get-RendererWindow([IntPtr] $Handle) {
+  # Chromium renders the page in a child window of this class.
+  $found = New-Object System.Collections.ArrayList
+  $callback = [Win32.Typer+EnumWindowsProc]{
+    param($hWnd, $lParam)
+    $sb = New-Object System.Text.StringBuilder 256
+    [void][Win32.Typer]::GetClassName($hWnd, $sb, 256)
+    if ($sb.ToString() -eq 'Chrome_RenderWidgetHostHWND') { [void]$found.Add($hWnd) }
+    return $true
+  }
+  [void][Win32.Typer]::EnumChildWindows($Handle, $callback, [IntPtr]::Zero)
+  if ($found.Count -gt 0) { return [IntPtr]$found[0] }
+  return [IntPtr]::Zero
+}
+
+function Send-WindowChar([IntPtr] $Handle, [string] $Text) {
+  $target = Get-RendererWindow $Handle
+  if ($target -eq [IntPtr]::Zero) { $target = $Handle }
+  $WM_CHAR = 0x0102
+  foreach ($ch in $Text.ToCharArray()) {
+    [void][Win32.Typer]::PostMessage($target, $WM_CHAR, [IntPtr][int][char]$ch, [IntPtr]::Zero)
+    Start-Sleep -Milliseconds 25
+  }
+}
+
+function Send-WindowKey([IntPtr] $Handle, [int] $VirtualKey) {
+  # TAB and ENTER are key presses, not characters, so they travel as WM_KEYDOWN
+  # followed by WM_KEYUP.
+  $target = Get-RendererWindow $Handle
+  if ($target -eq [IntPtr]::Zero) { $target = $Handle }
+  [void][Win32.Typer]::PostMessage($target, 0x0100, [IntPtr]$VirtualKey, [IntPtr]::Zero)
+  Start-Sleep -Milliseconds 60
+  [void][Win32.Typer]::PostMessage($target, 0x0101, [IntPtr]$VirtualKey, [IntPtr]::Zero)
+  Start-Sleep -Milliseconds 120
+}
+
+function Send-Credentials([IntPtr] $Handle, [string] $User, [string] $Pass) {
+  Send-WindowChar $Handle $User
+  Send-WindowKey $Handle 0x09   # VK_TAB
+  Send-WindowChar $Handle $Pass
+  Send-WindowKey $Handle 0x0D   # VK_RETURN
+}
+
+
 function Close-AppGracefully {
   # Preferred path: send WM_CLOSE to the application window, exactly as a user
   # closing the window would, then wait for every process to exit.
@@ -1103,11 +1169,22 @@ Step 'Signing in through the interface reports no error in the interface' {
   Send-InterfaceKeys $script:Password
   Send-InterfaceKeys '{ENTER}'
 
-  $deadline = (Get-Date).AddSeconds(90)
+  $deadline = (Get-Date).AddSeconds(45)
   $signedIn = $false
   while ((Get-Date) -lt $deadline -and -not $signedIn) {
     if (Test-Path $LogFile) { $signedIn = [bool](Select-String -Path $LogFile -Pattern 'renderer: signed-in' -Quiet) }
     if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
+  }
+  # SendKeys needs the keyboard; a runner with no display often has none to
+  # give. Post the same credentials into the window's own message queue and
+  # try once more before recording the outcome.
+  if (-not $signedIn) {
+    Send-Credentials $window.Handle 'smoke.admin' $script:Password
+    $deadline = (Get-Date).AddSeconds(60)
+    while ((Get-Date) -lt $deadline -and -not $signedIn) {
+      if (Test-Path $LogFile) { $signedIn = [bool](Select-String -Path $LogFile -Pattern 'renderer: signed-in' -Quiet) }
+      if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
+    }
   }
   # Record the outcome where the release notes can read it: every build must
   # say whether the typed sign-in really reached the interface, never assume it.
@@ -1181,7 +1258,7 @@ Step 'The signed-in screens this release is about are photographed' {
     Send-InterfaceKeys $script:Password
     Send-InterfaceKeys '{ENTER}'
 
-    $deadline = (Get-Date).AddSeconds(90)
+    $deadline = (Get-Date).AddSeconds(45)
     $signedIn = $false
     while ((Get-Date) -lt $deadline -and -not $signedIn) {
       if (Test-Path $LogFile) {
@@ -1189,14 +1266,33 @@ Step 'The signed-in screens this release is about are photographed' {
       }
       if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
     }
+
+    # SendKeys needs the window to hold the keyboard, which this runner cannot
+    # promise. If it did not get through, post the characters straight into the
+    # window's message queue instead and try once more: that is the difference
+    # between "the interface was never reached" and "the automation was blind".
+    $how = 'SendKeys'
+    if (-not $signedIn) {
+      Write-Host '    SendKeys did not reach the interface; posting keys to the window instead' -ForegroundColor DarkGray
+      Send-Credentials $window.Handle 'smoke.admin' $script:Password
+      $deadline = (Get-Date).AddSeconds(60)
+      while ((Get-Date) -lt $deadline -and -not $signedIn) {
+        if (Test-Path $LogFile) {
+          $signedIn = (@(Select-String -Path $LogFile -Pattern 'renderer: signed-in').Count) -gt $signinsBefore
+        }
+        if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
+      }
+      if ($signedIn) { $how = 'posted WM_CHAR' }
+    }
     # A moment for the screen to settle before it is photographed, so the
     # picture is of the dashboard and not of the sign-in form fading out.
     Start-Sleep -Seconds 5
     if (Save-WindowPicture -Window $window -FileName $pair.Shot) {
       if ($signedIn) {
-        Write-Host "    $label signed in and photographed" -ForegroundColor DarkGray
+        Write-Host "    $label signed in and photographed (keys delivered by $how)" -ForegroundColor DarkGray
+        $script:notes += "$label reached the signed-in screen: the credentials typed into the window were accepted ($how)"
       } else {
-        $script:notes += "$label was photographed on the sign-in screen: the typed keys were not confirmed to have reached it"
+        $script:notes += "$label was photographed on the sign-in screen: neither SendKeys nor posted messages were confirmed to have reached the interface"
       }
     } else {
       $script:notes += "$label could not be photographed"

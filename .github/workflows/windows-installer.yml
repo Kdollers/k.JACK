@@ -581,7 +581,11 @@ jobs:
       # Delete the ci-logs folder once the failure is understood; a green run
       # does not create it.
       - name: Commit smoke-test diagnostics to the branch
-        if: failure()
+        # Always, not only on failure. The transcript of a passing run is what
+        # answers "what exactly did it prove?" afterwards; keeping it only when
+        # something broke means the only copy on the branch is a stale one from
+        # whichever run last failed.
+        if: always()
         shell: bash
         working-directory: ${{ github.workspace }}
         env:
@@ -589,10 +593,12 @@ jobs:
         run: |
           set -e
           mkdir -p ci-logs
-          # The test transcript lives in JENESIS/, and this step always runs
-          # after a failure, so the copy is certain to happen here even if the
-          # step that produced it stopped early.
+          # The transcript of the smoke test and the application's own logs,
+          # whatever the outcome. This step runs last either way, so the copy
+          # happens even if an earlier step stopped short.
           if [ -f JENESIS/test-all.log ]; then cp JENESIS/test-all.log ci-logs/windows-test-all.txt; fi
+          if [ -f JENESIS/release/smoke.txt ]; then cp JENESIS/release/smoke.txt ci-logs/smoke-score.txt; fi
+          if [ -f JENESIS/release/interface-signin.txt ]; then cp JENESIS/release/interface-signin.txt ci-logs/interface-signin.txt; fi
           if [ -d "$APPDATA/JENESIS/logs" ]; then cp -r "$APPDATA/JENESIS/logs/." ci-logs/ || true; fi
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
