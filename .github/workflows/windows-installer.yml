@@ -495,8 +495,8 @@ jobs:
           the audit trail. Every change is numbered, and an open window
           notices the number move and reads its permissions again.
 
-          **595 automated checks** in 34 suites, and a 29/29 smoke test of the
-          installed applications.
+          **$checks automated checks** pass across the whole suite, and the
+          installed-application smoke test reports **$smoke**.
 
           ## Checksums
 
