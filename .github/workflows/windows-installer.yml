@@ -252,7 +252,7 @@ jobs:
           # Stage the stamped documents and archive that tree. git archive will
           # take a tree, not only a commit, so the archive gets the stamped
           # documents without a commit being made for the archive's sake.
-          git add -A -f "JENESIS/DOWNLOAD.md" "JENESIS/$release RELEASE NOTES.md" "JENESIS/JENESIS-$version-PROGRESS.md"
+          git add -A -f "$GITHUB_WORKSPACE/JENESIS/DOWNLOAD.md" "$GITHUB_WORKSPACE/JENESIS/$release RELEASE NOTES.md" "$GITHUB_WORKSPACE/JENESIS/JENESIS-$version-PROGRESS.md"
           tree=$(git write-tree)
           git archive --format=zip -o "JENESIS/release/$release.zip" "$tree" ":(exclude)JENESIS/dist"
           cd JENESIS/release
@@ -286,7 +286,7 @@ jobs:
           # Now that every file has been measured, commit the finished
           # documents. The copy in the repository should end up carrying all
           # three checksums, not only the two known when the archive was cut.
-          git add -A -f "JENESIS/DOWNLOAD.md" "JENESIS/$release RELEASE NOTES.md" "JENESIS/JENESIS-$version-PROGRESS.md"
+          git add -A -f "$GITHUB_WORKSPACE/JENESIS/DOWNLOAD.md" "$GITHUB_WORKSPACE/JENESIS/$release RELEASE NOTES.md" "$GITHUB_WORKSPACE/JENESIS/JENESIS-$version-PROGRESS.md"
           if git diff --cached --quiet; then echo "the documents already carry this build's numbers"; else
             git commit -q -m "docs: checksums and build reference for run $GITHUB_RUN_ID"
           fi
