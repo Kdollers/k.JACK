@@ -278,6 +278,18 @@ jobs:
           echo "--- download table ---"
           cat download-table.md
 
+          # DOWNLOAD.md travels with the installer, so it has to describe the
+          # file it is shipped beside. The numbers were just measured above;
+          # stamp them in rather than leave the document quoting whichever
+          # build somebody last typed them in for.
+          node "$GITHUB_WORKSPACE/JENESIS/scripts/stamp-download-table.cjs" \
+            --table "$GITHUB_WORKSPACE/JENESIS/release/download-table.md" \
+            --download "$GITHUB_WORKSPACE/JENESIS/DOWNLOAD.md" \
+            --run "$GITHUB_RUN_ID" --commit "$(git -C "$GITHUB_WORKSPACE" rev-parse --short HEAD)"
+          echo "--- the download table as the document will publish it ---"
+          grep -n '^| `JEN ' "$GITHUB_WORKSPACE/JENESIS/DOWNLOAD.md" || true
+          grep -n 'run [0-9]*, commit' "$GITHUB_WORKSPACE/JENESIS/DOWNLOAD.md" | head -2 || true
+
       - name: Upload the source backup
         if: success()
         uses: actions/upload-artifact@v4
