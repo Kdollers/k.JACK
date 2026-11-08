@@ -1,5 +1,5 @@
 JENESIS installed-application smoke test
-Installer: D:\a\k.JACK\k.JACK\JENESIS\release\JEN 0.5.4 Setup.exe
+Installer: D:\a\k.JACK\k.JACK\JENESIS\release\JEN 0.5.5 Setup.exe
 Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
 ==> Preconditions: no existing user data or running instance
     PASS
@@ -34,14 +34,14 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
 ==> Full backup export is produced and contains the transaction
     PASS
 ==> Graceful shutdown: window closes and all processes exit
-    WM_CLOSE posted to pid 5580 handle 197002 title 'JENESIS — Professional Business Accounting & Management Software': True
+    WM_CLOSE posted to pid 720 handle 131310 title 'JENESIS — Professional Business Accounting & Management Software': True
     PASS
 ==> Relaunch: business data persists after restart
     PASS
 ==> Backup restore protection: a restore first keeps a copy of the database
     PASS
 ==> Close again and confirm clean shutdown
-    WM_CLOSE posted to pid 5464 handle 197012 title 'JENESIS — Professional Business Accounting & Management Software': True
+    WM_CLOSE posted to pid 6212 handle 459214 title 'JENESIS — Professional Business Accounting & Management Software': True
     PASS
 ==> Both themes ship in the installed application
     installed build contains the theme bootstrap, the dark palette and the remapped utilities
@@ -58,165 +58,79 @@ Install folder: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS
     launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=seller
     picture saved: JENESIS-Seller.bmp
     JENESIS Seller: 106496 sampled pixels, 452 distinct colours, 19.5% pure white
-    WM_CLOSE posted to pid 1104 handle 1049074 title 'JENESIS Seller — JENESIS': True
+    WM_CLOSE posted to pid 1640 handle 459066 title 'JENESIS Seller — JENESIS': True
     PASS
 True
 ==> JENESIS Network & Maintenance opens from its own shortcut, with its own interface
     launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=maintenance
     picture saved: JENESIS-Network-Maintenance.bmp
     JENESIS Network & Maintenance: 106496 sampled pixels, 485 distinct colours, 19.5% pure white
-    WM_CLOSE posted to pid 5840 handle 393724 title 'JENESIS Network & Maintenance — JENESIS': True
+    WM_CLOSE posted to pid 7996 handle 459312 title 'JENESIS Network & Maintenance — JENESIS': True
     PASS
 True
 ==> JENESIS Accounting & Business opens from its own shortcut, with its own interface
     launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=admin
     picture saved: JENESIS-Accounting-Business.bmp
     JENESIS Accounting & Business: 106496 sampled pixels, 473 distinct colours, 19.5% pure white
-    WM_CLOSE posted to pid 1572 handle 1966566 title 'JENESIS Accounting & Business — JENESIS': True
+    WM_CLOSE posted to pid 5532 handle 1114200 title 'JENESIS Accounting & Business — JENESIS': True
     PASS
 True
 ==> JENESIS Settings & Access Point opens from its own shortcut, with its own interface
     launching: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\JENESIS.exe --app=settings
     picture saved: JENESIS-Settings-Access-Point.bmp
     JENESIS Settings & Access Point: 106496 sampled pixels, 495 distinct colours, 19.5% pure white
-    WM_CLOSE posted to pid 5312 handle 393778 title 'JENESIS Settings & Access Point — JENESIS': True
+    WM_CLOSE posted to pid 7896 handle 393780 title 'JENESIS Settings & Access Point — JENESIS': True
     PASS
 True
 ==> The four applications run side by side, each in its own window
     windows open:  | JENESIS Accounting & Business — JENESIS | JENESIS Network & Maintenance — JENESIS | JENESIS Seller — JENESIS | JENESIS Settings & Access Point — JENESIS
-    FAIL: JENESIS Seller is not open.
-    --- application log C:\Users\runneradmin\AppData\Roaming\JENESIS\logs\desktop.log (last 200 lines) ---
-    | 2026-11-05T00:08:27.472Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-05T00:08:27.624Z Interface candidates: resources=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-05T00:08:27.625Z Interface directory: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-05T00:08:28.433Z JENESIS server running at http://127.0.0.1:65290
-    | 2026-11-05T00:08:28.449Z Backend ready at http://127.0.0.1:65290/ (attempt 1)
-    | 2026-11-05T00:08:28.471Z Interface check: 5 file(s) reachable from C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-05T00:08:28.495Z Opening the JENESIS launcher.
-    | 2026-11-05T00:08:30.387Z Window finished loading.
-    | 2026-11-05T00:08:30.404Z Appearance set to light.
-    | 2026-11-05T00:08:30.444Z Window ready to show.
-    | 2026-11-05T00:08:30.469Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:08:32.930Z Window closed.
-    | 2026-11-05T00:08:32.930Z All windows are closed.
-    | 2026-11-05T00:08:32.931Z Quit requested.
-    | 2026-11-05T00:08:32.931Z Stopping backend...
-    | 2026-11-05T00:08:33.073Z Backend stopped.
-    | 2026-11-05T00:08:35.426Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-05T00:08:35.426Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261105-000835.db
-    | 2026-11-05T00:08:35.439Z Interface candidates: resources=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-05T00:08:35.439Z Interface directory: C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-05T00:08:35.756Z JENESIS server running at http://127.0.0.1:65327
-    | 2026-11-05T00:08:35.781Z Backend ready at http://127.0.0.1:65327/ (attempt 1)
-    | 2026-11-05T00:08:35.804Z Interface check: 5 file(s) reachable from C:\Users\RUNNER~1\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-05T00:08:35.825Z Opening the JENESIS launcher.
-    | 2026-11-05T00:08:35.993Z Window finished loading.
-    | 2026-11-05T00:08:35.994Z Window ready to show.
-    | 2026-11-05T00:08:36.020Z Appearance set to light.
-    | 2026-11-05T00:08:36.052Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:08:38.624Z Window closed.
-    | 2026-11-05T00:08:38.625Z All windows are closed.
-    | 2026-11-05T00:08:38.625Z Quit requested.
-    | 2026-11-05T00:08:38.625Z Stopping backend...
-    | 2026-11-05T00:08:38.658Z Backend stopped.
-    | 2026-11-05T00:08:39.277Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-05T00:08:39.278Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261105-000839.db
-    | 2026-11-05T00:08:39.291Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-05T00:08:39.291Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-05T00:08:39.617Z JENESIS server running at http://127.0.0.1:65354
-    | 2026-11-05T00:08:39.650Z Backend ready at http://127.0.0.1:65354/ (attempt 1)
-    | 2026-11-05T00:08:39.677Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-05T00:08:39.699Z Opening JENESIS Seller.
-    | 2026-11-05T00:08:39.883Z Window finished loading.
-    | 2026-11-05T00:08:39.896Z Appearance set to light.
-    | 2026-11-05T00:08:39.901Z Window ready to show.
-    | 2026-11-05T00:08:39.927Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:08:40.344Z Window closed.
-    | 2026-11-05T00:08:40.344Z All windows are closed.
-    | 2026-11-05T00:08:40.344Z Quit requested.
-    | 2026-11-05T00:08:40.344Z Stopping backend...
-    | 2026-11-05T00:08:40.361Z Backend stopped.
-    | 2026-11-05T00:08:40.888Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-05T00:08:40.888Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261105-000840.db
-    | 2026-11-05T00:08:40.900Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-05T00:08:40.900Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-05T00:08:41.245Z JENESIS server running at http://127.0.0.1:65370
-    | 2026-11-05T00:08:41.272Z Backend ready at http://127.0.0.1:65370/ (attempt 1)
-    | 2026-11-05T00:08:41.299Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-05T00:08:41.323Z Opening JENESIS Network & Maintenance.
-    | 2026-11-05T00:08:41.509Z Window finished loading.
-    | 2026-11-05T00:08:41.519Z Appearance set to light.
-    | 2026-11-05T00:08:41.527Z Window ready to show.
-    | 2026-11-05T00:08:41.554Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:08:41.893Z Window closed.
-    | 2026-11-05T00:08:41.894Z All windows are closed.
-    | 2026-11-05T00:08:41.894Z Quit requested.
-    | 2026-11-05T00:08:41.894Z Stopping backend...
-    | 2026-11-05T00:08:41.916Z Backend stopped.
-    | 2026-11-05T00:08:42.409Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-05T00:08:42.410Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261105-000842.db
-    | 2026-11-05T00:08:42.424Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-05T00:08:42.424Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-05T00:08:42.737Z JENESIS server running at http://127.0.0.1:65385
-    | 2026-11-05T00:08:42.773Z Backend ready at http://127.0.0.1:65385/ (attempt 1)
-    | 2026-11-05T00:08:42.798Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-05T00:08:42.824Z Opening JENESIS Accounting & Business.
-    | 2026-11-05T00:08:43.007Z Window finished loading.
-    | 2026-11-05T00:08:43.017Z Appearance set to light.
-    | 2026-11-05T00:08:43.023Z Window ready to show.
-    | 2026-11-05T00:08:43.051Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:08:43.440Z Window closed.
-    | 2026-11-05T00:08:43.440Z All windows are closed.
-    | 2026-11-05T00:08:43.440Z Quit requested.
-    | 2026-11-05T00:08:43.440Z Stopping backend...
-    | 2026-11-05T00:08:43.459Z Backend stopped.
-    | 2026-11-05T00:08:43.934Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-05T00:08:43.934Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261105-000843.db
-    | 2026-11-05T00:08:43.945Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-05T00:08:43.945Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-05T00:08:44.274Z JENESIS server running at http://127.0.0.1:65400
-    | 2026-11-05T00:08:44.307Z Backend ready at http://127.0.0.1:65400/ (attempt 1)
-    | 2026-11-05T00:08:44.332Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-05T00:08:44.358Z Opening JENESIS Settings & Access Point.
-    | 2026-11-05T00:08:44.545Z Window finished loading.
-    | 2026-11-05T00:08:44.545Z Window ready to show.
-    | 2026-11-05T00:08:44.571Z Appearance set to light.
-    | 2026-11-05T00:08:44.580Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:08:44.953Z Window closed.
-    | 2026-11-05T00:08:44.953Z All windows are closed.
-    | 2026-11-05T00:08:44.953Z Quit requested.
-    | 2026-11-05T00:08:44.954Z Stopping backend...
-    | 2026-11-05T00:08:44.970Z Backend stopped.
-    | 2026-11-05T00:08:45.463Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
-    | 2026-11-05T00:08:45.464Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261105-000845.db
-    | 2026-11-05T00:08:45.477Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
-    | 2026-11-05T00:08:45.477Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
-    | 2026-11-05T00:08:45.806Z JENESIS server running at http://127.0.0.1:65415
-    | 2026-11-05T00:08:45.832Z Backend ready at http://127.0.0.1:65415/ (attempt 1)
-    | 2026-11-05T00:08:45.861Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
-    | 2026-11-05T00:08:45.884Z Opening JENESIS Seller.
-    | 2026-11-05T00:08:46.071Z Window finished loading.
-    | 2026-11-05T00:08:46.082Z Appearance set to light.
-    | 2026-11-05T00:08:46.088Z Window ready to show.
-    | 2026-11-05T00:08:46.115Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:08:51.420Z Another launch requested JENESIS Network & Maintenance.
-    | 2026-11-05T00:08:51.430Z Opening JENESIS Network & Maintenance.
-    | 2026-11-05T00:08:51.606Z Window finished loading.
-    | 2026-11-05T00:08:51.607Z Window ready to show.
-    | 2026-11-05T00:08:51.629Z Appearance set to light.
-    | 2026-11-05T00:08:51.636Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:08:57.428Z Another launch requested JENESIS Accounting & Business.
-    | 2026-11-05T00:08:57.437Z Opening JENESIS Accounting & Business.
-    | 2026-11-05T00:08:57.619Z Window finished loading.
-    | 2026-11-05T00:08:57.619Z Window ready to show.
-    | 2026-11-05T00:08:57.637Z Appearance set to light.
-    | 2026-11-05T00:08:57.648Z renderer: ready — the interface is mounted
-    | 2026-11-05T00:09:03.425Z Another launch requested JENESIS Settings & Access Point.
-    | 2026-11-05T00:09:03.436Z Opening JENESIS Settings & Access Point.
-    | 2026-11-05T00:09:03.617Z Window finished loading.
-    | 2026-11-05T00:09:03.626Z Appearance set to light.
-    | 2026-11-05T00:09:03.638Z Window ready to show.
-    | 2026-11-05T00:09:03.658Z renderer: ready — the interface is mounted
+    picture saved: JENESIS-Seller-together.bmp
+    picture saved: JENESIS-Network-Maintenance-together.bmp
+    picture saved: JENESIS-Accounting-Business-together.bmp
+    picture saved: JENESIS-Settings-Access-Point-together.bmp
+    photographed together: 4 of four
+    desktop captured: 786432 pixels, 1432 distinct colours, 0% black
+    WM_CLOSE posted to pid 2372 handle 131676 title 'JENESIS Settings & Access Point — JENESIS': True
+    WM_CLOSE posted to pid 2372 handle 131652 title 'JENESIS Accounting & Business — JENESIS': True
+    WM_CLOSE posted to pid 2372 handle 66118 title 'JENESIS Network & Maintenance — JENESIS': True
+    WM_CLOSE posted to pid 2372 handle 524850 title 'JENESIS Seller — JENESIS': True
+    PASS
+==> Signing in through the interface reports no error in the interface
+    the window holds the keyboard focus: True
+    NOTE: the interface did not confirm the signed-in screen, so the signed-in
+    interface is NOT proven by this run (the typed keys may not have reached it).
+    picture saved: JENESIS-Accounting-Business.bmp
+    JENESIS Accounting & Business: 106496 sampled pixels, 528 distinct colours, 20.2% pure white
+    last lines of C:\Users\runneradmin\AppData\Roaming\JENESIS\logs\desktop.log
+    | 2026-11-08T05:23:41.021Z Data directory: C:\Users\runneradmin\AppData\Roaming\JENESIS
+    | 2026-11-08T05:23:41.022Z Backed up the existing database to C:\Users\runneradmin\AppData\Roaming\JENESIS\backups\genesis-20261108-052341.db
+    | 2026-11-08T05:23:41.032Z Interface candidates: resources=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend(present), asar=C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app.asar\dist(present)
+    | 2026-11-08T05:23:41.032Z Interface directory: C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend [resources]
+    | 2026-11-08T05:23:41.322Z JENESIS server running at http://127.0.0.1:65129
+    | 2026-11-08T05:23:41.386Z Backend ready at http://127.0.0.1:65129/ (attempt 1)
+    | 2026-11-08T05:23:41.408Z Interface check: 5 file(s) reachable from C:\Users\runneradmin\AppData\Local\Temp\JenesisSmokeTest\JENESIS\resources\app-frontend.
+    | 2026-11-08T05:23:41.428Z Opening JENESIS Accounting & Business.
+    | 2026-11-08T05:23:41.590Z Window finished loading.
+    | 2026-11-08T05:23:41.591Z Window ready to show.
+    | 2026-11-08T05:23:41.614Z Appearance set to light.
+    | 2026-11-08T05:23:41.616Z renderer: ready — the interface is mounted
+    WM_CLOSE posted to pid 7780 handle 786992 title 'JENESIS Accounting & Business — JENESIS': True
+    PASS
+True
+==> The signed-in screens this release is about are photographed
+    SendKeys did not reach the interface; posting keys to the window instead
+    picture saved: JENESIS-Seller-Dashboard.bmp
+    WM_CLOSE posted to pid 4760 handle 786738 title 'JENESIS Seller — JENESIS': True
+    SendKeys did not reach the interface; posting keys to the window instead
+    picture saved: JENESIS-Settings-Signed-In.bmp
+    WM_CLOSE posted to pid 4612 handle 983500 title 'JENESIS Settings & Access Point — JENESIS': True
+    PASS
+==> Silent uninstall removes the program but keeps business data
+    PASS
+
+Notes
+  - JENESIS Seller was photographed on the sign-in screen: neither SendKeys nor posted messages were confirmed to have reached the interface
+  - JENESIS Settings & Access Point was photographed on the sign-in screen: neither SendKeys nor posted messages were confirmed to have reached the interface
 
 Summary
 
@@ -248,6 +162,10 @@ JENESIS Seller opens from its own shortcut, with its own interface              
 JENESIS Network & Maintenance opens from its own shortcut, with its own interface   PASS
 JENESIS Accounting & Business opens from its own shortcut, with its own interface   PASS
 JENESIS Settings & Access Point opens from its own shortcut, with its own interface PASS
-The four applications run side by side, each in its own window                      FAIL: JENESIS Seller is not open.
+The four applications run side by side, each in its own window                      PASS
+Signing in through the interface reports no error in the interface                  PASS
+The signed-in screens this release is about are photographed                        PASS
+Silent uninstall removes the program but keeps business data                        PASS
 
 
+All smoke-test checks passed.
