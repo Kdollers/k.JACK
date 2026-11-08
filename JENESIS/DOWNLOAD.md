@@ -401,13 +401,13 @@ is the first place to look.
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
 These are the files published by the build this page describes — GitHub Actions
-run 42454828607, commit `5dc229c`. A later build carries different numbers; the
+run 42455521036, commit `eb1c2d1`. A later build carries different numbers; the
 ones on the release page always belong to the file you are downloading.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.5 Setup.exe` | 93,077,003 bytes (88.8 MB) | `6472e2d0cb13f0b907bca83436466e309eae040a3e31b7478ce9607f20982d0b` |
-| `JEN 0.5.5 Portable.zip` | 133,767,229 bytes (127.6 MB) | `aa655b6acb3096e5f931a449857a9d5dd599e32545b758336f59eabd8f65ba09` |
+| `JEN 0.5.5 Setup.exe` | 93,078,661 bytes (88.8 MB) | `c28af4e966f844b14f039e545f55d0cf0b824fa496b55a060e24af8c5ecc921e` |
+| `JEN 0.5.5 Portable.zip` | 133,767,302 bytes (127.6 MB) | `2dbcf93929f5db8ea8cdca4fd8d8ee5d7aa7369767fb66a9dedf3cbffaf84087` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
 named on the release page (**595 automated checks** on that build, and the
