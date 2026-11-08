@@ -320,11 +320,14 @@ function Send-Credentials([IntPtr] $Handle, [string] $User, [string] $Pass) {
 }
 
 
-/**
- * True once the desktop shell records that the signed-in interface is on
- * screen. That line is written by the interface itself, so it is the
- * application's own word for it and not the test's guess.
- */
+<#
+    True once the desktop shell records that the signed-in interface is on
+    screen. That line is written by the interface itself, so it is the
+    application's own word for it and not the test's guess.
+
+    Written as a PowerShell block comment on purpose: a slash-star comment is
+    parsed as a command here, which is how this file broke once already.
+#>
 function Test-SignedIn([int] $Seconds = 30) {
   $deadline = (Get-Date).AddSeconds($Seconds)
   while ((Get-Date) -lt $deadline) {
