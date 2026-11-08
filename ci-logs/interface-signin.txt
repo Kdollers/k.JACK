@@ -1,1 +1,1 @@
-NOT confirmed
+confirmed via the DevTools Protocol
