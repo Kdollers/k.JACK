@@ -401,14 +401,14 @@ is the first place to look.
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
 These are the files published by the build this page describes — GitHub Actions
-run 42442343837, commit `7036c5d`. A later build carries different numbers; the
+run 42447376042, commit `7de3421`. A later build carries different numbers; the
 ones on the release page always belong to the file you are downloading.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.5 Setup.exe` | 93,077,670 bytes (88.8 MB) | `1b74342ddc7c02cace1d24a4794a3f7860036a9b855610a9f87dce5f8c09cd36` |
-| `JEN 0.5.5 Portable.zip` | 133,767,237 bytes (127.6 MB) | `f5beb7fb40cc94cbcb20d7f1f8f9966485416d171c4b61afe52a49c9be922e12` |
-| `JEN 0.5.5.zip` | 6,238,735 bytes (5.9 MB) | `b4e1cb15708faae3f32adf3e17a395d674432e147847e987987e42ad2afe63e1` |
+| `JEN 0.5.5 Setup.exe` | 93,078,987 bytes (88.8 MB) | `1bcb2f87018918ef753580dde9e71117b2bb288c5dbb77762ee81ed5ba7f38b1` |
+| `JEN 0.5.5 Portable.zip` | 133,767,103 bytes (127.6 MB) | `75d2bda3b58afb792e557a83f8d3af1ac4cd8804d1290b22039ea7d1787cce1d` |
+| `JEN 0.5.5.zip` | 6,241,965 bytes (6.0 MB) | `f921fd196fbfc905d1d5e01f25a96b0435d0c97e9cdd6b9ce2449b21e46dd0b8` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
 named on the release page (**595 automated checks** on that build, and the
