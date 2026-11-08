@@ -6,7 +6,7 @@ Branch: `arena/a2c625e8-k-jack`.
 Status: **all three modifications are complete, and JEN 0.5.5 is built and
 published.** The installer has been installed and used on a Windows Server 2022
 runner, all four shortcuts have been launched, and the smoke test of the
-installed applications passes 29/29.
+installed applications passes 30/30.
 
 Test bar: **595 checks passed, 0 failed, 34 suites**
 (`NODE_OPTIONS=--experimental-sqlite npm run test:all`, run from `JENESIS/`,
@@ -269,7 +269,7 @@ src/i18n/{en,fr,rw}.json   1,167 keys per language, 0 missing
 | Right-click (`test:contextmenu`) | 28 | pass |
 | Seller dashboard (`test:seller`) | 9 | pass |
 | Settings & Access Point (`test:accesspoint`) | 17 | pass |
-| Installed-application smoke test | 29 | pass (Windows runner) |
+| Installed-application smoke test | 30 | pass (Windows runner) |
 | `npx vite build` | — | clean |
 | i18n parity en/fr/rw | 1,167 keys | 0 missing |
 
@@ -300,11 +300,14 @@ that admits them.
    to the release are a machine's picture of a window.
 2. **The two themes have never been seen.** Dark and Light are both drawn and
    both tested for contrast, but nobody has looked at either.
-3. **Signing in by typing is not confirmed.** The smoke test types the
-   password into the window and the interface *sometimes* reports
-   `renderer: signed-in`; the run records which, in
-   `release/interface-signin.txt`. When it is not confirmed, the signed-in
-   photographs are of the sign-in screen, and the run says so.
+3. **Signing in by typing is NOT confirmed — and on this build it was not.**
+   The smoke test types the password into the window and the interface
+   *sometimes* reports `renderer: signed-in`; the run records which, in
+   `release/interface-signin.txt`. On this run it was **not confirmed**, so
+   `JENESIS-Seller-Dashboard.bmp` and `JENESIS-Settings-Signed-In.bmp` are
+   photographs of the sign-in screen. Verified independently: the two captures
+   differ from the ordinary sign-in captures by 0.4% of their pixels — they
+   are the same screen.
 4. **Messenger between two separate physical computers is not proven.** Two
    real services on one machine is not two computers.
 5. **The installer is unsigned.** Windows SmartScreen will warn (More info →
@@ -323,6 +326,6 @@ that admits them.
 
 ## Build
 
-Run **42413730696**, commit `14cf87b00cc82c5d095ad81b037a279d09427fa7`.
+Run **42442343837**, commit `7036c5d`.
 Published as **JEN 0.5.5** with `JEN 0.5.5 Setup.exe`,
 `JEN 0.5.5 Portable.zip` and `JEN 0.5.5.zip`, each with a `.sha256` next to it.

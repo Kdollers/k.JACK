@@ -6,8 +6,7 @@ KAYIGANWA JACQUES.
 Installer: `JEN 0.5.5 Setup.exe` · Portable: `JEN 0.5.5 Portable.zip` ·
 Source: `JEN 0.5.5.zip`
 
-Built by GitHub Actions, run **42413730696**, commit
-**`14cf87b00cc82c5d095ad81b037a279d09427fa7`**.
+Built by GitHub Actions, run **42442343837**, commit **`7036c5d`**.
 
 ---
 
@@ -136,7 +135,7 @@ every existing configuration was preserved.
 | Right-click suite | 28 checks |
 | Seller dashboard suite | 9 checks |
 | Settings & Access Point suite | 17 checks |
-| Installed-application smoke test | **29/29 PASS** on a Windows runner |
+| Installed-application smoke test | **30/30 PASS** on a Windows runner |
 | `npx vite build` | clean |
 | Translation parity en/fr/rw | 1,167 keys per language, 0 missing |
 
@@ -179,10 +178,15 @@ that admits them.
    them.**
 2. **The two themes have never been seen.** Dark and Light are both drawn and
    both tested for contrast, but nobody has looked at either.
-3. **Signing in by typing is not confirmed.** The smoke test types the password
-   and the interface *sometimes* reports the signed-in screen. When it does
-   not, the signed-in photographs are of the sign-in screen, and the run says
-   so in the notes.
+3. **Signing in by typing is NOT confirmed — and on this build it was not.**
+   The smoke test types the password into the window and the interface
+   *sometimes* reports the signed-in screen; on this run it did **not**, so
+   `JENESIS-Seller-Dashboard.bmp` and `JENESIS-Settings-Signed-In.bmp` are
+   photographs of the **sign-in screen**, not of the dashboard and the
+   settings. They are published because they are what the machine really
+   showed; the run records the outcome in `release/interface-signin.txt`. The
+   four ordinary screenshots are unaffected — they show the sign-in screen by
+   design.
 4. **Messenger between two separate physical computers is not proven.** Two
    real services on one machine is not two computers.
 5. **The installer is unsigned.** Windows SmartScreen will warn (More info →
