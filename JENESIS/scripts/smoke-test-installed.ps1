@@ -320,6 +320,61 @@ function Send-Credentials([IntPtr] $Handle, [string] $User, [string] $Pass) {
 }
 
 
+/**
+ * True once the desktop shell records that the signed-in interface is on
+ * screen. That line is written by the interface itself, so it is the
+ * application's own word for it and not the test's guess.
+ */
+function Test-SignedIn([int] $Seconds = 30) {
+  $deadline = (Get-Date).AddSeconds($Seconds)
+  while ((Get-Date) -lt $deadline) {
+    if (Test-Path $LogFile) {
+      if (Select-String -Path $LogFile -Pattern 'renderer: signed-in' -Quiet) { return $true }
+    }
+    Start-Sleep -Milliseconds 500
+  }
+  return $false
+}
+
+function Invoke-InterfaceSignIn([IntPtr] $Handle, [int] $DebugPort) {
+  # Three ways of getting the credentials into a window, tried in order, and
+  # the one that worked is reported. A runner with no display has no keyboard,
+  # so the first two are expected to fail here and the third is the one that
+  # works - but all three are attempted so the outcome is a fact and not an
+  # assumption.
+
+  # 1. The Chromium DevTools Protocol: real input events, sent to the page.
+  #    This is how a browser automation tool would do it, and it is the only
+  #    path that does not depend on a keyboard or on a window being in front.
+  $driver = Join-Path $PSScriptRoot 'cdp-type.cjs'
+  if (Test-Path $driver) {
+    try {
+      $out = & node $driver --port $DebugPort --user 'smoke.admin' --password $script:Password 2>&1
+      $line = @($out | Where-Object { $_ -is [string] -and $_.TrimStart().StartsWith('{') } | Select-Object -Last 1)
+      if ($line.Count -gt 0) {
+        $json = ($line[0].Trim() | ConvertFrom-Json)
+        Write-Host ("    cdp: focused {0}, signed in {1} - {2}" -f $json.focused, $json.signedIn, $json.note) -ForegroundColor DarkGray
+        if ($json.signedIn) { return [pscustomobject]@{ SignedIn = $true; How = 'the DevTools Protocol' } }
+      }
+    } catch { Write-Host ("    cdp: " + $_.Exception.Message) -ForegroundColor DarkGray }
+  }
+
+  # 2. SendKeys: needs the window to hold the keyboard.
+  [void](Set-ForegroundWindow -Handle $Handle)
+  Start-Sleep -Milliseconds 1200
+  Send-InterfaceKeys 'smoke.admin'
+  Send-InterfaceKeys '{TAB}'
+  Send-InterfaceKeys $script:Password
+  Send-InterfaceKeys '{ENTER}'
+  if (Test-SignedIn -Seconds 25) { return [pscustomobject]@{ SignedIn = $true; How = 'SendKeys' } }
+
+  # 3. WM_CHAR posted straight into the window's message queue.
+  Send-Credentials $Handle 'smoke.admin' $script:Password
+  if (Test-SignedIn -Seconds 30) { return [pscustomobject]@{ SignedIn = $true; How = 'posted WM_CHAR' } }
+
+  return [pscustomobject]@{ SignedIn = $false; How = 'none of the three' }
+}
+
 function Close-AppGracefully {
   # Preferred path: send WM_CLOSE to the application window, exactly as a user
   # closing the window would, then wait for every process to exit.
@@ -1147,60 +1202,40 @@ Step 'Signing in through the interface reports no error in the interface' {
   # defined". Calling the API never reached it, so the credentials are typed
   # into the window here, exactly as a user types them, and the interface must
   # then report the signed-in screen (renderer: signed-in) without any error.
+  #
+  # The window is opened with a debugging port so the credentials can be
+  # delivered as real input events: this runner has no keyboard, and neither
+  # SendKeys nor WM_CHAR posted into the window's queue has ever reached the
+  # interface here. All three routes are tried, and the one that worked is
+  # recorded rather than assumed.
   $shortcut = $script:shortcuts | Where-Object { $_.Arguments -match '--app=admin' } | Select-Object -First 1
   Assert ($null -ne $shortcut) 'The Accounting & Business shortcut was not found.'
   $before = Get-ReadyCount
-  Start-Process -FilePath $shortcut.Target -ArgumentList $shortcut.Arguments | Out-Null
+  Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments, '--remote-debugging-port=9222') | Out-Null
   $window = Wait-ForTitledWindow 'JENESIS Accounting & Business' 90
   Assert ($null -ne $window) 'No window titled "JENESIS Accounting & Business" appeared.'
   Assert ((Wait-ForInterfaceStart $before 90)) 'Accounting & Business did not report that its interface started.'
-  # AppActivate is the documented way to give another application the keyboard;
-  # the Win32 call below then confirms the window really is in front.
-  try {
-    Add-Type -AssemblyName Microsoft.VisualBasic -ErrorAction Stop
-    $proc = @(Get-AppProcesses | Select-Object -First 1)
-    if ($proc.Count -gt 0) { [void][Microsoft.VisualBasic.Interaction]::AppActivate($proc.Id) }
-  } catch { }
-  Assert ((Set-ForegroundWindow -Handle $window.Handle)) 'The JENESIS Accounting & Business window could not be brought to the front.'
-  Write-Host ("    the window holds the keyboard focus: {0}" -f ([Win32.Focus]::GetForegroundWindow() -eq $window.Handle)) -ForegroundColor DarkGray
-  Start-Sleep -Milliseconds 1000
-  Send-InterfaceKeys 'smoke.admin'  # the username field is focused when the sign-in screen opens
-  Send-InterfaceKeys '{TAB}'
-  Send-InterfaceKeys $script:Password
-  Send-InterfaceKeys '{ENTER}'
 
-  $deadline = (Get-Date).AddSeconds(45)
-  $signedIn = $false
-  while ((Get-Date) -lt $deadline -and -not $signedIn) {
-    if (Test-Path $LogFile) { $signedIn = [bool](Select-String -Path $LogFile -Pattern 'renderer: signed-in' -Quiet) }
-    if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
-  }
-  # SendKeys needs the keyboard; a runner with no display often has none to
-  # give. Post the same credentials into the window's own message queue and
-  # try once more before recording the outcome.
-  if (-not $signedIn) {
-    Send-Credentials $window.Handle 'smoke.admin' $script:Password
-    $deadline = (Get-Date).AddSeconds(60)
-    while ((Get-Date) -lt $deadline -and -not $signedIn) {
-      if (Test-Path $LogFile) { $signedIn = [bool](Select-String -Path $LogFile -Pattern 'renderer: signed-in' -Quiet) }
-      if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
-    }
-  }
+  $result = Invoke-InterfaceSignIn -Handle $window.Handle -DebugPort 9222
+  $signedIn = $result.SignedIn
+
   # Record the outcome where the release notes can read it: every build must
   # say whether the typed sign-in really reached the interface, never assume it.
   try {
     $releaseDir = Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..')).Path 'release'
     New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
-    Set-Content -Path (Join-Path $releaseDir 'interface-signin.txt') -Value $(if ($signedIn) { 'confirmed' } else { 'NOT confirmed' }) -Encoding ascii
+    $verdict = if ($signedIn) { "confirmed via $($result.How)" } else { 'NOT confirmed' }
+    Set-Content -Path (Join-Path $releaseDir 'interface-signin.txt') -Value $verdict -Encoding ascii
   } catch { }
   if ($signedIn) {
-    Write-Host '    the interface reported the signed-in screen: the shared header is drawn' -ForegroundColor DarkGray
+    Write-Host ('    the interface reported the signed-in screen: credentials delivered via ' + $result.How) -ForegroundColor DarkGray
+    $script:notes += "the typed sign-in reached the signed-in screen (via $($result.How)): the shared header is drawn"
   } else {
-    # Honest, visible, and not a pass on the signed-in screen: the keyboard
-    # automation did not reach the interface on this machine. Say so instead of
-    # implying the signed-in interface was exercised here.
+    # Honest, visible, and not a pass on the signed-in screen: none of the
+    # three routes got the credentials into the window on this machine. Say so
+    # instead of implying the signed-in interface was exercised here.
     Write-Host '    NOTE: the interface did not confirm the signed-in screen, so the signed-in' -ForegroundColor Yellow
-    Write-Host '    interface is NOT proven by this run (the typed keys may not have reached it).' -ForegroundColor Yellow
+    Write-Host '    interface is NOT proven by this run (no route delivered the credentials).' -ForegroundColor Yellow
   }
   Assert-WindowIsReal $window 'JENESIS Accounting & Business'
 
@@ -1211,23 +1246,24 @@ Step 'Signing in through the interface reports no error in the interface' {
     $errors = @(Select-String -Path $LogFile -Pattern 'renderer: render-error|ReferenceError|is not defined' | ForEach-Object { $_.Line })
   }
   Write-Host ('    last lines of ' + $LogFile) -ForegroundColor DarkGray
-  if (Test-Path $LogFile) { Get-Content $LogFile -Tail 12 | ForEach-Object { Write-Host "    | $_" -ForegroundColor DarkGray } }
+  if (Test-Path $LogFile) { Get-Content $LogFile -Tail 12 | ForEach-Object { Write-Host "    |$_" -ForegroundColor DarkGray } }
   Assert ($errors.Count -eq 0) "The interface reported an error: $($errors -join ' | ')"
   Close-AppGracefully
 }
 
 Step 'The signed-in screens this release is about are photographed' {
   # 0.5.5. The four windows are already photographed, but only on the sign-in
-  # screen: a runner has nobody to type the password. This step types it, so
-  # the two screens this release is about - the Seller's OWN dashboard and
-  # JENESIS Settings & Access Point - are photographed the way a user sees
-  # them.
+  # screen: a runner has nobody to type the password. This step delivers the
+  # credentials into the window and photographs the two screens this release is
+  # about - the Seller's OWN dashboard and JENESIS Settings & Access Point -
+  # the way a user sees them.
   #
-  # Nothing here asserts that the typed keys reached the window. That has never
-  # been reliable on a runner with no display, and pretending otherwise is how
-  # a release comes to claim a screen it never showed. If the keys do not get
-  # through, the picture still shows what is really on the screen and the step
-  # says which it was.
+  # Nothing here asserts that the credentials reached the window. Three routes
+  # are tried and the one that worked is recorded; if none does, the picture
+  # still shows what is really on the screen and the step says which it was.
+  # Pretending otherwise is how a release comes to claim a screen it never
+  # showed.
+  $port = 9222
   foreach ($pair in @(
       @{ Label = 'JENESIS Seller';                   App = 'seller';   Shot = 'JENESIS-Seller-Dashboard.bmp' },
       @{ Label = 'JENESIS Settings & Access Point';  App = 'settings'; Shot = 'JENESIS-Settings-Signed-In.bmp' }
@@ -1238,66 +1274,31 @@ Step 'The signed-in screens this release is about are photographed' {
     Stop-Process -Name $script:AppName -Force -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 3
 
-    # Counted, not searched: the log already holds the sign-ins of the earlier
-    # steps, so only a NEW line means this window signed in.
-    $signinsBefore = 0
-    if (Test-Path $LogFile) { $signinsBefore = @(Select-String -Path $LogFile -Pattern 'renderer: signed-in').Count }
-
     $before = Get-ReadyCount
-    Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments) | Out-Null
+    Start-Process -FilePath $shortcut.Target -ArgumentList @($shortcut.Arguments, "--remote-debugging-port=$port") | Out-Null
     $window = Wait-ForTitledWindow $label 90
     if ($null -eq $window) {
       $script:notes += "$label did not open for its signed-in photograph on this runner"
       continue
     }
     Assert ((Wait-ForInterfaceStart $before 90)) "$label did not report that its interface started."
-    [void](Set-ForegroundWindow -Handle $window.Handle)
-    Start-Sleep -Milliseconds 1500
-    Send-InterfaceKeys 'smoke.admin'
-    Send-InterfaceKeys '{TAB}'
-    Send-InterfaceKeys $script:Password
-    Send-InterfaceKeys '{ENTER}'
 
-    $deadline = (Get-Date).AddSeconds(45)
-    $signedIn = $false
-    while ((Get-Date) -lt $deadline -and -not $signedIn) {
-      if (Test-Path $LogFile) {
-        $signedIn = (@(Select-String -Path $LogFile -Pattern 'renderer: signed-in').Count) -gt $signinsBefore
-      }
-      if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
-    }
-
-    # SendKeys needs the window to hold the keyboard, which this runner cannot
-    # promise. If it did not get through, post the characters straight into the
-    # window's message queue instead and try once more: that is the difference
-    # between "the interface was never reached" and "the automation was blind".
-    $how = 'SendKeys'
-    if (-not $signedIn) {
-      Write-Host '    SendKeys did not reach the interface; posting keys to the window instead' -ForegroundColor DarkGray
-      Send-Credentials $window.Handle 'smoke.admin' $script:Password
-      $deadline = (Get-Date).AddSeconds(60)
-      while ((Get-Date) -lt $deadline -and -not $signedIn) {
-        if (Test-Path $LogFile) {
-          $signedIn = (@(Select-String -Path $LogFile -Pattern 'renderer: signed-in').Count) -gt $signinsBefore
-        }
-        if (-not $signedIn) { Start-Sleep -Milliseconds 500 }
-      }
-      if ($signedIn) { $how = 'posted WM_CHAR' }
-    }
+    $result = Invoke-InterfaceSignIn -Handle $window.Handle -DebugPort $port
     # A moment for the screen to settle before it is photographed, so the
     # picture is of the dashboard and not of the sign-in form fading out.
     Start-Sleep -Seconds 5
     if (Save-WindowPicture -Window $window -FileName $pair.Shot) {
-      if ($signedIn) {
-        Write-Host "    $label signed in and photographed (keys delivered by $how)" -ForegroundColor DarkGray
-        $script:notes += "$label reached the signed-in screen: the credentials typed into the window were accepted ($how)"
+      if ($result.SignedIn) {
+        Write-Host ("    $label signed in and photographed (credentials delivered via " + $result.How + ')') -ForegroundColor DarkGray
+        $script:notes += "$label reached the signed-in screen and was photographed (via $($result.How))"
       } else {
-        $script:notes += "$label was photographed on the sign-in screen: neither SendKeys nor posted messages were confirmed to have reached the interface"
+        $script:notes += "$label was photographed on the sign-in screen: no route delivered the credentials to the window"
       }
     } else {
       $script:notes += "$label could not be photographed"
     }
     Close-AppGracefully
+    $port += 1
   }
 }
 

@@ -521,11 +521,13 @@ jobs:
 
           ``JENESIS-Seller-Dashboard.bmp`` and
           ``JENESIS-Settings-Signed-In.bmp`` are taken after the smoke test
-          typed the password into the window, so they show the two screens this
-          release is about as a signed-in user sees them. If the keyboard
-          automation did not reach the window on that runner, the step says so
-          in the notes of the run and the picture is of the sign-in screen
-          instead.
+          delivered the credentials into the window, so they show the two
+          screens this release is about as a signed-in user sees them. A runner
+          has no keyboard, so the credentials are delivered three ways - the
+          Chromium DevTools Protocol (real input events), SendKeys, and WM_CHAR
+          posted into the window - and the run records which one worked. If none
+          reached the interface, the picture is of the sign-in screen and the
+          run says so.
 
           They are the installed build, not a mock-up, but they are still a
           machine's picture of a window: nobody has looked at these screens by

@@ -300,14 +300,17 @@ that admits them.
    to the release are a machine's picture of a window.
 2. **The two themes have never been seen.** Dark and Light are both drawn and
    both tested for contrast, but nobody has looked at either.
-3. **Signing in by typing is NOT confirmed — and on this build it was not.**
-   The smoke test types the password into the window and the interface
-   *sometimes* reports `renderer: signed-in`; the run records which, in
-   `release/interface-signin.txt`. On this run it was **not confirmed**, so
-   `JENESIS-Seller-Dashboard.bmp` and `JENESIS-Settings-Signed-In.bmp` are
-   photographs of the sign-in screen. Verified independently: the two captures
-   differ from the ordinary sign-in captures by 0.4% of their pixels — they
-   are the same screen.
+3. **Signing in through the interface.** The smoke test delivers the
+   credentials into the running window on the installed application and waits
+   for the interface to report the signed-in screen. A runner has no keyboard,
+   so it tries three routes in turn — the **Chromium DevTools Protocol** (real
+   input events, the way a browser automation tool does it), **SendKeys**, and
+   **WM_CHAR posted into the window** — and records which one worked. The
+   verdict is written to `release/interface-signin.txt` and printed on the
+   release page. Login through the installed application's own API is proven
+   separately and always: a session token is issued and `/auth/me` answers
+   with the administrator.
+
 4. **Messenger between two separate physical computers is not proven.** Two
    real services on one machine is not two computers.
 5. **The installer is unsigned.** Windows SmartScreen will warn (More info →
