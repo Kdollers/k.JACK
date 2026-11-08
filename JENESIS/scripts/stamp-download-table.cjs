@@ -50,17 +50,20 @@ function args(name) {
 }
 
 const tablePath = arg('table', path.join('release', 'download-table.md'));
-const downloadPath = arg('download', 'DOWNLOAD.md');
+const downloadPath = arg('download', '');   // empty: stamp no checksums unless asked
 const run = arg('run', process.env.GITHUB_RUN_ID || '');
 const commit = arg('commit', (process.env.GITHUB_SHA || '').slice(0, 7));
 const releaseDir = arg('dir', path.dirname(tablePath));
 const alsoPaths = args('also').filter((p) => fs.existsSync(p));
 
-if (!fs.existsSync(tablePath)) {
-  console.log(`stamp-download-table: no ${tablePath} — the build did not measure anything, so nothing was stamped.`);
-  process.exit(0);
+const haveTable = fs.existsSync(tablePath);
+if (!haveTable) {
+  // Called before anything was measured: stamp the build reference only. The
+  // source archive is taken from the working tree, so its documents have to
+  // name this build before the archive is cut - the checksums come later.
+  console.log(`stamp-download-table: no ${tablePath} — stamping the build reference only.`);
 }
-if (!fs.existsSync(downloadPath)) {
+if (downloadPath && !fs.existsSync(downloadPath)) {
   console.log(`stamp-download-table: no ${downloadPath} — nothing to stamp.`);
   process.exit(0);
 }
@@ -75,10 +78,9 @@ function parseRows(markdown) {
   return rows;
 }
 
-const measured = parseRows(fs.readFileSync(tablePath, 'utf8'));
-if (measured.length === 0) {
-  console.log('stamp-download-table: the table the build wrote has no measured rows — nothing was stamped.');
-  process.exit(0);
+const measured = haveTable ? parseRows(fs.readFileSync(tablePath, 'utf8')) : [];
+if (haveTable && measured.length === 0) {
+  console.log('stamp-download-table: the table the build wrote has no measured rows — the checksums were not stamped.');
 }
 
 /**
@@ -95,7 +97,7 @@ function describe(name, rounded) {
   }
 }
 
-let doc = fs.readFileSync(downloadPath, 'utf8');
+let doc = downloadPath ? fs.readFileSync(downloadPath, 'utf8') : '';
 let replaced = 0;
 
 // 1. The three published files: rewrite each row from the measurement.
@@ -105,6 +107,47 @@ for (const row of measured) {
   if (pattern.test(doc)) {
     doc = doc.replace(pattern, `| \`${row.name}\` | ${describe(row.name, row.size)} | \`${row.hash}\` |`);
     replaced += 1;
+  }
+}
+
+// 1b. Rows this build did not measure. Keeping them would leave the document
+//     quoting a checksum from an earlier build and presenting it as this one's,
+//     which is the one thing this script exists to prevent. A row is dropped
+//     only when something WAS measured, so a build that measured nothing leaves
+//     the document intact rather than emptying it.
+if (measured.length > 0 && doc) {
+  const kept = [];
+  for (const line of doc.split(/\r?\n/)) {
+    const m = /^\|\s*`([^`]+)`\s*\|[^|]*\|\s*`[0-9a-f]{64}`\s*\|/.exec(line);
+    if (m && !measured.some((r) => r.name === m[1])) {
+      console.log(`  ${m[1]}: not measured by this build — the stale row was dropped`);
+      replaced += 1;
+      continue;
+    }
+    kept.push(line);
+  }
+  doc = kept.join('\n');
+}
+
+// 1c. ...and once it has been measured, the row comes back. The table is
+//     completed in two passes - the archive's own checksum cannot be known
+//     until the archive exists - so a row dropped by the first pass has to be
+//     restored by the second rather than lost for good.
+if (measured.length > 0 && doc) {
+  const rowRe = /^\|\s*`([^`]+)`\s*\|[^|]*\|\s*`[0-9a-f]{64}`\s*\|/;
+  const lines = doc.split(/\r?\n/);
+  const present = new Set();
+  lines.forEach((l) => { const m = rowRe.exec(l); if (m) present.add(m[1]); });
+  const missing = measured.filter((r) => !present.has(r.name));
+  if (missing.length > 0) {
+    let last = -1;
+    lines.forEach((l, i) => { if (rowRe.test(l)) last = i; });
+    if (last === -1) last = lines.findIndex((l) => /^\|\s*`[^`]+`\s*\|/.test(l));
+    if (last !== -1) {
+      lines.splice(last + 1, 0, ...missing.map((r) => `| \`${r.name}\` | ${describe(r.name, r.size)} | \`${r.hash}\` |`));
+      doc = lines.join('\n');
+      missing.forEach((r) => { console.log(`  ${r.name}: measured by this build — the row was restored`); replaced += 1; });
+    }
   }
 }
 
@@ -124,7 +167,7 @@ if (run && commit) {
   if (doc !== before) { replaced += 1; stamped.push(downloadPath); }
 }
 
-fs.writeFileSync(downloadPath, doc);
+if (downloadPath) fs.writeFileSync(downloadPath, doc);
 
 // 3. The other documents published with the build: same build, same run id.
 if (run && commit) {
@@ -146,7 +189,7 @@ if (run && commit) {
 }
 
 if (replaced === 0) {
-  console.log('stamp-download-table: no matching rows or build line in DOWNLOAD.md — nothing was stamped.');
+  console.log('stamp-download-table: nothing matched in any document — nothing was stamped.');
   process.exit(0);
 }
 console.log(`stamp-download-table: ${replaced} place(s) stamped with the measurements of run ${run || '?'} (${stamped.length} document(s)).`);
