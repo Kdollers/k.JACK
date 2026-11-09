@@ -21,4 +21,15 @@ fi
 if ! grep -q "SANDBOX ONLY" JENESIS/node_modules/better-sqlite3/lib/index.js 2>/dev/null; then
   bash "$(dirname "$0")/make-sqlite-shim.sh"
 fi
+
+# JENESIS/.preview/ is git-ignored, so a deep reset deletes it along with
+# node_modules - which left the preview with no database to open, every time.
+# Rebuild it here so restoring the sandbox also restores the ground the preview
+# stands on. It is always a throwaway copy: pointing the server at
+# JENESIS/genesis.db would migrate the baseline the test suite depends on.
+if [ -f JENESIS/scripts/preview-db.cjs ]; then
+  (cd JENESIS && node scripts/preview-db.cjs 2>/dev/null | sed 's/^/  /') \
+    || echo "  preview database: not rebuilt (see the error above)"
+fi
+
 echo "restore complete"
