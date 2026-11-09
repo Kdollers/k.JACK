@@ -6,7 +6,7 @@ KAYIGANWA JACQUES.
 Installer: `JEN 0.5.5 Setup.exe` · Portable: `JEN 0.5.5 Portable.zip` ·
 Source: `JEN 0.5.5.zip`
 
-Built by GitHub Actions, run **42456204699**, commit **`f310fe9`**.
+Built by GitHub Actions, run **42690870327**, commit **`38f4eca`**.
 
 ---
 
