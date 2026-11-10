@@ -616,7 +616,22 @@ function recordPayment(companyId, paymentData, user) {
     } = paymentData;
 
     const payAmount = roundTo(Number(amount), 2);
-    if (payAmount <= 0) throw new Error('Payment amount must be greater than zero');
+    if (!Number.isFinite(payAmount)) throw new Error('Payment amount must be a number');
+    if (payAmount === 0) throw new Error('Payment amount cannot be zero');
+
+    /**
+     * A NEGATIVE amount is a refund: the money goes back out to the customer,
+     * or back in from the supplier.
+     *
+     * Every figure below is written as a signed addition or subtraction of
+     * payAmount, so a negative runs the whole posting in reverse on its own:
+     * the bank balance falls instead of rising, the invoice is marked less
+     * paid instead of more, and the customer owes more instead of less.
+     *
+     * The journal entry reverses too. Debiting the bank a negative amount is
+     * recorded as a credit to the bank, which is what a refund is.
+     */
+    const isRefund = payAmount < 0;
 
     const bankAcc = db.prepare(`SELECT * FROM bank_accounts WHERE id = ? AND company_id = ?`).get(bankAccountId, companyId);
     if (!bankAcc) throw new Error('Bank/Cash account not found');
@@ -660,7 +675,9 @@ function recordPayment(companyId, paymentData, user) {
       const customer = db.prepare(`SELECT * FROM customers WHERE id = ? AND company_id = ?`).get(customerId, companyId);
       if (!customer) throw new Error('Customer is required for customer receipt');
 
-      desc = `Customer Receipt ${paymentNumber} from ${customer.name}`;
+      desc = isRefund
+        ? `Customer Refund ${paymentNumber} to ${customer.name}`
+        : `Customer Receipt ${paymentNumber} from ${customer.name}`;
 
       // Debit Bank Account
       jeLines.push({
@@ -705,6 +722,11 @@ function recordPayment(companyId, paymentData, user) {
             db.prepare(`UPDATE sales_invoices SET amount_paid = ?, balance_due = 0, status = 'PAID' WHERE id = ?`).run(inv.total, inv.id);
           } else {
             const newPaid = roundTo(inv.amount_paid + payAmount, 2);
+            if (newPaid < -0.005) {
+              throw new Error(
+                `Cannot refund more than was paid on ${inv.invoice_number}: paid ${inv.amount_paid}, refund requested ${-payAmount}.`
+              );
+            }
             const newDue = roundTo(inv.total - newPaid, 2);
             const newStatus = newDue <= 0 ? 'PAID' : 'PARTIALLY_PAID';
             db.prepare(`UPDATE sales_invoices SET amount_paid = ?, balance_due = ?, status = ? WHERE id = ?`).run(newPaid, newDue, newStatus, inv.id);
@@ -719,7 +741,9 @@ function recordPayment(companyId, paymentData, user) {
       const supplier = db.prepare(`SELECT * FROM suppliers WHERE id = ? AND company_id = ?`).get(supplierId, companyId);
       if (!supplier) throw new Error('Supplier is required for supplier payment');
 
-      desc = `Supplier Payment ${paymentNumber} to ${supplier.name}`;
+      desc = isRefund
+        ? `Supplier Refund ${paymentNumber} from ${supplier.name}`
+        : `Supplier Payment ${paymentNumber} to ${supplier.name}`;
 
       // Debit Accounts Payable
       jeLines.push({
@@ -764,6 +788,11 @@ function recordPayment(companyId, paymentData, user) {
             db.prepare(`UPDATE purchase_invoices SET amount_paid = ?, balance_due = 0, status = 'PAID' WHERE id = ?`).run(bill.total, bill.id);
           } else {
             const newPaid = roundTo(bill.amount_paid + payAmount, 2);
+            if (newPaid < -0.005) {
+              throw new Error(
+                `Cannot be refunded more than was paid on ${bill.bill_number}: paid ${bill.amount_paid}, refund received ${-payAmount}.`
+              );
+            }
             const newDue = roundTo(bill.total - newPaid, 2);
             const newStatus = newDue <= 0 ? 'PAID' : 'PARTIALLY_PAID';
             db.prepare(`UPDATE purchase_invoices SET amount_paid = ?, balance_due = ?, status = ? WHERE id = ?`).run(newPaid, newDue, newStatus, bill.id);

@@ -37,6 +37,7 @@ const {
   createJournalEntry,
   postSalesInvoice,
   postStockAdjustment,
+  recordPayment,
   generateId,
   nextSequenceNumber
 } = require('../server/accountingEngine');
@@ -314,6 +315,106 @@ check('a journal entry carrying a negative correction still balances', () => {
     roundTo(stored.total_debit, 2), roundTo(stored.total_credit, 2),
     `a correcting entry must balance (debits ${stored.total_debit}, credits ${stored.total_credit})`
   );
+});
+
+check('a refund is recorded as a negative payment and takes money out of the bank', () => {
+  const bank = db.prepare(
+    `SELECT * FROM bank_accounts WHERE company_id = ? LIMIT 1`
+  ).get(companyId);
+  const customer = db.prepare(`SELECT * FROM customers WHERE company_id = ? LIMIT 1`).get(companyId);
+  assert.ok(bank, 'the fixture needs a bank account');
+
+  const bankBefore = roundTo(bank.current_balance, 2);
+  const refund = -10.75;                   // refunding ten and three quarters
+
+  const posted = recordPayment(companyId, {
+    paymentType: 'CUSTOMER_RECEIPT',
+    bankAccountId: bank.id,
+    customerId: customer.id,
+    amount: refund,
+    date: new Date().toISOString().split('T')[0],
+    reference: 'refund test',
+    notes: 'money handed back to the customer'
+  }, user);
+
+  const bankAfter = roundTo(
+    db.prepare(`SELECT current_balance FROM bank_accounts WHERE id = ?`).get(bank.id).current_balance, 2
+  );
+  assert.strictEqual(
+    bankAfter, roundTo(bankBefore + refund, 2),
+    `a ${refund} refund must take that much out of the bank (${bankBefore} -> ${bankAfter})`
+  );
+
+  // The journal entry must show the bank CREDITED, not debited a negative.
+  const je = db.prepare(`SELECT * FROM journal_entries WHERE id = ?`).get(posted.journalEntryId);
+  const lines = db.prepare(`SELECT * FROM journal_entry_lines WHERE journal_entry_id = ?`).all(je.id);
+  const bankLines = lines.filter((l) => l.account_id === bank.account_id);
+  assert.ok(bankLines.length === 1, 'the bank account must appear on exactly one line');
+  assert.ok(
+    bankLines[0].credit > 0 && bankLines[0].debit === 0,
+    `a refund must credit the bank, got debit ${bankLines[0].debit} credit ${bankLines[0].credit}`
+  );
+  assert.strictEqual(roundTo(bankLines[0].credit, 2), 10.75, 'the bank credit must be the refund as a positive');
+  assert.ok(
+    /refund/i.test(je.description),
+    `the entry should say it is a refund, it says: ${je.description}`
+  );
+});
+
+check('a refund cannot give back more than the customer ever paid', () => {
+  const bank = db.prepare(`SELECT * FROM bank_accounts WHERE company_id = ? LIMIT 1`).get(companyId);
+  const customer = db.prepare(`SELECT * FROM customers WHERE company_id = ? LIMIT 1`).get(companyId);
+
+  // An invoice for 25, paid in full, then a refund of 40 - more than was paid.
+  const unitPrice = 25;
+  const total = roundTo(unitPrice * 1.18, 2);
+  const invId = generateId('inv');
+  db.prepare(`
+    INSERT INTO sales_invoices (id, company_id, invoice_number, date, due_date, customer_id,
+      subtotal, tax_total, discount_total, total, amount_paid, balance_due, status, created_by, created_at)
+    VALUES (?, ?, ?, date('now'), date('now'), ?, ?, ?, 0, ?, ?, 0, 'PAID', ?, datetime('now'))
+  `).run(invId, companyId, nextSequenceNumber(companyId, 'INVOICE', 'INV'), customer.id,
+    unitPrice, roundTo(unitPrice * 0.18, 2), total, total, user.id);
+
+  assert.throws(
+    () => recordPayment(companyId, {
+      paymentType: 'CUSTOMER_RECEIPT',
+      bankAccountId: bank.id,
+      customerId: customer.id,
+      salesInvoiceId: invId,
+      amount: -40,
+      date: new Date().toISOString().split('T')[0],
+      notes: 'refunding more than was paid'
+    }, user),
+    /refund more than was paid/i,
+    'a refund larger than the amount paid must be refused'
+  );
+});
+
+check('a zero payment is refused, and a decimal refund is accepted to the cent', () => {
+  const bank = db.prepare(`SELECT * FROM bank_accounts WHERE company_id = ? LIMIT 1`).get(companyId);
+  const customer = db.prepare(`SELECT * FROM customers WHERE company_id = ? LIMIT 1`).get(companyId);
+
+  assert.throws(
+    () => recordPayment(companyId, {
+      paymentType: 'CUSTOMER_RECEIPT', bankAccountId: bank.id, customerId: customer.id,
+      amount: 0, date: new Date().toISOString().split('T')[0]
+    }, user),
+    /cannot be zero/i,
+    'a zero payment must be refused'
+  );
+
+  const before = roundTo(
+    db.prepare(`SELECT current_balance FROM bank_accounts WHERE id = ?`).get(bank.id).current_balance, 2
+  );
+  recordPayment(companyId, {
+    paymentType: 'CUSTOMER_RECEIPT', bankAccountId: bank.id, customerId: customer.id,
+    amount: -0.25, date: new Date().toISOString().split('T')[0], notes: 'a quarter refunded'
+  }, user);
+  const after = roundTo(
+    db.prepare(`SELECT current_balance FROM bank_accounts WHERE id = ?`).get(bank.id).current_balance, 2
+  );
+  assert.strictEqual(after, roundTo(before - 0.25, 2), 'a quarter must come off the balance, not a whole unit');
 });
 
 check('the books are still balanced after every decimal and negative posting', () => {

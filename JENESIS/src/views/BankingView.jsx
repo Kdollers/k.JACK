@@ -188,7 +188,8 @@ export default function BankingView() {
 
   const handleRecordPayment = async (e) => {
     e.preventDefault();
-    if (!paymentForm.bankAccountId || paymentForm.amount <= 0) {
+    // A negative amount is a refund and is allowed; only a blank is refused.
+    if (!paymentForm.bankAccountId || !paymentForm.amount) {
       return showToast(t('errors.MISSING_FIELDS'), 'error');
     }
 
@@ -995,9 +996,11 @@ export default function BankingView() {
 
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t('common.amount')} *</label>
+                  {/* No minimum: a NEGATIVE amount refunds money - back out to
+                      a customer, or back in from a supplier. The bank, cash or
+                      mobile-money balance falls by that amount. */}
                   <input
                     type="number"
-                    min="0.01"
                     step="0.01"
                     required
                     value={paymentForm.amount || ''}
