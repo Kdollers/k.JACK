@@ -58,15 +58,20 @@ test('the product is called JENESIS everywhere a user can see it', () => {
   assert.strictEqual(pkg.build.copyright, 'Copyright (c) JENESIS');
   assert.strictEqual(pkg.author, 'JENESIS');
   assert.strictEqual(pkg.description, 'JENESIS - Professional Business Accounting & Management Software');
-  // The installer file is named after the release: "JEN 0.5 Setup.exe", and a
-  // patch release such as 0.5.1 keeps the same shape.
+  // The installer file is named after the release. It is written as a
+  // template - "JENESIS ${version} Setup.${ext}" - so a version bump cannot
+  // leave a file whose name disagrees with the version inside it. Resolve the
+  // template and check both halves: the shape, and the name it produces.
+  const artifact = pkg.build.win.artifactName;
   assert.ok(
-    /^JEN \d+\.\d+(?:\.\d+)? Setup\.\$\{ext\}$/.test(pkg.build.win.artifactName),
-    `the installer file must be named "JEN <release> Setup.exe" (found ${pkg.build.win.artifactName})`
+    /^JENESIS \$\{version\} Setup\.\$\{ext\}$/.test(artifact),
+    `the installer file must be named "JENESIS <release> Setup.exe" (found ${artifact})`
   );
-  assert.ok(
-    pkg.build.win.artifactName.includes(pkg.version.split('.').slice(0, 2).join('.')),
-    `the installer name (${pkg.build.win.artifactName}) and the version (${pkg.version}) must agree`
+  const resolved = artifact.replace('${version}', pkg.version).replace('${ext}', 'exe');
+  assert.strictEqual(
+    resolved,
+    `JENESIS ${pkg.version} Setup.exe`,
+    `the installer name must carry the version (found ${resolved} for ${pkg.version})`
   );
   assert.strictEqual(pkg.build.nsis.shortcutName, 'JENESIS');
   assert.strictEqual(pkg.build.nsis.uninstallDisplayName, 'JENESIS');
@@ -85,18 +90,27 @@ test('the internal identifiers that must not change are preserved', () => {
 });
 
 test('the version and the installer filename say the same number', () => {
-  // Every release renames the installer, and the name is typed into
-  // build.win.artifactName by hand. Bumping package.json and forgetting it
-  // produces an installer that installs the new build under the old release
-  // name, which is exactly the kind of thing nobody notices until a user
-  // reports two different versions with the same filename.
+  // Every release renames the installer. The name used to be typed into
+  // build.win.artifactName by hand, and bumping package.json while forgetting
+  // it produced an installer holding the new build under the old release name
+  // - the sort of thing nobody notices until a user reports two different
+  // versions with the same filename.
+  //
+  // It is a template now - "JENESIS ${version} Setup.${ext}" - so the drift
+  // cannot happen. This check therefore resolves the template and asserts the
+  // name it produces, which is what a user actually downloads.
   assert.ok(/^\d+\.\d+\.\d+$/.test(pkg.version), `the version must look like a version (got ${pkg.version})`);
   const artifact = pkg.build.win.artifactName;
+  const resolved = artifact.replace(/\$\{version\}/g, pkg.version).replace(/\$\{ext\}/g, 'exe');
   assert.ok(
-    artifact.includes(pkg.version),
-    `the installer must be named for this version: "${artifact}" does not contain ${pkg.version}`
+    resolved.includes(pkg.version),
+    `the installer must be named for this version: "${resolved}" does not contain ${pkg.version}`
   );
-  assert.ok(artifact.startsWith('JEN '), `the installer must keep the JEN release name (got "${artifact}")`);
+  assert.ok(
+    resolved.startsWith('JENESIS '),
+    `the installer must keep the JENESIS release name (got "${resolved}")`
+  );
+  assert.strictEqual(resolved, `JENESIS ${pkg.version} Setup.exe`);
 });
 
 test('the browser tab and the packaged UI are titled JENESIS', () => {

@@ -143,7 +143,7 @@ jobs:
           # The file names follow the version in package.json, so a corrected
           # release can never be published under the name of an earlier one.
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $releaseName = "JEN $version"
+          $releaseName = "JENESIS $version"
           $installerName = "$releaseName Setup.exe"
           $installer = Get-ChildItem release -Filter $installerName | Select-Object -First 1
           if (-not $installer) { throw "The installer $installerName was not produced." }
@@ -183,7 +183,7 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $false
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $releaseName = "JEN $version"
+          $releaseName = "JENESIS $version"
           $installerName = "$releaseName Setup.exe"
           $installer = Get-ChildItem release -Filter $installerName | Select-Object -First 1
           if (-not $installer) { throw "The installer $installerName was not produced." }
@@ -231,7 +231,7 @@ jobs:
           # Tracked files only: node_modules, dist and release are not in git,
           # so the archive is the real source of this release and nothing else.
           version=$(node -p "require('./JENESIS/package.json').version")
-          release="JEN $version"
+          release="JENESIS $version"
           echo "source backup: $release.zip"
           # The archive holds the source of THIS build, so the documents inside
           # it have to name it - and git archive reads the committed tree, which
@@ -301,7 +301,7 @@ jobs:
           # terminating error by PowerShell 7.4 and later.
           $PSNativeCommandUseErrorActionPreference = $false
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $releaseName = "JEN $version"
+          $releaseName = "JENESIS $version"
           $folder = "release\$releaseName"
           New-Item -ItemType Directory -Force -Path $folder | Out-Null
           Copy-Item "release\$releaseName Setup.exe" $folder -Force
@@ -313,7 +313,7 @@ jobs:
           # downloaded file should not have to go looking through the repository
           # for what changed, what was tested and what was not.
           foreach ($doc in @(
-            "JEN $version RELEASE NOTES.md",
+            "JENESIS $version RELEASE NOTES.md",
             "JENESIS-$version-PROGRESS.md",
             'DOWNLOAD.md',
             'README.md'
@@ -326,7 +326,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JEN ${{ steps.version.outputs.value }} source backup
+          name: JENESIS ${{ steps.version.outputs.value }} source backup
           path: |
             JENESIS/release/*.zip
             JENESIS/release/*.zip.sha256
@@ -393,7 +393,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: JEN ${{ steps.version.outputs.value }} Portable
+          name: JENESIS ${{ steps.version.outputs.value }} Portable
           path: |
             JENESIS/release/*.zip
             JENESIS/release/*.zip.sha256
@@ -449,7 +449,7 @@ jobs:
           }
           # The documentation of this build, published with the build.
           foreach ($doc in @(
-            "JEN $version RELEASE NOTES.md",
+            "JENESIS $version RELEASE NOTES.md",
             "JENESIS-$version-PROGRESS.md",
             'DOWNLOAD.md',
             'README.md'
@@ -466,7 +466,7 @@ jobs:
           # The smoke test records it; the notes must never imply more than that.
           $signin = if (Test-Path release\interface-signin.txt) { (Get-Content release\interface-signin.txt -Raw).Trim() } else { 'not recorded' }
 
-          $releaseName = "JEN $version"
+          $releaseName = "JENESIS $version"
           $notes = @"
           $releaseName — JENESIS desktop business and accounting software.
           **Four applications in one installation, sharing one database.**

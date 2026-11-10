@@ -18,9 +18,9 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JEN 0.5.5 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **four desktop shortcuts** — JENESIS Seller (red), JENESIS Network & Maintenance (green), JENESIS Accounting & Business (blue), JENESIS Settings & Access Point (yellow) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JEN 0.5.5 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JEN 0.5.5.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JENESIS 1.0.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **four desktop shortcuts** — JENESIS Seller (red), JENESIS Network & Maintenance (green), JENESIS Accounting & Business (blue), JENESIS Settings & Access Point (yellow) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JENESIS 1.0.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JENESIS 1.0.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
@@ -34,7 +34,7 @@ application is checked for that on every build (`scripts/verify-package.cjs`).
 
 ---
 
-## What is new in JEN 0.5.5
+## What is new in JENESIS 1.0.1
 
 ### A. Right-click now works, everywhere
 
@@ -160,8 +160,8 @@ If you prefer the files exactly as the build job produced them:
 2. Click the **most recent completed (green) run** at the top of the list, then
    scroll to the bottom, **Artifacts** section
 3. Download **`JENESIS-Windows-installer`** (the `.exe` and its `.sha256`),
-   **`JEN 0.5.5 Portable`** (the portable `.zip` and its `.sha256`),
-   **`JEN 0.5.5 source backup`** (the source `.zip` and its `.sha256`) or
+   **`JENESIS 1.0.1 Portable`** (the portable `.zip` and its `.sha256`),
+   **`JENESIS 1.0.1 source backup`** (the source `.zip` and its `.sha256`) or
    **`JENESIS-screenshots`** (pictures of the four installed applications,
    taken during the smoke test)
 
@@ -173,12 +173,12 @@ release above does not expire.
 ## 3. Verify what you downloaded (optional but recommended)
 
 The exact checksums of this build are printed in the table in §7 and are also
-attached to the release as `JEN 0.5.5 Setup.exe.sha256`. To check a file on
+attached to the release as `JENESIS 1.0.1 Setup.exe.sha256`. To check a file on
 Windows, open the folder in File Explorer, type `cmd` in the address bar… — or
 simply use PowerShell from the folder's context menu:
 
 ```powershell
-certutil -hashfile "JEN 0.5.5 Setup.exe" SHA256
+certutil -hashfile "JENESIS 1.0.1 Setup.exe" SHA256
 ```
 
 The value must match the SHA-256 in §7 / in the `.sha256` file.
@@ -187,7 +187,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ## 4. Installing on Windows (no command prompt, no code)
 
-1. Download `JEN 0.5.5 Setup.exe` from the link above.
+1. Download `JENESIS 1.0.1 Setup.exe` from the link above.
 2. **Double-click** the downloaded file.
 3. Windows SmartScreen may say *"Windows protected your PC"* because the
    installer is not code-signed. Click **More info → Run anyway**.
@@ -205,7 +205,7 @@ The value must match the SHA-256 in §7 / in the `.sha256` file.
 
 ### If you would rather not install: the portable package
 
-1. Download `JEN 0.5.5 Portable.zip` and **unzip** it anywhere (Desktop,
+1. Download `JENESIS 1.0.1 Portable.zip` and **unzip** it anywhere (Desktop,
    Documents, a USB stick — it is self-contained).
 2. Open the folder and double-click `JENESIS.exe`. That opens the application
    chooser; to start one application directly, make your own shortcut to
@@ -406,9 +406,9 @@ ones on the release page always belong to the file you are downloading.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JEN 0.5.5 Setup.exe` | 93,076,957 bytes (88.8 MB) | `11aff67f699c0cd6d98ab44931a7939d41f36882e3bb34b43be8ed2b83bb4831` |
-| `JEN 0.5.5 Portable.zip` | 133,767,211 bytes (127.6 MB) | `08870a33878b4720562f1329a764ac12615e6722d481d23ae811f935aacf9395` |
-| `JEN 0.5.5.zip` | 6,388,833 bytes (6.1 MB) | `8e263f52554d84da7c0136a1419111a388ac637ec82f7f6159a2e32d5cde3371` |
+| `JENESIS 1.0.1 Setup.exe` | 93,076,957 bytes (88.8 MB) | `11aff67f699c0cd6d98ab44931a7939d41f36882e3bb34b43be8ed2b83bb4831` |
+| `JENESIS 1.0.1 Portable.zip` | 133,767,211 bytes (127.6 MB) | `08870a33878b4720562f1329a764ac12615e6722d481d23ae811f935aacf9395` |
+| `JENESIS 1.0.1.zip` | 6,388,833 bytes (6.1 MB) | `8e263f52554d84da7c0136a1419111a388ac637ec82f7f6159a2e32d5cde3371` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
 named on the release page (**595 automated checks** on that build, and the

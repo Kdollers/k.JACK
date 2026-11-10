@@ -1,10 +1,10 @@
-# JEN 0.5.5 — release notes
+# JENESIS 1.0.1 — release notes
 
-**JENESIS 0.5.5** — desktop business and accounting software by
+**JENESIS 1.0.1** — desktop business and accounting software by
 KAYIGANWA JACQUES.
 
-Installer: `JEN 0.5.5 Setup.exe` · Portable: `JEN 0.5.5 Portable.zip` ·
-Source: `JEN 0.5.5.zip`
+Installer: `JENESIS 1.0.1 Setup.exe` · Portable: `JENESIS 1.0.1 Portable.zip` ·
+Source: `JENESIS 1.0.1.zip`
 
 Built by GitHub Actions, run **42690870327**, commit **`38f4eca`**.
 
@@ -156,9 +156,9 @@ All three are fixed and all three now have a test that fails if they come back.
 ## What is in the release
 
 ```
-JEN 0.5.5 Setup.exe        Windows installer (NSIS), four desktop shortcuts
-JEN 0.5.5 Portable.zip     The same application without installing
-JEN 0.5.5.zip              Source-code backup of the finished project
+JENESIS 1.0.1 Setup.exe        Windows installer (NSIS), four desktop shortcuts
+JENESIS 1.0.1 Portable.zip     The same application without installing
+JENESIS 1.0.1.zip              Source-code backup of the finished project
 ```
 
 Each is published with a `.sha256` next to it. Verify with

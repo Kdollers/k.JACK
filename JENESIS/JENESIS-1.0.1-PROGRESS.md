@@ -1,9 +1,9 @@
-# JENESIS 0.5.5 — implementation progress
+# JENESIS 1.0.1 — implementation progress
 
-Target: **0.5.5** (from 0.5.4). Developer: KAYIGANWA JACQUES.
+Target: **1.0.1** (from 0.5.5). Developer: KAYIGANWA JACQUES.
 Branch: `arena/a2c625e8-k-jack`.
 
-Status: **all three modifications are complete, and JEN 0.5.5 is built and
+Status: **all three modifications are complete, and JENESIS 1.0.1 is built and
 published.** The installer has been installed and used on a Windows Server 2022
 runner, all four shortcuts have been launched, and the smoke test of the
 installed applications passes 30/30.
@@ -25,7 +25,7 @@ Version is **0.5.5** (`package.json`, and the installer filename with it).
 | 2 | JENESIS Seller has its own dashboard | **DONE** — new screen, admin figures removed AND refused by the server, one shared database |
 | 3 | JENESIS Settings & Access Point | **DONE** — users, access point, tax rates with safeguards, company, general, synchronization |
 | — | The bar: 595 checks, 34 suites | **DONE** — three new suites (right-click 28, Seller dashboard 9, Settings & Access Point 17) |
-| — | Windows installer, smoke test, delivery | **DONE** — published as **JEN 0.5.5** |
+| — | Windows installer, smoke test, delivery | **DONE** — published as **JENESIS 1.0.1** |
 
 ---
 
@@ -354,5 +354,5 @@ that admits them.
 ## Build
 
 Run **42690870327**, commit `38f4eca`.
-Published as **JEN 0.5.5** with `JEN 0.5.5 Setup.exe`,
-`JEN 0.5.5 Portable.zip` and `JEN 0.5.5.zip`, each with a `.sha256` next to it.
+Published as **JENESIS 1.0.1** with `JENESIS 1.0.1 Setup.exe`,
+`JENESIS 1.0.1 Portable.zip` and `JENESIS 1.0.1.zip`, each with a `.sha256` next to it.

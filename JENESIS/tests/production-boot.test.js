@@ -345,15 +345,24 @@ check('the shell never shows a window it already knows is empty', () => {
   assert.ok(/showing it anyway/.test(mainSource), 'the window is shown even if ready-to-show never fires');
 });
 
-check('the packaged version identifies this corrected build', () => {
+check('the packaged version identifies this build', () => {
   const pkg = readJson('package.json');
+  // JENESIS 1.0 and later. The 0.5 series was the JEN line and is behind us.
   assert.ok(
-    /^0\.5\.\d+$/.test(pkg.version),
-    `this corrected build must keep the JEN 0.5 series (found ${pkg.version})`
+    /^\d+\.\d+\.\d+$/.test(pkg.version),
+    `the version must be plain major.minor.patch (found ${pkg.version})`
   );
+  const [major] = pkg.version.split('.').map(Number);
+  assert.ok(
+    major >= 1,
+    `this build is the JENESIS 1.0 series or later (found ${pkg.version})`
+  );
+  const resolved = pkg.build.win.artifactName
+    .replace('${version}', pkg.version)
+    .replace('${ext}', 'exe');
   assert.strictEqual(
-    pkg.build.win.artifactName,
-    `JEN ${pkg.version} Setup.${'${ext}'}`,
+    resolved,
+    `JENESIS ${pkg.version} Setup.exe`,
     `the installer file must be named after the version (${pkg.version})`
   );
 });
