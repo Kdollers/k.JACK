@@ -8,12 +8,15 @@ published.** The installer has been installed and used on a Windows Server 2022
 runner, all four shortcuts have been launched, and the smoke test of the
 installed applications passes 30/30.
 
-Test bar: **595 checks passed, 0 failed, 34 suites**
+Test bar: **684 checks passed, 0 failed, 38 suites**
 (`NODE_OPTIONS=--experimental-sqlite npm run test:all`, run from `JENESIS/`,
 and the same figure reported by the Windows runner).
-It was 531 at the start of 0.5.5. Anything that drops below 595 is a regression.
+It was 531 at the start of 0.5.5 and 595 when 1.0.1 began. Anything that drops
+below 684 is a regression — four suites were added for the three modifications
+(decimal and negative 15, receipt layout 27, receipt settings render 16,
+application Help 27).
 
-Version is **0.5.5** (`package.json`, and the installer filename with it).
+Version is **1.0.1** (`package.json`, and the installer filename with it).
 
 ---
 
@@ -265,7 +268,7 @@ src/i18n/{en,fr,rw}.json   1,167 keys per language, 0 missing
 
 | Suite | Checks | Result |
 |---|---:|---|
-| Whole suite | **595** | **0 failed**, 34 suites |
+| Whole suite | **684** | **0 failed**, 38 suites |
 | Right-click (`test:contextmenu`) | 28 | pass |
 | Seller dashboard (`test:seller`) | 9 | pass |
 | Settings & Access Point (`test:accesspoint`) | 17 | pass |

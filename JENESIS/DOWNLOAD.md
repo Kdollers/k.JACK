@@ -18,9 +18,9 @@ English, French and Kinyarwanda (F1)**.
 
 | File | What it is | Size | SHA-256 |
 |---|---|---|---|
-| `JENESIS 1.0.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **four desktop shortcuts** — JENESIS Seller (red), JENESIS Network & Maintenance (green), JENESIS Accounting & Business (blue), JENESIS Settings & Access Point (yellow) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JENESIS 1.0.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
-| `JENESIS 1.0.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | _measured on the built file — see the release page_ | _measured on the built file — see the release page_ |
+| `JENESIS 1.0.1 Setup.exe` | **Windows installer** (NSIS). Installs JENESIS and creates **four desktop shortcuts** — JENESIS Seller (red), JENESIS Network & Maintenance (green), JENESIS Accounting & Business (blue), JENESIS Settings & Access Point (yellow) — each with its own J logo, plus a JENESIS folder in the Start menu and an uninstaller. | see [section 7](#7-files-and-checksums-of-this-build) | see [section 7](#7-files-and-checksums-of-this-build) |
+| `JENESIS 1.0.1 Portable.zip` | **Portable package** — the same application, no installation needed. Unzip and double-click `JENESIS.exe`. Useful on a locked-down PC or a USB stick. | see [section 7](#7-files-and-checksums-of-this-build) | see [section 7](#7-files-and-checksums-of-this-build) |
+| `JENESIS 1.0.1.zip` | **Source-code backup** of the finished project (every tracked file of the repository). | see [section 7](#7-files-and-checksums-of-this-build) | see [section 7](#7-files-and-checksums-of-this-build) |
 | `*.sha256` | Checksum for each file above, so you can prove the download is intact. | — | — |
 
 > GitHub shows the download name with dots instead of spaces
@@ -411,7 +411,7 @@ ones on the release page always belong to the file you are downloading.
 | `JENESIS 1.0.1.zip` | 6,468,905 bytes (6.2 MB) | `f1b82c94a6d21d778b52d309be646e6b503bd6ec8c46ca4e5b3c46bd727788c6` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
-named on the release page (**595 automated checks** on that build, and the
+named on the release page (**684 automated checks** on that build, and the
 installed-application smoke test recorded on the release page, 30/30 PASS).
 
 Every push rebuilds and republishes these files, so a later build carries a
