@@ -10,6 +10,143 @@ Built by GitHub Actions, run **42913206219**, commit **`3ca9741`**.
 
 ---
 
+## The three modifications in this release
+
+This release implements three modifications that were requested together.
+Each is described below with what it does, how it was tested, and — where it
+could not be tested here — what remains unverified.
+
+### 1. Negative and decimal numbers, everywhere
+
+JENESIS now accepts, stores, calculates, displays and reports negative and
+decimal values: −1, −5, −0.5, 0.1, 0.25, 0.5, 1.25, 10.75.
+
+**Rounding is now exact.** The old helper rounded by scaling the number up,
+rounding, and scaling back. That is wrong for the values a business hits every
+day: `8.165 × 100` is `816.4999999999999`, so it rounded *down* to 8.16. The
+worse half was the sign — `-1.005` lost its cents entirely and became `-1`, so
+a debit of 1.005 and the credit of −1.005 that is meant to balance it landed a
+cent apart. In double-entry books that is not a rounding error, it is an
+unbalanced entry. Rounding now works on the number's own decimal digits with
+ties going away from zero, so every pair is equal and opposite. This helper is
+used 311 times across ten modules, so it touches every figure the program
+writes.
+
+**Fractional quantities.** A sale can be for 1.25 kg or 0.5 L. Half a kilo
+sold removes half a kilo from stock — not one kilo, and not two. Stored
+quantities are never coerced to whole numbers.
+
+**Negative lines and returns.** A negative quantity on a sale is a return: the
+stock comes back and the cost of goods is credited. Under FIFO, a negative
+quantity used to be discarded outright — the stock came back but the accounts
+were never told — so a return now books a cost layer back the same way a
+credit note does. Two guards also skipped their work when a value was
+negative: tax and cost of goods were only posted when greater than zero, so a
+return dropped them and the entry came out hundreds out of balance.
+
+**Refunds.** A refund could not be recorded at all: payments refused any
+amount that was not greater than zero, and the banking screen refused it twice
+more. A negative amount is now a refund. Because every balance in the posting
+is written as a signed addition of the amount, a negative runs the whole
+posting in reverse on its own — the bank balance falls instead of rising, the
+invoice becomes less paid, and the customer owes more. The entry reverses too:
+a debit of a negative amount is recorded as a credit, which is what a refund
+is. Three guards were added: a refund cannot exceed what was paid on an
+invoice, a zero amount is refused, and a refund is labelled *Customer Refund*
+or *Supplier Refund* so the ledger says what happened.
+
+**The engine still refuses a negative debit or credit**, which is correct. A
+correction written as a negative is recorded as a positive on the opposite
+side — the way an accountant writes it — so every report, total and balance
+stays meaningful.
+
+**A negative entry is never automatically treated as a refund.** Returned
+products, financial refunds and accounting corrections remain distinct: a
+return has its own document (a credit note) which records the reason and can
+restock; a refund is a negative payment; a correction is a negative on the
+side being reduced. Stock movements and accounting entries stay consistent.
+
+Deliberately **not** changed: goods receipts and stock transfers keep their
+positive-only rule, because both have a dedicated return or reversal document;
+and counting banknotes still rounds to whole notes, because half a banknote
+does not exist.
+
+### 2. Customisable receipt printing
+
+A shop could print an invoice through the browser's print window and nothing
+else: no choice of printer, no paper size, no way to shape the receipt, no way
+to see it before printing, and no memory of any of it.
+
+Receipts are now built from a layout the user sets, on the computer they are
+using, for the application they are in.
+
+- **Printer.** Every printer on the computer is listed, USB and network
+  alike. One that is offline, out of paper or jammed is *shown*, greyed out
+  with the reason, rather than hidden — a printer that has silently vanished
+  is far more confusing than one that is visibly not ready. A test receipt can
+  be printed to check alignment before a customer is waiting.
+- **Paper.** 58 mm and 80 mm rolls, A4, or a custom width. A roll is
+  continuous and gets a cut mark; a cut sheet is paginated and does not.
+- **Appearance.** Text size, typeface, bold, line spacing, four margins,
+  heading and logo alignment, the receipt title, the footer message, and a
+  switch for each of seventeen pieces of information that can appear.
+- **Preview.** The print document itself, painted at true millimetre size,
+  with an estimate of whether the receipt fits the paper and a way back to the
+  settings.
+- **Memory.** Per computer **and** per application. A Seller who sets a 58 mm
+  roll on the till cannot have it replaced by an Admin saving an 80 mm layout
+  in the back office, because the application is part of every request.
+- **Access.** In JENESIS Settings → Printing, and reachable from a sale via a
+  new *Print receipt* button. Existing invoice and statement printing is
+  untouched and still works.
+
+Built to survive the cases that break naive receipt code: decimal quantities
+print as written (1.25 stays 1.25, and 2 does not become 2.0000); a returned
+item is a minus quantity marked as a return and named in words; French and
+Kinyarwanda survive, because the encoding is declared before any text that
+needs it and the font stack is one that actually contains those glyphs; and a
+product name cannot inject markup into the receipt.
+
+**Printing changes nothing.** It is tested: receipts are built against a copy
+of the database and the file is asserted byte-for-byte unchanged afterwards,
+with the journal entry count identical.
+
+### 3. Help that belongs to the application you opened
+
+The Seller, the accountant, the person who looks after the network and whoever
+configures the program were all handed the same guide. Each had to read past a
+great deal that had nothing to do with them — and worse, the Seller's guide
+carried accounting instructions for work a Seller is not allowed to do.
+
+Each application now has its own guide, chosen **automatically** from the
+application the user opened. Nobody is ever asked which guide they want.
+
+| Application | Sections |
+|---|---|
+| **Seller** | The screen, recording a sale, finding a product, customers, receipts and payment, printing a receipt, returns and refunds, checking stock, shortcuts, troubleshooting. **No accounting.** |
+| **Accounting & Business** | Dashboard, accounting operations, purchases and bills, customers and suppliers, taxes and VAT, financial reports, accounting records, users roles and permissions, administrator functions, shortcuts. |
+| **Network & Maintenance** | The screen, network configuration, connecting computers on the network, managing connections, network troubleshooting, settings, shortcuts. Deliberately no accounting, sales, purchase or stock instructions. |
+| **Settings & Access Point** | Overview, printers, receipt layouts, language, light and dark appearance, preferences, configuration options, configuration troubleshooting. |
+
+All four guides in **English, French and Kinyarwanda** — 36 sections each,
+108 in all — using the same structure as the existing guide, so the design is
+unchanged. Every guide ends with the same credit in every language: *JENESIS
+is created and developed by KAYIGANWA JACQUES.*
+
+Two leaks were found while testing and closed. The Help screen drew the live
+shortcut catalogue, which lists every shortcut in the program including the
+accounting ones — showing that to a Seller is handing them accounting
+instructions, so the full catalogue is now drawn only for the general guide.
+And the closing line told the reader to "print the Trial Balance"; each
+application's guide now ends with its own translated note.
+
+The guides are checked **against the program itself**, not only against each
+other: every application named must be a real JENESIS application, every
+shortcut promised must be one the program listens for, and every printing
+setting the Settings guide offers must exist in the receipt layout module.
+
+---
+
 ## The four applications
 
 One installation, four programs, **one shared database**. Each has its own
@@ -131,13 +268,21 @@ every existing configuration was preserved.
 
 | | |
 |---|---|
-| Whole automated suite | **595 checks, 0 failed, 34 suites** |
+| Whole automated suite | **684 checks, 0 failed, 38 suites** |
+| Decimal & negative suite (new) | 15 checks |
+| Receipt layout suite (new) | 27 checks |
+| Receipt settings render suite (new) | 16 checks |
+| Application Help suite (new) | 27 checks |
 | Right-click suite | 28 checks |
 | Seller dashboard suite | 9 checks |
 | Settings & Access Point suite | 17 checks |
 | Installed-application smoke test | **30/30 PASS** on a Windows runner |
 | `npx vite build` | clean |
-| Translation parity en/fr/rw | 1,167 keys per language, 0 missing |
+| Translation parity en/fr/rw | 1,262 keys per language, 0 missing |
+
+The three new suites run against a **real server on a real copy of the
+accounting database** and check the database afterwards. `genesis.db` is hashed
+before and after every suite and must come out unchanged.
 
 The three new suites run against a **real server on a real copy of the
 accounting database** and check the database afterwards. `genesis.db` is hashed
@@ -150,6 +295,20 @@ before and after every suite and must come out unchanged.
 * closing an application not taking effect until the next sign-in.
 
 All three are fixed and all three now have a test that fails if they come back.
+
+This release's suites found real defects too:
+
+* `roundTo` rounding `-1.005` to `-1`, discarding the cents, so a debit and
+  its matching credit could not balance;
+* a return under FIFO restoring the stock but posting no cost of goods;
+* tax and cost of goods being skipped when the value was negative, leaving a
+  return hundreds out of balance;
+* a refund being impossible to record at all;
+* the Seller's Help guide carrying accounting instructions — including a live
+  shortcut catalogue listing the ledger shortcuts, and a closing line telling
+  the reader to print the Trial Balance.
+
+Each is fixed and each now has a test that fails if it comes back.
 
 ---
 
@@ -220,13 +379,26 @@ that admits them.
 5. **Nothing has been run on a physical PC** — only on GitHub-hosted Windows
    runners. Antivirus, SmartScreen, graphics drivers and user account control
    are all things this runner does not have.
-6. **Printing is untested.** No printer.
+6. **Printing has never been tested against a real printer.** No printer
+   exists in the build environment, and there is none here. What *was* tested:
+   building the receipt document for every paper size, every layout option and
+   the hard cases (decimal quantities, returned items, French and Kinyarwanda
+   text, a 200-line receipt); that printing leaves the database byte-for-byte
+   unchanged; that each application keeps its own saved layout. What was
+   **not** tested: discovering a real printer, sending a job to one, or
+   whether a receipt comes out of a thermal roll or an A4 sheet correctly.
+   Please print a test receipt from Settings → Printing before relying on it.
 7. **No live Windows database migration test.** Migration 6 was applied to a
    copy and every migration from 1 to 6 replays cleanly, but a real company
    database upgrading in place has not been watched.
 8. **Right-click was never clicked by a person.** Every action is exercised in
    code and over HTTP; whether the menu lands where the cursor is on a real
    screen is unverified.
+9. **The four Help guides have never been read on a screen.** All 108 sections
+   are proven to exist, to be complete, to be genuinely translated rather than
+   English copied, and to render for the right application. Whether the prose
+   reads well, and whether every instruction matches your business, is
+   something only you can judge.
 
 ---
 
