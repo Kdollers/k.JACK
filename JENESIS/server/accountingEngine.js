@@ -87,17 +87,41 @@ function createJournalEntry({ companyId, date, reference, description, sourceTyp
   let totalCredit = 0;
 
   for (const line of lines) {
-    const debit = roundTo(Number(line.debit) || 0, 2);
-    const credit = roundTo(Number(line.credit) || 0, 2);
-    if (debit < 0 || credit < 0) {
-      throw new Error('Debit and credit values cannot be negative');
+    let debit = roundTo(Number(line.debit) || 0, 2);
+    let credit = roundTo(Number(line.credit) || 0, 2);
+
+    /**
+     * A NEGATIVE amount is an accountant's shorthand for a correction: reduce
+     * this side rather than increase it. Debiting -10.75 means "credit 10.75".
+     *
+     * A journal line has never been allowed to hold a negative figure, and it
+     * still may not: the amount is recorded as a positive on the OPPOSITE side,
+     * which is the same entry and keeps every report, total and balance
+     * meaningful. Without this, a correcting entry could not be posted at all.
+     */
+    if (debit < 0 && credit < 0) {
+      // Both sides negative: flip the whole line rather than silently guessing.
+      debit = Math.abs(debit);
+      credit = Math.abs(credit);
     }
+    if (debit < 0) {
+      credit = roundTo(credit + Math.abs(debit), 2);
+      debit = 0;
+    } else if (credit < 0) {
+      debit = roundTo(debit + Math.abs(credit), 2);
+      credit = 0;
+    }
+
     if (debit > 0 && credit > 0) {
       throw new Error('A single line cannot have both debit and credit amounts');
     }
     if (debit === 0 && credit === 0) {
       throw new Error('A journal line cannot have zero debit and zero credit');
     }
+    // Remember the corrected side, so what is written is what was validated.
+    line.debit = debit;
+    line.credit = credit;
+
     totalDebit = roundTo(totalDebit + debit, 2);
     totalCredit = roundTo(totalCredit + credit, 2);
   }
@@ -292,8 +316,11 @@ function postSalesInvoice(companyId, invoiceId, user, opts = {}) {
       credit: inv.subtotal
     });
 
-    // 3. Credit Tax Payable for tax total (if any)
-    if (inv.tax_total > 0) {
+    // 3. Credit Tax Payable for tax total (if any).
+    //    Not '> 0': on a return the tax is negative, and it still has to be
+    //    posted, on the opposite side. Skipping it is what left the entry
+    //    out of balance.
+    if (roundTo(inv.tax_total, 2) !== 0) {
       jeLines.push({
         accountId: taxAccount.id,
         description: `VAT Output: Inv #${inv.invoice_number}`,
@@ -302,8 +329,10 @@ function postSalesInvoice(companyId, invoiceId, user, opts = {}) {
       });
     }
 
-    // 4. COGS & Inventory Asset entries for inventory items
-    if (totalCogs > 0) {
+    // 4. COGS & Inventory Asset entries for inventory items.
+    //    Likewise not '> 0': a return credits COGS and debits the inventory
+    //    asset back, which is the whole point of accepting a negative line.
+    if (roundTo(totalCogs, 2) !== 0) {
       jeLines.push({
         accountId: defaultCogsAccount.id,
         description: `COGS: Inv #${inv.invoice_number}`,

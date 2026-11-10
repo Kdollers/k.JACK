@@ -636,9 +636,10 @@ export default function AccountingView() {
                             />
                           </td>
                           <td className="py-2 px-3 text-right">
+                            {/* No minimum: an accounting correction is a negative on the side being reduced.
+                                The entry must still balance before it will post. */}
                             <input
                               type="number"
-                              min="0"
                               step="0.01"
                               value={line.debit || ''}
                               onChange={(e) => updateEntryLine(idx, 'debit', e.target.value)}
@@ -647,9 +648,10 @@ export default function AccountingView() {
                             />
                           </td>
                           <td className="py-2 px-3 text-right">
+                            {/* No minimum: an accounting correction is a negative on the side being reduced.
+                                The entry must still balance before it will post. */}
                             <input
                               type="number"
-                              min="0"
                               step="0.01"
                               value={line.credit || ''}
                               onChange={(e) => updateEntryLine(idx, 'credit', e.target.value)}

@@ -998,9 +998,15 @@ export default function SalesView() {
                               />
                             </td>
                             <td className="py-2 px-3 text-right">
+                              {/* No minimum: a NEGATIVE quantity records a
+                                  return or a correction on the sale itself
+                                  (-1 for one returned, -0.5 for half a kilo).
+                                  The stock comes back and COGS is credited.
+                                  A formal return against an invoice is still
+                                  best raised as a credit note, which records
+                                  the reason and the restock. */}
                               <input
                                 type="number"
-                                min="0.01"
                                 step="any"
                                 required
                                 value={line.quantity}

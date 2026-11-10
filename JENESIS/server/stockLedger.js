@@ -119,7 +119,44 @@ function addFifoLayer(db, { companyId, productId, warehouseId = null, qty, unitC
  */
 function consumeFifo(db, companyId, productId, qty, date) {
   const wanted = roundTo(Number(qty), 4);
-  if (wanted <= 0) return { layers: [], totalCost: 0 };
+  if (wanted === 0) return { layers: [], totalCost: 0 };
+
+  /**
+   * A NEGATIVE quantity is a return: the goods come back into stock.
+   *
+   * A sale consumes layers oldest-first without recording which ones it took,
+   * so a return cannot put them back where they came from. They are therefore
+   * booked in again as a new layer at the cost the product is carried at,
+   * dated today - the same way a credit note restock is booked (source type
+   * SALES_RETURN), so the two routes agree.
+   *
+   * The cost comes back NEGATIVE, because that is what a return does to COGS:
+   * the sale charged it, the return gives it back.
+   *
+   * Before this, a negative quantity fell through the old `wanted <= 0` guard
+   * and returned nothing at all, so a return recorded on a sale under FIFO
+   * silently posted no cost of goods - the stock came back but the accounts
+   * were never told.
+   */
+  if (wanted < 0) {
+    const qtyBack = Math.abs(wanted);
+    const prod = db.prepare(`SELECT cost_price FROM products WHERE id = ?`).get(productId);
+    const unitCost = roundTo(Number(prod?.cost_price) || 0, 4);
+    const layerId = addFifoLayer(db, {
+      companyId,
+      productId,
+      warehouseId: null,
+      qty: qtyBack,
+      unitCost,
+      date,
+      sourceType: 'SALES_RETURN',
+      sourceId: null
+    });
+    return {
+      layers: [{ layerId, qty: qtyBack, unitCost }],
+      totalCost: roundTo(-(qtyBack * unitCost), 2)
+    };
+  }
   const layers = db.prepare(`
     SELECT * FROM fifo_stock_layers
     WHERE company_id = ? AND product_id = ? AND quantity_remaining > 0
