@@ -44,27 +44,901 @@
 > genesis-accounting@1.0.1 test:receipt
 > node tests/receipt-layout.test.js
 
-node:internal/modules/cjs/loader:1210
-  throw err;
-  ^
+--- STARTING RECEIPT LAYOUT TESTS ---
+  ✓ decimal quantities keep their decimals, and whole ones stay whole
+  ✓ negative quantities print with a minus and no negative zero
+  ✓ a quantity that is not a number does not print as NaN
+  ✓ a negative line is recognised as a return, a positive one is not
+  ✓ the three named paper sizes are the widths a shop actually uses
+  ✓ a roll has no fixed height; A4 and a custom sheet do
+  ✓ a custom size uses the width the user typed, within sane limits
+  ✓ an out-of-range or nonsense layout is pulled back, not allowed through
+  ✓ a missing or broken layout still produces a complete one
+  ✓ a narrower roll fits fewer characters, so wrapping is predictable
+  ✓ a receipt declares UTF-8 before anything, so Kinyarwanda prints
+  ✓ French and Kinyarwanda text survives into the receipt intact
+  ✓ the font stack is one a printer really has, for those glyphs
+  ✓ a decimal quantity and a negative return both print correctly
+  ✓ a returned line is marked as a return, not just shown with a minus
+  ✓ every field can be turned off, and stays off
+  ✓ a custom title and footer message are the ones that print
+  ✓ the layout the user chose is the layout in the markup
+  ✓ the margins the user chose are the margins on the page
+  ✓ a product name cannot inject markup into the receipt
+  ✓ a long receipt is complete, not truncated at some line limit
+  ✓ an A4 receipt is paginated; a roll is not cut every page
+  ✓ a cut line appears on a roll and not on an A4 sheet
+  ✓ an empty or broken document still produces printable paper
+  ✓ the same document printed twice is byte-for-byte identical
+  ✓ the height estimate says whether a receipt fits, and grows with lines
+  ✓ building a receipt does not change the database
 
-Error: Cannot find module 'D:ak.JACKk.JACKJENESISsrc
-eceipt
-eceiptLayout.js'
-Require stack:
-- D:\a\k.JACK\k.JACK\JENESIS\tests\receipt-layout.test.js
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
-    at Module._load (node:internal/modules/cjs/loader:1038:27)
-    at Module.require (node:internal/modules/cjs/loader:1289:19)
-    at require (node:internal/modules/helpers:182:18)
-    at src/receipt/buildReceiptHtml.js:29:66
-    at Script.runInContext (node:vm:149:12)
-    at Script.runInNewContext (node:vm:154:17)
-    at Object.runInNewContext (node:vm:310:38)
-    at loadModule (D:\a\k.JACK\k.JACK\JENESIS\tests\receipt-layout.test.js:55:6)
-    at Object.<anonymous> (D:\a\k.JACK\k.JACK\JENESIS\tests\receipt-layout.test.js:60:17) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [ 'D:\\a\\k.JACK\\k.JACK\\JENESIS\\tests\\receipt-layout.test.js' ]
-}
+--- 27 passed, 0 failed ---
 
-Node.js v20.20.2
+> genesis-accounting@1.0.1 test:receiptui
+> node tests/receipt-ui-render.test.js
+
+--- STARTING RECEIPT SETTINGS RENDER TESTS ---
+  ✓ the panel draws as JENESIS Seller
+  ✓ all five sections are present
+  ✓ all four paper sizes are offered
+  ✓ every appearance control is present
+  ✓ the three typefaces are offered
+  ✓ the millimetre page size is shown back to the user
+  ✓ every piece of information has a switch
+  ✓ the title and footer message can be typed in
+  ✓ a test receipt can be printed, and the settings saved
+  ✓ the number of copies can be chosen
+  ✓ the panel says the settings belong to this application
+  ✓ each application keeps its own saved layout on the same computer
+  ✓ a damaged preferences file does not stop printing
+  ✓ the panel draws for the Admin too, and draws the same controls
+  ✓ the panel is drawn afresh for each application, not shared
+  ✓ the panel still draws where there is no desktop bridge
+
+--- 16 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:apphelp
+> node tests/app-help.test.js
+
+--- STARTING APPLICATION HELP TESTS ---
+  ✓ all four applications have a guide
+  ✓ every guide exists in English, French and Kinyarwanda
+  ✓ no guide is a copy of another
+  ✓ every section named in the order really exists, in every language
+  ✓ every section carries the whole structure
+  ✓ the three languages cover the same sections
+  ✓ the three languages are genuinely translated, not English copied
+  ✓ each guide names the application it belongs to
+  ✓ the Seller guide carries no accounting instructions
+  ✓ the maintenance guide carries no accounting, sales or stock instructions
+  ✓ the Seller guide covers the counter, not the back office
+  ✓ the Admin guide covers the topics the brief lists
+  ✓ the maintenance guide covers the topics the brief lists
+  ✓ the settings guide covers the topics the brief lists
+  ✓ every guide credits the developer, in every language
+  ✓ the credit is the last section of every guide
+  ✓ every application the guides mention is a real JENESIS application
+  ✓ every shortcut the guides name is one the program really listens for
+  ✓ the guides describe no feature the program does not have
+  ✓ the printing settings the guide describes really exist in the module
+  ✓ the Help screen draws for every application
+  ✓ each application is given its own guide, automatically
+  ✓ a guide never shows another application's content
+  ✓ the four drawn guides are genuinely different
+  ✓ the credit is visible on screen in every guide
+  ✓ opening JENESIS without an application still shows a guide
+  ✓ the user is never asked to choose an application
+
+--- 27 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:auth
+> node tests/auth-security.test.js
+
+--- AUTHENTICATION & AUTHORIZATION TESTS ---
+  scenario: fresh
+  ✓ fresh database reports setup required and creates no demo accounts
+  ✓ every protected endpoint rejects anonymous requests
+  ✓ the x-user-id header does not grant access
+  ✓ setup rejects weak or invalid administrator details
+  ✓ setup creates one administrator and cannot be repeated
+  ✓ wrong passwords are rejected generically and lock the account after repeated failures
+  ✓ unknown usernames get the same response as wrong passwords
+  ✓ login issues a session token; /auth/me returns identity and permissions
+  ✓ session tokens are stored only as digests
+  ✓ the company list is limited to the session company
+  ✓ logout revokes the session token
+  ✓ idle and absolute session expiry are enforced
+  ✓ every route is guarded by a permission or explicitly authenticated-only
+  ✓ role matrix: each role can do its job and nothing more
+  ✓ a user cannot impersonate the administrator by sending a different user id
+  ✓ administrator cannot remove their own rights or disable themselves
+  ✓ changing a user role revokes that user's sessions
+  ✓ administrator-created users must change their password before using the system
+  ✓ demo reset endpoint is disabled and cannot drop data
+  ✓ backup import rejects malformed input before changing data
+  ✓ the permission matrix covers every role without unknown permissions
+  21 passed, 0 failed (fresh)
+  scenario: legacy
+  ✓ copied legacy database is migrated with a pre-migration backup
+  ✓ business records are unchanged by the migrations
+  ✓ legacy accounts can still sign in once, then must change password
+  ✓ password change enforces policy and the current password
+  ✓ after the change the old password fails and the hash is scrypt
+  ✓ setup is not offered on an existing installation
+  6 passed, 0 failed (legacy)
+✓ repository genesis.db unchanged
+--- ALL AUTH TESTS PASSED ---
+
+> genesis-accounting@1.0.1 test:security
+> node tests/security-hardening.test.js
+
+--- SECURITY AND BACKUP TESTS ---
+✓ rate limiter blocks after the limit and reports Retry-After
+✓ sign-in is rate limited per account: 10 failures then HTTP 429 with Retry-After
+✓ restore is refused without the current password and without the typed confirmation
+✓ backup contains business data only: no users, credentials, sessions or audit log
+✓ backup validation refuses tampering, other companies and the legacy format
+✓ restore: data comes back, sessions are revoked, credentials unchanged, ledger preserved
+✓ a restore that fails a consistency check changes nothing and keeps sessions
+✓ every response carries the Content-Security-Policy and security headers
+--- 8 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:desktop
+> node tests/desktop-backend.test.js
+
+--- DESKTOP BACKEND LIFECYCLE TESTS ---
+✓ backend starts on loopback, identifies itself, serves UI and stops cleanly
+✓ backend binds only to the loopback interface
+✓ data remains available after the backend restarts
+✓ a foreign server on the port is rejected, not attached to
+✓ startup fails with a clear message when the backend cannot start
+✓ a working directory that is a file is reported as a spawn error (packaged app.asar case)
+✓ startup times out with a clear message when nothing answers
+✓ an existing database is never overwritten by the bundled seed
+✓ first run creates the database from the seed
+✓ backups are pruned to the configured limit and never touch the source
+--- 10 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:ops
+> node tests/operations.test.js
+
+--- OPERATIONS TESTS (stores, receipts, counts, cash, fx, walk-in, corrections) ---
+  ✓ anonymous sale without customer and without walk-in flag is rejected
+  ✓ walk-in sale needs no customer name and settles immediately
+  ✓ walk-in sale hides the placeholder from the customer list
+  ✓ posting an invoice with insufficient stock is refused
+  ✓ searchable sales history: text, status, walk-in and date filters
+  ✓ partial sales return via credit note restocks and credits the customer
+  ✓ over-return (more than invoiced) is blocked
+  ✓ duplicate return beyond the invoice total is blocked
+  ✓ customer refund pays the credit balance out of cash
+  ✓ receipt correction: reversing a payment restores every balance and audits
+  ✓ stores can be created by the Inventory Officer and admin, not by sales
+  ✓ stock levels are tracked per store with a consolidated company total
+  ✓ inter-store transfer: dispatch keeps company inventory intact (in transit)
+  ✓ partial receipt then completion moves stock between stores only
+  ✓ transfers respect store stock and cannot target the same store
+  ✓ product search works by code and by name
+  ✓ creating a product, a PO or a draft bill never increases stock
+  ✓ goods receipt posts stock in with Dr Inventory / Cr GRNI
+  ✓ over-receipt against the PO is blocked
+  ✓ supplier invoice linked to the receipt clears GRNI without double stock
+  ✓ strict receiving policy: bills need a posted receipt when the company requires it
+  ✓ officer drafts and submits a count; direct one-shot posting is not their path
+  ✓ the submitter cannot approve their own count
+  ✓ independent reviewer approves and posts; stock and GL follow the count
+  ✓ rejection returns the count to the officer
+  ✓ financial reports stay protected from the Inventory Officer
+  ✓ cash register opens with a denomination count; only one open session
+  ✓ expected vs actual: receipts count in, discrepancies need an explanation
+  ✓ cash reconciliation approval requires an independent approver
+  ✓ currencies carry their own decimal precision (JPY 0, BHD 3)
+  ✓ exchange rates are effective-dated and history is preserved
+  ✓ currency conversion respects target decimals (JPY 0, BHD 3)
+  ✓ foreign-currency invoice stores rate + foreign total; ledger stays in base currency
+  ✓ manager role stays read-only; every new route enforces server-side permissions
+  ✓ client-supplied user ids are never trusted: identity comes from the session
+  ✓ the whole operation set keeps the Trial Balance balanced
+  ✓ repository genesis.db unchanged
+--- ALL OPERATIONS TESTS PASSED (36 checks) ---
+
+> genesis-accounting@1.0.1 test:migrations
+> node tests/migrations-v2.test.js
+
+--- MIGRATION v2 TESTS (scenario: legacy copy) ---
+  ✓ a pre-migration backup is taken automatically
+  ✓ migration versions 1 and 2 are recorded exactly once
+  ✓ every pre-existing table keeps its exact row count (except documented system additions)
+  ✓ business records keep identity, balances and amounts byte-for-byte
+  ✓ new tables exist and structural defaults were backfilled per company
+  ✓ stock_levels backfill mirrors product stock exactly (nothing created or lost)
+  ✓ migrations are idempotent: reopening the database changes nothing
+--- migration scenario 'legacy': 7 passed, 0 failed ---
+--- MIGRATION v2 TESTS (scenario: fresh production install) ---
+  ✓ a fresh (non-demo) database seeds company defaults without demo data
+  ✓ schema_migrations records both versions on a fresh database
+--- migration scenario 'fresh': 2 passed, 0 failed ---
+  ✓ repository genesis.db unchanged
+--- ALL MIGRATION TESTS PASSED ---
+
+> genesis-accounting@1.0.1 test:i18n
+> node tests/i18n-parity.test.js
+
+
+GENESIS i18n parity tests
+  ✓ all three dictionaries are non-trivial (>400 keys each)
+  ✓ en / fr / rw have identical key sets (full parity)
+  ✓ no empty or whitespace-only values in any language
+  ✓ french and kinyarwanda are genuinely translated (not english copies)
+  ✓ every server business-error code has errors.<CODE> in all 3 languages
+  ✓ interpolation placeholders match across languages (no data corruption on switch)
+  ✓ v2 feature groups exist in all languages
+  ✓ every t() key used in src/ resolves in all dictionaries (no untranslated UI text)
+  ✓ dictionary values never embed API routes (identifiers stay in code)
+  ✓ language switching is a pure lookup (i18n runtime exposes t(lang,key) semantics)
+
+--- ALL I18N PARITY TESTS PASSED (10 checks, 1262 keys per language) ---
+
+
+> genesis-accounting@1.0.1 test:fx
+> node tests/fx-settlement.test.js
+
+--- FX SETTLEMENT TESTS (gain/loss accounts, document settlement, rate history) ---
+  ✓ migration v3 created FX gain/loss accounts 4800 and 5900
+  ✓ EUR currency and an effective rate of 1.1 can be configured
+  ✓ a EUR sales invoice stores the foreign total and the base amount at its own rate
+  ✓ a newer same-day rate (1.05) supersedes the old one for new lookups
+  ✓ settling the invoice in EUR posts the 50 base difference to FX Loss (5900) and clears the document exactly
+  ✓ FX settlement without a linked document is rejected with a stable code
+  ✓ FX settlement in the base currency is rejected with a stable code
+  ✓ a EUR supplier bill settles with the difference posted to FX Gain (4800)
+  ✓ without the settlement flag a foreign payment applies normally (no FX accounts touched)
+  ✓ migration v4 created unrealized FX accounts 4810/5910 and backfilled booked rates
+  ✓ period-end revaluation restates the open EUR balance into 4810 and advances the book rate
+  ✓ re-running the revaluation for the same date is refused (no duplicate posting)
+  ✓ only admin/accountant may revalue (sales role is refused)
+  ✓ supplier-side revaluation posts an unrealized loss to 5910 and keeps history
+  ✓ a revaluation where no rate moved posts nothing
+  ✓ the Trial Balance remains balanced after all FX settlements
+  ✓ repository genesis.db unchanged
+--- 17 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:fxreval
+> node tests/fx-revaluation-integrity.test.js
+
+--- FX REVALUATION INTEGRITY TESTS (history, sub-ledger, isolation) ---
+  ✓ fixtures: EUR currency, a booked rate and one partly paid EUR invoice
+  ✓ fixtures: a second company with its own open EUR document
+  ✓ fixtures: an open EUR document with an unusable booking rate (0)
+  ✓ the rate moves to 1.25 and the period is revalued
+  ✓ no historical journal entry is modified by a revaluation
+  ✓ the revaluation journal is balanced and the trial balance stays balanced
+  ✓ the customer sub-ledger moves in step with the A/R control account
+  ✓ the document is restated, but payments, foreign amount and booking rate are untouched
+  ✓ a document without a usable booking rate is skipped, never guessed
+  ✓ another company is never touched by this company’s revaluation
+  ✓ the revaluation is recorded in history with per-document lines
+  ✓ the revaluation is written to the audit trail
+  ✓ a second revaluation on a later date posts only the incremental movement
+  ✓ re-running the same date is still refused after all of the above
+  ✓ repository genesis.db unchanged
+--- 15 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:settlement
+> node tests/settlement-paid.test.js
+
+--- SETTLEMENT TESTS (documents created PAID, idempotent F2 settle) ---
+  ✓ a sales invoice created with settle=true is PAID in full, in one transaction
+  ✓ PAID is backed by exactly one real CUSTOMER_RECEIPT payment row
+  ✓ the customer balance was cleared by the receipt (no phantom AR)
+  ✓ the stock movement was recorded once for the settled invoice
+  ✓ settling again (F2 pressed twice) records nothing and reports alreadySettled
+  ✓ a draft sale stays unpaid until it is settled
+  ✓ settling a draft posts it exactly once and pays it in full
+  ✓ a partially paid invoice is settled for the remainder only (never overpaid)
+  ✓ a purchase bill created with settle=true is PAID in full
+  ✓ settling a purchase bill twice changes nothing
+  ✓ a draft bill is posted once and paid once by settle
+  ✓ a cancelled document cannot be settled
+  ✓ settling an unknown document returns 400 and records nothing
+  ✓ settle routes enforce server-side permissions
+  ✓ every settle route is guarded by exactly one permission
+  ✓ an unknown document is never settled through the create path either
+  ✓ the Trial Balance remains balanced after every settlement
+  ✓ the audit log records a SETTLE entry for each settled document
+  ✓ the sales and purchase forms offer no PAID/UNPAID choice
+  ✓ repository genesis.db unchanged
+--- 20 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:shortcuts
+> node tests/shortcuts.test.js
+
+--- KEYBOARD SHORTCUT TESTS (single listener, typing safety, destinations) ---
+  ✓ combos are normalised whatever the casing or order
+  ✓ key names come from the layout-independent key code
+  ✓ text fields are recognised (and checkboxes/buttons are not)
+  ✓ typing is never interrupted: only function keys, Esc and Alt/Shift combos get through
+  ✓ matchesEvent combines the combo and the typing guard
+  ✓ escape layers close top-most first (priority, then registration order)
+  ✓ only a declared key-capturing layer receives raw keys
+  ✓ actions are resolved by order and can disable themselves with when()
+  ✓ the reference list is searchable by keys, action and group
+  ✓ the catalogue is consistent and translated in all three languages
+  ✓ exactly one keydown listener exists in the whole application
+  ✓ the provider handles Escape first and never quits the application
+  ✓ every catalogue shortcut has a real destination in the code
+  ✓ F2/F3/Ctrl+N are registered by the screens that own them
+  ✓ the calculator captures the keyboard without leaking shortcuts
+  ✓ a key the capture layer refuses still reaches the application
+  ✓ the calculator keeps accounting precision (no floating-point noise)
+  ✓ permission-aware: shortcuts check permissions before acting
+  ✓ the catalogue matches the user's shortcut table exactly
+  ✓ no two shortcuts share the same key combination
+  ✓ theme and language moved off the Ctrl+Shift+<letter> screen keys
+  ✓ every screen navigation shortcut is guarded by the application and permissions
+  ✓ Ctrl+S and Ctrl+Enter save by submitting the form under the cursor
+  ✓ Ctrl+F and the search shortcuts focus the search box of the screen
+  ✓ a button that names its shortcut names the one the list really uses
+--- 25 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:fourapps
+> node tests/four-apps.test.js
+
+--- FOUR APPLICATIONS TESTS (Seller / Network & Maintenance / Accounting & Business / Settings & Access Point) ---
+  ✓ there are exactly four applications
+  ✓ each application has its own colour: Seller red, Maintenance green, Accounting blue, Settings yellow
+  ✓ the renderer and the desktop shell describe the same four applications
+  ✓ the applications carry their full names, and Admin has been renamed
+  ✓ the installer creates four shortcuts, each naming its application, argument and icon
+  ✓ every application opens directly in its own environment
+  ✓ no application renders a screen it does not own
+  ✓ Network & Maintenance holds no business screen at all
+  ✓ Settings & Access Point is configuration only
+  ✓ each application remembers its own Light/Dark/System choice
+  ✓ every application ships its own icon, and none of them is the old G logo
+  ✓ the installer creates one shortcut per application, each with its own icon
+  ✓ the installation package carries everything the four applications need
+  ✓ the launcher offers the four applications and remembers the choice
+  ✓ the four applications share one database and one accounting engine
+  ✓ the identity strings exist in English, French and Kinyarwanda
+--- 16 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:prod
+> node tests/production-boot.test.js
+
+  ✓ the start-up guard is a file of its own, not an inline script
+  ✓ the production Content-Security-Policy allows the start-up guard
+  ✓ the start page always shows something, even before the bundle runs
+  ✓ the guard paints the saved theme before the first frame
+  ✓ the guard detects a file that fails to load — the white-screen cause
+  ✓ the guard reports a stalled start instead of leaving an empty window
+  ✓ the guard writes its diagnosis to the desktop log
+  ✓ the guard is safe to run anywhere: no network, no eval, no data access
+  ✓ the guard never throws, whatever the page lacks
+  ✓ the guard exposes its theme logic for the theme tests to execute
+  ✓ an interface that throws shows a translated message instead of a blank screen
+  ✓ the interface tells the shell when it is really mounted
+  ✓ the packaged interface is read from a real directory, not only from inside the archive
+  ✓ the interface location prefers the real directory and falls back safely
+  ✓ the shell verifies the built interface before the window is shown
+  ✓ a missing interface is retried with the other copy and then reported
+  ✓ the start-up is logged well enough to diagnose it afterwards
+  ✓ each window is told which application it is, not which one opened last
+  ✓ the interface reports when the signed-in screen is really on screen
+  ✓ the shell never shows a window it already knows is empty
+  ✓ the packaged version identifies this build
+--- 21 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:messenger
+> node tests/messenger.test.js
+
+--- MESSENGER TESTS (delivery, permissions, company isolation, live push) ---
+  ✓ migration v5 created the messages table
+  ✓ messaging permissions exist and only managers are read-only
+  ✓ the colleague list contains the same company only (never yourself)
+  ✓ anonymous and cross-company access are refused
+  ✓ a message is stored with the session user as sender (never a client-supplied id)
+  ✓ the recipient sees the message and it is marked delivered
+  ✓ the unread badge counts only messages received
+  ✓ reading a conversation marks it read and shows the receipt to the sender
+  ✓ conversations list the last message and the unread count per colleague
+  ✓ invalid messages are refused before anything is stored
+  ✓ reading a thread of another company is refused
+  ✓ a read-only manager can read but cannot send
+  ✓ the live stream pushes a new message to its recipient only
+  ✓ a message sent to somebody else is never pushed to this stream
+  ✓ the audit trail records the event but never the message text
+  ✓ every messenger route is guarded by exactly one permission
+  ✓ messages survive a re-read (history is persisted, not only pushed)
+  ✓ repository genesis.db unchanged
+--- 18 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:help
+> node tests/help-content.test.js
+
+--- USER GUIDE TESTS (trilingual parity, completeness, agreement with the code) ---
+  ✓ the guide exists in English, French and Kinyarwanda
+  ✓ all three languages have exactly the same structure (no missing key)
+  ✓ every required topic is present in every language
+  ✓ the guide names the developer, in every language
+  ✓ every section has purpose, location, steps, expected result and notes
+  ✓ the translations are genuine, not English copies
+  ✓ the guide is substantial in every language (not a footnote)
+  ✓ the sales and purchase sections describe PAID, F2 and F3 truthfully
+  ✓ every shortcut documented in the guide exists in the application catalogue
+  ✓ the catalogue shortcuts are all explained in the guide
+  ✓ the guide explains the layered Escape behaviour and that Esc never quits
+  ✓ the guide covers the three roles the team uses (Seller, Administrator, Maintenance)
+  ✓ the guide is reachable: sidebar entry, F1 and the application route
+  ✓ the guide renders its content and the shortcut tables
+  ✓ every interface string used by the guide view is translated
+--- 15 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:reports
+> node tests/reports-screens.test.js
+
+--- REPORTS SCREEN TESTS (the two reports that stopped the interface) ---
+  ✓ an answer is only drawn by the report it belongs to
+  ✓ the mix that stopped the interface is refused instead of drawn
+  ✓ an answer without a marker is recognised by its shape
+  ✓ the Reports screen uses the rule for every report it draws
+  ✓ every report answers with the marker of the report it is
+  ✓ Profit & Loss reports revenue, cost of sales, gross profit, expenses and the net result
+  ✓ other income is reported beside the trading result, never inside revenue
+  ✓ the date filter decides what the Profit & Loss shows
+  ✓ the Balance Sheet respects Assets = Liabilities + Equity
+  ✓ the Balance Sheet carries the period result into equity
+  ✓ a period with no entries produces an empty report, not a broken one
+  ✓ the reports refuse an unauthorised caller instead of answering
+  ✓ a report answer is never drawn as another report
+--- 13 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:screens
+> node tests/screens-render.test.js
+
+--- SCREEN RENDER TESTS (every screen must draw, without a browser) ---
+  ✓ the interface can be compiled for Node
+  ✓ Dashboard draws without an error
+  ✓ Sales draws without an error
+  ✓ Purchases draws without an error
+  ✓ Inventory draws without an error
+  ✓ Reports draws without an error
+  ✓ Accounting draws without an error
+  ✓ Banking draws without an error
+  ✓ Customers draws without an error
+  ✓ Suppliers draws without an error
+  ✓ Settings draws without an error
+  ✓ Maintenance draws without an error
+  ✓ Help draws without an error
+  ✓ Seller dashboard draws without an error
+  ✓ Tax rates panel draws without an error
+  ✓ Users panel draws without an error
+  ✓ the Seller dashboard answers the counter, and never the accountant
+  ✓ the Seller dashboard shows the day it was given, not a placeholder
+  ✓ Network computers draws without an error
+  ✓ Network computers (empty) draws without an error
+  ✓ Calculator draws without an error
+  ✓ Shortcut reference draws without an error
+  ✓ Header draws without an error
+  ✓ Sidebar draws without an error
+  ✓ Theme toggle draws without an error
+  ✓ the calculator draws its keys and its display
+  ✓ the other-computer list shows each computer, its address and its state
+  ✓ the connected computer is marked, and only it
+  ✓ every computer in the list can be tested, connected and forgotten
+  ✓ an empty computer list says so instead of showing nothing
+  ✓ the header names the keys the shortcut list really uses
+--- 31 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:money
+> node tests/money-format.test.js
+
+--- MONEY FORMATTING TESTS (one rule, every currency) ---
+  ✓ the amount and the currency are separated by a space
+  ✓ a code goes behind the amount, a graphic sign in front of it
+  ✓ the code is used when the company configured no symbol
+  ✓ the four currencies named in the brief all read consistently
+  ✓ display only: the number, its decimals and its value are untouched
+  ✓ a foreign currency follows the same rule
+  ✓ the amount can be printed alone, with no currency at all
+  ✓ no screen builds a money string by hand any more
+  ✓ the application context uses the shared function
+--- 9 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:translations
+> node tests/translation-coverage.test.js
+
+
+JENESIS translation coverage tests
+  ✓ the untranslated-text scanner reports no candidates in src/
+  ✓ the scanner is still alive (it catches seeded untranslated text)
+  ✓ every allowlist entry is documented with a reason
+  ✓ the language choice is persisted so it survives a restart
+  ✓ switching language re-renders immediately and falls back to English
+  ✓ t() interpolates {name} placeholders for dynamic messages
+  ✓ accounting terminology is genuinely translated, not an English copy
+
+--- ALL TRANSLATION COVERAGE TESTS PASSED (7 checks) ---
+
+
+> genesis-accounting@1.0.1 test:translationscope
+> node tests/translation-scope.test.js
+
+
+JENESIS translation scope tests
+  ✓ every file that calls t() brings t into scope
+  ✓ the check itself is alive: it catches a file with t() and no t
+  ✓ no file imports useI18n without the i18n module being importable
+
+--- ALL TRANSLATION SCOPE TESTS PASSED (3 checks over 57 files) ---
+
+
+> genesis-accounting@1.0.1 test:records
+> node tests/record-lifecycle.test.js
+
+
+--- RECORD LIFECYCLE TESTS (deactivate / reactivate / delete) ---
+  ✓ a fresh customer can be created for the lifecycle tests
+  ✓ accountant is refused deactivation by the API (403)
+  ✓ accountant is refused deletion by the API (403)
+  ✓ sales is refused deactivation by the API (403)
+  ✓ sales is refused deletion by the API (403)
+  ✓ inventory is refused deactivation by the API (403)
+  ✓ inventory is refused deletion by the API (403)
+  ✓ an unauthenticated deactivate request is refused (401)
+  ✓ a manager IS allowed to deactivate
+  ✓ an unknown record type is rejected rather than silently ignored
+  ✓ a record from another company cannot be reached
+  ✓ a customer that has been invoiced reports its history
+  ✓ deleting a customer with invoices is refused with "archive instead"
+  ✓ the refused customer is still on file, untouched
+  ✓ deactivating that customer works and keeps every invoice
+  ✓ the trial balance stays balanced after a deactivation
+  ✓ journal entries are never deleted by a record retirement
+  ✓ a deactivated customer disappears from the default customer list
+  ✓ the same customer is still reachable with ?status=all
+  ✓ ?status=inactive returns only retired records
+  ✓ reactivation brings the record back into the picker
+  ✓ reactivating twice is harmless and reports no change
+  ✓ a never-used customer can be deleted for good
+  ✓ a supplier with bills is refused deletion
+  ✓ a product that has moved is refused deletion
+  ✓ a new store can be created and stocked
+  ✓ deactivating a store keeps its stock and its movements
+  ✓ a deactivated store leaves the store picker
+  ✓ a store with stock cannot be deleted
+  ✓ the default store cannot be deactivated
+  ✓ a store can be reactivated
+  ✓ a user cannot deactivate their own account
+  ✓ a user cannot delete their own account
+  ✓ the last active administrator cannot be deactivated
+  ✓ a manager cannot delete the last active administrator
+  ✓ a deactivated user loses access immediately, mid-session
+  ✓ a deactivated user cannot sign in again
+  ✓ a deactivated user can be reactivated and signs in again
+  ✓ a user can be deleted, and their sessions die with them
+  ✓ deleting a user leaves their audit history intact
+  ✓ every retirement is audited with user, action and record
+  ✓ the audit log records the action type of each change
+  ✓ the audit log records what changed, before and after
+  ✓ deactivation is visible in the audit screen endpoint
+  ✓ the trial balance is still balanced at the end
+  ✓ the database passes its own integrity check
+  ✓ repository genesis.db unchanged
+--- ALL RECORD LIFECYCLE TESTS PASSED (47 checks) ---
+
+> genesis-accounting@1.0.1 test:datadir
+> node tests/data-location-migration.test.js
+
+--- DATA LOCATION / GENESIS->JENESIS MIGRATION TESTS ---
+  ✓ legacyDataDirectories only proposes the sibling GENESIS folder of a JENESIS data directory
+  ✓ an existing GENESIS database is adopted into an empty JENESIS data directory
+  ✓ the original GENESIS database is left untouched (copied, never moved or deleted)
+  ✓ WAL and SHM sidecars are copied with the database
+  ✓ an existing JENESIS database is never overwritten by the legacy one
+  ✓ a legacy database that fails verification is not adopted and leaves no partial file
+  ✓ without a legacy installation nothing is migrated
+  ✓ prepareDataDirectory adopts the legacy database instead of seeding the starter copy
+  ✓ prepareDataDirectory still seeds a starter database for a brand-new installation
+  ✓ the adopted database opens and still contains its accounting data
+  ✓ the legacy database is adopted only once (a second launch is a normal launch backup)
+--- 11 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:branding
+> node tests/branding-consistency.test.js
+
+--- BRANDING / IDENTITY TESTS ---
+  ✓ the product is called JENESIS everywhere a user can see it
+  ✓ the internal identifiers that must not change are preserved
+  ✓ the version and the installer filename say the same number
+  ✓ the browser tab and the packaged UI are titled JENESIS
+  ✓ the desktop shell shows the JENESIS name and keeps user data outside the install folder
+  ✓ no user-facing code or script still refers to GENESIS
+  ✓ the Windows scripts follow the product name instead of hard-coding it
+  ✓ the legacy GENESIS data directory is adopted, not ignored
+  ✓ English, French and Kinyarwanda dictionaries are complete and in parity
+  ✓ the revaluation feature is translated in all three languages
+  ✓ no screen, document or report draws the old G mark
+  ✓ printed documents, report letterheads and PDFs carry the JENESIS mark
+  ✓ no user-facing string still says Genesis (compatibility paths excepted)
+--- 13 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:appgate
+> node tests/app-gate.test.js
+
+--- APPLICATION ACCESS GATE TESTS (real React render, no browser) ---
+  ✓ the application shell can be compiled for Node
+  ✓ a user without the permission is stopped at the Settings application
+  ✓ the refusal is translated, not left in English
+  ✓ a user who holds the permission is let through to the application
+  ✓ the other three applications are open to every signed-in user
+  ✓ the gate is what stops the user, not an empty page
+--- 6 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:appsrender
+> node tests/four-apps-render.test.js
+
+--- FOUR APPLICATIONS DRAWING TESTS (real React render, no browser) ---
+  ✓ all four applications can be compiled for Node
+  ✓ there are exactly four applications
+  ✓ JENESIS seller draws its own screens instead of a blank window
+  ✓ JENESIS seller is named and coloured as itself
+  ✓ JENESIS seller stays translated in French and Kinyarwanda
+  ✓ JENESIS maintenance draws its own screens instead of a blank window
+  ✓ JENESIS maintenance is named and coloured as itself
+  ✓ JENESIS maintenance stays translated in French and Kinyarwanda
+  ✓ JENESIS admin draws its own screens instead of a blank window
+  ✓ JENESIS admin is named and coloured as itself
+  ✓ JENESIS admin stays translated in French and Kinyarwanda
+  ✓ JENESIS settings draws its own screens instead of a blank window
+  ✓ JENESIS settings is named and coloured as itself
+  ✓ JENESIS settings stays translated in French and Kinyarwanda
+  ✓ Network & Maintenance offers no accounting, sales, purchase or stock screen
+  ✓ the launcher offers all four applications, each with its own mark
+  ✓ the four applications are four different colours
+--- 17 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:separation
+> node tests/app-separation.test.js
+
+--- SEPARATION BETWEEN THE FOUR APPLICATIONS ---
+  ✓ the four applications each declare their own boundary
+  ✓ no application is forbidden a permission that does not exist
+  ✓ Maintenance is forbidden every accounting, sales, purchase and stock permission
+  ✓ Seller is forbidden the reports, the purchases and the journals
+  ✓ an administrator working inside JENESIS Seller cannot pull the reports
+  ✓ an administrator inside Maintenance cannot read customers, suppliers or the ledger
+  ✓ Maintenance can still read its own service information
+  ✓ Settings cannot trade: no sales, no purchases, no stock movements
+  ✓ a Seller cannot reach the reports by calling the API directly
+  ✓ a Seller's own dashboard and sales screens still open
+  ✓ the accounting dashboard is not the Seller's dashboard
+  ✓ a caller that names no application is treated exactly as before
+  ✓ a refused request is recorded in the audit trail
+  ✓ a role refusal is recorded too, and no secret is written to the log
+  ✓ a stale or forged token is refused and the attempt is recorded
+  ✓ a deactivated user is stopped at once, including the session they are using
+  ✓ an administrator cannot deactivate their own account
+  ✓ the last active administrator cannot be deactivated by someone else
+  ✓ the shipped database is not modified by these tests
+  ✓ a sales clerk reads the tax rates from JENESIS Seller
+  ✓ a sales clerk still cannot create a tax rate
+  ✓ the tax rates stay out of JENESIS Network & Maintenance
+  ✓ a user is refused an application Settings & Access Point has closed to them
+  ✓ a bookkeeper still reads the tax rates from JENESIS Accounting & Business
+--- 24 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:network
+> node tests/network-maintenance.test.js
+
+--- NETWORK & MAINTENANCE: discovery, registration and status ---
+  ✓ the network is off unless an administrator turns it on
+  ✓ a JENESIS computer finds another one on the network
+  ✓ discovery is refused while the network switch is off
+  ✓ the announcement carries no token, password, user or database detail
+  ✓ a computer can be registered, probed and seen in the list
+  ✓ registering the same address twice refreshes it instead of duplicating it
+  ✓ a nonsense address is refused with a message, not stored
+  ✓ a forgotten computer leaves the list
+  ✓ connect, disconnect and reconnect all work and only one computer is connected
+  ✓ connecting to a computer that has stopped is refused with a reason
+  ✓ refreshing measures every registered computer and records what it found
+  ✓ every diagnosis explains itself in words a person can act on
+  ✓ a service that is not JENESIS is named as such, not reported as online
+  ✓ nothing listening at an address is reported as refused, not as online
+  ✓ the network screens need the network permission, not a business one
+  ✓ the shipped database is never touched by these tests
+--- 16 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:contextmenu
+> node tests/context-menu.test.js
+
+--- RIGHT-CLICK MENU TESTS (one menu, four applications) ---
+  ✓ a live record offers Deactivate, and a retired one offers Activate — never both
+  ✓ Cut is never offered on a record — there is nothing to cut a row into
+  ✓ Paste appears only when something is actually waiting to be pasted
+  ✓ an action with no handler is not offered, however wide the permission
+  ✓ a text field offers Copy, Cut, Paste and Select all
+  ✓ a read-only selection offers Copy and Select all, but no Cut or Paste
+  ✓ the items come back in one stable order, so every menu reads the same way
+  ✓ a user without records:delete is never offered Delete
+  ✓ a user without records:deactivate is offered neither Deactivate nor Activate
+  ✓ a user who may not edit is not offered Edit
+  ✓ the menu reads the permission, and the service enforces it independently
+  ✓ every accounting document is a protected record type
+  ✓ Delete is shown disabled with a reason, never as a working action
+  ✓ a record the lifecycle does not cover is protected too
+  ✓ a deleted record with history is answered by the server, not by the menu
+  ✓ Delete and Deactivate go through a confirmation that names the record
+  ✓ the confirmation is owned by the provider, so no screen can forget to ask
+  ✓ the menu is opened from rows in Seller, Accounting, Maintenance and Settings
+  ✓ the menu covers tables, lists and records, not one kind of widget
+  ✓ background right-clicks are answered too, so no click is silently ignored
+  ✓ the menu is drawn with the application accent, not a fixed colour
+  ✓ the four identities bind an accent, and the menu reads whichever is active
+  ✓ the menu never swallows a key or a click it does not own
+  ✓ the menu closes on any other click, on scroll, on resize and on blur
+  ✓ the menu never hangs off the edge of the window
+  ✓ a record is copied as readable text, one field per line
+  ✓ several rows are copied as a table a spreadsheet will open
+  ✓ copying a record keeps it for pasting, and pasting never writes to the database
+
+--- 28 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:seller
+> node tests/seller-dashboard.test.js
+
+--- SELLER DASHBOARD TESTS (its own screen, the same database) ---
+  ✓ the Seller dashboard answers, and answers the counter's question
+  ✓ no accounting figure reaches the Seller dashboard, because none is asked for
+  ✓ the cash register is the till, not the balance sheet
+  ✓ the product search answers with a price and whether it is on the shelf
+  ✓ a Seller window cannot pull the reports, the ledger or the trial balance
+  ✓ a Seller window cannot touch the company record, the users or the backups
+  ✓ the Seller reaches the counter routes it needs, so nothing was over-blocked
+  ✓ a sale written by the Seller updates the same books the accountant reconciles
+  ✓ the shipped database is not modified by these tests
+
+--- 9 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:accesspoint
+> node tests/access-point.test.js
+
+--- SETTINGS & ACCESS POINT TESTS (one copy of the truth) ---
+  ✓ a tax rate can be created, and it appears on the list offered for new documents
+  ✓ deactivating a rate takes it off new transactions and leaves history alone
+  ✓ reactivating a rate puts it back on the list for new transactions
+  ✓ a rate nothing has used can be deleted, and an unused one only
+  ✓ editing a rate changes it, and every change is written to the audit trail
+  ✓ an invoice keeps the rate it was raised with, whatever happens to the rate later
+  ✓ a tax rate that is not ours cannot be touched, and the catalogue is served
+  ✓ an account is created, renamed, and given a new password when one is forgotten
+  ✓ a weak password is refused, even for an administrator resetting somebody else
+  ✓ an account that is part of the company history cannot be deleted, only closed
+  ✓ an account nobody depends on can be removed for good
+  ✓ an administrator cannot delete themselves, and never the last administrator
+  ✓ closing an application to a user takes effect on their very next request
+  ✓ a permission granted to one person works, and one taken away stops working
+  ✓ every configuration change is given a number the other windows can compare
+  ✓ the settings have left JENESIS Accounting & Business, not been copied
+  ✓ the shipped database is not modified by these tests
+
+--- 17 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:portability
+> node tests/test-suite-portability.test.js
+
+  - not run automatically: npm run test:e2e (drives a real browser with Playwright; neither the browser nor the Python package is installable in CI, so it stays a manual check)
+  ✓ access-point.test.js does not require a version-specific module directly
+  ✓ accounting-engine.test.js does not require a version-specific module directly
+  ✓ app-gate.test.js does not require a version-specific module directly
+  ✓ app-help.test.js does not require a version-specific module directly
+  ✓ app-separation.test.js does not require a version-specific module directly
+  ✓ auth-security.test.js does not require a version-specific module directly
+  ✓ branding-consistency.test.js does not require a version-specific module directly
+  ✓ context-menu.test.js does not require a version-specific module directly
+  ✓ data-location-migration.test.js does not require a version-specific module directly
+  ✓ decimal-negative.test.js does not require a version-specific module directly
+  ✓ desktop-backend.test.js does not require a version-specific module directly
+  ✓ four-apps-render.test.js does not require a version-specific module directly
+  ✓ four-apps.test.js does not require a version-specific module directly
+  ✓ fx-revaluation-integrity.test.js does not require a version-specific module directly
+  ✓ fx-settlement.test.js does not require a version-specific module directly
+  ✓ help-content.test.js does not require a version-specific module directly
+  ✓ i18n-parity.test.js does not require a version-specific module directly
+  ✓ messenger.test.js does not require a version-specific module directly
+  ✓ migrations-v2.test.js does not require a version-specific module directly
+  ✓ money-format.test.js does not require a version-specific module directly
+  ✓ network-maintenance.test.js does not require a version-specific module directly
+  ✓ operations.test.js does not require a version-specific module directly
+  ✓ production-boot.test.js does not require a version-specific module directly
+  ✓ receipt-layout.test.js does not require a version-specific module directly
+  ✓ receipt-ui-render.test.js does not require a version-specific module directly
+  ✓ record-lifecycle.test.js does not require a version-specific module directly
+  ✓ reports-screens.test.js does not require a version-specific module directly
+  ✓ screens-render.test.js does not require a version-specific module directly
+  ✓ security-hardening.test.js does not require a version-specific module directly
+  ✓ seller-dashboard.test.js does not require a version-specific module directly
+  ✓ settlement-paid.test.js does not require a version-specific module directly
+  ✓ shortcuts.test.js does not require a version-specific module directly
+  ✓ test-suite-portability.test.js does not require a version-specific module directly
+  ✓ theme-render.test.js does not require a version-specific module directly
+  ✓ theme.test.js does not require a version-specific module directly
+  ✓ translation-coverage.test.js does not require a version-specific module directly
+  ✓ translation-scope.test.js does not require a version-specific module directly
+  ✓ ui-imports.test.js does not require a version-specific module directly
+  ✓ the shared opener reads genesis.db (31 tables via Database)
+  ✓ no exclusion is kept for a script that no longer exists
+  ✓ every test script either runs inside test:all or says why it cannot (38 scripts)
+  ✓ a clean transcript is counted as clean
+  ✓ a suite that died is counted as a failure, not as nothing
+  ✓ a suite that reports a failure fails the run
+  (driver: Database)
+--- 44 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:theme
+> node tests/theme.test.js
+
+--- THEME TESTS (Light Mode / Dark Mode / System Default) ---
+  ✓ Light Mode and Dark Mode can both be selected and resolved
+  ✓ System Default follows the operating system
+  ✓ Light Mode is the documented default when nothing is stored
+  ✓ the selected theme is persisted and read back (reload and restart)
+  ✓ switching theme updates the document immediately (no reload)
+  ✓ the header switch moves between the two explicit themes
+  ✓ a stored Dark Mode is painted before the interface loads
+  ✓ System Default is honoured at first paint
+  ✓ each application paints its own remembered theme
+  ✓ an application without a preference of its own inherits the shared one
+  ✓ an unreadable or empty preference falls back to Light Mode
+  ✓ Light and Dark define exactly the same token names
+  ✓ the tokens cover every role the design system needs
+  ✓ Dark Mode backgrounds are dark and its text is light
+  ✓ every colour class used in the interface is themed for Dark Mode
+    33 screens/components audited, 833 colour usages, all themed
+  ✓ every screen of the application is audited for both themes
+  ✓ the interface audit covers every screen of the application
+  ✓ Light Mode keeps accounting text readable (WCAG AA contrast)
+  ✓ Dark Mode keeps accounting text readable (WCAG AA contrast)
+    132 text/background pairs measured in both themes
+  ✓ no text/background pair in the interface falls below 4.5:1 in either theme
+  ✓ cards, panels and shells stay distinguishable from their background
+  ✓ the theme provider is mounted above the whole application
+  ✓ the theme provider stores, resolves and paints the preference
+  ✓ the header switch and the Settings control share the same manager
+  ✓ Settings offers an Appearance section with all three options
+  ✓ the theme is translated in English, French and Kinyarwanda
+  ✓ changing the theme never touches the accounting backend
+  ✓ the server and the database schema are unchanged by theming
+  ✓ the desktop bridge exposes the theme without weakening security
+  ✓ the shell validates the theme it receives and tints the window
+  ✓ printing keeps the light palette whatever the theme is
+  ✓ reduced-motion preferences are respected
+  ✓ native controls follow the theme through color-scheme
+  ✓ the production stylesheet carries both palettes
+--- 34 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:themeui
+> node tests/theme-render.test.js
+
+--- THEME RENDER TESTS (React, compiled with esbuild) ---
+  ✓ the theme UI compiles and renders
+  ✓ the Settings control offers Light, Dark and System with sun/moon/monitor icons
+  ✓ the control renders in French and Kinyarwanda
+  ✓ the stored preference is what the interface shows
+  ✓ an unknown stored value falls back to Light Mode
+  ✓ the header switch is a single button with an accessible name
+--- 6 passed, 0 failed ---
+
+> genesis-accounting@1.0.1 test:ui-imports
+> node tests/ui-imports.test.js
+
+  ✓ every component drawn in the interface is imported or declared
+  ✓ the Messenger icon in the header is imported where it is drawn
+  ✓ every icon imported from lucide-react exists in the installed package
+  ✓ every relative import resolves to a real file
+  ✓ every named import is really exported by the module it comes from
+  ✓ the three applications are covered by the same rules
+  ✓ an undefined component is reported by this checker (self-test)
+--- 7 passed, 0 failed ---
