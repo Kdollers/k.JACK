@@ -46,9 +46,16 @@ function loadModule(file) {
   const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
   const sandbox = { exports: {}, require, console, module: { exports: {} } };
   sandbox.module = sandbox;
+  // The path is written into generated JavaScript, so it must be quoted as a
+  // JavaScript string. A bare path is silently corrupted on Windows, where
+  // path.join produces backslashes and "\r", "\n" and "\t" inside the
+  // literal become a carriage return, a newline and a tab: the module is then
+  // looked for at a path that has had whole directories eaten out of it.
+  // JSON.stringify produces a properly escaped double-quoted literal.
+  const layoutPath = JSON.stringify(path.join(ROOT, 'src/receipt/receiptLayout.js'));
   const code = source.replace(
     /import\s*\{([^}]+)\}\s*from\s*'\.\/receiptLayout\.js';/g,
-    "const {$1} = require('" + path.join(ROOT, 'src/receipt/receiptLayout.js') + "');"
+    "const {$1} = require(" + layoutPath + ");"
   );
   // Turn `export function f` / `export const c` into plain declarations.
   const plain = code.replace(/^export\s+(async\s+)?(function|const|let|class)\s/gm, '$1$2 ');
