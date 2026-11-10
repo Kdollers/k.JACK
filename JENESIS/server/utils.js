@@ -10,12 +10,95 @@ function generateId(prefix = 'id') {
   return `${prefix}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
 }
 
-function roundTo(num, decimals = 2) {
-  const factor = Math.pow(10, decimals);
-  return Math.round((Number(num) + Number.EPSILON) * factor) / factor;
+/**
+ * Expands exponential notation ("1e-7", "1.5e+21") into a plain decimal
+ * string. Every later step works on digits, and "1e-7" has no digit position
+ * to round at until it is written out.
+ */
+function toPlainDecimalString(n) {
+  const s = String(n);
+  if (!/e/i.test(s)) return s;
+  const m = /^([+-]?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/.exec(s);
+  if (!m) return s;
+  const [, sign, int, frac = '', exp] = m;
+  const digits = int + frac;
+  const point = int.length + Number(exp);
+  let out;
+  if (point <= 0) out = '0.' + '0'.repeat(-point) + digits;
+  else if (point >= digits.length) out = digits + '0'.repeat(point - digits.length);
+  else out = digits.slice(0, point) + '.' + digits.slice(point);
+  return (sign === '-' ? '-' : '') + out;
 }
 
-module.exports = { generateId, roundTo };
+/** Puts a rounded number back together, and never returns -0. */
+function assembleNumber(negative, intDigits, fracDigits, decimals) {
+  const int = intDigits.replace(/^0+(?=\d)/, '') || '0';
+  const frac = decimals > 0 ? (fracDigits || '').padEnd(decimals, '0').slice(0, decimals) : '';
+  const value = Number(int + (frac ? '.' + frac : ''));
+  return negative && value !== 0 ? -value : value;
+}
+
+/**
+ * Rounds a number to a fixed number of decimal places, exactly.
+ *
+ * This is the one function every money calculation in JENESIS goes through, so
+ * an error here is an error in the accounts. It used to be:
+ *
+ *     Math.round((Number(num) + Number.EPSILON) * factor) / factor
+ *
+ * which is wrong in two ways. Multiplying first re-introduces the very error it
+ * was trying to avoid - 8.165 * 100 is 816.4999999999999, so it rounded down to
+ * 8.16 - and for negative numbers it was not merely imprecise but broken:
+ * roundTo(-1.005, 2) returned -1, throwing the cents away.
+ *
+ * That second fault is the serious one now that JENESIS accepts negative
+ * entries. A debit of -1.005 rounded to -1.00 while the matching credit of
+ * 1.005 rounded to 1.01 leaves the entry a cent out of balance, which is
+ * exactly what double-entry accounting must never do.
+ *
+ * So the rounding is done on the digits of the number's shortest decimal
+ * representation - the string that reads back as the same number - rather than
+ * on a scaled float. Ties go AWAY FROM ZERO, so a debit and its matching
+ * credit always round to equal and opposite values and the entry stays
+ * balanced.
+ */
+function roundTo(num, decimals = 2) {
+  const n = Number(num);
+  if (!Number.isFinite(n)) return 0;
+  let d = Math.trunc(Number(decimals));
+  if (!Number.isFinite(d) || d < 0) d = 2;
+  if (d > 12) d = 12; // beyond this a decimal string stops being meaningful
+
+  const plain = toPlainDecimalString(n);
+  const negative = plain.charAt(0) === '-';
+  const body = negative ? plain.slice(1) : plain;
+  const dot = body.indexOf('.');
+  const intDigits = dot === -1 ? body : body.slice(0, dot);
+  const fracDigits = dot === -1 ? '' : body.slice(dot + 1);
+
+  // Keep `d` fraction digits and look at the next one to decide the rounding.
+  const keptFrac = fracDigits.slice(0, d);
+  const nextDigit = fracDigits.charAt(d);
+  if (!nextDigit || Number(nextDigit) < 5) {
+    return assembleNumber(negative, intDigits, keptFrac, d);
+  }
+
+  // The next digit is 5 or more: add one to the last kept digit, carrying.
+  const digits = (intDigits + keptFrac).split('');
+  let i = digits.length - 1;
+  for (;;) {
+    if (i < 0) { digits.unshift('1'); break; }
+    if (digits[i] === '9') { digits[i] = '0'; i -= 1; continue; }
+    digits[i] = String(Number(digits[i]) + 1);
+    break;
+  }
+  const all = digits.join('');
+  if (d === 0) return assembleNumber(negative, all, '', 0);
+  const splitAt = Math.max(0, all.length - d);
+  return assembleNumber(negative, all.slice(0, splitAt) || '0', all.slice(splitAt), d);
+}
+
+module.exports = { generateId, roundTo, toPlainDecimalString };
 
 /**
  * Business-rule error with a stable machine code and optional structured
