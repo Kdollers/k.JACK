@@ -4,6 +4,8 @@ import { useI18n } from '../i18n';
 import { useShortcuts, useShortcutAction } from '../context/ShortcutsContext';
 import { SHORTCUTS, formatCombo, normalizeCombo } from '../shortcuts';
 import { HELP, HELP_ORDER } from './helpContent';
+import { APP_HELP, APP_HELP_ORDER } from './appHelpContent';
+import { useAppMode } from '../context/AppModeContext';
 
 /**
  * "How to use JENESIS" — the user guide (F1).
@@ -18,7 +20,19 @@ export default function HelpView() {
   const { openReference } = useShortcuts();
   const [query, setQuery] = useState('');
 
-  const content = HELP[lang] || HELP.en;
+  // Which application this window was opened as. The guide is chosen from it
+  // automatically: nobody is ever asked which guide they want, because the
+  // question is meaningless to someone who has simply opened JENESIS Seller.
+  const { app } = useAppMode();
+  const appId = app?.id || null;
+
+  // Each application has its own guide. Only when JENESIS is opened without
+  // one - from the launcher - is the general guide shown instead.
+  const isAppGuide = !!(appId && APP_HELP[appId] && APP_HELP[appId][lang]);
+  const content = isAppGuide
+    ? APP_HELP[appId][lang]
+    : (HELP[lang] || HELP.en);
+  const order = isAppGuide ? APP_HELP_ORDER[appId] : HELP_ORDER;
 
   // Ctrl+P / F3 prints the guide — the shortcut has a real destination here.
   useShortcutAction('F3', () => { window.print(); return true; }, { order: 1 });
@@ -26,7 +40,7 @@ export default function HelpView() {
 
   const sections = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return HELP_ORDER.map((id) => ({ id, ...content.sections[id] })).filter((section) => {
+    return order.map((id) => ({ id, ...content.sections[id] })).filter((section) => {
       if (!q) return true;
       const haystack = [
         section.title,
@@ -38,7 +52,7 @@ export default function HelpView() {
       ].join(' ').toLowerCase();
       return haystack.includes(q);
     });
-  }, [content, query]);
+  }, [content, order, query]);
 
   const shortcutRows = useMemo(() => {
     const seen = new Set();
@@ -150,7 +164,12 @@ export default function HelpView() {
               </div>
             </dl>
 
-            {section.id === 'shortcuts' && (
+            {/* The live catalogue is drawn with the general guide only.
+                It lists every shortcut in the program, including the
+                accounting ones, so showing it to a Seller would hand them
+                instructions for work they are not allowed to do. Each
+                application's guide lists its own shortcuts in its steps. */}
+            {!isAppGuide && section.id === 'shortcuts' && (
               <div className="mt-4 space-y-4">
                 <div className="overflow-hidden border border-slate-200 rounded-md">
                   <table className="w-full text-xs">
@@ -201,7 +220,10 @@ export default function HelpView() {
       </div>
 
       <p className="text-[10px] text-slate-400 text-center pb-4">
-        {t('help.footer_note')}
+        {/* The general closing line mentions printing the Trial Balance, which
+            is an accounting instruction. Each application's guide ends with
+            its own note instead. */}
+        {isAppGuide ? content.closingNote : t('help.footer_note')}
       </p>
     </div>
   );
