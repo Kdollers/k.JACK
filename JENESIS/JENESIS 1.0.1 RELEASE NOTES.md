@@ -6,7 +6,7 @@ KAYIGANWA JACQUES.
 Installer: `JENESIS 1.0.1 Setup.exe` · Portable: `JENESIS 1.0.1 Portable.zip` ·
 Source: `JENESIS 1.0.1.zip`
 
-Built by GitHub Actions, run **42690870327**, commit **`38f4eca`**.
+Built by GitHub Actions, run **42909947742**, commit **`b52ee1d`**.
 
 ---
 
