@@ -401,14 +401,14 @@ is the first place to look.
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
 These are the files published by the build this page describes — GitHub Actions
-run 42909947742, commit `b52ee1d`. A later build carries different numbers; the
+run 42913206219, commit `3ca9741`. A later build carries different numbers; the
 ones on the release page always belong to the file you are downloading.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JENESIS 1.0.1 Setup.exe` | 93,078,937 bytes (88.8 MB) | `14c733c90d3cb5c69cc2abb5464d7a6a2013256b0ff1cd6e8e8d469a3b2b2284` |
-| `JENESIS 1.0.1 Portable.zip` | 133,767,177 bytes (127.6 MB) | `5b41af88755dc3004bc11681ef4b3cd44f554fbe4049c9d57e273b7aa8e54408` |
-| `JENESIS 1.0.1.zip` | 6,388,932 bytes (6.1 MB) | `c84f2358495a227f5c33fc5a9299d8b39b8df41be491673ab1af01a09adeb66e` |
+| `JENESIS 1.0.1 Setup.exe` | 93,080,532 bytes (88.8 MB) | `f9649dd982cba6dd0d9375c9e03c7fc7c414ad3e75be5632bda52782cd2c8cc3` |
+| `JENESIS 1.0.1 Portable.zip` | 133,769,919 bytes (127.6 MB) | `a53e3ba008ee244cf49e127ebeeb98de581626ada7338c2c6af000e7dad4e8de` |
+| `JENESIS 1.0.1.zip` | 6,397,117 bytes (6.1 MB) | `37db4b3161f96018713e64547c3c96a6a5d935347dd518060b45b91175ba6927` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
 named on the release page (**595 automated checks** on that build, and the
