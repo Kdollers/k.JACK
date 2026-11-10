@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAppMode } from '../context/AppModeContext';
 import { useEscapeLayer } from '../context/ShortcutsContext';
 import { useI18n } from '../i18n';
-import { Printer, X, Download } from 'lucide-react';
+import { Printer, X, Download, Receipt } from 'lucide-react';
 import JenesisLogo from './JenesisLogo';
+import { buildReceiptHtml } from '../receipt/buildReceiptHtml.js';
+import { defaultReceiptLayout, normaliseReceiptLayout } from '../receipt/receiptLayout.js';
+import useReceiptPrinting from '../receipt/useReceiptPrinting.js';
 
 export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }) {
-  const { currentCompany, formatCurrency, formatDate } = useApp();
+  const { currentCompany, formatCurrency, formatDate, currentUser } = useApp();
   const { t } = useI18n();
   // Printed documents carry the mark of the application that issued them:
   // red in JENESIS Seller, blue in JENESIS Accounting & Business.
@@ -33,6 +36,72 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
     window.print();
   };
 
+  // Printing a till receipt uses this application's saved receipt layout on
+  // this computer. It is READ ONLY: the document already exists and nothing
+  // about it changes. Printing twice gives two pieces of paper, never two
+  // sales.
+  const printing = useReceiptPrinting(app?.id || 'seller');
+  const [receiptNote, setReceiptNote] = useState(null);
+
+  const handlePrintReceipt = async () => {
+    setReceiptNote(null);
+    const stored = await printing.loadLayout();
+    const layout = normaliseReceiptLayout(stored || defaultReceiptLayout());
+
+    const doc = {
+      number: docNumber,
+      date: invoice.date,
+      cashier: currentUser?.full_name || '',
+      partyName: partyName,
+      paymentMethod: invoice.payment_method || '',
+      currency: currentCompany?.currency_code || '',
+      subtotal: invoice.subtotal,
+      taxTotal: invoice.tax_total,
+      discountTotal: invoice.discount_total,
+      total: invoice.total,
+      amountPaid: invoice.amount_paid,
+      change: 0,
+      lines: (invoice.lines || []).map((l) => ({
+        sku: l.product_sku,
+        description: l.description,
+        quantity: l.quantity,
+        unit: l.unit,
+        unitPrice: l.unit_price,
+        lineTotal: l.line_total
+      }))
+    };
+
+    const html = buildReceiptHtml(doc, {
+      name: currentCompany?.name,
+      address: currentCompany?.address,
+      phone: currentCompany?.phone,
+      email: currentCompany?.email,
+      taxId: currentCompany?.tax_id
+    }, layout, {
+      labels: {
+        'printing.phone': t('common.tel'),
+        'printing.tax_id': t('print.tin_tax_id'),
+        'printing.number': numberLabel,
+        'printing.date': t('common.date'),
+        'printing.cashier': t('printing.field_cashier'),
+        'printing.customer': isSale ? t('sales.bill_to') : t('printing.field_customer'),
+        'printing.subtotal': t('common.subtotal'),
+        'printing.tax': t('common.tax'),
+        'printing.discount': t('common.discount'),
+        'printing.total': t('common.total'),
+        'printing.paid': t('printing.field_paymentMethod'),
+        'printing.change': t('printing.change'),
+        'printing.method': t('printing.method'),
+        'printing.returned': t('printing.returned'),
+        'printing.includes_returns': t('printing.includes_returns')
+      }
+    });
+
+    const result = await printing.printReceipt(html, layout);
+    setReceiptNote(result.ok ? { ok: true, text: t('printing.sent') } : { ok: false, text: result.error });
+    setTimeout(() => setReceiptNote(null), 4000);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white text-slate-900 rounded-xl shadow-2xl max-w-4xl w-full my-8 overflow-hidden print:m-0 print:p-0 print:shadow-none print:w-full">
@@ -44,12 +113,30 @@ export default function InvoicePrintModal({ invoice, onClose, type = 'INVOICE' }
           </div>
           <div className="flex items-center space-x-2">
             <button
+              onClick={handlePrintReceipt}
+              disabled={printing.busy}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-medium flex items-center space-x-1.5 transition disabled:opacity-50"
+              title={t('printing.print_now')}
+            >
+              <Receipt className="w-3.5 h-3.5" />
+              <span>{t('print.print_receipt')}</span>
+            </button>
+            <button
               onClick={handlePrint}
               className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-medium flex items-center space-x-1.5 transition"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>{t('common.print')}</span>
             </button>
+            {/* The result of a receipt print. Plain accent text on the
+                toolbar's own dark bar, so it reads in both themes. */}
+            {receiptNote ? (
+              <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
+                receiptNote.ok ? 'text-emerald-300' : 'text-rose-200'
+              }`}>
+                {receiptNote.text}
+              </span>
+            ) : null}
             <button
               onClick={onClose}
               className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-700 transition"

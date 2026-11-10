@@ -9,6 +9,7 @@
  *   - open the JENESIS window with a locked-down renderer,
  *   - stop the backend cleanly when the application exits.
  */
+const receiptPrinter = require('./receiptPrinter.cjs');
 const { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, session, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
@@ -591,6 +592,68 @@ if (!gotLock) {
       packaged: app.isPackaged,
       app: mode
     };
+  });
+
+  // --- Receipt printing ---------------------------------------------------
+  // The renderer cannot reach a printer, so it asks the main process to do it.
+  // Nothing here reads or writes business data: printing renders a document
+  // and hands it to the spooler. A receipt printed twice is two pieces of
+  // paper, never two transactions.
+
+  // Which printers this computer has, including unavailable ones, so the user
+  // can see a printer is offline rather than wondering where it went.
+  ipcMain.handle('genesis:list-printers', async () => {
+    try {
+      return await receiptPrinter.listPrinters();
+    } catch (err) {
+      writeLog(`list-printers failed: ${err && err.message ? err.message : err}`);
+      return { printers: [], error: err && err.message ? err.message : String(err) };
+    }
+  });
+
+  // Print a finished receipt. The renderer has already built the document.
+  ipcMain.handle('genesis:print-receipt', async (event, options) => {
+    // Only accept a bounded set of fields, and only from our own interface.
+    const safe = {
+      html: String((options && options.html) || '').slice(0, 2_000_000),
+      printerName: options && options.printerName ? String(options.printerName).slice(0, 300) : null,
+      silent: options ? options.silent !== false : true,
+      copies: Math.min(10, Math.max(1, Math.round(Number(options && options.copies) || 1))),
+      landscape: !!(options && options.landscape)
+    };
+    if (options && options.pageSize && typeof options.pageSize === 'object') {
+      safe.pageSize = {
+        width: Math.round(Number(options.pageSize.width) || 0),
+        height: Math.round(Number(options.pageSize.height) || 0)
+      };
+    } else if (options && typeof options.pageSize === 'string') {
+      safe.pageSize = String(options.pageSize).slice(0, 40);
+    }
+    return receiptPrinter.printReceipt(safe);
+  });
+
+  // A test receipt, so a printer can be checked before a customer is waiting.
+  ipcMain.handle('genesis:print-test-receipt', async (event, options) => {
+    const printerName = options && options.printerName ? String(options.printerName).slice(0, 300) : null;
+    return receiptPrinter.printTestReceipt(printerName, (options && options.layout) || null);
+  });
+
+  // Layouts are stored per computer AND per application, so a Seller's 58 mm
+  // till roll and an Admin's 80 mm back-office layout never overwrite each
+  // other. The application id is validated against the known list.
+  const KNOWN_APP_IDS = ['seller', 'maintenance', 'admin', 'settings'];
+
+  ipcMain.handle('genesis:load-receipt-layout', async (event, appId) => {
+    const id = KNOWN_APP_IDS.includes(String(appId)) ? String(appId) : null;
+    if (!id) return null;
+    return receiptPrinter.loadLayout(id);
+  });
+
+  ipcMain.handle('genesis:save-receipt-layout', async (event, appId, layout) => {
+    const id = KNOWN_APP_IDS.includes(String(appId)) ? String(appId) : null;
+    if (!id) return false;
+    if (!layout || typeof layout !== 'object') return false;
+    return receiptPrinter.saveLayout(id, layout);
   });
 
   app.whenReady().then(async () => {

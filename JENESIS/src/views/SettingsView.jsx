@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import { useTheme } from '../context/ThemeContext';
+import { useAppMode } from '../context/AppModeContext';
 import ThemeToggle from '../components/ThemeToggle';
 import { apiRequest, downloadAuthenticated, translateError } from '../services/api';
 import {
@@ -19,7 +20,8 @@ import {
   AlertTriangle,
   X,
   Palette,
-  Info
+  Info,
+  Printer
 } from 'lucide-react';
 import RecordLifecycleControls, { RecordStatusFilter } from '../components/RecordLifecycle';
 
@@ -27,16 +29,49 @@ import RecordLifecycleControls, { RecordStatusFilter } from '../components/Recor
 import { useRecordMenu } from '../contextmenu/useRecordMenu';
 import UsersPanel from '../components/settings/UsersPanel';
 import TaxesPanel from '../components/settings/TaxesPanel';
+import ReceiptPrintSettings from '../components/ReceiptPrintSettings.jsx';
+
+/**
+ * A sample receipt for the printing preview. It deliberately shows the cases
+ * a shop actually hits: a fractional quantity, a returned item with a minus,
+ * and accented text. It is sample PAPER ONLY - it is never saved, posted or
+ * sent anywhere, and it changes nothing in the accounts.
+ */
+const SAMPLE_RECEIPT = {
+  number: 'INV-2026-0001',
+  date: new Date().toISOString().split('T')[0],
+  cashier: 'KAYIGANWA JACQUES',
+  partyName: 'Caf\u00e9 Inyange',
+  paymentMethod: 'Cash',
+  currency: null,
+  subtotal: 4250,
+  taxTotal: 765,
+  total: 5015,
+  amountPaid: 5015,
+  change: 0,
+  lines: [
+    { sku: 'COF-250', description: 'Caf\u00e9 moulu 250 g', quantity: 1.25, unit: 'kg', unitPrice: 2000, lineTotal: 2500 },
+    { sku: 'SUC-1', description: 'Sucre', quantity: 2, unit: 'kg', unitPrice: 875, lineTotal: 1750 },
+    // A returned half kilo: the negative case, shown with a minus.
+    { sku: 'THE-100', description: 'Th\u00e9 vert', quantity: -0.5, unit: 'kg', unitPrice: 1500, lineTotal: -750 }
+  ]
+};
 
 export default function SettingsView() {
   const { currentCompany, companies, switchCompany, showToast, refreshKey, triggerRefresh, logout } = useApp();
+  // Which application these printing settings belong to. Receipt layouts are
+  // remembered per computer AND per application, so a Seller who sets a 58 mm
+  // till roll is never overwritten by an Admin saving an 80 mm layout in the
+  // back office - even though both are saved on the same machine.
+  const { app } = useAppMode();
+  const appIdForPrinting = app?.id || 'settings';
   const { lang, setLang, t } = useI18n();
   // Right-click on a user, a tax rate or a currency: copy, edit, deactivate,
   // reactivate or delete — each only when this user may do it.
   const recordMenu = useRecordMenu();
   const { preference, systemPrefersDark } = useTheme();
 
-  const [activeTab, setActiveTab] = useState('company'); // 'company', 'users', 'taxes', 'audit', 'currencies', 'backup', 'appearance'
+  const [activeTab, setActiveTab] = useState('company'); // 'company', 'users', 'taxes', 'audit', 'currencies', 'backup', 'appearance', 'printing'
   const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   // Active / Inactive / All for the user list. The list is fetched here
@@ -400,6 +435,16 @@ export default function SettingsView() {
           <Palette className="w-3.5 h-3.5" />
           <span>{t('settings.tab_appearance')}</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('printing')}
+          className={`px-3 py-1.5 rounded-md transition whitespace-nowrap flex items-center space-x-1 ${
+            activeTab === 'printing' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Printer className="w-3.5 h-3.5" />
+          {t('settings.tab_printing')}
+        </button>
       </div>
 
       {/* Appearance Tab: Light / Dark / System Default */}
@@ -429,6 +474,34 @@ export default function SettingsView() {
           </div>
         </div>
       )}
+
+      {/* Printing Tab: the printer, the paper and the shape of a receipt.
+          The settings belong to THIS application on THIS computer, so a
+          Seller's till roll is never replaced by an Admin's back-office
+          layout. Nothing here reads or changes a transaction. */}
+      {activeTab === 'printing' && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 max-w-4xl">
+          <div className="border-b border-slate-200 pb-4 mb-5">
+            <h2 className="text-sm font-bold text-slate-800">{t('settings.tab_printing')}</h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">{t('printing.preview_hint')}</p>
+          </div>
+
+          <ReceiptPrintSettings
+            appId={appIdForPrinting}
+            company={{
+              name: currentCompany?.name,
+              legalName: currentCompany?.legal_name,
+              address: currentCompany?.address,
+              phone: currentCompany?.phone,
+              email: currentCompany?.email,
+              taxId: currentCompany?.tax_id,
+              currencyCode: currentCompany?.currency_code
+            }}
+            sampleDocument={SAMPLE_RECEIPT}
+          />
+        </div>
+      )}
+
 
       {/* 1. Company Setup Tab */}
       {activeTab === 'company' && (

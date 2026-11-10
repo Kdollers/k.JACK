@@ -38,5 +38,20 @@ contextBridge.exposeInMainWorld('genesisDesktop', {
     ipcRenderer.invoke('genesis:startup-report', {
       stage: String(stage || '').slice(0, 40),
       detail: String(detail || '').slice(0, 400)
-    })
+    }),
+
+  // --- Receipt printing ---------------------------------------------------
+  // Printing needs the operating system's print spooler, which the renderer
+  // cannot reach. These four calls ask the main process to do it. None of them
+  // can read or change a transaction: they render a document and print it.
+  listPrinters: () => ipcRenderer.invoke('genesis:list-printers'),
+  // Prints a finished receipt document to a named printer.
+  printReceipt: (options) => ipcRenderer.invoke('genesis:print-receipt', options || {}),
+  // Prints a test receipt, so a printer can be checked before it is needed.
+  printTestReceipt: (options) => ipcRenderer.invoke('genesis:print-test-receipt', options || {}),
+  // Layouts are remembered per computer AND per application, so the Seller's
+  // till roll and the Admin's back-office printer keep their own settings.
+  loadReceiptLayout: (appId) => ipcRenderer.invoke('genesis:load-receipt-layout', String(appId || '')),
+  saveReceiptLayout: (appId, layout) =>
+    ipcRenderer.invoke('genesis:save-receipt-layout', String(appId || ''), layout || {})
 });
