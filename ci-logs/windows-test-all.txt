@@ -1,9 +1,9 @@
 
-> genesis-accounting@1.0.1 test:all
-> npm run test && npm run test:decimal && npm run test:receipt && npm run test:receiptui && npm run test:apphelp && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:appsrender && npm run test:separation && npm run test:network && npm run test:contextmenu && npm run test:seller && npm run test:accesspoint && npm run test:portability && npm run test:theme && npm run test:themeui && npm run test:ui-imports
+> genesis-accounting@1.0.2 test:all
+> npm run test && npm run test:decimal && npm run test:receipt && npm run test:receiptui && npm run test:apphelp && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:appsrender && npm run test:separation && npm run test:network && npm run test:contextmenu && npm run test:seller && npm run test:accesspoint && npm run test:portability && npm run test:theme && npm run test:themeui && npm run test:ui-imports && npm run test:reportaudit && npm run test:helpgen
 
 
-> genesis-accounting@1.0.1 test
+> genesis-accounting@1.0.2 test
 > node tests/accounting-engine.test.js
 
 --- STARTING ACCOUNTING ENGINE INTEGRITY TESTS ---
@@ -19,7 +19,7 @@
 ✓ Dashboard KPI Stats calculated successfully: Sales = 18819.82 Purchases = 37288 Gross Profit = 2483.76 Net Profit = 433.76
 --- ALL ACCOUNTING ENGINE TESTS PASSED PERFECTLY! ---
 
-> genesis-accounting@1.0.1 test:decimal
+> genesis-accounting@1.0.2 test:decimal
 > node tests/decimal-negative.test.js
 
 --- STARTING DECIMAL / NEGATIVE NUMBER TESTS ---
@@ -37,11 +37,21 @@
   ✓ a refund is recorded as a negative payment and takes money out of the bank
   ✓ a refund cannot give back more than the customer ever paid
   ✓ a zero payment is refused, and a decimal refund is accepted to the cent
+  ✓ a purchase bill accepts a negative line as a correction, and reduces stock
+  ✓ the purchase correction keeps the journal entry balanced
+  ✓ a purchase of a fractional quantity lands exactly, at a fractional cost
   ✓ the books are still balanced after every decimal and negative posting
+  ✓ the forms were found and parsed
+  ✓ a sale line quantity can be negative or fractional
+  ✓ a purchase line quantity can carry a negative correction
+  ✓ a stock adjustment can decrease stock by a fraction
+  ✓ a credit note can be raised for half a unit
+  ✓ no money, cost or price field is locked to two decimals
+  ✓ a physical banknote count is still a whole number
 
---- 15 passed, 0 failed ---
+--- 25 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:receipt
+> genesis-accounting@1.0.2 test:receipt
 > node tests/receipt-layout.test.js
 
 --- STARTING RECEIPT LAYOUT TESTS ---
@@ -75,7 +85,7 @@
 
 --- 27 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:receiptui
+> genesis-accounting@1.0.2 test:receiptui
 > node tests/receipt-ui-render.test.js
 
 --- STARTING RECEIPT SETTINGS RENDER TESTS ---
@@ -98,7 +108,7 @@
 
 --- 16 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:apphelp
+> genesis-accounting@1.0.2 test:apphelp
 > node tests/app-help.test.js
 
 --- STARTING APPLICATION HELP TESTS ---
@@ -132,7 +142,7 @@
 
 --- 27 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:auth
+> genesis-accounting@1.0.2 test:auth
 > node tests/auth-security.test.js
 
 --- AUTHENTICATION & AUTHORIZATION TESTS ---
@@ -170,7 +180,7 @@
 ✓ repository genesis.db unchanged
 --- ALL AUTH TESTS PASSED ---
 
-> genesis-accounting@1.0.1 test:security
+> genesis-accounting@1.0.2 test:security
 > node tests/security-hardening.test.js
 
 --- SECURITY AND BACKUP TESTS ---
@@ -184,7 +194,7 @@
 ✓ every response carries the Content-Security-Policy and security headers
 --- 8 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:desktop
+> genesis-accounting@1.0.2 test:desktop
 > node tests/desktop-backend.test.js
 
 --- DESKTOP BACKEND LIFECYCLE TESTS ---
@@ -200,7 +210,7 @@
 ✓ backups are pruned to the configured limit and never touch the source
 --- 10 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:ops
+> genesis-accounting@1.0.2 test:ops
 > node tests/operations.test.js
 
 --- OPERATIONS TESTS (stores, receipts, counts, cash, fx, walk-in, corrections) ---
@@ -243,7 +253,7 @@
   ✓ repository genesis.db unchanged
 --- ALL OPERATIONS TESTS PASSED (36 checks) ---
 
-> genesis-accounting@1.0.1 test:migrations
+> genesis-accounting@1.0.2 test:migrations
 > node tests/migrations-v2.test.js
 
 --- MIGRATION v2 TESTS (scenario: legacy copy) ---
@@ -262,7 +272,7 @@
   ✓ repository genesis.db unchanged
 --- ALL MIGRATION TESTS PASSED ---
 
-> genesis-accounting@1.0.1 test:i18n
+> genesis-accounting@1.0.2 test:i18n
 > node tests/i18n-parity.test.js
 
 
@@ -281,7 +291,7 @@ GENESIS i18n parity tests
 --- ALL I18N PARITY TESTS PASSED (10 checks, 1262 keys per language) ---
 
 
-> genesis-accounting@1.0.1 test:fx
+> genesis-accounting@1.0.2 test:fx
 > node tests/fx-settlement.test.js
 
 --- FX SETTLEMENT TESTS (gain/loss accounts, document settlement, rate history) ---
@@ -304,7 +314,7 @@ GENESIS i18n parity tests
   ✓ repository genesis.db unchanged
 --- 17 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:fxreval
+> genesis-accounting@1.0.2 test:fxreval
 > node tests/fx-revaluation-integrity.test.js
 
 --- FX REVALUATION INTEGRITY TESTS (history, sub-ledger, isolation) ---
@@ -325,7 +335,7 @@ GENESIS i18n parity tests
   ✓ repository genesis.db unchanged
 --- 15 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:settlement
+> genesis-accounting@1.0.2 test:settlement
 > node tests/settlement-paid.test.js
 
 --- SETTLEMENT TESTS (documents created PAID, idempotent F2 settle) ---
@@ -351,7 +361,7 @@ GENESIS i18n parity tests
   ✓ repository genesis.db unchanged
 --- 20 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:shortcuts
+> genesis-accounting@1.0.2 test:shortcuts
 > node tests/shortcuts.test.js
 
 --- KEYBOARD SHORTCUT TESTS (single listener, typing safety, destinations) ---
@@ -382,7 +392,7 @@ GENESIS i18n parity tests
   ✓ a button that names its shortcut names the one the list really uses
 --- 25 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:fourapps
+> genesis-accounting@1.0.2 test:fourapps
 > node tests/four-apps.test.js
 
 --- FOUR APPLICATIONS TESTS (Seller / Network & Maintenance / Accounting & Business / Settings & Access Point) ---
@@ -404,7 +414,7 @@ GENESIS i18n parity tests
   ✓ the identity strings exist in English, French and Kinyarwanda
 --- 16 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:prod
+> genesis-accounting@1.0.2 test:prod
 > node tests/production-boot.test.js
 
   ✓ the start-up guard is a file of its own, not an inline script
@@ -430,7 +440,7 @@ GENESIS i18n parity tests
   ✓ the packaged version identifies this build
 --- 21 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:messenger
+> genesis-accounting@1.0.2 test:messenger
 > node tests/messenger.test.js
 
 --- MESSENGER TESTS (delivery, permissions, company isolation, live push) ---
@@ -454,7 +464,7 @@ GENESIS i18n parity tests
   ✓ repository genesis.db unchanged
 --- 18 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:help
+> genesis-accounting@1.0.2 test:help
 > node tests/help-content.test.js
 
 --- USER GUIDE TESTS (trilingual parity, completeness, agreement with the code) ---
@@ -475,7 +485,7 @@ GENESIS i18n parity tests
   ✓ every interface string used by the guide view is translated
 --- 15 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:reports
+> genesis-accounting@1.0.2 test:reports
 > node tests/reports-screens.test.js
 
 --- REPORTS SCREEN TESTS (the two reports that stopped the interface) ---
@@ -494,7 +504,7 @@ GENESIS i18n parity tests
   ✓ a report answer is never drawn as another report
 --- 13 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:screens
+> genesis-accounting@1.0.2 test:screens
 > node tests/screens-render.test.js
 
 --- SCREEN RENDER TESTS (every screen must draw, without a browser) ---
@@ -531,7 +541,7 @@ GENESIS i18n parity tests
   ✓ the header names the keys the shortcut list really uses
 --- 31 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:money
+> genesis-accounting@1.0.2 test:money
 > node tests/money-format.test.js
 
 --- MONEY FORMATTING TESTS (one rule, every currency) ---
@@ -546,7 +556,7 @@ GENESIS i18n parity tests
   ✓ the application context uses the shared function
 --- 9 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:translations
+> genesis-accounting@1.0.2 test:translations
 > node tests/translation-coverage.test.js
 
 
@@ -562,7 +572,7 @@ JENESIS translation coverage tests
 --- ALL TRANSLATION COVERAGE TESTS PASSED (7 checks) ---
 
 
-> genesis-accounting@1.0.1 test:translationscope
+> genesis-accounting@1.0.2 test:translationscope
 > node tests/translation-scope.test.js
 
 
@@ -574,7 +584,7 @@ JENESIS translation scope tests
 --- ALL TRANSLATION SCOPE TESTS PASSED (3 checks over 57 files) ---
 
 
-> genesis-accounting@1.0.1 test:records
+> genesis-accounting@1.0.2 test:records
 > node tests/record-lifecycle.test.js
 
 
@@ -628,7 +638,7 @@ JENESIS translation scope tests
   ✓ repository genesis.db unchanged
 --- ALL RECORD LIFECYCLE TESTS PASSED (47 checks) ---
 
-> genesis-accounting@1.0.1 test:datadir
+> genesis-accounting@1.0.2 test:datadir
 > node tests/data-location-migration.test.js
 
 --- DATA LOCATION / GENESIS->JENESIS MIGRATION TESTS ---
@@ -645,7 +655,7 @@ JENESIS translation scope tests
   ✓ the legacy database is adopted only once (a second launch is a normal launch backup)
 --- 11 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:branding
+> genesis-accounting@1.0.2 test:branding
 > node tests/branding-consistency.test.js
 
 --- BRANDING / IDENTITY TESTS ---
@@ -664,7 +674,7 @@ JENESIS translation scope tests
   ✓ no user-facing string still says Genesis (compatibility paths excepted)
 --- 13 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:appgate
+> genesis-accounting@1.0.2 test:appgate
 > node tests/app-gate.test.js
 
 --- APPLICATION ACCESS GATE TESTS (real React render, no browser) ---
@@ -676,7 +686,7 @@ JENESIS translation scope tests
   ✓ the gate is what stops the user, not an empty page
 --- 6 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:appsrender
+> genesis-accounting@1.0.2 test:appsrender
 > node tests/four-apps-render.test.js
 
 --- FOUR APPLICATIONS DRAWING TESTS (real React render, no browser) ---
@@ -699,7 +709,7 @@ JENESIS translation scope tests
   ✓ the four applications are four different colours
 --- 17 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:separation
+> genesis-accounting@1.0.2 test:separation
 > node tests/app-separation.test.js
 
 --- SEPARATION BETWEEN THE FOUR APPLICATIONS ---
@@ -729,7 +739,7 @@ JENESIS translation scope tests
   ✓ a bookkeeper still reads the tax rates from JENESIS Accounting & Business
 --- 24 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:network
+> genesis-accounting@1.0.2 test:network
 > node tests/network-maintenance.test.js
 
 --- NETWORK & MAINTENANCE: discovery, registration and status ---
@@ -751,7 +761,7 @@ JENESIS translation scope tests
   ✓ the shipped database is never touched by these tests
 --- 16 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:contextmenu
+> genesis-accounting@1.0.2 test:contextmenu
 > node tests/context-menu.test.js
 
 --- RIGHT-CLICK MENU TESTS (one menu, four applications) ---
@@ -786,7 +796,7 @@ JENESIS translation scope tests
 
 --- 28 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:seller
+> genesis-accounting@1.0.2 test:seller
 > node tests/seller-dashboard.test.js
 
 --- SELLER DASHBOARD TESTS (its own screen, the same database) ---
@@ -802,7 +812,7 @@ JENESIS translation scope tests
 
 --- 9 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:accesspoint
+> genesis-accounting@1.0.2 test:accesspoint
 > node tests/access-point.test.js
 
 --- SETTINGS & ACCESS POINT TESTS (one copy of the truth) ---
@@ -826,7 +836,7 @@ JENESIS translation scope tests
 
 --- 17 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:portability
+> genesis-accounting@1.0.2 test:portability
 > node tests/test-suite-portability.test.js
 
   - not run automatically: npm run test:e2e (drives a real browser with Playwright; neither the browser nor the Python package is installable in CI, so it stays a manual check)
@@ -856,6 +866,7 @@ JENESIS translation scope tests
   ✓ receipt-layout.test.js does not require a version-specific module directly
   ✓ receipt-ui-render.test.js does not require a version-specific module directly
   ✓ record-lifecycle.test.js does not require a version-specific module directly
+  ✓ report-audit.test.js does not require a version-specific module directly
   ✓ reports-screens.test.js does not require a version-specific module directly
   ✓ screens-render.test.js does not require a version-specific module directly
   ✓ security-hardening.test.js does not require a version-specific module directly
@@ -870,14 +881,14 @@ JENESIS translation scope tests
   ✓ ui-imports.test.js does not require a version-specific module directly
   ✓ the shared opener reads genesis.db (31 tables via Database)
   ✓ no exclusion is kept for a script that no longer exists
-  ✓ every test script either runs inside test:all or says why it cannot (38 scripts)
+  ✓ every test script either runs inside test:all or says why it cannot (40 scripts)
   ✓ a clean transcript is counted as clean
   ✓ a suite that died is counted as a failure, not as nothing
   ✓ a suite that reports a failure fails the run
   (driver: Database)
---- 44 passed, 0 failed ---
+--- 45 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:theme
+> genesis-accounting@1.0.2 test:theme
 > node tests/theme.test.js
 
 --- THEME TESTS (Light Mode / Dark Mode / System Default) ---
@@ -919,7 +930,7 @@ JENESIS translation scope tests
   ✓ the production stylesheet carries both palettes
 --- 34 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:themeui
+> genesis-accounting@1.0.2 test:themeui
 > node tests/theme-render.test.js
 
 --- THEME RENDER TESTS (React, compiled with esbuild) ---
@@ -931,7 +942,7 @@ JENESIS translation scope tests
   ✓ the header switch is a single button with an accessible name
 --- 6 passed, 0 failed ---
 
-> genesis-accounting@1.0.1 test:ui-imports
+> genesis-accounting@1.0.2 test:ui-imports
 > node tests/ui-imports.test.js
 
   ✓ every component drawn in the interface is imported or declared
@@ -942,3 +953,36 @@ JENESIS translation scope tests
   ✓ the three applications are covered by the same rules
   ✓ an undefined component is reported by this checker (self-test)
 --- 7 passed, 0 failed ---
+
+> genesis-accounting@1.0.2 test:reportaudit
+> node tests/report-audit.test.js
+
+--- STARTING REPORT AUDIT (NEGATIVES AND DECIMALS) ---
+  ✓ AR ageing includes a customer whose balance is negative (credit balance)
+  ✓ AR ageing nets an overpaid invoice into the bucket it belongs to
+  ✓ AR ageing still shows an ordinary debtor, and totals the two correctly
+  ✓ AR total is the sum of the rows it printed
+  ✓ AP ageing includes a supplier who was overpaid (negative balance)
+  ✓ AP ageing buckets add up to the row total, negatives included
+  ✓ inventory valuation rounds each product row to the company currency
+  ✓ inventory valuation keeps a quantity finer than two decimals
+  ✓ inventory valuation rows add up to the totals it prints
+  ✓ trial balance is still balanced with the audit fixtures in place
+  ✓ balance sheet still balances with the audit fixtures in place
+  ✓ P&L reports a returned sale as negative revenue, not as zero
+  ✓ general ledger running balance handles a negative correction
+  ✓ tax (VAT) report nets a refund against the sales it reverses
+  ✓ cash flow nets a refund out of cash receipts
+  ✓ no report emits NaN, Infinity or null where a number belongs
+  ✓ every monetary figure a report returns is already rounded to 2 decimals
+
+--- REPORT AUDIT SUMMARY ---
+  17 checks passed, 0 failed
+
+> genesis-accounting@1.0.2 test:helpgen
+> node scripts/helpgen/gen.cjs --check
+
+--- STARTING HELP GENERATOR CHECK ---
+  ✗ appHelpContent.js has drifted from its sources. Run: npm run help:build
+
+--- 0 passed, 1 failed ---
