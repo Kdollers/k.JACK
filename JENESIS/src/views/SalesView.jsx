@@ -1017,7 +1017,7 @@ export default function SalesView() {
                             <td className="py-2 px-3 text-right">
                               <input
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 required
                                 value={line.unit_price}
                                 onChange={(e) => updateLine(idx, 'unit_price', Number(e.target.value))}
@@ -1218,7 +1218,8 @@ export default function SalesView() {
                   <label className="block text-slate-600 font-semibold mb-1">{t('common.quantity')}</label>
                   <input
                     type="number"
-                    min="1"
+                    step="any"
+                    min="0.0001"
                     value={creditNoteForm.lines[0]?.quantity || 1}
                     onChange={(e) => {
                       const lines = [...creditNoteForm.lines];
@@ -1232,7 +1233,7 @@ export default function SalesView() {
                   <label className="block text-slate-600 font-semibold mb-1">{t('sales.credit_unit_price')}</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     value={creditNoteForm.lines[0]?.unitPrice || 0}
                     onChange={(e) => {
                       const lines = [...creditNoteForm.lines];

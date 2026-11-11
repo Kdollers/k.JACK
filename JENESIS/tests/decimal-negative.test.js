@@ -36,6 +36,7 @@ const { getDb } = require('../server/db');
 const {
   createJournalEntry,
   postSalesInvoice,
+  postPurchaseInvoice,
   postStockAdjustment,
   recordPayment,
   generateId,
@@ -417,6 +418,113 @@ check('a zero payment is refused, and a decimal refund is accepted to the cent',
   assert.strictEqual(after, roundTo(before - 0.25, 2), 'a quarter must come off the balance, not a whole unit');
 });
 
+// ---------------------------------------------------------------------------
+// A purchase correction: the engine must take a negative bill line before the
+// form is allowed to offer one.
+// ---------------------------------------------------------------------------
+
+check('a purchase bill accepts a negative line as a correction, and reduces stock', () => {
+  const supplier = db.prepare(`SELECT * FROM suppliers WHERE company_id = ? LIMIT 1`).get(companyId);
+  const product = db.prepare(
+    `SELECT * FROM products WHERE company_id = ? AND type = 'GOODS' AND active = 1 LIMIT 1`
+  ).get(companyId);
+  assert.ok(supplier && product, 'the company needs a supplier and a goods product');
+
+  const stockBefore = roundTo(product.current_stock, 4);
+  const correction = -0.25;
+
+  const billId = generateId('bill');
+  const billNumber = nextSequenceNumber(companyId, 'PURCHASE_INVOICE', 'BINV');
+  const date = new Date().toISOString().split('T')[0];
+  db.prepare(`
+    INSERT INTO purchase_invoices (id, company_id, bill_number, date, due_date, supplier_id,
+                                   subtotal, tax_total, total, amount_paid, balance_due, status,
+                                   created_by, created_at, currency_code, exchange_rate)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, 'DRAFT', ?, datetime('now'), 'RWF', 1)
+  `).run(billId, companyId, billNumber, date, date, supplier.id,
+         roundTo(correction * product.cost_price, 2),
+         roundTo(correction * product.cost_price, 2),
+         roundTo(correction * product.cost_price, 2),
+         user.id);
+
+  db.prepare(`
+    INSERT INTO purchase_invoice_lines (id, bill_id, product_id, description,
+                                        quantity, unit_cost, tax_rate, line_total)
+    VALUES (?, ?, ?, 'a quarter unit returned to the supplier', ?, ?, 0, ?)
+  `).run(generateId('bil'), billId, product.id, correction, product.cost_price,
+         roundTo(correction * product.cost_price, 2));
+
+  const result = postPurchaseInvoice(companyId, billId, user);
+  assert.ok(result && result.journalEntryId, 'the correcting bill must post');
+
+  const stockAfter = roundTo(
+    db.prepare(`SELECT current_stock FROM products WHERE id = ?`).get(product.id).current_stock, 4
+  );
+  assert.strictEqual(stockAfter, roundTo(stockBefore + correction, 4),
+    'a correction of -0.25 must take exactly 0.25 off the stock, no more');
+  // The correction must not drive the stock below zero: the business cannot
+  // return goods it no longer holds.
+  assert.ok(stockAfter >= 0, 'a correction must not drive stock negative');
+});
+
+check('the purchase correction keeps the journal entry balanced', () => {
+  const tb = getTrialBalance(companyId);
+  assert.strictEqual(tb.isBalanced, true,
+    `the correction unbalanced the books: ${tb.grandDebit} vs ${tb.grandCredit}`);
+});
+
+check('a purchase of a fractional quantity lands exactly, at a fractional cost', () => {
+  // Modification 1C asks for decimal quantities on the purchasing side too,
+  // and 1F asks that precision be preserved rather than rounded away: buying
+  // an eighth of a unit must add an eighth, not a rounded quarter or nothing.
+  const supplier = db.prepare(`SELECT * FROM suppliers WHERE company_id = ? LIMIT 1`).get(companyId);
+  const product = db.prepare(
+    `SELECT * FROM products WHERE company_id = ? AND type = 'GOODS' AND active = 1 LIMIT 1`
+  ).get(companyId);
+  assert.ok(supplier && product, 'the company needs a supplier and a goods product');
+
+  const stockBefore = roundTo(product.current_stock, 4);
+  const qty = 0.125;
+  const unitCost = 10.3333;
+  const billId = generateId('bill');
+  const billNumber = nextSequenceNumber(companyId, 'PURCHASE_INVOICE', 'BINV') + '-FRAC';
+  const date = new Date().toISOString().split('T')[0];
+  const lineTotal = roundTo(qty * unitCost, 2);
+
+  db.prepare(`
+    INSERT INTO purchase_invoices (id, company_id, bill_number, date, due_date, supplier_id,
+                                   subtotal, tax_total, total, amount_paid, balance_due, status,
+                                   created_by, created_at, currency_code, exchange_rate)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, 'DRAFT', ?, datetime('now'), 'RWF', 1)
+  `).run(billId, companyId, billNumber, date, date, supplier.id,
+         lineTotal, lineTotal, lineTotal, user.id);
+
+  db.prepare(`
+    INSERT INTO purchase_invoice_lines (id, bill_id, product_id, description,
+                                        quantity, unit_cost, tax_rate, line_total)
+    VALUES (?, ?, ?, 'an eighth of a kilo', ?, ?, 0, ?)
+  `).run(generateId('bil'), billId, product.id, qty, unitCost, lineTotal);
+
+  postPurchaseInvoice(companyId, billId, user);
+
+  const stockAfter = roundTo(
+    db.prepare(`SELECT current_stock FROM products WHERE id = ?`).get(product.id).current_stock, 4
+  );
+  assert.strictEqual(stockAfter, roundTo(stockBefore + qty, 4),
+    'buying 0.125 must add exactly 0.125 to the stock, not 0.13 and not 0.12');
+
+  const movement = db.prepare(`
+    SELECT quantity, unit_cost FROM inventory_movements
+    WHERE company_id = ? AND reference_id = ? AND product_id = ?
+    ORDER BY created_at DESC LIMIT 1
+  `).get(companyId, billId, product.id);
+  assert.ok(movement, 'the fractional purchase must be recorded as a stock movement');
+  assert.strictEqual(roundTo(movement.quantity, 4), qty,
+    'the movement must carry the fractional quantity');
+  assert.strictEqual(roundTo(movement.unit_cost, 4), unitCost,
+    'the movement must carry the fractional unit cost');
+});
+
 check('the books are still balanced after every decimal and negative posting', () => {
   const tb = getTrialBalance(companyId);
   assert.strictEqual(
@@ -427,6 +535,122 @@ check('the books are still balanced after every decimal and negative posting', (
     roundTo(tb.grandDebit, 2), roundTo(tb.grandCredit, 2),
     `debits ${tb.grandDebit} must equal credits ${tb.grandCredit} to the cent`
   );
+});
+
+// ---------------------------------------------------------------------------
+// The forms: a database that stores -0.5 is no use if the form refuses to let
+// it be typed. These checks read the JSX and pin the constraints down, so a
+// later edit cannot quietly put a min="1" back on a field that must take a
+// half or a minus sign.
+// ---------------------------------------------------------------------------
+
+/**
+ * Every <input> in a .jsx file, with its attributes. The tag is closed at the
+ * first '>' that is not inside braces, so an arrow function in onChange
+ * (which contains '=>') does not end the tag early.
+ */
+function numberInputs(relPath) {
+  const full = path.join(__dirname, '..', relPath);
+  const src = fs.readFileSync(full, 'utf8');
+  const out = [];
+  let i = 0;
+  while ((i = src.indexOf('<input', i)) !== -1) {
+    let depth = 0;
+    let j = i + 6;
+    for (; j < src.length; j += 1) {
+      const ch = src[j];
+      if (ch === '{') depth += 1;
+      else if (ch === '}') depth -= 1;
+      else if (ch === '>' && depth <= 0) break;
+    }
+    const tag = src.slice(i, j + 1);
+    if (!/type="number"/.test(tag)) { i = j + 1; continue; }
+    const attr = (name) => {
+      const m = new RegExp(name + '="([^"]*)"').exec(tag);
+      return m ? m[1] : null;
+    };
+    const valueMatch = /value=\{([^}]*)\}/.exec(tag);
+    out.push({
+      file: relPath,
+      line: src.slice(0, i).split('\n').length,
+      value: valueMatch ? valueMatch[1].trim() : '',
+      step: attr('step'),
+      min: attr('min'),
+      max: attr('max')
+    });
+    i = j + 1;
+  }
+  return out;
+}
+
+const VIEW_FILES = [
+  'src/views/SalesView.jsx',
+  'src/views/PurchasesView.jsx',
+  'src/views/InventoryView.jsx',
+  'src/views/AccountingView.jsx',
+  'src/views/BankingView.jsx',
+  'src/views/CustomersView.jsx'
+];
+
+const allInputs = VIEW_FILES.flatMap(numberInputs);
+
+check('the forms were found and parsed', () => {
+  assert.ok(allInputs.length > 10,
+    'the parser must find the number inputs in the views; found ' + allInputs.length);
+});
+
+check('a sale line quantity can be negative or fractional', () => {
+  const field = allInputs.find(i => i.file.endsWith('SalesView.jsx') && i.value === 'line.quantity');
+  assert.ok(field, 'the sale line quantity input must exist');
+  assert.strictEqual(field.min, null,
+    'a return is typed as a negative quantity, so the sale quantity must carry no min');
+  assert.strictEqual(field.step, 'any',
+    'a sale quantity must accept any decimal, not step in whole units');
+});
+
+check('a purchase line quantity can carry a negative correction', () => {
+  const field = allInputs.find(i => i.file.endsWith('PurchasesView.jsx') && i.value === 'line.quantity');
+  assert.ok(field, 'the purchase line quantity input must exist');
+  assert.strictEqual(field.min, null,
+    'the engine accepts a negative purchase correction, so the form must not block one');
+  assert.strictEqual(field.step, 'any', 'a purchase quantity must accept any decimal');
+});
+
+check('a stock adjustment can decrease stock by a fraction', () => {
+  const field = allInputs.find(
+    i => i.file.endsWith('InventoryView.jsx') && i.value === 'adjForm.quantityChange'
+  );
+  assert.ok(field, 'the stock adjustment quantity input must exist');
+  assert.strictEqual(field.min, null,
+    'an adjustment must be able to take stock away as well as add it');
+});
+
+check('a credit note can be raised for half a unit', () => {
+  const field = allInputs.find(
+    i => i.file.endsWith('SalesView.jsx') && /creditNoteForm\.lines\[0\]\?\.quantity/.test(i.value)
+  );
+  assert.ok(field, 'the credit note quantity input must exist');
+  assert.ok(Number(field.min) < 1,
+    'returning 0.5 kg must be possible; min is ' + field.min);
+});
+
+check('no money, cost or price field is locked to two decimals', () => {
+  // The company's currency carries a configurable number of decimals (0 to 4),
+  // so step="0.01" refuses a precision the rest of JENESIS honours.
+  const offenders = allInputs.filter(i => i.step === '0.01');
+  assert.deepStrictEqual(
+    offenders.map(o => o.file + ':' + o.line + ' (' + o.value + ')'), [],
+    'these fields still refuse a third decimal: ' +
+      offenders.map(o => o.file + ':' + o.line).join(', ')
+  );
+});
+
+check('a physical banknote count is still a whole number', () => {
+  // Left alone on purpose: a cash count counts pieces of paper. Half a
+  // banknote is not a thing, so this field keeps step="1".
+  const field = allInputs.find(i => i.file.endsWith('BankingView.jsx') && i.value === 'l.quantity');
+  assert.ok(field, 'the cash count quantity input must exist');
+  assert.strictEqual(field.step, '1', 'counting banknotes must stay in whole notes');
 });
 
 console.log(`\n--- ${passed} passed, ${failed} failed ---`);

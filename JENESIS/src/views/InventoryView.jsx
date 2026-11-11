@@ -1319,13 +1319,13 @@ export default function InventoryView() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t('inventory.cost_price')} *</label>
-                  <input type="number" step="0.01" required value={productForm.cost_price}
+                  <input type="number" step="any" required value={productForm.cost_price}
                     onChange={(e) => setProductForm({ ...productForm, cost_price: Number(e.target.value) })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" />
                 </div>
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t('inventory.selling_price')} *</label>
-                  <input type="number" step="0.01" required value={productForm.selling_price}
+                  <input type="number" step="any" required value={productForm.selling_price}
                     onChange={(e) => setProductForm({ ...productForm, selling_price: Number(e.target.value) })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" />
                 </div>
@@ -1334,7 +1334,7 @@ export default function InventoryView() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-600 font-semibold mb-1">{t('inventory.min_stock')}</label>
-                  <input type="number" value={productForm.min_stock_level}
+                  <input type="number" step="any" value={productForm.min_stock_level}
                     onChange={(e) => setProductForm({ ...productForm, min_stock_level: Number(e.target.value) })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500" />
                 </div>

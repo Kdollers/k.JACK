@@ -27,6 +27,10 @@
  *
  * These guides document the program as it is. Nothing here describes a
  * feature that does not exist in JENESIS.
+ *
+ * GENERATED FILE — edit scripts/helpgen/content/{en,fr,rw}.json and run
+ * npm run help:build. Editing this file by hand loses the change on the
+ * next build.
  */
 
 export const APP_HELP_ORDER = {

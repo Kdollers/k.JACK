@@ -640,7 +640,7 @@ export default function AccountingView() {
                                 The entry must still balance before it will post. */}
                             <input
                               type="number"
-                              step="0.01"
+                              step="any"
                               value={line.debit || ''}
                               onChange={(e) => updateEntryLine(idx, 'debit', e.target.value)}
                               className="w-full px-2 py-1.5 text-right border border-slate-300 rounded font-mono font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -652,7 +652,7 @@ export default function AccountingView() {
                                 The entry must still balance before it will post. */}
                             <input
                               type="number"
-                              step="0.01"
+                              step="any"
                               value={line.credit || ''}
                               onChange={(e) => updateEntryLine(idx, 'credit', e.target.value)}
                               className="w-full px-2 py-1.5 text-right border border-slate-300 rounded font-mono font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"

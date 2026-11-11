@@ -1001,7 +1001,7 @@ export default function BankingView() {
                       mobile-money balance falls by that amount. */}
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     required
                     value={paymentForm.amount || ''}
                     onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}

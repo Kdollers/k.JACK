@@ -496,7 +496,7 @@ export default function CustomersView() {
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     value={formData.credit_limit}
                     onChange={(e) => setFormData({ ...formData, credit_limit: Number(e.target.value) })}
                     className="w-full px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"

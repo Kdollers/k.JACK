@@ -889,7 +889,6 @@ export default function PurchasesView() {
                             <td className="py-2 px-3 text-right">
                               <input
                                 type="number"
-                                min="0.01"
                                 step="any"
                                 required
                                 value={line.quantity}
@@ -900,7 +899,7 @@ export default function PurchasesView() {
                             <td className="py-2 px-3 text-right">
                               <input
                                 type="number"
-                                step="0.01"
+                                step="any"
                                 required
                                 value={line.unit_cost}
                                 onChange={(e) => updateLine(idx, 'unit_cost', Number(e.target.value))}
