@@ -1,0 +1,5 @@
+# The generated Help module is written with LF endings, and a drift check
+# compares it against its sources. Git's autocrlf would hand it back with CRLF
+# on a Windows checkout and make identical content look changed, so the file is
+# pinned to LF in every working tree.
+JENESIS/src/views/appHelpContent.js text eol=lf

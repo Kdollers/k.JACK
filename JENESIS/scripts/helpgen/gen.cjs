@@ -204,7 +204,15 @@ function main() {
     // total) so scripts/count-checks.mjs counts it. A check the counter
     // cannot see is a check the release notes cannot quote.
     console.log('--- STARTING HELP GENERATOR CHECK ---');
-    const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
+    // Line endings are not content. This generator writes LF, and a Windows
+    // checkout hands every file back with CRLF — which made this check fail
+    // on the Windows runner while passing on Linux, reporting a drift that
+    // was only ever a difference in how the lines are terminated. Compare
+    // with the endings normalised, so the check asks whether the GUIDES
+    // agree rather than whether git's autocrlf is switched on.
+    const current = fs.existsSync(OUT)
+      ? fs.readFileSync(OUT, 'utf8').replace(/\r\n/g, '\n')
+      : '';
     if (current === text) {
       console.log('  ✓ appHelpContent.js matches its sources in scripts/helpgen/content/');
       console.log('\n--- 1 passed, 0 failed ---');
