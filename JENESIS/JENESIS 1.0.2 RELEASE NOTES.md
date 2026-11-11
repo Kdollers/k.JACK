@@ -1,10 +1,10 @@
-# JENESIS 1.0.1 — release notes
+# JENESIS 1.0.2 — release notes
 
-**JENESIS 1.0.1** — desktop business and accounting software by
+**JENESIS 1.0.2** — desktop business and accounting software by
 KAYIGANWA JACQUES.
 
-Installer: `JENESIS 1.0.1 Setup.exe` · Portable: `JENESIS 1.0.1 Portable.zip` ·
-Source: `JENESIS 1.0.1.zip`
+Installer: `JENESIS 1.0.2 Setup.exe` · Portable: `JENESIS 1.0.2 Portable.zip` ·
+Source: `JENESIS 1.0.2.zip`
 
 Built by GitHub Actions, run **42921736471**, commit **`fbe7d27`**.
 
@@ -172,6 +172,105 @@ Kwinjirira`).
 
 ---
 
+## What is new in 1.0.2
+
+1.0.1 delivered the three modifications. 1.0.2 is the audit of them: every
+report was walked with negative and decimal values, and every form was checked
+against what the engine actually accepts. Four defects were found in the
+reports and four in the forms. All eight are fixed, and each now has a test
+that fails if it comes back.
+
+### Reports: values that were hidden rather than processed
+
+**AR and AP ageing dropped every credit balance.** Both filtered
+`current_balance > 0` on the customer or supplier and `balance_due > 0` on the
+invoice. Refund a customer more than they owed and the business owes *them* —
+a negative balance — and that customer vanished from the very report an
+accountant reads to find out who is owed what. An overpaid supplier
+disappeared the same way. Both reports now show every non-zero balance in
+either direction, and a negative total is printed as a negative.
+
+**Inventory valuation overstated total units by exactly two.** The line
+
+    roundTo(products.reduce((acc, p) => acc + (p.current_stock || 0), 2), 2)
+
+passes `2` as the reduce's *initial value* rather than as `roundTo`'s
+decimals, so every stock total started counting at 2. Every total units figure
+JENESIS has ever printed was two too high.
+
+**Inventory valuation printed unrounded rows under a rounded total.** 1.25 kg
+at 10.3333 showed `12.916662500000001` in the row and `12.92` in the total
+below it, so the column visibly failed to add up. Rows are now rounded to the
+currency's decimals — and quantities to *four* decimals, because a business
+selling 0.125 kg lots must not see them rounded out of its own stock total.
+
+### Forms: numbers the engine stored but nobody could type
+
+A **purchase bill line could not carry a negative correction** — the form
+demanded `min="0.01"` while `postPurchaseInvoice` handles a negative line
+correctly. A **credit note could not be raised for half a unit** — the field
+demanded `min="1"` while the engine accepts any quantity above zero. A
+**reorder point** could only be a whole number. And **nine money, cost and
+price fields were locked to `step="0.01"`**, which makes the browser reject a
+third decimal even though the company's currency is configurable to four.
+
+Three restrictions were left in place on purpose, and the tests now say so out
+loud instead of leaving someone to wonder: a stock transfer line and a goods
+receipt line are refused by the engine, so relaxing the form would only let
+the user type a value the engine then rejects (a supplier return has its own
+instrument); and the cash-count quantity counts banknotes, and half a banknote
+is not a thing.
+
+### The Help guides are generated again
+
+The four guides — 39 sections each, in English, French and Kinyarwanda — had
+no way to be regenerated, because the scripts that produced them were outside
+the repository and were lost. The sources are now data in
+`scripts/helpgen/content/`, with `npm run help:build` to write the module and
+`npm run help:check` to fail if the two drift apart. The generator reproduces
+the committed module byte for byte, which is also the proof the recovered
+sources are faithful.
+
+### This release's own tests found all of it
+
+Nothing above was found by reading code alone. `tests/report-audit.test.js`
+(17 checks) walks every reporting function with a customer who was refunded
+too much, a supplier who was overpaid, an overpaid invoice and a product held
+at 1.25 kg. `tests/decimal-negative.test.js` gained 7 checks, including one
+that reads the JSX and pins the form constraints down.
+
+**Suite: 713 checks, 0 failed, 40 suites.** 1.0.1 shipped with 684.
+
+---
+
+## JENESIS 1.0.1 — the release this one supersedes
+
+1.0.1 remains published and untouched. Its files and checksums are recorded
+here because a later build gives the download page different numbers, and
+anyone who already has 1.0.1 should still be able to prove what they have.
+
+Built by GitHub Actions (build 42921736471, from commit `fbe7d27`).
+Smoke test of the installed application: **30/30 PASS**.
+
+The build reference is written out longhand on purpose. The release
+notes are re-stamped with each build's run id and commit, and a line
+reading `run <id>, commit <sha>` would be rewritten to name the *new*
+build — which would leave this paragraph claiming 1.0.1 was built by
+1.0.2. Phrasing it as `build 42921736471` keeps it out of that pattern.
+
+```
+JENESIS 1.0.1 Setup.exe       93,144,759 bytes   d85f4db8d0e75012b5a224c7d496b6a6f792ecf2235352b84888196fa100a3de
+JENESIS 1.0.1 Portable.zip   133,858,567 bytes   b394d480945fc3db045113c5448440a69a000f1738a9de30585f649024e507d7
+JENESIS 1.0.1.zip              6,468,905 bytes   f1b82c94a6d21d778b52d309be646e6b503bd6ec8c46ca4e5b3c46bd727788c6
+```
+
+1.0.1 contained the three modifications themselves. 1.0.2 contains the audit
+of them. If you are already running 1.0.1, nothing you have recorded changes:
+no migration touches existing rows, and the corrections above only alter what
+the reports *show*, not what was posted.
+
+---
+
 ## What is new in 0.5.5
 
 ### 1. Right-click now works, everywhere
@@ -268,11 +367,13 @@ every existing configuration was preserved.
 
 | | |
 |---|---|
-| Whole automated suite | **684 checks, 0 failed, 38 suites** |
-| Decimal & negative suite (new) | 15 checks |
-| Receipt layout suite (new) | 27 checks |
-| Receipt settings render suite (new) | 16 checks |
-| Application Help suite (new) | 27 checks |
+| Whole automated suite | **713 checks, 0 failed, 40 suites** |
+| Report audit suite (new in 1.0.2) | 17 checks |
+| Decimal & negative suite | 25 checks (15 in 1.0.1) |
+| Receipt layout suite | 27 checks |
+| Receipt settings render suite | 16 checks |
+| Application Help suite | 27 checks |
+| Help generator check (new in 1.0.2) | 1 check |
 | Right-click suite | 28 checks |
 | Seller dashboard suite | 9 checks |
 | Settings & Access Point suite | 17 checks |
@@ -315,9 +416,9 @@ Each is fixed and each now has a test that fails if it comes back.
 ## What is in the release
 
 ```
-JENESIS 1.0.1 Setup.exe        Windows installer (NSIS), four desktop shortcuts
-JENESIS 1.0.1 Portable.zip     The same application without installing
-JENESIS 1.0.1.zip              Source-code backup of the finished project
+JENESIS 1.0.2 Setup.exe        Windows installer (NSIS), four desktop shortcuts
+JENESIS 1.0.2 Portable.zip     The same application without installing
+JENESIS 1.0.2.zip              Source-code backup of the finished project
 ```
 
 Each is published with a `.sha256` next to it. Verify with

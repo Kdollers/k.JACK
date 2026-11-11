@@ -1,22 +1,23 @@
-# JENESIS 1.0.1 — implementation progress
+# JENESIS 1.0.2 — implementation progress
 
-Target: **1.0.1** (from 0.5.5). Developer: KAYIGANWA JACQUES.
+Target: **1.0.2** (from 1.0.1). Developer: KAYIGANWA JACQUES.
 Branch: `arena/a2c625e8-k-jack`.
 
-Status: **all three modifications are complete, and JENESIS 1.0.1 is built and
+Status: **the three modifications are complete, and the audit of them is complete
 published.** The installer has been installed and used on a Windows Server 2022
 runner, all four shortcuts have been launched, and the smoke test of the
 installed applications passes 30/30.
 
-Test bar: **684 checks passed, 0 failed, 38 suites**
+Test bar: **713 checks passed, 0 failed, 40 suites**
 (`NODE_OPTIONS=--experimental-sqlite npm run test:all`, run from `JENESIS/`,
 and the same figure reported by the Windows runner).
-It was 531 at the start of 0.5.5 and 595 when 1.0.1 began. Anything that drops
-below 684 is a regression — four suites were added for the three modifications
-(decimal and negative 15, receipt layout 27, receipt settings render 16,
-application Help 27).
+It was 531 at the start of 0.5.5, 595 when 1.0.1 began, and 684 when 1.0.1
+shipped. Anything that drops below 713 is a regression — five suites were added
+across the two releases (decimal and negative 25, receipt layout 27, receipt
+settings render 16, application Help 27, report audit 17).
 
-Version is **1.0.1** (`package.json`, and the installer filename with it).
+Version is **1.0.2** (`package.json`, and the installer filename with it).
+1.0.1 is published and left alone; a later build never reuses its tag.
 
 ---
 
@@ -28,7 +29,7 @@ Version is **1.0.1** (`package.json`, and the installer filename with it).
 | 2 | JENESIS Seller has its own dashboard | **DONE** — new screen, admin figures removed AND refused by the server, one shared database |
 | 3 | JENESIS Settings & Access Point | **DONE** — users, access point, tax rates with safeguards, company, general, synchronization |
 | — | The bar: 595 checks, 34 suites | **DONE** — three new suites (right-click 28, Seller dashboard 9, Settings & Access Point 17) |
-| — | Windows installer, smoke test, delivery | **DONE** — published as **JENESIS 1.0.1** |
+| — | Windows installer, smoke test, delivery | **DONE** — published as **JENESIS 1.0.1**; 1.0.2 is the audited follow-on |
 
 ---
 
@@ -268,7 +269,7 @@ src/i18n/{en,fr,rw}.json   1,167 keys per language, 0 missing
 
 | Suite | Checks | Result |
 |---|---:|---|
-| Whole suite | **684** | **0 failed**, 38 suites |
+| Whole suite | **713** | **0 failed**, 40 suites |
 | Right-click (`test:contextmenu`) | 28 | pass |
 | Seller dashboard (`test:seller`) | 9 | pass |
 | Settings & Access Point (`test:accesspoint`) | 17 | pass |
@@ -358,4 +359,6 @@ that admits them.
 
 Run **42921736471**, commit `fbe7d27`.
 Published as **JENESIS 1.0.1** with `JENESIS 1.0.1 Setup.exe`,
-`JENESIS 1.0.1 Portable.zip` and `JENESIS 1.0.1.zip`, each with a `.sha256` next to it.
+`JENESIS 1.0.1 Portable.zip` and `JENESIS 1.0.1.zip`, each with a `.sha256` next
+to it. Those files are frozen: 1.0.2 publishes under its own tag, `v1.0.2`, so
+the 1.0.1 checksums above stay true for as long as that release exists.
