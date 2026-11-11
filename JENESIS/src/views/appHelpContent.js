@@ -224,14 +224,14 @@ export const APP_HELP = {
       }
     },
     fr: {
-      guideTitle: "Comment utiliser JENESIS Seller",
+      guideTitle: "Comment utiliser JENESIS Vendeur",
       guideIntro: "Un guide court pour vendre au comptoir : enregistrer une vente, trouver un produit, encaisser, imprimer un reçu, et reprendre des marchandises lorsqu'un client les rapporte.",
-      closingNote: "Chaque vente que vous enregistrez est équilibrée dans les comptes pour vous. Ce guide couvre le comptoir ; tout ce qui concerne les livres appartient à JENESIS Accounting & Business.",
+      closingNote: "Chaque vente que vous enregistrez est équilibrée dans les comptes pour vous. Ce guide couvre le comptoir ; tout ce qui concerne les livres appartient à JENESIS Comptabilité & Gestion.",
       sections: {
         seller_interface: {
           title: "L'écran du vendeur",
           purpose: "Vendre au comptoir. Tout ce dont vous avez besoin pour une vente est sur cet écran, et rien d'autre ne vous gêne.",
-          where: "JENESIS Seller (l'application rouge). Elle s'ouvre sur l'écran des ventes.",
+          where: "JENESIS Vendeur (l'application rouge). Elle s'ouvre sur l'écran des ventes.",
           steps: [
             "Regardez la colonne de gauche : elle indique où vous pouvez aller — Tableau de bord, Ventes, Clients, Stocks, Aide.",
             "La barre du haut montre l'entreprise dans laquelle vous travaillez, la date du jour, la calculatrice, le Messenger, la langue et votre nom.",
@@ -239,7 +239,7 @@ export const APP_HELP = {
           ],
           expected: "Vous voyez les chiffres du jour et pouvez commencer une vente sans ouvrir un autre écran.",
           notes: [
-            "La couleur de l'application est le rouge. Si la barre est bleue, vous êtes dans JENESIS Accounting & Business, qui contient la comptabilité et non la caisse.",
+            "La couleur de l'application est le rouge. Si la barre est bleue, vous êtes dans JENESIS Comptabilité & Gestion, qui contient la comptabilité et non la caisse.",
             "Votre nom s'affiche en haut à droite. Chaque vente que vous enregistrez est conservée sous ce nom.",
           ]
         },
@@ -267,7 +267,7 @@ export const APP_HELP = {
           steps: [
             "Tapez une partie du nom, ou le code entier, dans la case produit.",
             "La liste se raccourcit au fur et à mesure ; choisissez l'article voulu.",
-            "Si rien n'apparaît, le produit n'est peut-être pas encore créé — un administrateur ajoute les produits dans JENESIS Accounting & Business.",
+            "Si rien n'apparaît, le produit n'est peut-être pas encore créé — un administrateur ajoute les produits dans JENESIS Comptabilité & Gestion.",
           ],
           expected: "Le produit est ajouté à la vente avec son prix et le stock qu'il vous reste.",
           notes: [
@@ -309,16 +309,16 @@ export const APP_HELP = {
         seller_printing: {
           title: "Imprimer un reçu",
           purpose: "Imprimer un reçu pour le client sur l'imprimante qui se trouve au comptoir, à la façon dont votre boutique en a besoin.",
-          where: "Le bouton Imprimer le reçu sur une vente ou sur une facture enregistrée, et JENESIS Settings & Access Point → Impression pour le régler.",
+          where: "Le bouton Imprimer le reçu sur une vente ou sur une facture enregistrée, et JENESIS Paramètres & Point d'accès → Impression pour le régler.",
           steps: [
             "Sur une vente, appuyez sur Imprimer le reçu. Le reçu part directement vers l'imprimante choisie.",
-            "Pour changer son apparence, ouvrez JENESIS Settings & Access Point, allez dans Impression, et choisissez l'imprimante, le papier (58 mm, 80 mm, A4 ou une largeur personnalisée), la taille du texte et ce qui doit y figurer.",
+            "Pour changer son apparence, ouvrez JENESIS Paramètres & Point d'accès, allez dans Impression, et choisissez l'imprimante, le papier (58 mm, 80 mm, A4 ou une largeur personnalisée), la taille du texte et ce qui doit y figurer.",
             "Appuyez sur Afficher l'aperçu pour voir le reçu exactement tel qu'il sera imprimé, et sur Imprimer un reçu de test pour vérifier l'imprimante avant qu'un client n'attende.",
             "Appuyez sur Enregistrer ces paramètres quand cela vous convient.",
           ],
           expected: "Le reçu s'imprime sur le papier choisi, avec les informations choisies, et cela reste ainsi pour la prochaine fois.",
           notes: [
-            "Les paramètres que vous enregistrez appartiennent à JENESIS Seller sur cet ordinateur. Les enregistrer ne change pas l'impression de JENESIS Accounting & Business.",
+            "Les paramètres que vous enregistrez appartiennent à JENESIS Vendeur sur cet ordinateur. Les enregistrer ne change pas l'impression de JENESIS Comptabilité & Gestion.",
             "Les décimales s'impriment telles que vous les tapez — 1,25 reste 1,25 — et un article retourné s'affiche avec un signe moins et la mention « retourné ».",
             "Imprimer un reçu ne modifie pas la vente. L'imprimer deux fois donne deux morceaux de papier, pas deux ventes.",
           ]
@@ -358,7 +358,7 @@ export const APP_HELP = {
         seller_shortcuts: {
           title: "Les raccourcis clavier",
           purpose: "Travailler plus vite au comptoir sans chercher la souris.",
-          where: "N'importe où dans JENESIS Seller. Appuyez sur F1 pour la liste complète.",
+          where: "N'importe où dans JENESIS Vendeur. Appuyez sur F1 pour la liste complète.",
           steps: [
             "F1 — ouvrir ce guide.",
             "F2 — commencer une nouvelle vente.",
@@ -376,7 +376,7 @@ export const APP_HELP = {
         seller_troubleshooting: {
           title: "Quand quelque chose ne va pas",
           purpose: "Régler les quelques problèmes qui arrivent à un comptoir, ou savoir qui appeler.",
-          where: "N'importe où dans JENESIS Seller.",
+          where: "N'importe où dans JENESIS Vendeur.",
           steps: [
             "« Je ne peux pas vendre cet article » — vous n'en avez plus, ou vous en avez moins que ce que vous essayez de vendre. Vérifiez le stock.",
             "« L'imprimante n'a rien fait » — vérifiez qu'elle est allumée, qu'elle a du papier et qu'elle n'affiche pas d'erreur. Imprimez un reçu de test depuis Paramètres → Impression pour vérifier.",
@@ -387,7 +387,7 @@ export const APP_HELP = {
           expected: "Vous savez ce que le message signifie et quoi faire ensuite.",
           notes: [
             "Rien de ce que vous faites au comptoir ne peut perdre la comptabilité : une correction est toujours enregistrée comme une correction, jamais effacée.",
-            "Si le programme ne démarre pas du tout, ou si un écran est blanc, c'est le travail de JENESIS Network & Maintenance.",
+            "Si le programme ne démarre pas du tout, ou si un écran est blanc, c'est le travail de JENESIS Réseau & Maintenance.",
           ]
         },
         credits: {
@@ -405,14 +405,14 @@ export const APP_HELP = {
       }
     },
     rw: {
-      guideTitle: "Uburyo bwo gukoresha JENESIS Seller",
+      guideTitle: "Uburyo bwo gukoresha JENESIS Umucuruzi",
       guideIntro: "Ubufasha bugufi bwo kugurisha ku meza yo kwishyuriraho: kwandika igurisha, gushaka igicuruzwa, kwakira amafaranga, gucapa inyemezabwishyu, no kwakira ibicuruzwa igihe umukiriya abisubije.",
-      closingNote: "Buri gurisha wanditse riringanizwa mu ibaruramari. Ubu bufasha bukubiyemo imashini yo kwishyuriraho; ibyerekeye ibitabo ni ibya JENESIS Accounting & Business.",
+      closingNote: "Buri gurisha wanditse riringanizwa mu ibaruramari. Ubu bufasha bukubiyemo imashini yo kwishyuriraho; ibyerekeye ibitabo ni ibya JENESIS Ibaruramari & Ubucuruzi.",
       sections: {
         seller_interface: {
           title: "Ipaji y'umucuruzi",
           purpose: "Kugurisha ku meza yo kwishyuriraho. Icyo ukeneye cyose mu kugurisha kiri kuri iyi paji, nta kindi kiguhagarara imbere.",
-          where: "JENESIS Seller (porogaramu itukura). Ifungura ipaji yo kugurisha.",
+          where: "JENESIS Umucuruzi (porogaramu itukura). Ifungura ipaji yo kugurisha.",
           steps: [
             "Reba inkingi ibumoso: yerekana aho ushobora kujya — Imbonerahamwe, Igurisha, Abakiriya, Ububiko, Ubufasha.",
             "Umurongo wo hejuru werekana sosiyete ukoreramo, itariki y'uyu munsi, imashini ibara, Messenger, ururimi n'izina ryawe.",
@@ -420,7 +420,7 @@ export const APP_HELP = {
           ],
           expected: "Ubona imibare y'uyu munsi kandi ushobora gutangira kugurisha utafunguye indi paji.",
           notes: [
-            "Ibara rya porogaramu ni umutuku. Niba umurongo uri ubururu, uri muri JENESIS Accounting & Business, ifite ibitabo by'ibaruramari atari imashini yo kwishyuriraho.",
+            "Ibara rya porogaramu ni umutuku. Niba umurongo uri ubururu, uri muri JENESIS Ibaruramari & Ubucuruzi, ifite ibitabo by'ibaruramari atari imashini yo kwishyuriraho.",
             "Izina ryawe riri hejuru iburyo. Igurisha ryose wanditse rijyanishwa n'iryo zina.",
           ]
         },
@@ -448,7 +448,7 @@ export const APP_HELP = {
           steps: [
             "Andika igice cy'izina, cyangwa kode yose, mu gasanduku k'igicuruzwa.",
             "Urutonde ruragabanuka uko wandika; hitamo icyo ushaka.",
-            "Niba nta kintu kigaragara, igicuruzwa gishobora kuba kitarakorwa — umuyobozi yongeramo ibicuruzwa muri JENESIS Accounting & Business.",
+            "Niba nta kintu kigaragara, igicuruzwa gishobora kuba kitarakorwa — umuyobozi yongeramo ibicuruzwa muri JENESIS Ibaruramari & Ubucuruzi.",
           ],
           expected: "Igicuruzwa cyongerwa ku igurisha hamwe n'igiciro cyacyo n'ububiko busigaye.",
           notes: [
@@ -490,16 +490,16 @@ export const APP_HELP = {
         seller_printing: {
           title: "Gucapa inyemezabwishyu",
           purpose: "Gucapira umukiriya inyemezabwishyu ku icapa iri ku meza yo kwishyuriraho, mu buryo iduka ryawe rikeneye.",
-          where: "Buto Capa inyemezabwishyu ku igurisha cyangwa ku nyemezabuguzi yabitswe, na JENESIS Settings & Access Point → Gucapa kugira ngo uyishyireho.",
+          where: "Buto Capa inyemezabwishyu ku igurisha cyangwa ku nyemezabuguzi yabitswe, na JENESIS Igenamiterere & Ahantu ho Kwinjirira → Gucapa kugira ngo uyishyireho.",
           steps: [
             "Ku igurisha, kanda Capa inyemezabwishyu. Inyemezabwishyu ijya ku icapa wahisemo.",
-            "Kugira ngo uhindure uko isa, fungura JENESIS Settings & Access Point, jya mu Gucapa, hanyuma uhitemo icapa, impapuro (58 mm, 80 mm, A4 cyangwa ubugari wihitiyemo), ingano y'inyandiko n'ibizagaragaraho.",
+            "Kugira ngo uhindure uko isa, fungura JENESIS Igenamiterere & Ahantu ho Kwinjirira, jya mu Gucapa, hanyuma uhitemo icapa, impapuro (58 mm, 80 mm, A4 cyangwa ubugari wihitiyemo), ingano y'inyandiko n'ibizagaragaraho.",
             "Kanda Erekana igerageza kugira ngo urebe inyemezabwishyu nk'uko izacapwa, na Capa inyemezabwishyu yo kugerageza kugira ngo urebe icapa mbere y'uko umukiriya ategereza.",
             "Kanda Bika iyi miterere iyo bikunejeje.",
           ],
           expected: "Inyemezabwishyu icapa ku rupapuro wahisemo, ifite ibisobanuro wahisemo, kandi bikomeza bityo ubutaha.",
           notes: [
-            "Imiterere ubitse ni iya JENESIS Seller kuri iyi mudasobwa. Kubika ntibihindura icapa rya JENESIS Accounting & Business.",
+            "Imiterere ubitse ni iya JENESIS Umucuruzi kuri iyi mudasobwa. Kubika ntibihindura icapa rya JENESIS Ibaruramari & Ubucuruzi.",
             "Imibare y'ibice icapa nk'uko uyanditse — 1.25 iguma 1.25 — kandi igicuruzwa cyasubijwe cyerekana akamenyetso k'ubusa n'ijambo « byasubijwe ».",
             "Gucapa inyemezabwishyu ntibihindura igurisha. Kuyicapa kabiri bita impapuro ebyiri, atari igurisha kabiri.",
           ]
@@ -539,7 +539,7 @@ export const APP_HELP = {
         seller_shortcuts: {
           title: "Inzira ngufi za clavier",
           purpose: "Gukora vuba ku meza yo kwishyuriraho udashaka imbeba.",
-          where: "Ahantu hose muri JENESIS Seller. Kanda F1 kugira ngo ubone urutonde rwose.",
+          where: "Ahantu hose muri JENESIS Umucuruzi. Kanda F1 kugira ngo ubone urutonde rwose.",
           steps: [
             "F1 — fungura ubu bufasha.",
             "F2 — tangira igurisha rishya.",
@@ -557,7 +557,7 @@ export const APP_HELP = {
         seller_troubleshooting: {
           title: "Iyo ikintu kitagenze neza",
           purpose: "Gukemura ibibazo bike bibaho ku meza yo kwishyuriraho, cyangwa kumenya uwo bahamagara.",
-          where: "Ahantu hose muri JENESIS Seller.",
+          where: "Ahantu hose muri JENESIS Umucuruzi.",
           steps: [
             "« Sinshobora kugurisha iki kintu » — nta cyo ugifite, cyangwa ufite gito ugerageza kugurisha. Reba ingano y'ububiko.",
             "« Icapa nta cyo ryakoze » — reba ko ryakongerewe, rifite impapuro kandi ridafite ikibazo. Capa inyemezabwishyu yo kugerageza uvuye mu Imiterere → Gucapa kugira ngo urebe.",
@@ -568,7 +568,7 @@ export const APP_HELP = {
           expected: "Uzi icyo ubutumwa busobanura n'icyo gukora nyuma.",
           notes: [
             "Nta cyo ukora ku meza yo kwishyuriraho gishobora gutakaza ibaruramari: ikosora ryandikwa nk'ikosora, ntirihanagurwa na rimwe.",
-            "Niba porogaramu itangira na gato, cyangwa ipaji iri ubusa, ako ni akazi ka JENESIS Network & Maintenance.",
+            "Niba porogaramu itangira na gato, cyangwa ipaji iri ubusa, ako ni akazi ka JENESIS Umuyoboro & Kubungabunga.",
           ]
         },
         credits: {
@@ -767,14 +767,14 @@ export const APP_HELP = {
       }
     },
     fr: {
-      guideTitle: "Comment utiliser JENESIS Accounting & Business",
+      guideTitle: "Comment utiliser JENESIS Comptabilité & Gestion",
       guideIntro: "Un guide court pour tenir les comptes : passer des écritures, enregistrer des achats, produire les rapports, et décider ce que chacun a le droit de faire.",
       closingNote: "Chaque écriture que vous validez est équilibrée avant d'être acceptée, afin que les rapports correspondent toujours aux livres.",
       sections: {
         admin_dashboard: {
           title: "Le tableau de bord",
           purpose: "Voir l'état de l'entreprise d'un coup d'œil avant d'entrer dans le détail.",
-          where: "Tableau de bord dans la colonne de gauche de JENESIS Accounting & Business (l'application bleue).",
+          where: "Tableau de bord dans la colonne de gauche de JENESIS Comptabilité & Gestion (l'application bleue).",
           steps: [
             "Ouvrez le tableau de bord pour voir les ventes, les achats, ce que les clients doivent, ce que vous devez aux fournisseurs et le bénéfice à ce jour.",
             "Utilisez la période en haut pour regarder un autre intervalle.",
@@ -899,7 +899,7 @@ export const APP_HELP = {
         admin_functions: {
           title: "Les fonctions d'administrateur",
           purpose: "Les tâches que seul un administrateur fait : configurer l'entreprise et garder les données en sécurité.",
-          where: "JENESIS Settings & Access Point, et Paramètres dans JENESIS Accounting & Business.",
+          where: "JENESIS Paramètres & Point d'accès, et Paramètres dans JENESIS Comptabilité & Gestion.",
           steps: [
             "Configurez l'entreprise : le nom, l'adresse, le numéro fiscal et la devise.",
             "Faites une sauvegarde avant toute opération risquée, et conservez le fichier ailleurs que sur cet ordinateur.",
@@ -915,7 +915,7 @@ export const APP_HELP = {
         admin_shortcuts: {
           title: "Les raccourcis clavier",
           purpose: "Se déplacer dans la comptabilité sans chercher la souris.",
-          where: "N'importe où dans JENESIS Accounting & Business. Appuyez sur F1 pour la liste complète.",
+          where: "N'importe où dans JENESIS Comptabilité & Gestion. Appuyez sur F1 pour la liste complète.",
           steps: [
             "F1 — ouvrir ce guide.",
             "Ctrl+Maj+L — le grand livre.",
@@ -946,14 +946,14 @@ export const APP_HELP = {
       }
     },
     rw: {
-      guideTitle: "Uburyo bwo gukoresha JENESIS Accounting & Business",
+      guideTitle: "Uburyo bwo gukoresha JENESIS Ibaruramari & Ubucuruzi",
       guideIntro: "Ubufasha bugufi bwo gucunga ibitabo: kwandika inyandiko, kwandika kugura, gukora raporo, no kwemeza ibyo buri muntu yemerewe gukora.",
       closingNote: "Buri nyandiko wemeje iringanizwa mbere yo kwemerwa, kugira ngo raporo zihorana n'ibitabo.",
       sections: {
         admin_dashboard: {
           title: "Imbonerahamwe",
           purpose: "Kureba uko ubucuruzi bumeze mu kanya gato mbere yo kwinjira mu bisobanuro.",
-          where: "Imbonerahamwe mu nkingi ibumoso ya JENESIS Accounting & Business (porogaramu y'ubururu).",
+          where: "Imbonerahamwe mu nkingi ibumoso ya JENESIS Ibaruramari & Ubucuruzi (porogaramu y'ubururu).",
           steps: [
             "Fungura Imbonerahamwe kugira ngo urebe igurisha, kugura, ibyo abakiriya barimo, ibyo urimo abatanga ibicuruzwa, n'inyungu kugeza ubu.",
             "Koresha igihe cyo hejuru kugira ngo urebe ikindi gihe.",
@@ -1078,7 +1078,7 @@ export const APP_HELP = {
         admin_functions: {
           title: "Imirimo y'umuyobozi",
           purpose: "Imirimo umuyobozi gusa akora: gushyiraho sosiyete, no kurinda amakuru.",
-          where: "JENESIS Settings & Access Point, na Imiterere muri JENESIS Accounting & Business.",
+          where: "JENESIS Igenamiterere & Ahantu ho Kwinjirira, na Imiterere muri JENESIS Ibaruramari & Ubucuruzi.",
           steps: [
             "Shyiraho sosiyete: izina, aderesi, nimero y'umusoro n'ifaranga.",
             "Kora ububiko bw'amakuru (backup) mbere yo gukora ikintu gishobora guteza akaga, kandi ubike dosiye ahandi hatari kuri iyi mudasobwa.",
@@ -1094,7 +1094,7 @@ export const APP_HELP = {
         admin_shortcuts: {
           title: "Inzira ngufi za clavier",
           purpose: "Kugendagenda mu bitabo udashaka imbeba.",
-          where: "Ahantu hose muri JENESIS Accounting & Business. Kanda F1 kugira ngo ubone urutonde rwose.",
+          where: "Ahantu hose muri JENESIS Ibaruramari & Ubucuruzi. Kanda F1 kugira ngo ubone urutonde rwose.",
           steps: [
             "F1 — fungura ubu bufasha.",
             "Ctrl+Maj+L — igitabo rusange.",
@@ -1252,14 +1252,14 @@ export const APP_HELP = {
       }
     },
     fr: {
-      guideTitle: "Comment utiliser JENESIS Network & Maintenance",
+      guideTitle: "Comment utiliser JENESIS Réseau & Maintenance",
       guideIntro: "Un guide court pour garder le service JENESIS en marche : les réglages réseau, la connexion des autres ordinateurs de la boutique, et quoi vérifier quand l'un d'eux n'atteint pas JENESIS.",
       closingNote: "Tout ce que fait cette application concerne le service et le réseau. Elle ne modifie jamais les comptes.",
       sections: {
         maint_interface: {
           title: "L'écran de maintenance",
           purpose: "Garder le service JENESIS en marche et les ordinateurs du réseau en contact avec lui.",
-          where: "JENESIS Network & Maintenance (l'application verte).",
+          where: "JENESIS Réseau & Maintenance (l'application verte).",
           steps: [
             "Ouvrez l'application pour voir si le service tourne et quels ordinateurs sont connectés.",
             "L'écran montre l'état du service, l'adresse que les autres ordinateurs utilisent, et la liste des ordinateurs trouvés sur le réseau.",
@@ -1274,7 +1274,7 @@ export const APP_HELP = {
         maint_network: {
           title: "La configuration réseau",
           purpose: "Définir l'adresse et le port que les autres ordinateurs utilisent pour atteindre JENESIS.",
-          where: "La section réseau de JENESIS Network & Maintenance.",
+          where: "La section réseau de JENESIS Réseau & Maintenance.",
           steps: [
             "Vérifiez l'adresse affichée : c'est l'adresse de cet ordinateur sur le réseau local.",
             "Le port est le numéro sur lequel JENESIS écoute. Les autres ordinateurs doivent utiliser le même.",
@@ -1289,7 +1289,7 @@ export const APP_HELP = {
         maint_connect: {
           title: "Connecter les ordinateurs du réseau",
           purpose: "Permettre aux autres ordinateurs de la boutique d'utiliser les mêmes données JENESIS.",
-          where: "La liste des ordinateurs dans JENESIS Network & Maintenance, et les réglages de connexion sur l'autre ordinateur.",
+          where: "La liste des ordinateurs dans JENESIS Réseau & Maintenance, et les réglages de connexion sur l'autre ordinateur.",
           steps: [
             "Assurez-vous que chaque ordinateur est sur le même réseau local.",
             "Sur l'autre ordinateur, ouvrez JENESIS et pointez-le vers l'adresse et le port affichés ici.",
@@ -1304,7 +1304,7 @@ export const APP_HELP = {
         maint_manage: {
           title: "Gérer les connexions",
           purpose: "Voir qui est connecté, et traiter un ordinateur qui ne devrait pas l'être.",
-          where: "La liste des ordinateurs dans JENESIS Network & Maintenance.",
+          where: "La liste des ordinateurs dans JENESIS Réseau & Maintenance.",
           steps: [
             "La liste montre chaque ordinateur trouvé, s'il répond, et s'il est connecté maintenant.",
             "Appuyez sur Actualiser pour chercher à nouveau.",
@@ -1319,7 +1319,7 @@ export const APP_HELP = {
         maint_troubleshooting: {
           title: "Dépannage réseau",
           purpose: "Comprendre pourquoi un ordinateur n'atteint pas JENESIS, et corriger le problème.",
-          where: "JENESIS Network & Maintenance.",
+          where: "JENESIS Réseau & Maintenance.",
           steps: [
             "« L'autre ordinateur n'arrive pas à se connecter » — vérifiez que les deux sont sur le même réseau, que cet ordinateur est allumé, et qu'un pare-feu ne bloque pas le port.",
             "« Un ordinateur a disparu de la liste » — il est peut-être éteint ou en veille. Appuyez sur Actualiser pour chercher à nouveau.",
@@ -1329,28 +1329,28 @@ export const APP_HELP = {
           ],
           expected: "Vous savez laquelle des quelques causes habituelles c'est, et quoi faire.",
           notes: [
-            "Ce que vous ne pouvez pas résoudre ici est une question de comptabilité pour JENESIS Accounting & Business, pas une question de réseau.",
+            "Ce que vous ne pouvez pas résoudre ici est une question de comptabilité pour JENESIS Comptabilité & Gestion, pas une question de réseau.",
             "Le service écrit un journal. C'est le premier endroit où regarder quand quelque chose ne démarre pas.",
           ]
         },
         maint_settings: {
           title: "Les paramètres",
           purpose: "Les quelques réglages qui appartiennent au service plutôt qu'à la comptabilité.",
-          where: "La section paramètres de JENESIS Network & Maintenance.",
+          where: "La section paramètres de JENESIS Réseau & Maintenance.",
           steps: [
             "Ouvrez la section paramètres pour voir ce qui peut être changé ici.",
             "Ne changez que ce qui est nécessaire, et redémarrez le service ensuite si on vous le demande.",
           ],
           expected: "Le service fonctionne comme vous l'avez réglé.",
           notes: [
-            "Les coordonnées de l'entreprise, les utilisateurs, les taxes, les devises et l'impression se règlent dans JENESIS Settings & Access Point, pas ici.",
+            "Les coordonnées de l'entreprise, les utilisateurs, les taxes, les devises et l'impression se règlent dans JENESIS Paramètres & Point d'accès, pas ici.",
             "Cette application ne modifie jamais la comptabilité.",
           ]
         },
         maint_shortcuts: {
           title: "Les raccourcis clavier",
           purpose: "Se déplacer à l'écran sans chercher la souris.",
-          where: "N'importe où dans JENESIS Network & Maintenance. Appuyez sur F1 pour la liste complète.",
+          where: "N'importe où dans JENESIS Réseau & Maintenance. Appuyez sur F1 pour la liste complète.",
           steps: [
             "F1 — ouvrir ce guide.",
             "Alt+T — changer l'apparence claire ou sombre.",
@@ -1377,14 +1377,14 @@ export const APP_HELP = {
       }
     },
     rw: {
-      guideTitle: "Uburyo bwo gukoresha JENESIS Network & Maintenance",
+      guideTitle: "Uburyo bwo gukoresha JENESIS Umuyoboro & Kubungabunga",
       guideIntro: "Ubufasha bugufi bwo kugumisha serivisi ya JENESIS ikora: imiterere ya réseau, guhuza andi mamudasobwa yo mu iduka, n'ibyo kureba iyo imwe muri yo itagera kuri JENESIS.",
       closingNote: "Ibyo iyi porogaramu ikora byose bireba serivisi na réseau. Ntihindura ibaruramari na rimwe.",
       sections: {
         maint_interface: {
           title: "Ipaji yo gufata neza",
           purpose: "Kugumisha serivisi ya JENESIS ikora n'amamudasobwa yo kuri réseau avugana na yo.",
-          where: "JENESIS Network & Maintenance (porogaramu y'icyatsi).",
+          where: "JENESIS Umuyoboro & Kubungabunga (porogaramu y'icyatsi).",
           steps: [
             "Fungura porogaramu kugira ngo urebe niba serivisi irimo gukora n'amamudasobwa ahujwe.",
             "Ipaji yerekana imiterere ya serivisi, aderesi andi mamudasobwa akoresha, n'urutonde rw'amamudasobwa abonetse kuri réseau.",
@@ -1399,7 +1399,7 @@ export const APP_HELP = {
         maint_network: {
           title: "Imiterere ya réseau",
           purpose: "Gushyiraho aderesi n'umuryango andi mamudasobwa akoresha kugira ngo agere kuri JENESIS.",
-          where: "Igice cya réseau muri JENESIS Network & Maintenance.",
+          where: "Igice cya réseau muri JENESIS Umuyoboro & Kubungabunga.",
           steps: [
             "Reba aderesi yerekanwe: ni aderesi y'iyi mudasobwa kuri réseau y'aho.",
             "Umuryango ni numero JENESIS yumviraho. Andi mamudasobwa akeneye umwe.",
@@ -1414,7 +1414,7 @@ export const APP_HELP = {
         maint_connect: {
           title: "Guhuza amamudasobwa kuri réseau",
           purpose: "Kureka andi mamudasobwa yo mu iduka agakoresha amakuru amwe ya JENESIS.",
-          where: "Urutonde rw'amamudasobwa muri JENESIS Network & Maintenance, n'imiterere yo guhuza ku yindi mudasobwa.",
+          where: "Urutonde rw'amamudasobwa muri JENESIS Umuyoboro & Kubungabunga, n'imiterere yo guhuza ku yindi mudasobwa.",
           steps: [
             "Menya neza ko buri mudasobwa iri kuri réseau imwe y'aho.",
             "Ku yindi mudasobwa, fungura JENESIS uyiyobore kuri aderesi n'umuryango werekanwe hano.",
@@ -1429,7 +1429,7 @@ export const APP_HELP = {
         maint_manage: {
           title: "Gucunga uhuza",
           purpose: "Kureba uwo uhuye, no kugenza mudasobwa itagombye kuba ihujwe.",
-          where: "Urutonde rw'amamudasobwa muri JENESIS Network & Maintenance.",
+          where: "Urutonde rw'amamudasobwa muri JENESIS Umuyoboro & Kubungabunga.",
           steps: [
             "Urutonde rwerekana buri mudasobwa yabonetse, niba isubiza, kandi niba ihujwe ubu.",
             "Kanda Ongera urebe kugira ngo wongere ushake.",
@@ -1444,7 +1444,7 @@ export const APP_HELP = {
         maint_troubleshooting: {
           title: "Gukemura ibibazo bya réseau",
           purpose: "Kumenya impamvu mudasobwa itagera kuri JENESIS, no kuyikemura.",
-          where: "JENESIS Network & Maintenance.",
+          where: "JENESIS Umuyoboro & Kubungabunga.",
           steps: [
             "« Indi mudasobwa ntishobora guhuza » — reba ko zombi ziri kuri réseau imwe, ko iyi mudasobwa yakongerewe, kandi ko umuryango utabujijwe na pare-feu.",
             "« Mudasobwa yabuze ku rutonde » — ishobora kuba yazimye cyangwa iri mu bitotsi. Kanda Ongera urebe kugira ngo wongere ushake.",
@@ -1454,28 +1454,28 @@ export const APP_HELP = {
           ],
           expected: "Uzi impamvu imwe muri nkeya zisanzwe ari yo, n'icyo gukora.",
           notes: [
-            "Icyo udashobora gukemura hano ni ikibazo cy'ibaruramari kuri JENESIS Accounting & Business, atari icya réseau.",
+            "Icyo udashobora gukemura hano ni ikibazo cy'ibaruramari kuri JENESIS Ibaruramari & Ubucuruzi, atari icya réseau.",
             "Serivisi yandika inyandiko. Ni ho ha mbere ho kureba iyo ikintu kitangiye.",
           ]
         },
         maint_settings: {
           title: "Imiterere",
           purpose: "Imimerere mike ibarizwa kuri serivisi aho kuba iy'ibaruramari.",
-          where: "Igice cy'imiterere muri JENESIS Network & Maintenance.",
+          where: "Igice cy'imiterere muri JENESIS Umuyoboro & Kubungabunga.",
           steps: [
             "Fungura igice cy'imiterere kugira ngo urebe ibishobora guhinduka hano.",
             "Hindura gusa ibyo ukeneye, kandi wongere utangize serivisi nyuma niba ubisabwe.",
           ],
           expected: "Serivisi ikora uko wayishyizeho.",
           notes: [
-            "Amakuru ya sosiyete, abakoresha, imisoro, amafaranga no gucapa bishyirwa muri JENESIS Settings & Access Point, atari hano.",
+            "Amakuru ya sosiyete, abakoresha, imisoro, amafaranga no gucapa bishyirwa muri JENESIS Igenamiterere & Ahantu ho Kwinjirira, atari hano.",
             "Iyi porogaramu ntihindura ibaruramari na rimwe.",
           ]
         },
         maint_shortcuts: {
           title: "Inzira ngufi za clavier",
           purpose: "Kugendagenda kuri paji udashaka imbeba.",
-          where: "Ahantu hose muri JENESIS Network & Maintenance. Kanda F1 kugira ngo ubone urutonde rwose.",
+          where: "Ahantu hose muri JENESIS Umuyoboro & Kubungabunga. Kanda F1 kugira ngo ubone urutonde rwose.",
           steps: [
             "F1 — fungura ubu bufasha.",
             "Alt+T — hindura imiterere y'umucyo cyangwa umwijima.",
@@ -1649,14 +1649,14 @@ export const APP_HELP = {
       }
     },
     fr: {
-      guideTitle: "Comment utiliser JENESIS Settings & Access Point",
+      guideTitle: "Comment utiliser JENESIS Paramètres & Point d'accès",
       guideIntro: "Un guide court pour configurer JENESIS : les imprimantes, la forme d'un reçu, la langue, l'apparence claire ou sombre, et les options qui déterminent comment l'entreprise est enregistrée.",
       closingNote: "Tout ce que vous changez ici concerne le comportement de JENESIS. Rien n'efface ce qui a déjà été enregistré.",
       sections: {
         set_overview: {
           title: "À quoi servent les Paramètres",
           purpose: "Configurer JENESIS : l'entreprise, les utilisateurs, les taxes, les devises, la sauvegarde, l'apparence et l'impression.",
-          where: "JENESIS Settings & Access Point (l'application jaune), ou Paramètres dans JENESIS Accounting & Business.",
+          where: "JENESIS Paramètres & Point d'accès (l'application jaune), ou Paramètres dans JENESIS Comptabilité & Gestion.",
           steps: [
             "Les onglets en haut sont : Entreprise, Utilisateurs, Taxes, Audit, Devises, Sauvegarde, Apparence et Impression.",
             "Ouvrez l'onglet voulu, changez ce qui est nécessaire, et enregistrez.",
@@ -1699,7 +1699,7 @@ export const APP_HELP = {
           ],
           expected: "Le reçu s'imprime comme vous l'avez conçu, et reste ainsi.",
           notes: [
-            "Ces paramètres appartiennent à l'application dans laquelle vous êtes. Les enregistrer dans JENESIS Seller ne change pas JENESIS Accounting & Business, et inversement.",
+            "Ces paramètres appartiennent à l'application dans laquelle vous êtes. Les enregistrer dans JENESIS Vendeur ne change pas JENESIS Comptabilité & Gestion, et inversement.",
             "L'aperçu est le document d'impression réel à taille réelle : si une ligne y est coupée, elle sera coupée sur le papier.",
             "Les décimales et les retours s'impriment correctement : 1,25 reste 1,25, et un article retourné porte un signe moins et la mention « retourné ».",
             "L'impression ne modifie jamais une vente, un paiement ni une écriture. Elle ne produit que du papier.",
@@ -1730,7 +1730,7 @@ export const APP_HELP = {
           expected: "L'interface change immédiatement et votre choix est retenu.",
           notes: [
             "Chaque application JENESIS retient sa propre apparence : la caisse peut être claire pendant que le bureau est sombre.",
-            "Les couleurs des quatre applications ne changent jamais : Seller est rouge, Maintenance verte, Accounting bleue et Settings jaune, en clair comme en sombre.",
+            "Les couleurs des quatre applications ne changent jamais : Vente est rouge, Réseau & Maintenance est verte, Comptabilité & Gestion est bleue, Paramètres & Point d'accès est jaune, en clair comme en sombre.",
           ]
         },
         set_preferences: {
@@ -1766,7 +1766,7 @@ export const APP_HELP = {
         set_troubleshooting: {
           title: "Quand un réglage ne marche pas",
           purpose: "Comprendre pourquoi un changement n'a pas pris effet.",
-          where: "N'importe où dans JENESIS Settings & Access Point.",
+          where: "N'importe où dans JENESIS Paramètres & Point d'accès.",
           steps: [
             "« Je n'arrive pas à ouvrir un onglet » — il faut être administrateur. Demandez à l'un d'eux, ou connectez-vous comme tel.",
             "« Mon imprimante n'est pas dans la liste » — vérifiez qu'elle est allumée et installée dans Windows. Appuyez sur Actualiser pour chercher à nouveau.",
@@ -1794,14 +1794,14 @@ export const APP_HELP = {
       }
     },
     rw: {
-      guideTitle: "Uburyo bwo gukoresha JENESIS Settings & Access Point",
+      guideTitle: "Uburyo bwo gukoresha JENESIS Igenamiterere & Ahantu ho Kwinjirira",
       guideIntro: "Ubufasha bugufi bwo gushyiraho JENESIS: ibyapa, imiterere y'inyemezabwishyu, ururimi, imiterere y'umucyo n'umwijima, n'amahitamo agena uko ubucuruzi bwandikwa.",
       closingNote: "Ibyo uhindura hano byose bireba imyitwarire ya JENESIS. Nta na kimwe gisiba ibyanditswe.",
       sections: {
         set_overview: {
           title: "Icyo Imiterere imariye",
           purpose: "Gushyiraho JENESIS: sosiyete, abakoresha, imisoro, amafaranga, ububiko bw'amakuru, imiterere n'icapa.",
-          where: "JENESIS Settings & Access Point (porogaramu y'umuhondo), cyangwa Imiterere muri JENESIS Accounting & Business.",
+          where: "JENESIS Igenamiterere & Ahantu ho Kwinjirira (porogaramu y'umuhondo), cyangwa Imiterere muri JENESIS Ibaruramari & Ubucuruzi.",
           steps: [
             "Udupapuro two hejuru ni: Sosiyete, Abakoresha, Imisoro, Igenzura, Amafaranga, Ububiko, Imiterere n'Icapa.",
             "Fungura igipapuro ushaka, hindura ibyo ukeneye, hanyuma ubike.",
@@ -1844,7 +1844,7 @@ export const APP_HELP = {
           ],
           expected: "Inyemezabwishyu icapa uko wayiteguye, kandi igumaho.",
           notes: [
-            "Iyi miterere ni iya porogaramu urimo. Kuyibika muri JENESIS Seller ntibihindura JENESIS Accounting & Business, no mu buryo bunyuranye.",
+            "Iyi miterere ni iya porogaramu urimo. Kuyibika muri JENESIS Umucuruzi ntibihindura JENESIS Ibaruramari & Ubucuruzi, no mu buryo bunyuranye.",
             "Igerageza ni inyandiko nyayo yo gucapa ku ngayo nyayo: niba umurongo uciweyo, uzacibwa no ku rupapuro.",
             "Imibare y'ibice n'ibyasubijwe bicapa neza: 1.25 iguma 1.25, kandi igicuruzwa cyasubijwe gifite akamenyetso k'ubusa n'ijambo « byasubijwe ».",
             "Gucapa ntibihindura igurisha, ubwishyu cyangwa inyandiko. Bikora impapuro gusa.",
@@ -1875,7 +1875,7 @@ export const APP_HELP = {
           expected: "Interface irahinduka ako kanya kandi icyo wahisemo kiribukwa.",
           notes: [
             "Buri porogaramu ya JENESIS yibuka imiterere yayo: imashini yo kwishyuriraho ishobora kuba umucyo mu gihe biro biri umwijima.",
-            "Amabara ya porogaramu enye ntahinduka: Seller ni umutuku, Maintenance icyatsi, Accounting ubururu na Settings umuhondo, mu mucyo no mu mwijima.",
+            "Amabara ya porogaramu enye ntahinduka: Ubucuruzi ni umutuku, Umuyoboro & Kubungabunga ni icyatsi, Ibaruramari & Ubucuruzi ni ubururu, Igenamiterere & Ahantu ho Kwinjirira ni umuhondo, mu mucyo no mu mwijima.",
           ]
         },
         set_preferences: {
@@ -1911,7 +1911,7 @@ export const APP_HELP = {
         set_troubleshooting: {
           title: "Iyo imiterere idakora",
           purpose: "Kumenya impamvu impinduka itagize ingaruka.",
-          where: "Ahantu hose muri JENESIS Settings & Access Point.",
+          where: "Ahantu hose muri JENESIS Igenamiterere & Ahantu ho Kwinjirira.",
           steps: [
             "« Sinshobora gufungura igipapuro » — bisaba umuyobozi. Saba umwe, cyangwa injira nk'umuyobozi.",
             "« Icapa ryanjye ntiriri ku rutonde » — reba ko ryakongerewe kandi rishyizwe muri Windows. Kanda Ongera urebe kugira ngo wongere ushake.",

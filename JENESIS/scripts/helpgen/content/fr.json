@@ -50,14 +50,14 @@
   },
   "guides": {
     "seller": {
-      "guideTitle": "Comment utiliser JENESIS Seller",
+      "guideTitle": "Comment utiliser JENESIS Vendeur",
       "guideIntro": "Un guide court pour vendre au comptoir : enregistrer une vente, trouver un produit, encaisser, imprimer un reçu, et reprendre des marchandises lorsqu'un client les rapporte.",
-      "closingNote": "Chaque vente que vous enregistrez est équilibrée dans les comptes pour vous. Ce guide couvre le comptoir ; tout ce qui concerne les livres appartient à JENESIS Accounting & Business.",
+      "closingNote": "Chaque vente que vous enregistrez est équilibrée dans les comptes pour vous. Ce guide couvre le comptoir ; tout ce qui concerne les livres appartient à JENESIS Comptabilité & Gestion.",
       "sections": {
         "seller_interface": {
           "title": "L'écran du vendeur",
           "purpose": "Vendre au comptoir. Tout ce dont vous avez besoin pour une vente est sur cet écran, et rien d'autre ne vous gêne.",
-          "where": "JENESIS Seller (l'application rouge). Elle s'ouvre sur l'écran des ventes.",
+          "where": "JENESIS Vendeur (l'application rouge). Elle s'ouvre sur l'écran des ventes.",
           "steps": [
             "Regardez la colonne de gauche : elle indique où vous pouvez aller — Tableau de bord, Ventes, Clients, Stocks, Aide.",
             "La barre du haut montre l'entreprise dans laquelle vous travaillez, la date du jour, la calculatrice, le Messenger, la langue et votre nom.",
@@ -65,7 +65,7 @@
           ],
           "expected": "Vous voyez les chiffres du jour et pouvez commencer une vente sans ouvrir un autre écran.",
           "notes": [
-            "La couleur de l'application est le rouge. Si la barre est bleue, vous êtes dans JENESIS Accounting & Business, qui contient la comptabilité et non la caisse.",
+            "La couleur de l'application est le rouge. Si la barre est bleue, vous êtes dans JENESIS Comptabilité & Gestion, qui contient la comptabilité et non la caisse.",
             "Votre nom s'affiche en haut à droite. Chaque vente que vous enregistrez est conservée sous ce nom."
           ]
         },
@@ -93,7 +93,7 @@
           "steps": [
             "Tapez une partie du nom, ou le code entier, dans la case produit.",
             "La liste se raccourcit au fur et à mesure ; choisissez l'article voulu.",
-            "Si rien n'apparaît, le produit n'est peut-être pas encore créé — un administrateur ajoute les produits dans JENESIS Accounting & Business."
+            "Si rien n'apparaît, le produit n'est peut-être pas encore créé — un administrateur ajoute les produits dans JENESIS Comptabilité & Gestion."
           ],
           "expected": "Le produit est ajouté à la vente avec son prix et le stock qu'il vous reste.",
           "notes": [
@@ -135,16 +135,16 @@
         "seller_printing": {
           "title": "Imprimer un reçu",
           "purpose": "Imprimer un reçu pour le client sur l'imprimante qui se trouve au comptoir, à la façon dont votre boutique en a besoin.",
-          "where": "Le bouton Imprimer le reçu sur une vente ou sur une facture enregistrée, et JENESIS Settings & Access Point → Impression pour le régler.",
+          "where": "Le bouton Imprimer le reçu sur une vente ou sur une facture enregistrée, et JENESIS Paramètres & Point d'accès → Impression pour le régler.",
           "steps": [
             "Sur une vente, appuyez sur Imprimer le reçu. Le reçu part directement vers l'imprimante choisie.",
-            "Pour changer son apparence, ouvrez JENESIS Settings & Access Point, allez dans Impression, et choisissez l'imprimante, le papier (58 mm, 80 mm, A4 ou une largeur personnalisée), la taille du texte et ce qui doit y figurer.",
+            "Pour changer son apparence, ouvrez JENESIS Paramètres & Point d'accès, allez dans Impression, et choisissez l'imprimante, le papier (58 mm, 80 mm, A4 ou une largeur personnalisée), la taille du texte et ce qui doit y figurer.",
             "Appuyez sur Afficher l'aperçu pour voir le reçu exactement tel qu'il sera imprimé, et sur Imprimer un reçu de test pour vérifier l'imprimante avant qu'un client n'attende.",
             "Appuyez sur Enregistrer ces paramètres quand cela vous convient."
           ],
           "expected": "Le reçu s'imprime sur le papier choisi, avec les informations choisies, et cela reste ainsi pour la prochaine fois.",
           "notes": [
-            "Les paramètres que vous enregistrez appartiennent à JENESIS Seller sur cet ordinateur. Les enregistrer ne change pas l'impression de JENESIS Accounting & Business.",
+            "Les paramètres que vous enregistrez appartiennent à JENESIS Vendeur sur cet ordinateur. Les enregistrer ne change pas l'impression de JENESIS Comptabilité & Gestion.",
             "Les décimales s'impriment telles que vous les tapez — 1,25 reste 1,25 — et un article retourné s'affiche avec un signe moins et la mention « retourné ».",
             "Imprimer un reçu ne modifie pas la vente. L'imprimer deux fois donne deux morceaux de papier, pas deux ventes."
           ]
@@ -184,7 +184,7 @@
         "seller_shortcuts": {
           "title": "Les raccourcis clavier",
           "purpose": "Travailler plus vite au comptoir sans chercher la souris.",
-          "where": "N'importe où dans JENESIS Seller. Appuyez sur F1 pour la liste complète.",
+          "where": "N'importe où dans JENESIS Vendeur. Appuyez sur F1 pour la liste complète.",
           "steps": [
             "F1 — ouvrir ce guide.",
             "F2 — commencer une nouvelle vente.",
@@ -202,7 +202,7 @@
         "seller_troubleshooting": {
           "title": "Quand quelque chose ne va pas",
           "purpose": "Régler les quelques problèmes qui arrivent à un comptoir, ou savoir qui appeler.",
-          "where": "N'importe où dans JENESIS Seller.",
+          "where": "N'importe où dans JENESIS Vendeur.",
           "steps": [
             "« Je ne peux pas vendre cet article » — vous n'en avez plus, ou vous en avez moins que ce que vous essayez de vendre. Vérifiez le stock.",
             "« L'imprimante n'a rien fait » — vérifiez qu'elle est allumée, qu'elle a du papier et qu'elle n'affiche pas d'erreur. Imprimez un reçu de test depuis Paramètres → Impression pour vérifier.",
@@ -213,7 +213,7 @@
           "expected": "Vous savez ce que le message signifie et quoi faire ensuite.",
           "notes": [
             "Rien de ce que vous faites au comptoir ne peut perdre la comptabilité : une correction est toujours enregistrée comme une correction, jamais effacée.",
-            "Si le programme ne démarre pas du tout, ou si un écran est blanc, c'est le travail de JENESIS Network & Maintenance."
+            "Si le programme ne démarre pas du tout, ou si un écran est blanc, c'est le travail de JENESIS Réseau & Maintenance."
           ]
         },
         "credits": {
@@ -231,14 +231,14 @@
       }
     },
     "admin": {
-      "guideTitle": "Comment utiliser JENESIS Accounting & Business",
+      "guideTitle": "Comment utiliser JENESIS Comptabilité & Gestion",
       "guideIntro": "Un guide court pour tenir les comptes : passer des écritures, enregistrer des achats, produire les rapports, et décider ce que chacun a le droit de faire.",
       "closingNote": "Chaque écriture que vous validez est équilibrée avant d'être acceptée, afin que les rapports correspondent toujours aux livres.",
       "sections": {
         "admin_dashboard": {
           "title": "Le tableau de bord",
           "purpose": "Voir l'état de l'entreprise d'un coup d'œil avant d'entrer dans le détail.",
-          "where": "Tableau de bord dans la colonne de gauche de JENESIS Accounting & Business (l'application bleue).",
+          "where": "Tableau de bord dans la colonne de gauche de JENESIS Comptabilité & Gestion (l'application bleue).",
           "steps": [
             "Ouvrez le tableau de bord pour voir les ventes, les achats, ce que les clients doivent, ce que vous devez aux fournisseurs et le bénéfice à ce jour.",
             "Utilisez la période en haut pour regarder un autre intervalle.",
@@ -363,7 +363,7 @@
         "admin_functions": {
           "title": "Les fonctions d'administrateur",
           "purpose": "Les tâches que seul un administrateur fait : configurer l'entreprise et garder les données en sécurité.",
-          "where": "JENESIS Settings & Access Point, et Paramètres dans JENESIS Accounting & Business.",
+          "where": "JENESIS Paramètres & Point d'accès, et Paramètres dans JENESIS Comptabilité & Gestion.",
           "steps": [
             "Configurez l'entreprise : le nom, l'adresse, le numéro fiscal et la devise.",
             "Faites une sauvegarde avant toute opération risquée, et conservez le fichier ailleurs que sur cet ordinateur.",
@@ -379,7 +379,7 @@
         "admin_shortcuts": {
           "title": "Les raccourcis clavier",
           "purpose": "Se déplacer dans la comptabilité sans chercher la souris.",
-          "where": "N'importe où dans JENESIS Accounting & Business. Appuyez sur F1 pour la liste complète.",
+          "where": "N'importe où dans JENESIS Comptabilité & Gestion. Appuyez sur F1 pour la liste complète.",
           "steps": [
             "F1 — ouvrir ce guide.",
             "Ctrl+Maj+L — le grand livre.",
@@ -410,14 +410,14 @@
       }
     },
     "maintenance": {
-      "guideTitle": "Comment utiliser JENESIS Network & Maintenance",
+      "guideTitle": "Comment utiliser JENESIS Réseau & Maintenance",
       "guideIntro": "Un guide court pour garder le service JENESIS en marche : les réglages réseau, la connexion des autres ordinateurs de la boutique, et quoi vérifier quand l'un d'eux n'atteint pas JENESIS.",
       "closingNote": "Tout ce que fait cette application concerne le service et le réseau. Elle ne modifie jamais les comptes.",
       "sections": {
         "maint_interface": {
           "title": "L'écran de maintenance",
           "purpose": "Garder le service JENESIS en marche et les ordinateurs du réseau en contact avec lui.",
-          "where": "JENESIS Network & Maintenance (l'application verte).",
+          "where": "JENESIS Réseau & Maintenance (l'application verte).",
           "steps": [
             "Ouvrez l'application pour voir si le service tourne et quels ordinateurs sont connectés.",
             "L'écran montre l'état du service, l'adresse que les autres ordinateurs utilisent, et la liste des ordinateurs trouvés sur le réseau.",
@@ -432,7 +432,7 @@
         "maint_network": {
           "title": "La configuration réseau",
           "purpose": "Définir l'adresse et le port que les autres ordinateurs utilisent pour atteindre JENESIS.",
-          "where": "La section réseau de JENESIS Network & Maintenance.",
+          "where": "La section réseau de JENESIS Réseau & Maintenance.",
           "steps": [
             "Vérifiez l'adresse affichée : c'est l'adresse de cet ordinateur sur le réseau local.",
             "Le port est le numéro sur lequel JENESIS écoute. Les autres ordinateurs doivent utiliser le même.",
@@ -447,7 +447,7 @@
         "maint_connect": {
           "title": "Connecter les ordinateurs du réseau",
           "purpose": "Permettre aux autres ordinateurs de la boutique d'utiliser les mêmes données JENESIS.",
-          "where": "La liste des ordinateurs dans JENESIS Network & Maintenance, et les réglages de connexion sur l'autre ordinateur.",
+          "where": "La liste des ordinateurs dans JENESIS Réseau & Maintenance, et les réglages de connexion sur l'autre ordinateur.",
           "steps": [
             "Assurez-vous que chaque ordinateur est sur le même réseau local.",
             "Sur l'autre ordinateur, ouvrez JENESIS et pointez-le vers l'adresse et le port affichés ici.",
@@ -462,7 +462,7 @@
         "maint_manage": {
           "title": "Gérer les connexions",
           "purpose": "Voir qui est connecté, et traiter un ordinateur qui ne devrait pas l'être.",
-          "where": "La liste des ordinateurs dans JENESIS Network & Maintenance.",
+          "where": "La liste des ordinateurs dans JENESIS Réseau & Maintenance.",
           "steps": [
             "La liste montre chaque ordinateur trouvé, s'il répond, et s'il est connecté maintenant.",
             "Appuyez sur Actualiser pour chercher à nouveau.",
@@ -477,7 +477,7 @@
         "maint_troubleshooting": {
           "title": "Dépannage réseau",
           "purpose": "Comprendre pourquoi un ordinateur n'atteint pas JENESIS, et corriger le problème.",
-          "where": "JENESIS Network & Maintenance.",
+          "where": "JENESIS Réseau & Maintenance.",
           "steps": [
             "« L'autre ordinateur n'arrive pas à se connecter » — vérifiez que les deux sont sur le même réseau, que cet ordinateur est allumé, et qu'un pare-feu ne bloque pas le port.",
             "« Un ordinateur a disparu de la liste » — il est peut-être éteint ou en veille. Appuyez sur Actualiser pour chercher à nouveau.",
@@ -487,28 +487,28 @@
           ],
           "expected": "Vous savez laquelle des quelques causes habituelles c'est, et quoi faire.",
           "notes": [
-            "Ce que vous ne pouvez pas résoudre ici est une question de comptabilité pour JENESIS Accounting & Business, pas une question de réseau.",
+            "Ce que vous ne pouvez pas résoudre ici est une question de comptabilité pour JENESIS Comptabilité & Gestion, pas une question de réseau.",
             "Le service écrit un journal. C'est le premier endroit où regarder quand quelque chose ne démarre pas."
           ]
         },
         "maint_settings": {
           "title": "Les paramètres",
           "purpose": "Les quelques réglages qui appartiennent au service plutôt qu'à la comptabilité.",
-          "where": "La section paramètres de JENESIS Network & Maintenance.",
+          "where": "La section paramètres de JENESIS Réseau & Maintenance.",
           "steps": [
             "Ouvrez la section paramètres pour voir ce qui peut être changé ici.",
             "Ne changez que ce qui est nécessaire, et redémarrez le service ensuite si on vous le demande."
           ],
           "expected": "Le service fonctionne comme vous l'avez réglé.",
           "notes": [
-            "Les coordonnées de l'entreprise, les utilisateurs, les taxes, les devises et l'impression se règlent dans JENESIS Settings & Access Point, pas ici.",
+            "Les coordonnées de l'entreprise, les utilisateurs, les taxes, les devises et l'impression se règlent dans JENESIS Paramètres & Point d'accès, pas ici.",
             "Cette application ne modifie jamais la comptabilité."
           ]
         },
         "maint_shortcuts": {
           "title": "Les raccourcis clavier",
           "purpose": "Se déplacer à l'écran sans chercher la souris.",
-          "where": "N'importe où dans JENESIS Network & Maintenance. Appuyez sur F1 pour la liste complète.",
+          "where": "N'importe où dans JENESIS Réseau & Maintenance. Appuyez sur F1 pour la liste complète.",
           "steps": [
             "F1 — ouvrir ce guide.",
             "Alt+T — changer l'apparence claire ou sombre.",
@@ -535,14 +535,14 @@
       }
     },
     "settings": {
-      "guideTitle": "Comment utiliser JENESIS Settings & Access Point",
+      "guideTitle": "Comment utiliser JENESIS Paramètres & Point d'accès",
       "guideIntro": "Un guide court pour configurer JENESIS : les imprimantes, la forme d'un reçu, la langue, l'apparence claire ou sombre, et les options qui déterminent comment l'entreprise est enregistrée.",
       "closingNote": "Tout ce que vous changez ici concerne le comportement de JENESIS. Rien n'efface ce qui a déjà été enregistré.",
       "sections": {
         "set_overview": {
           "title": "À quoi servent les Paramètres",
           "purpose": "Configurer JENESIS : l'entreprise, les utilisateurs, les taxes, les devises, la sauvegarde, l'apparence et l'impression.",
-          "where": "JENESIS Settings & Access Point (l'application jaune), ou Paramètres dans JENESIS Accounting & Business.",
+          "where": "JENESIS Paramètres & Point d'accès (l'application jaune), ou Paramètres dans JENESIS Comptabilité & Gestion.",
           "steps": [
             "Les onglets en haut sont : Entreprise, Utilisateurs, Taxes, Audit, Devises, Sauvegarde, Apparence et Impression.",
             "Ouvrez l'onglet voulu, changez ce qui est nécessaire, et enregistrez.",
@@ -585,7 +585,7 @@
           ],
           "expected": "Le reçu s'imprime comme vous l'avez conçu, et reste ainsi.",
           "notes": [
-            "Ces paramètres appartiennent à l'application dans laquelle vous êtes. Les enregistrer dans JENESIS Seller ne change pas JENESIS Accounting & Business, et inversement.",
+            "Ces paramètres appartiennent à l'application dans laquelle vous êtes. Les enregistrer dans JENESIS Vendeur ne change pas JENESIS Comptabilité & Gestion, et inversement.",
             "L'aperçu est le document d'impression réel à taille réelle : si une ligne y est coupée, elle sera coupée sur le papier.",
             "Les décimales et les retours s'impriment correctement : 1,25 reste 1,25, et un article retourné porte un signe moins et la mention « retourné ».",
             "L'impression ne modifie jamais une vente, un paiement ni une écriture. Elle ne produit que du papier."
@@ -616,7 +616,7 @@
           "expected": "L'interface change immédiatement et votre choix est retenu.",
           "notes": [
             "Chaque application JENESIS retient sa propre apparence : la caisse peut être claire pendant que le bureau est sombre.",
-            "Les couleurs des quatre applications ne changent jamais : Seller est rouge, Maintenance verte, Accounting bleue et Settings jaune, en clair comme en sombre."
+            "Les couleurs des quatre applications ne changent jamais : Vente est rouge, Réseau & Maintenance est verte, Comptabilité & Gestion est bleue, Paramètres & Point d'accès est jaune, en clair comme en sombre."
           ]
         },
         "set_preferences": {
@@ -652,7 +652,7 @@
         "set_troubleshooting": {
           "title": "Quand un réglage ne marche pas",
           "purpose": "Comprendre pourquoi un changement n'a pas pris effet.",
-          "where": "N'importe où dans JENESIS Settings & Access Point.",
+          "where": "N'importe où dans JENESIS Paramètres & Point d'accès.",
           "steps": [
             "« Je n'arrive pas à ouvrir un onglet » — il faut être administrateur. Demandez à l'un d'eux, ou connectez-vous comme tel.",
             "« Mon imprimante n'est pas dans la liste » — vérifiez qu'elle est allumée et installée dans Windows. Appuyez sur Actualiser pour chercher à nouveau.",

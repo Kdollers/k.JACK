@@ -18,6 +18,8 @@
  * from build/installer.nsh.
  */
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const { srcPath, installBrowserStubs, bundle, silenceServerRenderWarnings, escapeHtml } = require('./helpers/render-app.cjs');
 
 let passed = 0;
@@ -293,6 +295,141 @@ async function main() {
     }
     assert.ok(html.length > 800, `the launcher drew only ${html.length} characters`);
     assert.ok(!/>undefined<|NaN/.test(html), 'the launcher must not print "undefined" or "NaN"');
+  });
+
+  // -------------------------------------------------------------------------
+  // Untranslated English, caught the way a user meets it: on the screen.
+  //
+  // The parity test proves the three dictionaries agree with each other. It
+  // cannot prove a screen actually used the dictionary. A component can
+  // hard-code a string, or ask for a key that is spelled differently, and the
+  // i18n layer falls back to English rather than showing nothing — so the
+  // French screen silently starts speaking English and no key count moves.
+  //
+  // So each screen is drawn in French and Kinyarwanda and searched for the
+  // English wording of any string that DOES have a translation. If the English
+  // phrase is on the page, the translation was not used.
+  // -------------------------------------------------------------------------
+
+  const DICT = {};
+  for (const lang of ['en', 'fr', 'rw']) {
+    DICT[lang] = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '..', 'src', 'i18n', `${lang}.json`), 'utf8')
+    );
+  }
+
+  function flatten(dict, prefix = '') {
+    const out = {};
+    for (const [key, value] of Object.entries(dict)) {
+      const name = prefix ? `${prefix}.${key}` : key;
+      if (value && typeof value === 'object') Object.assign(out, flatten(value, name));
+      else out[name] = value;
+    }
+    return out;
+  }
+
+  const EN = flatten(DICT.en);
+
+  /** The words as a reader sees them: no tags, no HTML entities. */
+  function visibleText(html) {
+    return html
+      .replace(/<script[\s\S]*?<\/script>/g, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ');
+  }
+
+  /**
+   * English wordings that genuinely have a different wording in `other`.
+   *
+   * Short entries are excluded on purpose: a two-word English phrase can turn
+   * up inside a legitimate translation, and reporting that would train people
+   * to ignore this check. Templated entries are excluded because what reaches
+   * the screen is the filled-in result, never the `{placeholder}` form.
+   */
+  function translatedAway(other) {
+    const out = [];
+    for (const key of Object.keys(EN)) {
+      const english = EN[key];
+      if (typeof english !== 'string') continue;
+      if (english.length < 12) continue;
+      if (!/\s/.test(english)) continue;
+      if (/[{}<>]/.test(english)) continue;
+      const translated = other[key];
+      if (typeof translated !== 'string' || translated === english) continue;
+      // A translation that keeps the English in brackets — Kinyarwanda does
+      // this for terms with no settled wording of their own, so a reader who
+      // knows the English term is not left guessing — is a deliberate gloss,
+      // not a missing translation. Judging it as a leak would be wrong, and
+      // would also make this check noisy enough to be ignored.
+      if (translated.includes(english)) continue;
+      out.push([key, english]);
+    }
+    return out;
+  }
+
+  const PHRASES = { fr: translatedAway(flatten(DICT.fr)), rw: translatedAway(flatten(DICT.rw)) };
+
+  for (const lang of ['fr', 'rw']) {
+    const languageName = lang === 'fr' ? 'French' : 'Kinyarwanda';
+
+    check(`no screen shows untranslated English in ${languageName}`, () => {
+      const leaks = [];
+      let screensChecked = 0;
+      for (const appId of APP_IDS) {
+        for (const view of APPS[appId].views || []) {
+          const text = visibleText(render({ appId, activeView: view, lang }));
+          screensChecked += 1;
+          for (const [key, english] of PHRASES[lang]) {
+            if (text.includes(english)) {
+              leaks.push(`${appId}/${view}: shows the English "${english}" (key ${key})`);
+            }
+          }
+        }
+      }
+      assert.ok(screensChecked >= 20, `only ${screensChecked} screens were checked`);
+      assert.deepStrictEqual(
+        leaks, [],
+        `English found on ${leaks.length} place(s) in ${languageName}:\n      ` +
+        leaks.slice(0, 10).join('\n      ')
+      );
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Icons. Every screen is drawn with its sidebar and toolbar, and the icons in
+  // them are inline SVG. A screen that draws without a single icon is a screen
+  // whose icons failed to resolve — which looks like a layout that has
+  // inexplicably lost its buttons.
+  // -------------------------------------------------------------------------
+
+  check('every screen draws its icons (no screen is missing all of them)', () => {
+    const bald = [];
+    for (const appId of APP_IDS) {
+      for (const view of APPS[appId].views || []) {
+        for (const lang of ['en', 'fr', 'rw']) {
+          const html = render({ appId, activeView: view, lang });
+          const icons = (html.match(/<svg/g) || []).length;
+          if (icons === 0) bald.push(`${appId}/${view}/${lang}`);
+        }
+      }
+    }
+    assert.deepStrictEqual(bald, [], `these drew no icon at all: ${bald.slice(0, 10).join(', ')}`);
+  });
+
+  check('the JENESIS mark is drawn on every screen, in the application colour', () => {
+    const wrong = [];
+    for (const appId of APP_IDS) {
+      for (const view of APPS[appId].views || []) {
+        const html = render({ appId, activeView: view, lang: 'en' });
+        if (!html.includes(`data-jenesis-mark="${APPS[appId].tone}"`)) {
+          wrong.push(`${appId}/${view}`);
+        }
+      }
+    }
+    assert.deepStrictEqual(wrong, [], `no JENESIS mark in the right tone on: ${wrong.join(', ')}`);
   });
 
   check('the four applications are four different colours', () => {
