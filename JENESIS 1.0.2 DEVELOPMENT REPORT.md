@@ -230,7 +230,7 @@ test:all` from `JENESIS/`.
 | Right-click | 28 |
 | Seller dashboard | 9 |
 | Settings & Access Point | 17 |
-| …and 30 further suites | 546 |
+| …and 31 further suites | 546 |
 | **Total** | **713** |
 
 Notable individual checks:
@@ -243,8 +243,10 @@ Notable individual checks:
 - A refund cannot exceed what the customer paid; a zero payment is refused.
 - A purchase of 0.125 at a unit cost of 10.3333 lands on the stock and in the
   movement record exactly.
-- Trial balance balanced after every posting: **204,902.93 debits = 204,902.93
-  credits**.
+- Trial balance balanced after every posting, and again after the report
+  audit's fixtures are inserted. (The figure itself differs between runs
+  because the preview database is rebuilt each time; what the check asserts
+  is that debits equal credits to the cent, not any particular total.)
 - AR and AP ageing show credit balances and reconcile to their own rows.
 - No report emits `NaN`, `Infinity` or an unrounded figure.
 - The suite reads the JSX and pins the form constraints, so a `min="1"` cannot
@@ -387,7 +389,30 @@ project.
 
 ### JENESIS 1.0.2 — this build
 
-<!--BUILD_TABLE-->
+Built by GitHub Actions run **42933650015**, commit **`c566e25`**, on a
+GitHub-hosted Windows runner. **713 automated checks, 0 failed.**
+Installed-application smoke test: **30/30 PASS**.
+
+```
+JENESIS 1.0.2 Setup.exe       93,144,646 bytes   8fcc2cdfef56157e940d55ab330a09f0fb5d543fab8ed191d44d15277642ad41
+JENESIS 1.0.2 Portable.zip   133,859,414 bytes   15571760a597f7fa2c8c2989ef04d416ea4adf85f8c4fb7991cfaf8125e00664
+JENESIS 1.0.2.zip              6,546,939 bytes   c0836a9eee5001f62e20c522e53ad45fef531a647800b4632eb48ad04cefad8f
+```
+
+Each is published with a `.sha256` beside it. The three sizes above were read
+from the release API and agree with the numbers the build stamped into
+`DOWNLOAD.md`; the checksums appear both on the release page and in
+`DOWNLOAD.md`, and the two agree.
+
+**Two earlier builds failed and are recorded here for the avoidance of doubt.**
+Runs 42932024847 and 42932481793 both failed at "Run the full test suite" on
+Windows while passing on Linux. The cause was not the code: the new
+help-generator check compared files byte-for-byte, the generator writes LF, and
+a Windows checkout hands the file back with CRLF — so identical prose looked
+like a rewrite. It was reproduced locally by converting the file to CRLF, and
+fixed by comparing with line endings normalised and pinning the file to LF in
+`.gitattributes`. Neither failure published anything, so **v1.0.1 was never
+touched and v1.0.2 was published only by the successful run 42933650015.**
 
 ### JENESIS 1.0.1 — published earlier, untouched
 
