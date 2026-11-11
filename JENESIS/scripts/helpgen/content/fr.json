@@ -1,0 +1,683 @@
+{
+  "order": {
+    "seller": [
+      "seller_interface",
+      "seller_sales",
+      "seller_search",
+      "seller_customers",
+      "seller_receipts",
+      "seller_printing",
+      "seller_returns",
+      "seller_stock",
+      "seller_shortcuts",
+      "seller_troubleshooting",
+      "credits"
+    ],
+    "admin": [
+      "admin_dashboard",
+      "admin_accounting",
+      "admin_purchases",
+      "admin_parties",
+      "admin_taxes",
+      "admin_reports",
+      "admin_records",
+      "admin_permissions",
+      "admin_functions",
+      "admin_shortcuts",
+      "credits"
+    ],
+    "maintenance": [
+      "maint_interface",
+      "maint_network",
+      "maint_connect",
+      "maint_manage",
+      "maint_troubleshooting",
+      "maint_settings",
+      "maint_shortcuts",
+      "credits"
+    ],
+    "settings": [
+      "set_overview",
+      "set_printers",
+      "set_receipts",
+      "set_languages",
+      "set_theme",
+      "set_preferences",
+      "set_options",
+      "set_troubleshooting",
+      "credits"
+    ]
+  },
+  "guides": {
+    "seller": {
+      "guideTitle": "Comment utiliser JENESIS Seller",
+      "guideIntro": "Un guide court pour vendre au comptoir : enregistrer une vente, trouver un produit, encaisser, imprimer un reçu, et reprendre des marchandises lorsqu'un client les rapporte.",
+      "closingNote": "Chaque vente que vous enregistrez est équilibrée dans les comptes pour vous. Ce guide couvre le comptoir ; tout ce qui concerne les livres appartient à JENESIS Accounting & Business.",
+      "sections": {
+        "seller_interface": {
+          "title": "L'écran du vendeur",
+          "purpose": "Vendre au comptoir. Tout ce dont vous avez besoin pour une vente est sur cet écran, et rien d'autre ne vous gêne.",
+          "where": "JENESIS Seller (l'application rouge). Elle s'ouvre sur l'écran des ventes.",
+          "steps": [
+            "Regardez la colonne de gauche : elle indique où vous pouvez aller — Tableau de bord, Ventes, Clients, Stocks, Aide.",
+            "La barre du haut montre l'entreprise dans laquelle vous travaillez, la date du jour, la calculatrice, le Messenger, la langue et votre nom.",
+            "Le milieu de l'écran est l'endroit où la vente se construit : le client, puis les articles."
+          ],
+          "expected": "Vous voyez les chiffres du jour et pouvez commencer une vente sans ouvrir un autre écran.",
+          "notes": [
+            "La couleur de l'application est le rouge. Si la barre est bleue, vous êtes dans JENESIS Accounting & Business, qui contient la comptabilité et non la caisse.",
+            "Votre nom s'affiche en haut à droite. Chaque vente que vous enregistrez est conservée sous ce nom."
+          ]
+        },
+        "seller_sales": {
+          "title": "Enregistrer une vente",
+          "purpose": "Enregistrer ce qu'un client achète. La vente, le stock et la comptabilité sont mis à jour ensemble, vous ne saisissez donc pas deux fois la même chose.",
+          "where": "Ventes → Nouvelle vente (ou appuyez sur F2).",
+          "steps": [
+            "Choisissez le client, ou laissez le client de passage s'il n'a pas de compte.",
+            "Ajoutez chaque article : choisissez le produit, puis la quantité. Les quantités peuvent être fractionnaires — un demi-kilo s'écrit 0,5.",
+            "Vérifiez le prix et le total en bas.",
+            "Choisissez comment le client paie : espèces, banque ou argent mobile.",
+            "Appuyez sur Enregistrer (ou enregistrez le paiement) pour terminer."
+          ],
+          "expected": "La vente est enregistrée, le stock de chaque article baisse exactement de ce qui a été vendu, et l'écriture comptable est faite pour vous. Une vente de 1,25 kg retire 1,25 kg du stock — pas un kilo, ni deux.",
+          "notes": [
+            "Vous ne pouvez pas vendre plus que ce que vous avez. Si le programme refuse la vente, vérifiez d'abord le stock de cet article.",
+            "Une vente est enregistrée dès que vous la sauvegardez. Pour corriger une vente déjà enregistrée, faites un retour plutôt que de la modifier."
+          ]
+        },
+        "seller_search": {
+          "title": "Trouver un produit",
+          "purpose": "Trouver rapidement ce que le client demande, par son nom ou par le code qui y figure.",
+          "where": "La case produit sur une vente, ou Stocks → Produits.",
+          "steps": [
+            "Tapez une partie du nom, ou le code entier, dans la case produit.",
+            "La liste se raccourcit au fur et à mesure ; choisissez l'article voulu.",
+            "Si rien n'apparaît, le produit n'est peut-être pas encore créé — un administrateur ajoute les produits dans JENESIS Accounting & Business."
+          ],
+          "expected": "Le produit est ajouté à la vente avec son prix et le stock qu'il vous reste.",
+          "notes": [
+            "La recherche porte sur le nom et sur le code : le code, plus court, est souvent plus rapide quand il y a du monde.",
+            "Le stock restant s'affiche à côté du produit, vous pouvez donc répondre au client sans quitter la vente."
+          ]
+        },
+        "seller_customers": {
+          "title": "Les clients",
+          "purpose": "Vendre à crédit à un client que vous connaissez, et voir ce qu'il doit.",
+          "where": "Clients dans la colonne de gauche.",
+          "steps": [
+            "Ouvrez Clients pour voir chaque client et le solde de ce qu'il doit.",
+            "Pour en ajouter un, appuyez sur Nouveau client et remplissez le nom et, si vous l'avez, le numéro de téléphone.",
+            "Choisissez le client sur une vente lorsqu'il achète à crédit plutôt que de payer tout de suite."
+          ],
+          "expected": "Une vente à crédit augmente ce que ce client doit. Lorsqu'il vous paie plus tard, le solde baisse.",
+          "notes": [
+            "Un client qui paie à chaque fois n'a pas besoin de compte : laissez la vente sur le client de passage.",
+            "Vous pouvez voir ce qu'un client doit, mais seul un administrateur peut annuler une dette."
+          ]
+        },
+        "seller_receipts": {
+          "title": "Les reçus et l'encaissement",
+          "purpose": "Prendre l'argent et donner au client un reçu conforme à ce qu'il a acheté.",
+          "where": "La partie paiement d'une vente, et Ventes → la liste des ventes.",
+          "steps": [
+            "Choisissez comment le client paie : espèces, banque ou argent mobile.",
+            "Tapez ce qu'il vous a donné ; la monnaie est calculée pour vous.",
+            "Enregistrez la vente, puis imprimez le reçu.",
+            "Pour rendre de l'argent, enregistrez un remboursement : c'est un paiement avec un montant négatif, et l'argent sort de la caisse, de la banque ou du compte d'argent mobile que vous choisissez."
+          ],
+          "expected": "L'argent est enregistré sur le compte choisi, et le solde du client baisse de ce qu'il a payé.",
+          "notes": [
+            "Un remboursement s'écrit avec un montant négatif. Il retire l'argent du compte, et le reçu comme la comptabilité le présentent comme un remboursement.",
+            "Vous ne pouvez pas rendre plus que ce que le client a payé sur cette vente."
+          ]
+        },
+        "seller_printing": {
+          "title": "Imprimer un reçu",
+          "purpose": "Imprimer un reçu pour le client sur l'imprimante qui se trouve au comptoir, à la façon dont votre boutique en a besoin.",
+          "where": "Le bouton Imprimer le reçu sur une vente ou sur une facture enregistrée, et JENESIS Settings & Access Point → Impression pour le régler.",
+          "steps": [
+            "Sur une vente, appuyez sur Imprimer le reçu. Le reçu part directement vers l'imprimante choisie.",
+            "Pour changer son apparence, ouvrez JENESIS Settings & Access Point, allez dans Impression, et choisissez l'imprimante, le papier (58 mm, 80 mm, A4 ou une largeur personnalisée), la taille du texte et ce qui doit y figurer.",
+            "Appuyez sur Afficher l'aperçu pour voir le reçu exactement tel qu'il sera imprimé, et sur Imprimer un reçu de test pour vérifier l'imprimante avant qu'un client n'attende.",
+            "Appuyez sur Enregistrer ces paramètres quand cela vous convient."
+          ],
+          "expected": "Le reçu s'imprime sur le papier choisi, avec les informations choisies, et cela reste ainsi pour la prochaine fois.",
+          "notes": [
+            "Les paramètres que vous enregistrez appartiennent à JENESIS Seller sur cet ordinateur. Les enregistrer ne change pas l'impression de JENESIS Accounting & Business.",
+            "Les décimales s'impriment telles que vous les tapez — 1,25 reste 1,25 — et un article retourné s'affiche avec un signe moins et la mention « retourné ».",
+            "Imprimer un reçu ne modifie pas la vente. L'imprimer deux fois donne deux morceaux de papier, pas deux ventes."
+          ]
+        },
+        "seller_returns": {
+          "title": "Les retours et les remboursements",
+          "purpose": "Reprendre des marchandises et rendre de l'argent, pour que le stock et la caisse disent tous les deux la vérité.",
+          "where": "Une nouvelle vente, ou un avoir sur une facture enregistrée.",
+          "steps": [
+            "Pour reprendre des marchandises à la caisse, enregistrez l'article avec une quantité négative — pour un demi-kilo rendu, tapez -0,5.",
+            "Pour rembourser une facture entière, ouvrez la vente et créez un avoir. Indiquez si les marchandises reviennent en stock.",
+            "Pour rendre de l'argent, enregistrez un paiement avec un montant négatif."
+          ],
+          "expected": "Les marchandises retournées rentrent en stock, et l'argent que vous rendez sort de la caisse, de la banque ou du compte d'argent mobile.",
+          "notes": [
+            "L'avoir est la bonne façon de reprendre des marchandises sur une facture : il enregistre pourquoi, et il peut remettre le stock en même temps.",
+            "Une ligne négative sur une vente est la correction rapide à la caisse. Les deux fonctionnent ; l'avoir est celui qui laisse une explication complète.",
+            "Un reçu qui comporte un retour le dit, afin que le client voie que des marchandises sont revenues plutôt qu'une quantité négative vendue."
+          ]
+        },
+        "seller_stock": {
+          "title": "Vérifier ce qu'il y a en stock",
+          "purpose": "Répondre à la question d'un client, ou vérifier avant de promettre quelque chose, sans quitter le comptoir.",
+          "where": "Stocks → Produits, et le chiffre de stock affiché à côté de chaque produit sur une vente.",
+          "steps": [
+            "Ouvrez Stocks → Produits pour voir ce que vous avez de tout.",
+            "Sur une vente, le stock restant s'affiche à côté du produit quand vous le choisissez.",
+            "Utilisez la recherche pour trouver vite un produit."
+          ],
+          "expected": "Vous voyez combien vous avez d'un article avant de le vendre.",
+          "notes": [
+            "Le chiffre du stock est ce qui reste après tout ce qui a déjà été vendu : c'est la vérité à cet instant.",
+            "Les fractions sont conservées : si vous avez 2,5 kg, vous voyez 2,5 et non 2.",
+            "Seul un administrateur peut modifier ce que vous avez ; un inventaire est la bonne façon de le corriger."
+          ]
+        },
+        "seller_shortcuts": {
+          "title": "Les raccourcis clavier",
+          "purpose": "Travailler plus vite au comptoir sans chercher la souris.",
+          "where": "N'importe où dans JENESIS Seller. Appuyez sur F1 pour la liste complète.",
+          "steps": [
+            "F1 — ouvrir ce guide.",
+            "F2 — commencer une nouvelle vente.",
+            "Ctrl+Maj+K — la calculatrice.",
+            "Ctrl+Maj+C — les clients.",
+            "Alt+T — changer l'apparence claire ou sombre.",
+            "Alt+L — changer la langue."
+          ],
+          "expected": "L'écran demandé s'ouvre immédiatement.",
+          "notes": [
+            "Les raccourcis ne se déclenchent pas pendant que vous tapez : écrire un nom de produit n'en déclenche aucun par accident.",
+            "Un raccourci ne fonctionne que si vous avez le droit de faire ce qu'il fait."
+          ]
+        },
+        "seller_troubleshooting": {
+          "title": "Quand quelque chose ne va pas",
+          "purpose": "Régler les quelques problèmes qui arrivent à un comptoir, ou savoir qui appeler.",
+          "where": "N'importe où dans JENESIS Seller.",
+          "steps": [
+            "« Je ne peux pas vendre cet article » — vous n'en avez plus, ou vous en avez moins que ce que vous essayez de vendre. Vérifiez le stock.",
+            "« L'imprimante n'a rien fait » — vérifiez qu'elle est allumée, qu'elle a du papier et qu'elle n'affiche pas d'erreur. Imprimez un reçu de test depuis Paramètres → Impression pour vérifier.",
+            "« Le reçu est coupé » — le format de papier ne correspond peut-être pas à votre imprimante. Ouvrez Paramètres → Impression et choisissez 58 mm ou 80 mm selon le rouleau.",
+            "« Je me suis trompé de montant » — ne modifiez pas la vente enregistrée. Faites un retour ou un remboursement pour que la comptabilité garde un historique fidèle.",
+            "« Je suis bloqué » — attendez quelques minutes et réessayez, ou demandez à un administrateur de réinitialiser votre mot de passe."
+          ],
+          "expected": "Vous savez ce que le message signifie et quoi faire ensuite.",
+          "notes": [
+            "Rien de ce que vous faites au comptoir ne peut perdre la comptabilité : une correction est toujours enregistrée comme une correction, jamais effacée.",
+            "Si le programme ne démarre pas du tout, ou si un écran est blanc, c'est le travail de JENESIS Network & Maintenance."
+          ]
+        },
+        "credits": {
+          "title": "Qui a fait JENESIS",
+          "purpose": "Savoir qui contacter au sujet du programme.",
+          "where": "Cette section figure à la fin de chaque guide JENESIS.",
+          "steps": [
+            "JENESIS est créé et développé par KAYIGANWA JACQUES."
+          ],
+          "expected": "Vous savez à qui appartient le programme et qui le développe.",
+          "notes": [
+            "Ce guide documente le programme tel qu'il est. Il ne décrit que des fonctions qui existent dans JENESIS."
+          ]
+        }
+      }
+    },
+    "admin": {
+      "guideTitle": "Comment utiliser JENESIS Accounting & Business",
+      "guideIntro": "Un guide court pour tenir les comptes : passer des écritures, enregistrer des achats, produire les rapports, et décider ce que chacun a le droit de faire.",
+      "closingNote": "Chaque écriture que vous validez est équilibrée avant d'être acceptée, afin que les rapports correspondent toujours aux livres.",
+      "sections": {
+        "admin_dashboard": {
+          "title": "Le tableau de bord",
+          "purpose": "Voir l'état de l'entreprise d'un coup d'œil avant d'entrer dans le détail.",
+          "where": "Tableau de bord dans la colonne de gauche de JENESIS Accounting & Business (l'application bleue).",
+          "steps": [
+            "Ouvrez le tableau de bord pour voir les ventes, les achats, ce que les clients doivent, ce que vous devez aux fournisseurs et le bénéfice à ce jour.",
+            "Utilisez la période en haut pour regarder un autre intervalle.",
+            "Ouvrez un chiffre pour aller aux écritures qui le composent."
+          ],
+          "expected": "Vous voyez comment va l'entreprise et pouvez aller droit sur ce qui semble faux.",
+          "notes": [
+            "Chaque chiffre est calculé à partir des écritures comptables : il correspond donc aux rapports au centime près.",
+            "Le tableau de bord montre l'entreprise dans laquelle vous travaillez. Changez d'entreprise en haut à gauche si vous en gérez plusieurs."
+          ]
+        },
+        "admin_accounting": {
+          "title": "Les opérations comptables",
+          "purpose": "Passer des écritures : journaux, ajustements et corrections qui tiennent les comptes droits.",
+          "where": "Comptabilité dans la colonne de gauche.",
+          "steps": [
+            "Ouvrez le plan comptable pour voir chaque compte et son solde.",
+            "Pour passer une écriture à la main, ouvrez une nouvelle écriture de journal : choisissez les comptes, puis les débits et les crédits.",
+            "Vérifiez que les débits et les crédits sont égaux avant de valider — le programme refuse une écriture qui n'est pas équilibrée.",
+            "Pour réduire un côté plutôt que l'augmenter, écrivez le montant en négatif : il est enregistré du côté opposé, c'est cela une correction."
+          ],
+          "expected": "L'écriture est validée, et la balance comme les rapports la reprennent immédiatement.",
+          "notes": [
+            "Une écriture qui n'est pas équilibrée ne peut pas être validée. C'est cette règle qui garde les comptes justes.",
+            "Les montants peuvent être décimaux, et une correction est un négatif du côté à réduire.",
+            "Les écritures issues d'une vente, d'un achat ou d'un paiement apparaissent aussi ici ; ce ne sont pas des livres séparés."
+          ]
+        },
+        "admin_purchases": {
+          "title": "Les achats et les factures fournisseurs",
+          "purpose": "Enregistrer ce que vous achetez et ce que vous devez, et garder le stock et la comptabilité au même rythme.",
+          "where": "Achats dans la colonne de gauche.",
+          "steps": [
+            "Enregistrez une facture d'un fournisseur : le fournisseur, la date, puis ce que vous avez acheté et à quel prix.",
+            "Si les marchandises sont arrivées, réceptionnez-les pour que le stock monte.",
+            "Enregistrez le paiement quand vous payez le fournisseur ; ce que vous lui devez baisse.",
+            "Pour renvoyer des marchandises, créez un retour d'achat sur la facture."
+          ],
+          "expected": "L'achat, le stock et ce que vous devez sont à jour, et la charge est dans la comptabilité.",
+          "notes": [
+            "Les quantités peuvent être décimales : acheter 2,5 kg s'enregistre 2,5.",
+            "Pour corriger une facture déjà enregistrée, créez un retour ou un avoir plutôt que de modifier l'original.",
+            "Une quantité réceptionnée ne peut pas être négative ; utilisez un retour d'achat, qui enregistre pourquoi."
+          ]
+        },
+        "admin_parties": {
+          "title": "Les clients et les fournisseurs",
+          "purpose": "Tenir à jour les personnes avec qui vous travaillez, et savoir exactement qui doit quoi.",
+          "where": "Clients et Fournisseurs dans la colonne de gauche.",
+          "steps": [
+            "Ouvrez Clients pour voir chaque client et ce qu'il doit ; ouvrez Fournisseurs pour ce que vous devez.",
+            "Ajoutez ou modifiez une fiche avec le nom, les coordonnées et, si vous l'avez, le numéro fiscal.",
+            "Imprimez un relevé pour montrer ce qui reste dû."
+          ],
+          "expected": "Les soldes correspondent à la comptabilité, car les deux viennent des mêmes écritures.",
+          "notes": [
+            "Un solde augmente quand vous vendez ou achetez à crédit, et baisse quand le paiement est enregistré.",
+            "Supprimer un client qui a un historique n'est pas autorisé ; la fiche est clôturée à la place, pour que les comptes restent complets."
+          ]
+        },
+        "admin_taxes": {
+          "title": "Les taxes et la TVA",
+          "purpose": "Facturer la bonne taxe et la déclarer correctement.",
+          "where": "Paramètres → Taxes, et la colonne taxe sur toute vente ou tout achat.",
+          "steps": [
+            "Créez chaque taux de taxe une fois : le nom et le pourcentage.",
+            "Le taux s'applique à une ligne quand vous enregistrez une vente ou un achat.",
+            "Les prix peuvent inclure la taxe ou non ; le réglage de l'entreprise en décide, il se fait dans Paramètres → Entreprise.",
+            "Lancez le rapport de TVA pour voir ce que vous avez collecté et ce que vous avez payé."
+          ],
+          "expected": "La taxe est facturée sur chaque ligne au taux défini, et le rapport de TVA correspond à la comptabilité.",
+          "notes": [
+            "Un taux qui n'est plus utilisé est désactivé plutôt que supprimé, pour que les anciens documents restent justes.",
+            "Le taux est enregistré sur chaque ligne au moment de la vente : changer un taux plus tard ne réécrit pas l'historique."
+          ]
+        },
+        "admin_reports": {
+          "title": "Les rapports financiers",
+          "purpose": "Produire les chiffres dont l'entreprise et l'administration fiscale ont besoin.",
+          "where": "Rapports dans la colonne de gauche.",
+          "steps": [
+            "Choisissez le rapport : Grand Livre, Journal, Balance, Compte de résultat, Bilan, Flux de trésorerie, Balance âgée clients, Balance âgée fournisseurs, TVA, ou Valorisation du stock.",
+            "Définissez la période voulue.",
+            "Lisez-le à l'écran, imprimez-le ou exportez-le."
+          ],
+          "expected": "Le rapport correspond à la comptabilité, car il est produit à partir des mêmes écritures.",
+          "notes": [
+            "Chaque rapport traite les montants négatifs et décimaux : un remboursement ou une quantité fractionnaire s'affiche tel qu'il a été enregistré.",
+            "La Balance et le Bilan doivent être équilibrés. Si ce n'est pas le cas, c'est une écriture à trouver, pas un rapport à mettre en doute."
+          ]
+        },
+        "admin_records": {
+          "title": "Les écritures comptables",
+          "purpose": "Retrouver n'importe quelle écriture, et voir qui l'a faite et quand.",
+          "where": "Comptabilité → la liste des écritures, et Paramètres → Journal d'audit.",
+          "steps": [
+            "Cherchez dans la liste des écritures par date, par compte, ou par la référence du document.",
+            "Ouvrez une écriture pour voir ses deux côtés et le document qui l'a produite.",
+            "Le journal d'audit montre qui a fait quoi et quand."
+          ],
+          "expected": "Tout chiffre de tout rapport peut être retracé jusqu'à l'écriture qui l'a produit.",
+          "notes": [
+            "Les écritures ne sont jamais effacées. Une erreur se corrige par une écriture inverse, l'historique reste donc complet.",
+            "Chaque écriture porte le nom de l'utilisateur qui l'a validée."
+          ]
+        },
+        "admin_permissions": {
+          "title": "Les utilisateurs, les rôles et les droits",
+          "purpose": "Permettre à chacun de faire son travail et rien de plus, et savoir qui a fait quoi.",
+          "where": "Paramètres → Utilisateurs. Seul un administrateur peut l'ouvrir.",
+          "steps": [
+            "Ajoutez un utilisateur avec un nom et un mot de passe provisoire ; il le change à sa première connexion.",
+            "Donnez-lui un rôle — Administrateur, Comptable, Ventes, Achats ou Stocks — qui décide ce qu'il voit et ce qu'il peut faire.",
+            "Désactivez un utilisateur qui part plutôt que de le supprimer."
+          ],
+          "expected": "Chacun voit les écrans dont son travail a besoin, et chaque action est enregistrée sous son nom.",
+          "notes": [
+            "Les droits sont appliqués par le programme et pas seulement par les menus : masquer un bouton n'est pas la seule protection.",
+            "Donnez le plus petit rôle qui permette à quelqu'un de faire son travail."
+          ]
+        },
+        "admin_functions": {
+          "title": "Les fonctions d'administrateur",
+          "purpose": "Les tâches que seul un administrateur fait : configurer l'entreprise et garder les données en sécurité.",
+          "where": "JENESIS Settings & Access Point, et Paramètres dans JENESIS Accounting & Business.",
+          "steps": [
+            "Configurez l'entreprise : le nom, l'adresse, le numéro fiscal et la devise.",
+            "Faites une sauvegarde avant toute opération risquée, et conservez le fichier ailleurs que sur cet ordinateur.",
+            "Restaurez une sauvegarde seulement quand vous le voulez vraiment, en sachant qu'elle remplace les données.",
+            "Ajoutez les utilisateurs et décidez de ce que chacun peut faire."
+          ],
+          "expected": "L'entreprise est bien configurée et il existe toujours une copie des données.",
+          "notes": [
+            "Une sauvegarde n'est une sauvegarde que si vous avez vérifié qu'elle se restaure. Testez-la avant d'en avoir besoin.",
+            "Modifier les droits d'un utilisateur met fin à sa session en cours : prévenez-le d'abord."
+          ]
+        },
+        "admin_shortcuts": {
+          "title": "Les raccourcis clavier",
+          "purpose": "Se déplacer dans la comptabilité sans chercher la souris.",
+          "where": "N'importe où dans JENESIS Accounting & Business. Appuyez sur F1 pour la liste complète.",
+          "steps": [
+            "F1 — ouvrir ce guide.",
+            "Ctrl+Maj+L — le grand livre.",
+            "Ctrl+Maj+T — les transferts.",
+            "Ctrl+Maj+K — la calculatrice.",
+            "Ctrl+Maj+M — le Messenger.",
+            "Alt+T — changer l'apparence claire ou sombre.",
+            "Alt+L — changer la langue."
+          ],
+          "expected": "L'écran demandé s'ouvre immédiatement.",
+          "notes": [
+            "Les raccourcis ne se déclenchent pas pendant que vous tapez.",
+            "Un raccourci ne fonctionne que si votre rôle permet ce qu'il fait."
+          ]
+        },
+        "credits": {
+          "title": "Qui a fait JENESIS",
+          "purpose": "Savoir qui contacter au sujet du programme.",
+          "where": "Cette section figure à la fin de chaque guide JENESIS.",
+          "steps": [
+            "JENESIS est créé et développé par KAYIGANWA JACQUES."
+          ],
+          "expected": "Vous savez à qui appartient le programme et qui le développe.",
+          "notes": [
+            "Ce guide documente le programme tel qu'il est. Il ne décrit que des fonctions qui existent dans JENESIS."
+          ]
+        }
+      }
+    },
+    "maintenance": {
+      "guideTitle": "Comment utiliser JENESIS Network & Maintenance",
+      "guideIntro": "Un guide court pour garder le service JENESIS en marche : les réglages réseau, la connexion des autres ordinateurs de la boutique, et quoi vérifier quand l'un d'eux n'atteint pas JENESIS.",
+      "closingNote": "Tout ce que fait cette application concerne le service et le réseau. Elle ne modifie jamais les comptes.",
+      "sections": {
+        "maint_interface": {
+          "title": "L'écran de maintenance",
+          "purpose": "Garder le service JENESIS en marche et les ordinateurs du réseau en contact avec lui.",
+          "where": "JENESIS Network & Maintenance (l'application verte).",
+          "steps": [
+            "Ouvrez l'application pour voir si le service tourne et quels ordinateurs sont connectés.",
+            "L'écran montre l'état du service, l'adresse que les autres ordinateurs utilisent, et la liste des ordinateurs trouvés sur le réseau.",
+            "Utilisez les boutons pour redémarrer le service ou revérifier le réseau."
+          ],
+          "expected": "Vous voyez d'un coup d'œil si les autres ordinateurs atteignent JENESIS, et vous pouvez agir sinon.",
+          "notes": [
+            "Cette application ne contient volontairement aucun écran de comptabilité, de vente, de client ou de produit. Elle s'occupe du service, pas des comptes.",
+            "Redémarrer le service déconnecte brièvement ceux qui utilisent JENESIS sur un autre ordinateur : faites-le quand la boutique est calme."
+          ]
+        },
+        "maint_network": {
+          "title": "La configuration réseau",
+          "purpose": "Définir l'adresse et le port que les autres ordinateurs utilisent pour atteindre JENESIS.",
+          "where": "La section réseau de JENESIS Network & Maintenance.",
+          "steps": [
+            "Vérifiez l'adresse affichée : c'est l'adresse de cet ordinateur sur le réseau local.",
+            "Le port est le numéro sur lequel JENESIS écoute. Les autres ordinateurs doivent utiliser le même.",
+            "Redémarrez le service après tout changement, pour qu'il soit pris en compte."
+          ],
+          "expected": "Le service redémarre sur l'adresse et le port définis.",
+          "notes": [
+            "Partager JENESIS avec d'autres ordinateurs est désactivé jusqu'à ce que vous l'activiez. Rien n'est partagé par accident.",
+            "Si l'adresse de cet ordinateur change, les autres devront être redirigés vers la nouvelle."
+          ]
+        },
+        "maint_connect": {
+          "title": "Connecter les ordinateurs du réseau",
+          "purpose": "Permettre aux autres ordinateurs de la boutique d'utiliser les mêmes données JENESIS.",
+          "where": "La liste des ordinateurs dans JENESIS Network & Maintenance, et les réglages de connexion sur l'autre ordinateur.",
+          "steps": [
+            "Assurez-vous que chaque ordinateur est sur le même réseau local.",
+            "Sur l'autre ordinateur, ouvrez JENESIS et pointez-le vers l'adresse et le port affichés ici.",
+            "Vérifiez que l'ordinateur apparaît dans la liste comme joignable."
+          ],
+          "expected": "L'autre ordinateur ouvre JENESIS et travaille sur les mêmes données que celui-ci.",
+          "notes": [
+            "Les deux ordinateurs doivent être sur le même réseau. Un ordinateur sur un autre réseau, ou éteint, ne sera pas trouvé.",
+            "La recherche d'ordinateurs sur le réseau est désactivée par défaut pour la confidentialité ; activez-la ici quand vous en avez besoin."
+          ]
+        },
+        "maint_manage": {
+          "title": "Gérer les connexions",
+          "purpose": "Voir qui est connecté, et traiter un ordinateur qui ne devrait pas l'être.",
+          "where": "La liste des ordinateurs dans JENESIS Network & Maintenance.",
+          "steps": [
+            "La liste montre chaque ordinateur trouvé, s'il répond, et s'il est connecté maintenant.",
+            "Appuyez sur Actualiser pour chercher à nouveau.",
+            "Utilisez les commandes de connexion pour autoriser ou refuser un ordinateur."
+          ],
+          "expected": "Vous savez quels ordinateurs atteignent JENESIS et vous pouvez en couper un.",
+          "notes": [
+            "Un ordinateur jamais vérifié s'affiche comme inconnu jusqu'à ce que vous le cherchiez.",
+            "Un appareil du réseau qui n'exécute pas JENESIS est signalé comme tel plutôt que pris pour une caisse."
+          ]
+        },
+        "maint_troubleshooting": {
+          "title": "Dépannage réseau",
+          "purpose": "Comprendre pourquoi un ordinateur n'atteint pas JENESIS, et corriger le problème.",
+          "where": "JENESIS Network & Maintenance.",
+          "steps": [
+            "« L'autre ordinateur n'arrive pas à se connecter » — vérifiez que les deux sont sur le même réseau, que cet ordinateur est allumé, et qu'un pare-feu ne bloque pas le port.",
+            "« Un ordinateur a disparu de la liste » — il est peut-être éteint ou en veille. Appuyez sur Actualiser pour chercher à nouveau.",
+            "« Ça marchait hier » — l'adresse de cet ordinateur a peut-être changé. Vérifiez qu'elle correspond à celle que l'autre ordinateur utilise.",
+            "« JENESIS ne démarre pas » — redémarrez le service depuis cet écran et guettez le message disant qu'il tourne.",
+            "« Un écran est blanc » — signalez-le avec le journal de démarrage, que cette application écrit pour qu'un échec puisse toujours être expliqué après coup."
+          ],
+          "expected": "Vous savez laquelle des quelques causes habituelles c'est, et quoi faire.",
+          "notes": [
+            "Ce que vous ne pouvez pas résoudre ici est une question de comptabilité pour JENESIS Accounting & Business, pas une question de réseau.",
+            "Le service écrit un journal. C'est le premier endroit où regarder quand quelque chose ne démarre pas."
+          ]
+        },
+        "maint_settings": {
+          "title": "Les paramètres",
+          "purpose": "Les quelques réglages qui appartiennent au service plutôt qu'à la comptabilité.",
+          "where": "La section paramètres de JENESIS Network & Maintenance.",
+          "steps": [
+            "Ouvrez la section paramètres pour voir ce qui peut être changé ici.",
+            "Ne changez que ce qui est nécessaire, et redémarrez le service ensuite si on vous le demande."
+          ],
+          "expected": "Le service fonctionne comme vous l'avez réglé.",
+          "notes": [
+            "Les coordonnées de l'entreprise, les utilisateurs, les taxes, les devises et l'impression se règlent dans JENESIS Settings & Access Point, pas ici.",
+            "Cette application ne modifie jamais la comptabilité."
+          ]
+        },
+        "maint_shortcuts": {
+          "title": "Les raccourcis clavier",
+          "purpose": "Se déplacer à l'écran sans chercher la souris.",
+          "where": "N'importe où dans JENESIS Network & Maintenance. Appuyez sur F1 pour la liste complète.",
+          "steps": [
+            "F1 — ouvrir ce guide.",
+            "Alt+T — changer l'apparence claire ou sombre.",
+            "Alt+L — changer la langue."
+          ],
+          "expected": "L'écran demandé s'ouvre immédiatement.",
+          "notes": [
+            "Les raccourcis ne se déclenchent pas pendant que vous tapez.",
+            "Il y a volontairement peu de raccourcis ici : cette application a peu d'écrans."
+          ]
+        },
+        "credits": {
+          "title": "Qui a fait JENESIS",
+          "purpose": "Savoir qui contacter au sujet du programme.",
+          "where": "Cette section figure à la fin de chaque guide JENESIS.",
+          "steps": [
+            "JENESIS est créé et développé par KAYIGANWA JACQUES."
+          ],
+          "expected": "Vous savez à qui appartient le programme et qui le développe.",
+          "notes": [
+            "Ce guide documente le programme tel qu'il est. Il ne décrit que des fonctions qui existent dans JENESIS."
+          ]
+        }
+      }
+    },
+    "settings": {
+      "guideTitle": "Comment utiliser JENESIS Settings & Access Point",
+      "guideIntro": "Un guide court pour configurer JENESIS : les imprimantes, la forme d'un reçu, la langue, l'apparence claire ou sombre, et les options qui déterminent comment l'entreprise est enregistrée.",
+      "closingNote": "Tout ce que vous changez ici concerne le comportement de JENESIS. Rien n'efface ce qui a déjà été enregistré.",
+      "sections": {
+        "set_overview": {
+          "title": "À quoi servent les Paramètres",
+          "purpose": "Configurer JENESIS : l'entreprise, les utilisateurs, les taxes, les devises, la sauvegarde, l'apparence et l'impression.",
+          "where": "JENESIS Settings & Access Point (l'application jaune), ou Paramètres dans JENESIS Accounting & Business.",
+          "steps": [
+            "Les onglets en haut sont : Entreprise, Utilisateurs, Taxes, Audit, Devises, Sauvegarde, Apparence et Impression.",
+            "Ouvrez l'onglet voulu, changez ce qui est nécessaire, et enregistrez.",
+            "Certains onglets demandent un administrateur ; si vous ne l'êtes pas, ils ne s'ouvrent pas."
+          ],
+          "expected": "JENESIS est configuré selon le fonctionnement de votre entreprise.",
+          "notes": [
+            "Les paramètres changent le comportement du programme. Ils ne modifient pas les comptes déjà enregistrés.",
+            "S'il manque un onglet, votre rôle ne l'inclut pas. Demandez à un administrateur."
+          ]
+        },
+        "set_printers": {
+          "title": "Les imprimantes",
+          "purpose": "Choisir quelle imprimante imprime quoi, et vérifier qu'elle marche avant qu'un client n'attende.",
+          "where": "Impression, dans la section imprimante.",
+          "steps": [
+            "Ouvrez l'onglet Impression. La liste montre toutes les imprimantes de cet ordinateur, branchées ou sur le réseau.",
+            "Choisissez l'imprimante voulue ; laisser sur l'imprimante par défaut utilise celle que Windows utiliserait.",
+            "Appuyez sur Imprimer un reçu de test pour vérifier qu'elle marche et qu'elle est bien alignée.",
+            "Appuyez sur Enregistrer ces paramètres."
+          ],
+          "expected": "Les reçus vont vers l'imprimante choisie, et vous en avez vu sortir une page de test.",
+          "notes": [
+            "Une imprimante éteinte, sans papier ou bourrée est affichée dans la liste plutôt que cachée, pour que vous voyiez qu'elle est là et pas prête.",
+            "L'imprimante choisie est retenue sur cet ordinateur. Un autre ordinateur garde son propre choix.",
+            "Dans un navigateur, sans l'application de bureau JENESIS, l'impression passe par la fenêtre d'impression du navigateur."
+          ]
+        },
+        "set_receipts": {
+          "title": "La mise en page des reçus",
+          "purpose": "Décider à quoi ressemble un reçu : le papier, le texte et les informations qui apparaissent.",
+          "where": "Impression, dans les sections papier, apparence et contenu.",
+          "steps": [
+            "Choisissez le papier : un rouleau de 58 mm, un rouleau de 80 mm, une feuille A4, ou une largeur personnalisée si la vôtre est différente.",
+            "Réglez le texte : la taille, la police, le gras, l'interligne et les quatre marges.",
+            "Tapez le titre du reçu et le message du bas.",
+            "Cochez les informations voulues : le logo, le nom de l'entreprise, l'adresse, le téléphone, le courriel, le numéro fiscal, le numéro du document, la date, le caissier, le client, les détails des articles, le détail des taxes, les totaux, le mode de paiement, le bas de page et la ligne de coupe.",
+            "Appuyez sur Afficher l'aperçu pour le voir exactement tel qu'il sera imprimé, et s'il tient sur le papier.",
+            "Appuyez sur Enregistrer ces paramètres."
+          ],
+          "expected": "Le reçu s'imprime comme vous l'avez conçu, et reste ainsi.",
+          "notes": [
+            "Ces paramètres appartiennent à l'application dans laquelle vous êtes. Les enregistrer dans JENESIS Seller ne change pas JENESIS Accounting & Business, et inversement.",
+            "L'aperçu est le document d'impression réel à taille réelle : si une ligne y est coupée, elle sera coupée sur le papier.",
+            "Les décimales et les retours s'impriment correctement : 1,25 reste 1,25, et un article retourné porte un signe moins et la mention « retourné ».",
+            "L'impression ne modifie jamais une vente, un paiement ni une écriture. Elle ne produit que du papier."
+          ]
+        },
+        "set_languages": {
+          "title": "La langue",
+          "purpose": "Utiliser JENESIS en anglais, en français ou en kinyarwanda.",
+          "where": "Le choix de la langue en haut de l'écran, ou appuyez sur Alt+L.",
+          "steps": [
+            "Cliquez sur la langue en haut de l'écran, ou appuyez sur Alt+L pour passer de l'une à l'autre.",
+            "Choisissez English, Français ou Kinyarwanda."
+          ],
+          "expected": "Toute l'interface change de langue d'un coup, et votre choix est retenu.",
+          "notes": [
+            "La langue est la vôtre : elle ne change pas ce que les autres utilisateurs voient sur leur propre ordinateur.",
+            "Les documents déjà imprimés restent dans la langue où ils ont été imprimés."
+          ]
+        },
+        "set_theme": {
+          "title": "L'apparence claire et sombre",
+          "purpose": "Travailler en pleine lumière ou dans une pièce sombre sans fatiguer les yeux.",
+          "where": "La commande d'apparence en haut de l'écran, ou appuyez sur Alt+T.",
+          "steps": [
+            "Appuyez sur Alt+T, ou cliquez sur la commande d'apparence, pour passer de clair à sombre ou à « suivre l'ordinateur ».",
+            "Suivre l'ordinateur signifie que JENESIS adopte le réglage utilisé par Windows."
+          ],
+          "expected": "L'interface change immédiatement et votre choix est retenu.",
+          "notes": [
+            "Chaque application JENESIS retient sa propre apparence : la caisse peut être claire pendant que le bureau est sombre.",
+            "Les couleurs des quatre applications ne changent jamais : Seller est rouge, Maintenance verte, Accounting bleue et Settings jaune, en clair comme en sombre."
+          ]
+        },
+        "set_preferences": {
+          "title": "Les préférences",
+          "purpose": "Les choix qui sont les vôtres et ceux de personne d'autre.",
+          "where": "En haut de l'écran et dans l'onglet Apparence.",
+          "steps": [
+            "La langue, l'apparence, votre mot de passe et vos propres informations n'appartiennent qu'à vous.",
+            "Changez votre mot de passe depuis votre nom en haut à droite quand le programme vous le demande, ou quand vous le voulez."
+          ],
+          "expected": "JENESIS s'affiche et se lit comme vous le préférez, sans affecter les autres utilisateurs.",
+          "notes": [
+            "Votre langue et votre apparence vous suivent, pas l'ordinateur : une caisse partagée reste la vôtre.",
+            "Certains réglages, comme les coordonnées de l'entreprise et les taxes, appartiennent à tout le monde et demandent un administrateur."
+          ]
+        },
+        "set_options": {
+          "title": "Les options de configuration",
+          "purpose": "Les réglages qui déterminent comment toute l'entreprise est enregistrée.",
+          "where": "Les onglets Entreprise, Taxes, Devises et Sauvegarde.",
+          "steps": [
+            "Entreprise — le nom, l'adresse, le numéro fiscal, l'exercice, la devise et la valorisation du stock.",
+            "Taxes — les taux que vous facturez et payez, et si les prix incluent la taxe.",
+            "Devises — les devises dans lesquelles vous travaillez et les taux de change.",
+            "Sauvegarde — faire une copie des données et la restaurer."
+          ],
+          "expected": "Les ventes, les achats et les rapports se comportent comme votre entreprise en a besoin.",
+          "notes": [
+            "Ces réglages affectent tout le monde : c'est un administrateur qui les modifie.",
+            "Un taux qui n'est plus utilisé est désactivé plutôt que supprimé, pour que les anciens documents restent justes."
+          ]
+        },
+        "set_troubleshooting": {
+          "title": "Quand un réglage ne marche pas",
+          "purpose": "Comprendre pourquoi un changement n'a pas pris effet.",
+          "where": "N'importe où dans JENESIS Settings & Access Point.",
+          "steps": [
+            "« Je n'arrive pas à ouvrir un onglet » — il faut être administrateur. Demandez à l'un d'eux, ou connectez-vous comme tel.",
+            "« Mon imprimante n'est pas dans la liste » — vérifiez qu'elle est allumée et installée dans Windows. Appuyez sur Actualiser pour chercher à nouveau.",
+            "« Le reçu est coupé » — le format de papier ne correspond pas au rouleau. Essayez 58 mm ou 80 mm, et regardez l'aperçu.",
+            "« J'ai enregistré la mise en page mais la caisse imprime comme avant » — le réglage appartient à l'application où vous étiez. Refaites-le dans l'application depuis laquelle vous imprimez.",
+            "« La langue n'a pas changé partout » — un document déjà imprimé garde la langue dans laquelle il a été imprimé."
+          ],
+          "expected": "Vous savez pourquoi c'est arrivé et quoi faire.",
+          "notes": [
+            "Rien dans les Paramètres ne supprime la comptabilité. Même une restauration est un acte délibéré, appuyé sur une sauvegarde."
+          ]
+        },
+        "credits": {
+          "title": "Qui a fait JENESIS",
+          "purpose": "Savoir qui contacter au sujet du programme.",
+          "where": "Cette section figure à la fin de chaque guide JENESIS.",
+          "steps": [
+            "JENESIS est créé et développé par KAYIGANWA JACQUES."
+          ],
+          "expected": "Vous savez à qui appartient le programme et qui le développe.",
+          "notes": [
+            "Ce guide documente le programme tel qu'il est. Il ne décrit que des fonctions qui existent dans JENESIS."
+          ]
+        }
+      }
+    }
+  }
+}

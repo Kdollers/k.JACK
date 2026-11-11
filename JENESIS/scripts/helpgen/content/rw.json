@@ -1,0 +1,683 @@
+{
+  "order": {
+    "seller": [
+      "seller_interface",
+      "seller_sales",
+      "seller_search",
+      "seller_customers",
+      "seller_receipts",
+      "seller_printing",
+      "seller_returns",
+      "seller_stock",
+      "seller_shortcuts",
+      "seller_troubleshooting",
+      "credits"
+    ],
+    "admin": [
+      "admin_dashboard",
+      "admin_accounting",
+      "admin_purchases",
+      "admin_parties",
+      "admin_taxes",
+      "admin_reports",
+      "admin_records",
+      "admin_permissions",
+      "admin_functions",
+      "admin_shortcuts",
+      "credits"
+    ],
+    "maintenance": [
+      "maint_interface",
+      "maint_network",
+      "maint_connect",
+      "maint_manage",
+      "maint_troubleshooting",
+      "maint_settings",
+      "maint_shortcuts",
+      "credits"
+    ],
+    "settings": [
+      "set_overview",
+      "set_printers",
+      "set_receipts",
+      "set_languages",
+      "set_theme",
+      "set_preferences",
+      "set_options",
+      "set_troubleshooting",
+      "credits"
+    ]
+  },
+  "guides": {
+    "seller": {
+      "guideTitle": "Uburyo bwo gukoresha JENESIS Seller",
+      "guideIntro": "Ubufasha bugufi bwo kugurisha ku meza yo kwishyuriraho: kwandika igurisha, gushaka igicuruzwa, kwakira amafaranga, gucapa inyemezabwishyu, no kwakira ibicuruzwa igihe umukiriya abisubije.",
+      "closingNote": "Buri gurisha wanditse riringanizwa mu ibaruramari. Ubu bufasha bukubiyemo imashini yo kwishyuriraho; ibyerekeye ibitabo ni ibya JENESIS Accounting & Business.",
+      "sections": {
+        "seller_interface": {
+          "title": "Ipaji y'umucuruzi",
+          "purpose": "Kugurisha ku meza yo kwishyuriraho. Icyo ukeneye cyose mu kugurisha kiri kuri iyi paji, nta kindi kiguhagarara imbere.",
+          "where": "JENESIS Seller (porogaramu itukura). Ifungura ipaji yo kugurisha.",
+          "steps": [
+            "Reba inkingi ibumoso: yerekana aho ushobora kujya — Imbonerahamwe, Igurisha, Abakiriya, Ububiko, Ubufasha.",
+            "Umurongo wo hejuru werekana sosiyete ukoreramo, itariki y'uyu munsi, imashini ibara, Messenger, ururimi n'izina ryawe.",
+            "Hagati ya paji niho igurisha ryubakwa: umukiriya, hanyuma ibicuruzwa."
+          ],
+          "expected": "Ubona imibare y'uyu munsi kandi ushobora gutangira kugurisha utafunguye indi paji.",
+          "notes": [
+            "Ibara rya porogaramu ni umutuku. Niba umurongo uri ubururu, uri muri JENESIS Accounting & Business, ifite ibitabo by'ibaruramari atari imashini yo kwishyuriraho.",
+            "Izina ryawe riri hejuru iburyo. Igurisha ryose wanditse rijyanishwa n'iryo zina."
+          ]
+        },
+        "seller_sales": {
+          "title": "Kwandika igurisha",
+          "purpose": "Kwandika ibyo umukiriya aguze. Igurisha, ububiko n'ibaruramari bivugururwa icyarimwe, bityo ntiwandika ikintu kimwe kabiri.",
+          "where": "Igurisha → Igurisha rishya (cyangwa kanda F2).",
+          "steps": [
+            "Hitamo umukiriya, cyangwa usige ari umukiriya w'inzira niba atafite konti.",
+            "Ongeraho buri kintu: hitamo igicuruzwa, hanyuma ingano. Ingano zishobora kuba ibice — nusu kilo yandikwa 0.5.",
+            "Reba igiciro n'igiteranyo hasi.",
+            "Hitamo uko umukiriya yishyura: amafaranga mu ntoki, banki, cyangwa Mobile Money.",
+            "Kanda Bika (cyangwa andike ubwishyu) kugira ngo urangize."
+          ],
+          "expected": "Igurisha rirabitswe, ububiko bwa buri kintu buragabanuka n'ingano nyayo yaguzwe, kandi inyandiko y'ibaruramari ikorwa. Kugurisha 1.25 kg bikura 1.25 kg mu bubiko — atari kilo imwe, kandi atari ebyiri.",
+          "notes": [
+            "Ntushobora kugurisha ibirenze ibyo ufite. Niba porogaramu yanga igurisha, banza urebe ingano y'ububiko bw'icyo kintu.",
+            "Igurisha ryandikwa ako kanya uribikishije. Kugira ngo ukosore igurisha ryabitswe, andika isubizwa aho kurihindura."
+          ]
+        },
+        "seller_search": {
+          "title": "Gushaka igicuruzwa",
+          "purpose": "Kubona vuba icyo umukiriya asaba, ukoresheje izina cyangwa kode iriho.",
+          "where": "Agasanduku k'igicuruzwa ku igurisha, cyangwa Ububiko → Ibicuruzwa.",
+          "steps": [
+            "Andika igice cy'izina, cyangwa kode yose, mu gasanduku k'igicuruzwa.",
+            "Urutonde ruragabanuka uko wandika; hitamo icyo ushaka.",
+            "Niba nta kintu kigaragara, igicuruzwa gishobora kuba kitarakorwa — umuyobozi yongeramo ibicuruzwa muri JENESIS Accounting & Business."
+          ],
+          "expected": "Igicuruzwa cyongerwa ku igurisha hamwe n'igiciro cyacyo n'ububiko busigaye.",
+          "notes": [
+            "Gushaka bireba izina na kode, bityo kode ngufi akenshi irihuta iyo hari abantu benshi.",
+            "Ububiko busigaye bwerekanwa iruhande rw'igicuruzwa, ushobora gusubiza umukiriya udasohotse ku igurisha."
+          ]
+        },
+        "seller_customers": {
+          "title": "Abakiriya",
+          "purpose": "Kugurisha ku ideni ku mukiriya uzi, no kureba ibyo arimo.",
+          "where": "Abakiriya mu nkingi ibumoso.",
+          "steps": [
+            "Fungura Abakiriya kugira ngo urebe buri mukiriya n'ibyo arimo.",
+            "Kugira ngo wongereho umwe, kanda Umukiriya mushya maze wuzuze izina na nimero ya telefoni niba uyifite.",
+            "Hitamo umukiriya ku igurisha iyo aguze ku ideni aho kwishyura ako kanya."
+          ],
+          "expected": "Kugurisha ku ideni byongera ibyo uwo mukiriya arimo. Iyo yishyuye nyuma, ibyo arimo biragabanuka.",
+          "notes": [
+            "Umukiriya wishyura buri gihe ntabwo akeneye konti: siga igurisha ku mukiriya w'inzira.",
+            "Ushobora kureba ibyo umukiriya arimo, ari umuyobozi gusa ushobora guhanagura ideni."
+          ]
+        },
+        "seller_receipts": {
+          "title": "Inyemezabwishyu no kwakira amafaranga",
+          "purpose": "Kwakira amafaranga no guha umukiriya inyemezabwishyu ihuye n'ibyo yaguze.",
+          "where": "Igice cy'ubwishyu ku igurisha, na Igurisha → urutonde rw'igurisha.",
+          "steps": [
+            "Hitamo uko umukiriya yishyura: amafaranga mu ntoki, banki, cyangwa Mobile Money.",
+            "Andika ibyo yaguhaye; ibyo usubiza abarirwa.",
+            "Bika igurisha, hanyuma capa inyemezabwishyu.",
+            "Kugira ngo usubize amafaranga, andika isubizwa: ni ubwishyu bufite ingano ifite akamenyetso k'ubusa, kandi amafaranga ava mu isanduku, muri banki cyangwa kuri konti ya Mobile Money wahisemo."
+          ],
+          "expected": "Amafaranga yandikwa kuri konti wahisemo, kandi ibyo umukiriya arimo biragabanuka n'ibyo yishyuye.",
+          "notes": [
+            "Isubizwa ryandikwa rifite ingano ifite akamenyetso k'ubusa. Rikura amafaranga kuri konti, kandi inyemezabwishyu n'ibaruramari byerekana ko ari isubizwa.",
+            "Ntushobora gusubiza ibirenze ibyo umukiriya yishyuye kuri iryo gurisha."
+          ]
+        },
+        "seller_printing": {
+          "title": "Gucapa inyemezabwishyu",
+          "purpose": "Gucapira umukiriya inyemezabwishyu ku icapa iri ku meza yo kwishyuriraho, mu buryo iduka ryawe rikeneye.",
+          "where": "Buto Capa inyemezabwishyu ku igurisha cyangwa ku nyemezabuguzi yabitswe, na JENESIS Settings & Access Point → Gucapa kugira ngo uyishyireho.",
+          "steps": [
+            "Ku igurisha, kanda Capa inyemezabwishyu. Inyemezabwishyu ijya ku icapa wahisemo.",
+            "Kugira ngo uhindure uko isa, fungura JENESIS Settings & Access Point, jya mu Gucapa, hanyuma uhitemo icapa, impapuro (58 mm, 80 mm, A4 cyangwa ubugari wihitiyemo), ingano y'inyandiko n'ibizagaragaraho.",
+            "Kanda Erekana igerageza kugira ngo urebe inyemezabwishyu nk'uko izacapwa, na Capa inyemezabwishyu yo kugerageza kugira ngo urebe icapa mbere y'uko umukiriya ategereza.",
+            "Kanda Bika iyi miterere iyo bikunejeje."
+          ],
+          "expected": "Inyemezabwishyu icapa ku rupapuro wahisemo, ifite ibisobanuro wahisemo, kandi bikomeza bityo ubutaha.",
+          "notes": [
+            "Imiterere ubitse ni iya JENESIS Seller kuri iyi mudasobwa. Kubika ntibihindura icapa rya JENESIS Accounting & Business.",
+            "Imibare y'ibice icapa nk'uko uyanditse — 1.25 iguma 1.25 — kandi igicuruzwa cyasubijwe cyerekana akamenyetso k'ubusa n'ijambo « byasubijwe ».",
+            "Gucapa inyemezabwishyu ntibihindura igurisha. Kuyicapa kabiri bita impapuro ebyiri, atari igurisha kabiri."
+          ]
+        },
+        "seller_returns": {
+          "title": "Ibyasubijwe n'amasubizwa",
+          "purpose": "Gusubiza ibicuruzwa no gusubiza amafaranga, kugira ngo ububiko n'isanduku byombi bivuge ukuri.",
+          "where": "Igurisha rishya, cyangwa inyemezabwishyu yo gusubiza ku nyemezabuguzi yabitswe.",
+          "steps": [
+            "Kugira ngo wakire ibicuruzwa ku meza yo kwishyuriraho, andika igicuruzwa gifite ingano ifite akamenyetso k'ubusa — kuri nusu kilo yasubijwe, andika -0.5.",
+            "Kugira ngo usubize inyemezabuguzi yose, fungura igurisha maze ukore inyemezabwishyu yo gusubiza. Vuga niba ibicuruzwa bisubira mu bubiko.",
+            "Kugira ngo usubize amafaranga, andika ubwishyu bufite ingano ifite akamenyetso k'ubusa."
+          ],
+          "expected": "Ibicuruzwa byasubijwe bisubira mu bubiko, kandi amafaranga usubiza ava mu isanduku, muri banki cyangwa kuri konti ya Mobile Money.",
+          "notes": [
+            "Inyemezabwishyu yo gusubiza ni bwo buryo bwiza bwo kwakira ibicuruzwa ku nyemezabuguzi: yandika impamvu, kandi ishobora gusubiza ububiko icyarimwe.",
+            "Umurongo ufite akamenyetso k'ubusa ku igurisha ni ikosora ryihuse ku meza yo kwishyuriraho. Byombi birakora; inyemezabwishyu yo gusubiza ni yo isiga ibisobanuro byuzuye.",
+            "Inyemezabwishyu irimo ibyasubijwe irabyerekana, kugira ngo umukiriya abone ko ibicuruzwa byasubijwe aho kuba ingano ifite akamenyetso k'ubusa yaguzwe."
+          ]
+        },
+        "seller_stock": {
+          "title": "Kureba ibiri mu bubiko",
+          "purpose": "Gusubiza ikibazo cy'umukiriya, cyangwa kureba mbere yo kumusezeranya, udasohotse ku meza yo kwishyuriraho.",
+          "where": "Ububiko → Ibicuruzwa, n'umubare w'ububiko werekanwa iruhande rwa buri gicuruzwa ku igurisha.",
+          "steps": [
+            "Fungura Ububiko → Ibicuruzwa kugira ngo urebe ibyo ufite kuri buri kintu.",
+            "Ku igurisha, ububiko busigaye bwerekanwa iruhande rw'igicuruzwa igihe ugihisemo.",
+            "Koresha agasanduku ko gushaka kugira ngo ubone igicuruzwa kimwe vuba."
+          ],
+          "expected": "Ubona ingano ufite y'ikintu mbere yo kukigurisha.",
+          "notes": [
+            "Umubare w'ububiko ni ibyasigaye nyuma y'ibyaguzwe byose: ni ukuri muri uyu mwanya.",
+            "Ibice birakomeza: niba ufite 2.5 kg, ureba 2.5 atari 2.",
+            "Umuyobozi gusa ashobora guhindura ibyo ufite; kubara ububiko ni bwo buryo bwiza bwo kubikosora."
+          ]
+        },
+        "seller_shortcuts": {
+          "title": "Inzira ngufi za clavier",
+          "purpose": "Gukora vuba ku meza yo kwishyuriraho udashaka imbeba.",
+          "where": "Ahantu hose muri JENESIS Seller. Kanda F1 kugira ngo ubone urutonde rwose.",
+          "steps": [
+            "F1 — fungura ubu bufasha.",
+            "F2 — tangira igurisha rishya.",
+            "Ctrl+Maj+K — imashini ibara.",
+            "Ctrl+Maj+C — abakiriya.",
+            "Alt+T — hindura imiterere y'umucyo cyangwa umwijima.",
+            "Alt+L — hindura ururimi."
+          ],
+          "expected": "Ipaji wasabye irakinguka ako kanya.",
+          "notes": [
+            "Inzira ngufi ntizikora igihe urimo wandika: kwandika izina ry'igicuruzwa ntibizatera iyo ari yo yose ku bw'impanuka.",
+            "Inzira ngufi ikora gusa niba ufite uburenganzira bwo gukora icyo ikora."
+          ]
+        },
+        "seller_troubleshooting": {
+          "title": "Iyo ikintu kitagenze neza",
+          "purpose": "Gukemura ibibazo bike bibaho ku meza yo kwishyuriraho, cyangwa kumenya uwo bahamagara.",
+          "where": "Ahantu hose muri JENESIS Seller.",
+          "steps": [
+            "« Sinshobora kugurisha iki kintu » — nta cyo ugifite, cyangwa ufite gito ugerageza kugurisha. Reba ingano y'ububiko.",
+            "« Icapa nta cyo ryakoze » — reba ko ryakongerewe, rifite impapuro kandi ridafite ikibazo. Capa inyemezabwishyu yo kugerageza uvuye mu Imiterere → Gucapa kugira ngo urebe.",
+            "« Inyemezabwishyu iraciwe » — ingano y'urupapuro ishobora kuba itari yo ku icapa ryawe. Fungura Imiterere → Gucapa uhitemo 58 mm cyangwa 80 mm bihuye n'umuzingo.",
+            "« Nanditse umubare utari wo » — ntuhindure igurisha ryabitswe. Andika isubizwa cyangwa isubizwa ry'amafaranga kugira ngo ibaruramari rigume rifite amateka nyayo.",
+            "« Nafunzwe » — tegereza iminota mike wongere ugerageze, cyangwa usabe umuyobozi kuguhindurira ijambo ry'ibanga."
+          ],
+          "expected": "Uzi icyo ubutumwa busobanura n'icyo gukora nyuma.",
+          "notes": [
+            "Nta cyo ukora ku meza yo kwishyuriraho gishobora gutakaza ibaruramari: ikosora ryandikwa nk'ikosora, ntirihanagurwa na rimwe.",
+            "Niba porogaramu itangira na gato, cyangwa ipaji iri ubusa, ako ni akazi ka JENESIS Network & Maintenance."
+          ]
+        },
+        "credits": {
+          "title": "Uwakoze JENESIS",
+          "purpose": "Kumenya uwo wabaza kuri porogaramu.",
+          "where": "Iki gice kiri ku musozo wa buri gafasha ka JENESIS.",
+          "steps": [
+            "JENESIS yakozwe kandi itezwa imbere na KAYIGANWA JACQUES."
+          ],
+          "expected": "Uzi uwo porogaramu ari we n'uyiteza imbere.",
+          "notes": [
+            "Ubu bufasha busobanura porogaramu uko iri. Busobanura gusa ibikorwa bihari muri JENESIS."
+          ]
+        }
+      }
+    },
+    "admin": {
+      "guideTitle": "Uburyo bwo gukoresha JENESIS Accounting & Business",
+      "guideIntro": "Ubufasha bugufi bwo gucunga ibitabo: kwandika inyandiko, kwandika kugura, gukora raporo, no kwemeza ibyo buri muntu yemerewe gukora.",
+      "closingNote": "Buri nyandiko wemeje iringanizwa mbere yo kwemerwa, kugira ngo raporo zihorana n'ibitabo.",
+      "sections": {
+        "admin_dashboard": {
+          "title": "Imbonerahamwe",
+          "purpose": "Kureba uko ubucuruzi bumeze mu kanya gato mbere yo kwinjira mu bisobanuro.",
+          "where": "Imbonerahamwe mu nkingi ibumoso ya JENESIS Accounting & Business (porogaramu y'ubururu).",
+          "steps": [
+            "Fungura Imbonerahamwe kugira ngo urebe igurisha, kugura, ibyo abakiriya barimo, ibyo urimo abatanga ibicuruzwa, n'inyungu kugeza ubu.",
+            "Koresha igihe cyo hejuru kugira ngo urebe ikindi gihe.",
+            "Fungura umubare uwo ari wo wose kugira ngo ujye ku nyandiko ziwugize."
+          ],
+          "expected": "Ubona uko ubucuruzi bumeze kandi ushobora kujya ku kintu icyo ari cyo cyose gisa nabi.",
+          "notes": [
+            "Buri mubare ubarwa uvuye ku nyandiko z'ibaruramari, bityo uhuza na raporo ku giceri.",
+            "Imbonerahamwe yerekana sosiyete ukoreramo. Hindura sosiyete hejuru ibumoso niba ucunga izirenze imwe."
+          ]
+        },
+        "admin_accounting": {
+          "title": "Ibikorwa by'ibaruramari",
+          "purpose": "Kwandika inyandiko mu bitabo: ibitabo, ibyongerwa n'ibikosora bituma ibisigaye birungi.",
+          "where": "Ibaruramari mu nkingi ibumoso.",
+          "steps": [
+            "Fungura urutonde rw'amakonti kugira ngo urebe buri konti n'ibyo isigaranye.",
+            "Kugira ngo wandike inyandiko ukoresheje intoki, fungura inyandiko nshya y'igitabo: hitamo amakonti, hanyuma ibyinjira n'ibisohoka.",
+            "Reba ko ibyinjira n'ibisohoka bingana mbere yo kwemeza — porogaramu yanga inyandiko idahwanye.",
+            "Kugira ngo ugabanye uruhande aho kurwongera, andika umubare ufite akamenyetso k'ubusa; rwandikwa ku ruhande rundi, icyo ni cyo ikosora."
+          ],
+          "expected": "Inyandiko iremezwa, kandi imizania na raporo birayifata ako kanya.",
+          "notes": [
+            "Inyandiko idahwanye ntishobora kwemezwa. Iyo tegeko ni ryo rituma ibitabo biba ukuri.",
+            "Imibare ishobora kuba iy'ibice, kandi ikosora ni umubare ufite akamenyetso k'ubusa ku ruhande rugabanywa.",
+            "Inyandiko ziva ku igurisha, ku kugura cyangwa ku bwishyu nazo zigaragara hano; si ibitabo bitandukanye."
+          ]
+        },
+        "admin_purchases": {
+          "title": "Kugura n'inyemezabuguzi z'abatanga ibicuruzwa",
+          "purpose": "Kwandika ibyo ugura n'ibyo urimo, no kugumisha ububiko n'ibaruramari ku ntambwe imwe.",
+          "where": "Kugura mu nkingi ibumoso.",
+          "steps": [
+            "Andika inyemezabuguzi y'uwaguhaye ibicuruzwa: uwabitanze, itariki, hanyuma ibyo waguze n'igiciro cyabyo.",
+            "Niba ibicuruzwa byageze, byakire kugira ngo ububiko buzamuke.",
+            "Andika ubwishyu igihe wishyuye uwaguhaye ibicuruzwa; ibyo umurimo biragabanuka.",
+            "Kugira ngo usubize ibicuruzwa, kora isubizwa ryo kugura ku nyemezabuguzi."
+          ],
+          "expected": "Kugura, ububiko n'ibyo urimo biba bigezweho, kandi igihombo kiri mu ibaruramari.",
+          "notes": [
+            "Ingano zishobora kuba iy'ibice: kugura 2.5 kg byandikwa 2.5.",
+            "Kugira ngo ukosore inyemezabuguzi wanditse, kora isubizwa cyangwa inyemezabwishyu yo gusubiza aho guhindura iy'umwimerere.",
+            "Ingano yakiriwe ntishobora kuba ifite akamenyetso k'ubusa; koresha isubizwa ryo kugura, ryandika impamvu."
+          ]
+        },
+        "admin_parties": {
+          "title": "Abakiriya n'abatanga ibicuruzwa",
+          "purpose": "Kugumana abantu ukorana nabo, no kumenya neza ibyo buri wese arimo.",
+          "where": "Abakiriya n'Abatanga ibicuruzwa mu nkingi ibumoso.",
+          "steps": [
+            "Fungura Abakiriya kugira ngo urebe buri mukiriya n'ibyo arimo; fungura Abatanga ibicuruzwa ku byo urimo.",
+            "Ongeraho cyangwa uhindure dosiye ukoresheje izina, uburyo bwo kubabona na nimero y'umusoro niba uyifite.",
+            "Capa imenyekanisha kuri umwe muri bo kugira ngo werekane ibisigaye."
+          ],
+          "expected": "Ibisigaye bihuza n'ibaruramari, kuko byombi biva ku nyandiko zimwe.",
+          "notes": [
+            "Ibisigaye birazamuka iyo ugurishije cyangwa uguze ku ideni, kandi biragabanuka iyo ubwishyu bwanditswe.",
+            "Guhanagura umukiriya ufite amateka ntibyemewe; dosiye irafungwa aho, kugira ngo ibaruramari rigume ryuzuye."
+          ]
+        },
+        "admin_taxes": {
+          "title": "Imisoro na TVA",
+          "purpose": "Kwishyuza umusoro ukwiye, no kuwutanga neza.",
+          "where": "Imiterere → Imisoro, n'inkingi y'umusoro ku igurisha cyangwa ku kugura.",
+          "steps": [
+            "Shyiraho buri gipimo cy'umusoro rimwe: izina n'ijanisha.",
+            "Igipimo gishyirwa ku murongo iyo wanditse igurisha cyangwa kugura.",
+            "Ibiciro bishobora kuba birimo umusoro cyangwa bitawurimo; imiterere ya sosiyete ni yo ibigena, ishyirwa mu Imiterere → Sosiyete.",
+            "Koresha raporo ya TVA kugira ngo urebe ibyo wakusanyije n'ibyo wishyuye."
+          ],
+          "expected": "Umusoro wishyuzwa kuri buri murongo ku gipimo washyizeho, kandi raporo ya TVA ihuza n'ibaruramari.",
+          "notes": [
+            "Igipimo kitagikoreshwa kirahagarikwa aho guhanagurwa, kugira ngo inyandiko za kera zigume ari ukuri.",
+            "Igipimo kibikwa kuri buri murongo igihe cyo kugurisha: guhindura igipimo nyuma ntibisubika amateka."
+          ]
+        },
+        "admin_reports": {
+          "title": "Raporo z'imari",
+          "purpose": "Gukora imibare ubucuruzi n'ubuyobozi bw'imisoro bakeneye.",
+          "where": "Raporo mu nkingi ibumoso.",
+          "steps": [
+            "Hitamo raporo: Igitabo rusange, Inyandiko z'igitabo, Imizania, Inyungu n'igihombo, Bilan, Imigendekere y'amafaranga, Imyenda y'abakiriya, Imyenda y'abatanga ibicuruzwa, TVA, cyangwa Igiciro cy'ububiko.",
+            "Shyiraho igihe ushaka.",
+            "Yisomere kuri ecran, uyicape, cyangwa uyohereze hanze."
+          ],
+          "expected": "Raporo ihuza n'ibaruramari, kuko ikorwa iva ku nyandiko zimwe.",
+          "notes": [
+            "Buri raporo ikemura imibare ifite akamenyetso k'ubusa n'iy'ibice, bityo isubizwa cyangwa ingano y'igice cyerekana uko cyanditswe.",
+            "Imizania na Bilan bigomba guhwana. Niba bitari ko biri, hari inyandiko yo gushaka, atari raporo yo gushidikanya."
+          ]
+        },
+        "admin_records": {
+          "title": "Inyandiko z'ibaruramari",
+          "purpose": "Kongera kubona inyandiko iyo ari yo yose, no kumenya uwayikoze n'igihe.",
+          "where": "Ibaruramari → urutonde rw'inyandiko, na Imiterere → Inyandiko y'igenzura.",
+          "steps": [
+            "Shakisha mu rutonde rw'inyandiko ukoresheje itariki, konti, cyangwa numero y'iranga inyandiko.",
+            "Fungura inyandiko kugira ngo urebe impande zombi zayo n'inyandiko yayikoze.",
+            "Inyandiko y'igenzura yerekana ukoze iki n'igihe."
+          ],
+          "expected": "Umubare uwo ari wo wose muri raporo iyo ari yo yose ushobora gukurikiranwa kugeza ku nyandiko yawukoze.",
+          "notes": [
+            "Inyandiko ntizihanagurwa na rimwe. Ikosa rikosorwa n'inyandiko ihindura, bityo amateka aguma yuzuye.",
+            "Buri nyandiko yandika izina ry'uwakoresheje wayemeje."
+          ]
+        },
+        "admin_permissions": {
+          "title": "Abakoresha, inshingano n'uburenganzira",
+          "purpose": "Kureka buri muntu agakora akazi ke n'ibindi atarenza, no kumenya uwakoze iki.",
+          "where": "Imiterere → Abakoresha. Umuyobozi gusa ashobora kuyifungura.",
+          "steps": [
+            "Ongeraho ukoresha afite izina n'ijambo ry'ibanga ry'agateganyo; arihindura ubwa mbere yinjiye.",
+            "Muhe inshingano — Umuyobozi, Umubaramari, Igurisha, Kugura cyangwa Ububiko — igena ibyo abona n'ibyo ashobora gukora.",
+            "Hagarika ukoresha ugiye aho kumuhanagura."
+          ],
+          "expected": "Buri muntu abona amapaji akazi ke gakeneye, kandi buri gikorwa cyandikwa ku izina rye.",
+          "notes": [
+            "Uburenganzira bushyirwa mu bikorwa na porogaramu atari gusa na menu: guhisha buto si bwo burinzi bwonyine.",
+            "Tanga inshingano ntoya ishoboka ituma umuntu akora akazi ke."
+          ]
+        },
+        "admin_functions": {
+          "title": "Imirimo y'umuyobozi",
+          "purpose": "Imirimo umuyobozi gusa akora: gushyiraho sosiyete, no kurinda amakuru.",
+          "where": "JENESIS Settings & Access Point, na Imiterere muri JENESIS Accounting & Business.",
+          "steps": [
+            "Shyiraho sosiyete: izina, aderesi, nimero y'umusoro n'ifaranga.",
+            "Kora ububiko bw'amakuru (backup) mbere yo gukora ikintu gishobora guteza akaga, kandi ubike dosiye ahandi hatari kuri iyi mudasobwa.",
+            "Subiza amakuru uvuye mu bubiko gusa igihe ubishaka, wumva ko asimbura ayari ahari.",
+            "Ongeraho abakoresha kandi wemeze ibyo buri wese ashobora gukora."
+          ],
+          "expected": "Sosiyete ishyizweho neza kandi hari kopi y'amakuru yo kugarukaho.",
+          "notes": [
+            "Ububiko bw'amakuru ni ububiko gusa niba warebye ko busubiza. Bwipime mbere yo kubukenera.",
+            "Guhindura uburenganzira bw'ukoresha bihagarika umwanya arimo: banza umubwire."
+          ]
+        },
+        "admin_shortcuts": {
+          "title": "Inzira ngufi za clavier",
+          "purpose": "Kugendagenda mu bitabo udashaka imbeba.",
+          "where": "Ahantu hose muri JENESIS Accounting & Business. Kanda F1 kugira ngo ubone urutonde rwose.",
+          "steps": [
+            "F1 — fungura ubu bufasha.",
+            "Ctrl+Maj+L — igitabo rusange.",
+            "Ctrl+Maj+T — kohereza.",
+            "Ctrl+Maj+K — imashini ibara.",
+            "Ctrl+Maj+M — Messenger.",
+            "Alt+T — hindura imiterere y'umucyo cyangwa umwijima.",
+            "Alt+L — hindura ururimi."
+          ],
+          "expected": "Ipaji wasabye irakinguka ako kanya.",
+          "notes": [
+            "Inzira ngufi ntizikora igihe urimo wandika.",
+            "Inzira ngufi ikora gusa niba inshingano zawe zemera icyo ikora."
+          ]
+        },
+        "credits": {
+          "title": "Uwakoze JENESIS",
+          "purpose": "Kumenya uwo wabaza kuri porogaramu.",
+          "where": "Iki gice kiri ku musozo wa buri gafasha ka JENESIS.",
+          "steps": [
+            "JENESIS yakozwe kandi itezwa imbere na KAYIGANWA JACQUES."
+          ],
+          "expected": "Uzi uwo porogaramu ari we n'uyiteza imbere.",
+          "notes": [
+            "Ubu bufasha busobanura porogaramu uko iri. Busobanura gusa ibikorwa bihari muri JENESIS."
+          ]
+        }
+      }
+    },
+    "maintenance": {
+      "guideTitle": "Uburyo bwo gukoresha JENESIS Network & Maintenance",
+      "guideIntro": "Ubufasha bugufi bwo kugumisha serivisi ya JENESIS ikora: imiterere ya réseau, guhuza andi mamudasobwa yo mu iduka, n'ibyo kureba iyo imwe muri yo itagera kuri JENESIS.",
+      "closingNote": "Ibyo iyi porogaramu ikora byose bireba serivisi na réseau. Ntihindura ibaruramari na rimwe.",
+      "sections": {
+        "maint_interface": {
+          "title": "Ipaji yo gufata neza",
+          "purpose": "Kugumisha serivisi ya JENESIS ikora n'amamudasobwa yo kuri réseau avugana na yo.",
+          "where": "JENESIS Network & Maintenance (porogaramu y'icyatsi).",
+          "steps": [
+            "Fungura porogaramu kugira ngo urebe niba serivisi irimo gukora n'amamudasobwa ahujwe.",
+            "Ipaji yerekana imiterere ya serivisi, aderesi andi mamudasobwa akoresha, n'urutonde rw'amamudasobwa abonetse kuri réseau.",
+            "Koresha utubuto kugira ngo wongere utangize serivisi cyangwa wongere urebe réseau."
+          ],
+          "expected": "Ubona mu kanya gato niba andi mamudasobwa ashobora kugera kuri JENESIS, kandi ugakora niba atabishobora.",
+          "notes": [
+            "Iyi porogaramu nta mapaji y'ibaruramari, yo kugurisha, y'abakiriya cyangwa y'ibicuruzwa igira ku bushake. Yita kuri serivisi, atari ku bitabo.",
+            "Kongera gutangiza serivisi bihagarika gato abari gukoresha JENESIS ku yindi mudasobwa: bikore igihe iduka rituje."
+          ]
+        },
+        "maint_network": {
+          "title": "Imiterere ya réseau",
+          "purpose": "Gushyiraho aderesi n'umuryango andi mamudasobwa akoresha kugira ngo agere kuri JENESIS.",
+          "where": "Igice cya réseau muri JENESIS Network & Maintenance.",
+          "steps": [
+            "Reba aderesi yerekanwe: ni aderesi y'iyi mudasobwa kuri réseau y'aho.",
+            "Umuryango ni numero JENESIS yumviraho. Andi mamudasobwa akeneye umwe.",
+            "Ongera utangize serivisi nyuma yo guhindura ikintu, kugira ngo bihinduke."
+          ],
+          "expected": "Serivisi yongera gutangira kuri aderesi n'umuryango washyizeho.",
+          "notes": [
+            "Gusangira JENESIS n'andi mamudasobwa birahagaritswe kugeza ubikongeje. Nta kintu gisangirwa ku bw'impanuka.",
+            "Niba aderesi y'iyi mudasobwa ihindutse, andi mamudasobwa azakenera kuyoborwa ku nshya."
+          ]
+        },
+        "maint_connect": {
+          "title": "Guhuza amamudasobwa kuri réseau",
+          "purpose": "Kureka andi mamudasobwa yo mu iduka agakoresha amakuru amwe ya JENESIS.",
+          "where": "Urutonde rw'amamudasobwa muri JENESIS Network & Maintenance, n'imiterere yo guhuza ku yindi mudasobwa.",
+          "steps": [
+            "Menya neza ko buri mudasobwa iri kuri réseau imwe y'aho.",
+            "Ku yindi mudasobwa, fungura JENESIS uyiyobore kuri aderesi n'umuryango werekanwe hano.",
+            "Reba niba mudasobwa igaragara mu rutonde nk'igerwaho."
+          ],
+          "expected": "Indi mudasobwa ifungura JENESIS igakora ku makuru amwe n'aya.",
+          "notes": [
+            "Amamudasobwa yombi agomba kuba kuri réseau imwe. Mudasobwa iri ku yindi réseau, cyangwa yazimye, ntizaboneka.",
+            "Gushaka amamudasobwa kuri réseau birahagaritswe ku ntangiriro ku bw'ibanga; bikongeje hano igihe ubikeneye."
+          ]
+        },
+        "maint_manage": {
+          "title": "Gucunga uhuza",
+          "purpose": "Kureba uwo uhuye, no kugenza mudasobwa itagombye kuba ihujwe.",
+          "where": "Urutonde rw'amamudasobwa muri JENESIS Network & Maintenance.",
+          "steps": [
+            "Urutonde rwerekana buri mudasobwa yabonetse, niba isubiza, kandi niba ihujwe ubu.",
+            "Kanda Ongera urebe kugira ngo wongere ushake.",
+            "Koresha amabwiriza yo guhuza kugira ngo wemere cyangwa wange mudasobwa."
+          ],
+          "expected": "Uzi amamudasobwa ashobora kugera kuri JENESIS, kandi ushobora guhagarika imwe.",
+          "notes": [
+            "Mudasobwa itigeze isuzumwa yerekana nk'itazwi kugeza uyishatse.",
+            "Igikoresho kiri kuri réseau kidakoresha JENESIS cyerekana ko ari cyo aho kugifatwa nk'imashini yo kwishyuriraho."
+          ]
+        },
+        "maint_troubleshooting": {
+          "title": "Gukemura ibibazo bya réseau",
+          "purpose": "Kumenya impamvu mudasobwa itagera kuri JENESIS, no kuyikemura.",
+          "where": "JENESIS Network & Maintenance.",
+          "steps": [
+            "« Indi mudasobwa ntishobora guhuza » — reba ko zombi ziri kuri réseau imwe, ko iyi mudasobwa yakongerewe, kandi ko umuryango utabujijwe na pare-feu.",
+            "« Mudasobwa yabuze ku rutonde » — ishobora kuba yazimye cyangwa iri mu bitotsi. Kanda Ongera urebe kugira ngo wongere ushake.",
+            "« Byakoraga ejo » — aderesi y'iyi mudasobwa ishobora kuba yarahindutse. Reba ko aderesi yerekanwe hano ihuye n'iyo indi mudasobwa ikoresha.",
+            "« JENESIS ntitangira » — ongera utangize serivisi uvuye kuri iyi paji urebe ubutumwa buvuga ko irimo gukora.",
+            "« Ipaji iri ubusa » — byerekane hamwe n'inyandiko yo gutangira, iyi porogaramu yandika kugira ngo itangira ryananiwe risobanurwe nyuma."
+          ],
+          "expected": "Uzi impamvu imwe muri nkeya zisanzwe ari yo, n'icyo gukora.",
+          "notes": [
+            "Icyo udashobora gukemura hano ni ikibazo cy'ibaruramari kuri JENESIS Accounting & Business, atari icya réseau.",
+            "Serivisi yandika inyandiko. Ni ho ha mbere ho kureba iyo ikintu kitangiye."
+          ]
+        },
+        "maint_settings": {
+          "title": "Imiterere",
+          "purpose": "Imimerere mike ibarizwa kuri serivisi aho kuba iy'ibaruramari.",
+          "where": "Igice cy'imiterere muri JENESIS Network & Maintenance.",
+          "steps": [
+            "Fungura igice cy'imiterere kugira ngo urebe ibishobora guhinduka hano.",
+            "Hindura gusa ibyo ukeneye, kandi wongere utangize serivisi nyuma niba ubisabwe."
+          ],
+          "expected": "Serivisi ikora uko wayishyizeho.",
+          "notes": [
+            "Amakuru ya sosiyete, abakoresha, imisoro, amafaranga no gucapa bishyirwa muri JENESIS Settings & Access Point, atari hano.",
+            "Iyi porogaramu ntihindura ibaruramari na rimwe."
+          ]
+        },
+        "maint_shortcuts": {
+          "title": "Inzira ngufi za clavier",
+          "purpose": "Kugendagenda kuri paji udashaka imbeba.",
+          "where": "Ahantu hose muri JENESIS Network & Maintenance. Kanda F1 kugira ngo ubone urutonde rwose.",
+          "steps": [
+            "F1 — fungura ubu bufasha.",
+            "Alt+T — hindura imiterere y'umucyo cyangwa umwijima.",
+            "Alt+L — hindura ururimi."
+          ],
+          "expected": "Ipaji wasabye irakinguka ako kanya.",
+          "notes": [
+            "Inzira ngufi ntizikora igihe urimo wandika.",
+            "Hano hari inzira ngufi nke ku bushake: iyi porogaramu ifite amapaji make."
+          ]
+        },
+        "credits": {
+          "title": "Uwakoze JENESIS",
+          "purpose": "Kumenya uwo wabaza kuri porogaramu.",
+          "where": "Iki gice kiri ku musozo wa buri gafasha ka JENESIS.",
+          "steps": [
+            "JENESIS yakozwe kandi itezwa imbere na KAYIGANWA JACQUES."
+          ],
+          "expected": "Uzi uwo porogaramu ari we n'uyiteza imbere.",
+          "notes": [
+            "Ubu bufasha busobanura porogaramu uko iri. Busobanura gusa ibikorwa bihari muri JENESIS."
+          ]
+        }
+      }
+    },
+    "settings": {
+      "guideTitle": "Uburyo bwo gukoresha JENESIS Settings & Access Point",
+      "guideIntro": "Ubufasha bugufi bwo gushyiraho JENESIS: ibyapa, imiterere y'inyemezabwishyu, ururimi, imiterere y'umucyo n'umwijima, n'amahitamo agena uko ubucuruzi bwandikwa.",
+      "closingNote": "Ibyo uhindura hano byose bireba imyitwarire ya JENESIS. Nta na kimwe gisiba ibyanditswe.",
+      "sections": {
+        "set_overview": {
+          "title": "Icyo Imiterere imariye",
+          "purpose": "Gushyiraho JENESIS: sosiyete, abakoresha, imisoro, amafaranga, ububiko bw'amakuru, imiterere n'icapa.",
+          "where": "JENESIS Settings & Access Point (porogaramu y'umuhondo), cyangwa Imiterere muri JENESIS Accounting & Business.",
+          "steps": [
+            "Udupapuro two hejuru ni: Sosiyete, Abakoresha, Imisoro, Igenzura, Amafaranga, Ububiko, Imiterere n'Icapa.",
+            "Fungura igipapuro ushaka, hindura ibyo ukeneye, hanyuma ubike.",
+            "Udupapuro tumwe dusaba umuyobozi; niba utari we, ntidufunguka."
+          ],
+          "expected": "JENESIS ishyizweho uko ubucuruzi bwawe bukora.",
+          "notes": [
+            "Imiterere ihindura imyitwarire ya porogaramu. Ntihindura ibaruramari ryanditswe.",
+            "Niba igipapuro kibuze, inshingano zawe ntizirimo. Saba umuyobozi."
+          ]
+        },
+        "set_printers": {
+          "title": "Ibyapa",
+          "purpose": "Guhitamo icapa rica iki, no kureba ko rikora mbere y'uko umukiriya ategereza.",
+          "where": "Icapa, mu gice cy'icapa.",
+          "steps": [
+            "Fungura igipapuro Gucapa. Urutonde rwerekana ibyapa byose by'iyi mudasobwa, ibyinjijwe n'ibiri kuri réseau.",
+            "Hitamo icapa ushaka; kurisiga ku icapa ryo ku ntangiriro bikoresha iryo Windows yakoresha.",
+            "Kanda Capa inyemezabwishyu yo kugerageza kugira ngo urebe ko rikora kandi rihuye.",
+            "Kanda Bika iyi miterere."
+          ],
+          "expected": "Inyemezabwishyu zijya ku icapa wahisemo, kandi wabonye urupapuro rwo kugerageza rusohoka.",
+          "notes": [
+            "Icapa ryazimye, ritagira impapuro cyangwa ryafashwe n'ikibazo cyerekanwa ku rutonde aho guhishwa, kugira ngo ubone ko rihari ari rititeguye.",
+            "Icapa wahisemo ryibukwa kuri iyi mudasobwa. Indi mudasobwa igumana icyo yahisemo.",
+            "Muri navigateur, hatari porogaramu ya JENESIS ya mudasobwa, icapa rinyura mu idirishya ry'icapa rya navigateur."
+          ]
+        },
+        "set_receipts": {
+          "title": "Imiterere y'inyemezabwishyu",
+          "purpose": "Kwemeza uko inyemezabwishyu isa: urupapuro, inyandiko, n'amakuru agaragara.",
+          "where": "Icapa, mu bice by'impapuro, imiterere n'ibirimo.",
+          "steps": [
+            "Hitamo urupapuro: umuzingo wa 58 mm, umuzingo wa 80 mm, urupapuro rwa A4, cyangwa ubugari wihitiyemo niba uwanyu utandukanye.",
+            "Shyiraho inyandiko: ingano, ubwoko bw'inyuguti, inyuguti zijimye, intera hagati y'imirongo n'uturimbo tune.",
+            "Andika umutwe inyemezabwishyu ifite n'ubutumwa bwo hasi.",
+            "Tora amakuru ushaka: ikirango, izina ry'ubucuruzi, aderesi, telefoni, imeyili, nimero y'umusoro, numero y'inyandiko, itariki, umucuruzi, umukiriya, ibisobanuro by'ibicuruzwa, uko imisoro iteye, ibiteranyo, uburyo bwo kwishyura, ibiri hasi n'umurongo wo kugabanya.",
+            "Kanda Erekana igerageza kugira ngo uyibone nk'uko izacapwa, kandi niba ihagije ku rupapuro.",
+            "Kanda Bika iyi miterere."
+          ],
+          "expected": "Inyemezabwishyu icapa uko wayiteguye, kandi igumaho.",
+          "notes": [
+            "Iyi miterere ni iya porogaramu urimo. Kuyibika muri JENESIS Seller ntibihindura JENESIS Accounting & Business, no mu buryo bunyuranye.",
+            "Igerageza ni inyandiko nyayo yo gucapa ku ngayo nyayo: niba umurongo uciweyo, uzacibwa no ku rupapuro.",
+            "Imibare y'ibice n'ibyasubijwe bicapa neza: 1.25 iguma 1.25, kandi igicuruzwa cyasubijwe gifite akamenyetso k'ubusa n'ijambo « byasubijwe ».",
+            "Gucapa ntibihindura igurisha, ubwishyu cyangwa inyandiko. Bikora impapuro gusa."
+          ]
+        },
+        "set_languages": {
+          "title": "Ururimi",
+          "purpose": "Gukoresha JENESIS mu Cyongereza, mu Gifaransa cyangwa mu Kinyarwanda.",
+          "where": "Ihitamo ry'ururimi hejuru ya paji, cyangwa kanda Alt+L.",
+          "steps": [
+            "Kanda ku rurimi hejuru ya paji, cyangwa kanda Alt+L kugira ngo unyure muri eshatu.",
+            "Hitamo English, Français cyangwa Kinyarwanda."
+          ],
+          "expected": "Interface yose ihindura ururimi icyarimwe, kandi icyo wahisemo kiribukwa.",
+          "notes": [
+            "Ururimi ni urwawe: ntiruhindura ibyo abandi bakoresha babona ku mamudasobwa yabo.",
+            "Inyandiko zacapwe zisigara mu rurimi zacapiwemo."
+          ]
+        },
+        "set_theme": {
+          "title": "Imiterere y'umucyo n'umwijima",
+          "purpose": "Gukora mu rumuri rwinshi cyangwa mu cyumba cyijimye udananiwe amaso.",
+          "where": "Igenzura ry'imiterere hejuru ya paji, cyangwa kanda Alt+T.",
+          "steps": [
+            "Kanda Alt+T, cyangwa ku igenzura ry'imiterere, kugira ngo unyure hagati y'umucyo, umwijima no gukurikira mudasobwa.",
+            "Gukurikira mudasobwa bivuga ko JENESIS ikurikiza imiterere Windows ikoresha."
+          ],
+          "expected": "Interface irahinduka ako kanya kandi icyo wahisemo kiribukwa.",
+          "notes": [
+            "Buri porogaramu ya JENESIS yibuka imiterere yayo: imashini yo kwishyuriraho ishobora kuba umucyo mu gihe biro biri umwijima.",
+            "Amabara ya porogaramu enye ntahinduka: Seller ni umutuku, Maintenance icyatsi, Accounting ubururu na Settings umuhondo, mu mucyo no mu mwijima."
+          ]
+        },
+        "set_preferences": {
+          "title": "Ibyo ukunda",
+          "purpose": "Amahitamo ari ayawe kandi atari ay'undi muntu.",
+          "where": "Hejuru ya paji no mu gipapuro Imiterere.",
+          "steps": [
+            "Ururimi, imiterere, ijambo ry'ibanga n'amakuru yawe ni ibyawe gusa.",
+            "Hindura ijambo ry'ibanga uvuye ku izina ryawe hejuru iburyo igihe porogaramu ibikubajije, cyangwa igihe ubishakiye."
+          ],
+          "expected": "JENESISA irasa kandi isomwa uko ukunda, nta kugira uwo ihungabanya.",
+          "notes": [
+            "Ururimi n'imiterere yawe biragukurikira, atari mudasobwa: imashini yo kwishyuriraho isangiwe iguma ari iyawe.",
+            "Imiterere imwe, nk'amakuru ya sosiyete n'imisoro, ni iya buri wese kandi isaba umuyobozi."
+          ]
+        },
+        "set_options": {
+          "title": "Amahitamo yo gushyiraho",
+          "purpose": "Imimerere igena uko ubucuruzi bwose bwanzikwa.",
+          "where": "Udupapuro Sosiyete, Imisoro, Amafaranga n'Ububiko bw'amakuru.",
+          "steps": [
+            "Sosiyete — izina, aderesi, nimero y'umusoro, umwaka w'ibaruramari, ifaranga n'igiciro cy'ububiko.",
+            "Imisoro — ibipimo wishyuza kandi wishyura, kandi niba ibiciro birimo umusoro.",
+            "Amafaranga — amafaranga ukoreramo n'ibipimo byo guhana.",
+            "Ububiko bw'amakuru — gukora kopi y'amakuru no kuyasubiza."
+          ],
+          "expected": "Igurisha, kugura na raporo byitwara uko ubucuruzi bwawe bubikeneye.",
+          "notes": [
+            "Iyi mimerere igira buri weseho: umuyobozi ni we uyihindura.",
+            "Igipimo kitagikoreshwa kirahagarikwa aho guhanagurwa, kugira ngo inyandiko za kera zigume ari ukuri."
+          ]
+        },
+        "set_troubleshooting": {
+          "title": "Iyo imiterere idakora",
+          "purpose": "Kumenya impamvu impinduka itagize ingaruka.",
+          "where": "Ahantu hose muri JENESIS Settings & Access Point.",
+          "steps": [
+            "« Sinshobora gufungura igipapuro » — bisaba umuyobozi. Saba umwe, cyangwa injira nk'umuyobozi.",
+            "« Icapa ryanjye ntiriri ku rutonde » — reba ko ryakongerewe kandi rishyizwe muri Windows. Kanda Ongera urebe kugira ngo wongere ushake.",
+            "« Inyemezabwishyu iraciwe » — ingano y'impapuro ntihuye n'umuzingo. Gerageza 58 mm cyangwa 80 mm, kandi urebe igerageza.",
+            "« Nabikishije imiterere ariko imashini yo kwishyuriraho iracapa nka mbere » — imiterere ni iya porogaramu wari urimo. Yongere uyishyire muri porogaramu ucapisha.",
+            "« Ururimi ntirwahindutse hose » — inyandiko icapwe isigara mu rurimi yacapiwemo."
+          ],
+          "expected": "Uzi impamvu byabaye n'icyo gukora.",
+          "notes": [
+            "Nta kintu mu Imiterere gisiba ibaruramari. Ndetse no gusubiza amakuru ni igikorwa cyatekerejweho, gishingiye ku bubiko bw'amakuru."
+          ]
+        },
+        "credits": {
+          "title": "Uwakoze JENESIS",
+          "purpose": "Kumenya uwo wabaza kuri porogaramu.",
+          "where": "Iki gice kiri ku musozo wa buri gafasha ka JENESIS.",
+          "steps": [
+            "JENESIS yakozwe kandi itezwa imbere na KAYIGANWA JACQUES."
+          ],
+          "expected": "Uzi uwo porogaramu ari we n'uyiteza imbere.",
+          "notes": [
+            "Ubu bufasha busobanura porogaramu uko iri. Busobanura gusa ibikorwa bihari muri JENESIS."
+          ]
+        }
+      }
+    }
+  }
+}

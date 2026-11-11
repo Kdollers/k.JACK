@@ -1,0 +1,683 @@
+{
+  "order": {
+    "seller": [
+      "seller_interface",
+      "seller_sales",
+      "seller_search",
+      "seller_customers",
+      "seller_receipts",
+      "seller_printing",
+      "seller_returns",
+      "seller_stock",
+      "seller_shortcuts",
+      "seller_troubleshooting",
+      "credits"
+    ],
+    "admin": [
+      "admin_dashboard",
+      "admin_accounting",
+      "admin_purchases",
+      "admin_parties",
+      "admin_taxes",
+      "admin_reports",
+      "admin_records",
+      "admin_permissions",
+      "admin_functions",
+      "admin_shortcuts",
+      "credits"
+    ],
+    "maintenance": [
+      "maint_interface",
+      "maint_network",
+      "maint_connect",
+      "maint_manage",
+      "maint_troubleshooting",
+      "maint_settings",
+      "maint_shortcuts",
+      "credits"
+    ],
+    "settings": [
+      "set_overview",
+      "set_printers",
+      "set_receipts",
+      "set_languages",
+      "set_theme",
+      "set_preferences",
+      "set_options",
+      "set_troubleshooting",
+      "credits"
+    ]
+  },
+  "guides": {
+    "seller": {
+      "guideTitle": "How to use JENESIS Seller",
+      "guideIntro": "A short guide to selling at the counter: recording a sale, finding a product, taking payment, printing a receipt, and putting goods back when a customer returns them.",
+      "closingNote": "Every sale you record is balanced in the accounts for you. This guide covers the counter; anything to do with the books belongs to JENESIS Accounting & Business.",
+      "sections": {
+        "seller_interface": {
+          "title": "The Seller screen",
+          "purpose": "Selling at the counter. Everything you need for a sale is on this screen and nothing else gets in the way.",
+          "where": "JENESIS Seller (the red application). It opens on the sales screen.",
+          "steps": [
+            "Look at the left column: it lists where you can go — Dashboard, Sales, Customers, Inventory, Help.",
+            "The top bar shows the company you are working in, today's date, the calculator, the Messenger, the language and your name.",
+            "The middle of the screen is where a sale is built up: the customer, then the items."
+          ],
+          "expected": "You can see the shop's figures for today and start a sale without opening any other screen.",
+          "notes": [
+            "The colour of the application is red. If the bar is blue you are in JENESIS Accounting & Business, which holds the books rather than the till.",
+            "Your name is shown at the top right. Every sale you record is stored against it."
+          ]
+        },
+        "seller_sales": {
+          "title": "Recording a sale",
+          "purpose": "Record what a customer buys. The sale, the stock and the accounts are all updated together, so you do not enter the same thing twice.",
+          "where": "Sales → New sale (or press F2).",
+          "steps": [
+            "Choose the customer, or leave it as the walk-in customer if they do not have an account.",
+            "Add each item: pick the product, then the quantity. Quantities can be fractions — half a kilo is 0.5.",
+            "Check the price and the total at the bottom.",
+            "Choose how the customer pays: cash, bank, or mobile money.",
+            "Press Save (or record the payment) to finish."
+          ],
+          "expected": "The sale is saved, the stock of each item falls by exactly what was sold, and the accounting entry is made for you. A sale of 1.25 kg takes 1.25 kg out of stock — not one kilo, and not two.",
+          "notes": [
+            "You cannot sell more than you hold. If the program refuses the sale, check the stock level of that item first.",
+            "A sale is recorded the moment you save it. To correct a saved sale, record a return rather than editing it."
+          ]
+        },
+        "seller_search": {
+          "title": "Finding a product",
+          "purpose": "Find what the customer is asking for quickly, by name or by the code printed on it.",
+          "where": "The product box on a sale, or Inventory → Products.",
+          "steps": [
+            "Type part of the name, or the whole code, into the product box.",
+            "The list shortens as you type; pick the item you want.",
+            "If nothing appears, the product may not be set up yet — an administrator adds products in JENESIS Accounting & Business."
+          ],
+          "expected": "The product is added to the sale with its price and the stock you have left.",
+          "notes": [
+            "Searching looks at both the name and the code, so the shorter code is often faster at a busy counter.",
+            "The stock you have left is shown next to the product, so you can answer a customer without leaving the sale."
+          ]
+        },
+        "seller_customers": {
+          "title": "Customers",
+          "purpose": "Sell on credit to a customer you know, and see what they owe.",
+          "where": "Customers in the left column.",
+          "steps": [
+            "Open Customers to see every customer and the balance each one owes.",
+            "To add one, press New customer and fill in the name and, if you have it, the telephone number.",
+            "Choose the customer on a sale when they are buying on account rather than paying now."
+          ],
+          "expected": "A sale on account raises what that customer owes. When they pay you later, the balance falls.",
+          "notes": [
+            "A customer who pays each time does not need an account: leave the sale on the walk-in customer.",
+            "You can see what a customer owes, but only an administrator can write a debt off."
+          ]
+        },
+        "seller_receipts": {
+          "title": "Receipts and taking payment",
+          "purpose": "Take the money and give the customer a receipt that matches what they bought.",
+          "where": "The payment part of a sale, and Sales → the list of sales.",
+          "steps": [
+            "Choose how the customer pays: cash, bank, or mobile money.",
+            "Type how much they gave you; the change is worked out for you.",
+            "Save the sale, then print the receipt.",
+            "To give money back, record a refund: it is a payment with a minus amount, and the money comes out of the till, the bank or the mobile money account you choose."
+          ],
+          "expected": "The money is recorded against the account you chose, and the customer's balance falls by what they paid.",
+          "notes": [
+            "A refund is written as a negative amount. It takes money out of the account, and the receipt and the accounts both show it as a refund.",
+            "You cannot give back more than the customer paid on that sale."
+          ]
+        },
+        "seller_printing": {
+          "title": "Printing a receipt",
+          "purpose": "Print a receipt for the customer on whatever printer is at the counter, shaped the way your shop needs.",
+          "where": "The Print receipt button on a sale or on a saved invoice, and JENESIS Settings & Access Point → Printing to set it up.",
+          "steps": [
+            "On a sale, press Print receipt. The receipt is sent straight to the printer you chose.",
+            "To change how it looks, open JENESIS Settings & Access Point, go to Printing, and choose the printer, the paper (58 mm, 80 mm, A4 or a custom width), the text size and what appears on it.",
+            "Press Show the preview to see the receipt exactly as it will print, and Print a test receipt to check the printer before a customer is waiting.",
+            "Press Save these settings when you are happy."
+          ],
+          "expected": "The receipt prints on the paper you chose, with the details you chose, and is remembered for next time.",
+          "notes": [
+            "The settings you save belong to JENESIS Seller on this computer. Saving them does not change how JENESIS Accounting & Business prints.",
+            "Decimals print as you type them — 1.25 stays 1.25 — and a returned item is shown with a minus and marked as returned.",
+            "Printing a receipt does not change the sale. Printing it twice gives two pieces of paper, not two sales."
+          ]
+        },
+        "seller_returns": {
+          "title": "Returns and refunds",
+          "purpose": "Put goods back and give money back, so the stock and the till both tell the truth.",
+          "where": "A new sale, or a credit note against a saved invoice.",
+          "steps": [
+            "To take goods back on the till, record the item with a negative quantity — for half a kilo returned, type -0.5.",
+            "To refund a whole invoice, open the sale and raise a credit note. Say whether the goods are coming back into stock.",
+            "To give money back, record a payment with a minus amount."
+          ],
+          "expected": "Returned goods go back into stock, and the money you give back comes out of the till, the bank or the mobile money account.",
+          "notes": [
+            "A credit note is the proper way to return goods against an invoice: it records why, and it can put the stock back at the same time.",
+            "A negative line on a sale is the quick correction at the counter. Both work; the credit note is the one that leaves a full explanation.",
+            "A receipt that includes a return says so, so the customer can see goods went back rather than being sold a negative quantity."
+          ]
+        },
+        "seller_stock": {
+          "title": "Checking what is in stock",
+          "purpose": "Answer a customer's question, or check before you promise something, without leaving the counter.",
+          "where": "Inventory → Products, and the stock figure shown next to each product on a sale.",
+          "steps": [
+            "Open Inventory → Products to see what you hold of everything.",
+            "On a sale, the stock left is shown next to the product as you pick it.",
+            "Use the search box to find one product quickly."
+          ],
+          "expected": "You can see how much of an item you hold before you sell it.",
+          "notes": [
+            "The stock figure is what is left after everything already sold, so it is the truth at this moment.",
+            "Fractions are kept: if you hold 2.5 kg, you see 2.5 and not 2.",
+            "Only an administrator can change what you hold; a count is the proper way to correct it."
+          ]
+        },
+        "seller_shortcuts": {
+          "title": "Keyboard shortcuts",
+          "purpose": "Work faster at the counter without reaching for the mouse.",
+          "where": "Anywhere in JENESIS Seller. Press F1 for the full list.",
+          "steps": [
+            "F1 — open this guide.",
+            "F2 — start a new sale.",
+            "Ctrl+Shift+K — the calculator.",
+            "Ctrl+Shift+C — customers.",
+            "Alt+T — change the light or dark appearance.",
+            "Alt+L — change the language."
+          ],
+          "expected": "The screen you asked for opens straight away.",
+          "notes": [
+            "Shortcuts stay out of the way while you are typing, so typing a product name never triggers one by accident.",
+            "A shortcut only works if you are allowed to do what it does."
+          ]
+        },
+        "seller_troubleshooting": {
+          "title": "When something goes wrong",
+          "purpose": "Sort out the handful of problems that happen at a counter, or know who to call.",
+          "where": "Anywhere in JENESIS Seller.",
+          "steps": [
+            "'I cannot sell this item' — you are out of it, or you have less than you are trying to sell. Check the stock level.",
+            "'The printer did nothing' — check it is switched on, has paper and is not showing a fault. Print a test receipt from Settings → Printing to check.",
+            "'The receipt is cut off' — the paper size may be wrong for your printer. Open Settings → Printing and choose 58 mm or 80 mm to match the roll.",
+            "'I typed the wrong amount' — do not edit the saved sale. Record a return or a refund so the accounts keep a true history.",
+            "'I am locked out' — wait a few minutes and try again, or ask an administrator to reset your password."
+          ],
+          "expected": "You know what the message means and what to do next.",
+          "notes": [
+            "Nothing you do at the counter can lose the accounts: a correction is always recorded as a correction, never erased.",
+            "If the program will not start at all, or a screen is blank, that is a job for JENESIS Network & Maintenance."
+          ]
+        },
+        "credits": {
+          "title": "Who made JENESIS",
+          "purpose": "Know who to contact about the program.",
+          "where": "This section appears at the end of every JENESIS guide.",
+          "steps": [
+            "JENESIS is created and developed by KAYIGANWA JACQUES."
+          ],
+          "expected": "You know who the program belongs to and who develops it.",
+          "notes": [
+            "This guide documents the program as it is. It describes only features that exist in JENESIS."
+          ]
+        }
+      }
+    },
+    "admin": {
+      "guideTitle": "How to use JENESIS Accounting & Business",
+      "guideIntro": "A short guide to keeping the books: making entries, recording purchases, running the reports, and deciding what each person is allowed to do.",
+      "closingNote": "Every entry you post is balanced before it is accepted, so the reports always agree with the books.",
+      "sections": {
+        "admin_dashboard": {
+          "title": "The dashboard",
+          "purpose": "See the state of the business at a glance before going into the detail.",
+          "where": "Dashboard in the left column of JENESIS Accounting & Business (the blue application).",
+          "steps": [
+            "Open the Dashboard to see sales, purchases, what customers owe, what you owe suppliers, and the profit so far.",
+            "Use the date range at the top to look at a different period.",
+            "Open any figure to go to the records behind it."
+          ],
+          "expected": "You can see how the business is doing and jump straight into anything that looks wrong.",
+          "notes": [
+            "Every figure is calculated from the accounting entries, so it agrees with the reports to the penny.",
+            "The dashboard shows the company you are working in. Change company at the top left if you look after more than one."
+          ]
+        },
+        "admin_accounting": {
+          "title": "Accounting operations",
+          "purpose": "Make entries in the books: journals, adjustments and the corrections that keep them straight.",
+          "where": "Accounting in the left column.",
+          "steps": [
+            "Open the chart of accounts to see every account and its balance.",
+            "To make an entry by hand, open a new journal entry: choose the accounts, then the debits and the credits.",
+            "Check that the debits and the credits are equal before you post — the program will refuse an entry that does not balance.",
+            "To reduce a side rather than increase it, write the amount as a negative; it is recorded on the opposite side, which is what a correction is."
+          ],
+          "expected": "The entry is posted and both the trial balance and the reports pick it up immediately.",
+          "notes": [
+            "An entry that does not balance cannot be posted. That rule is what keeps the books correct.",
+            "Amounts can be decimals, and a correction is a negative on the side being reduced.",
+            "Entries made by a sale, a purchase or a payment also appear here; they are not separate books."
+          ]
+        },
+        "admin_purchases": {
+          "title": "Purchases and supplier bills",
+          "purpose": "Record what you buy and what you owe, and keep the stock and the accounts in step.",
+          "where": "Purchases in the left column.",
+          "steps": [
+            "Record a bill from a supplier: the supplier, the date, then what you bought and at what price.",
+            "If the goods have arrived, receive them so the stock goes up.",
+            "Record the payment when you pay the supplier; what you owe them falls.",
+            "To send goods back, raise a purchase return against the bill."
+          ],
+          "expected": "The purchase, the stock and what you owe are all up to date, and the expense is in the accounts.",
+          "notes": [
+            "Quantities can be decimals, so buying 2.5 kg is recorded as 2.5.",
+            "To correct a bill you have already recorded, raise a return or a credit note rather than changing the original.",
+            "A received quantity cannot be negative; use a purchase return, which records why."
+          ]
+        },
+        "admin_parties": {
+          "title": "Customers and suppliers",
+          "purpose": "Keep the people you trade with, and know exactly who owes what.",
+          "where": "Customers and Suppliers in the left column.",
+          "steps": [
+            "Open Customers to see each customer and what they owe; open Suppliers for what you owe.",
+            "Add or edit a record with the name, the contact details and, where you have it, the tax number.",
+            "Print a statement for one of them to show what is outstanding."
+          ],
+          "expected": "The balances agree with the accounts, because both come from the same entries.",
+          "notes": [
+            "A balance rises when you sell or buy on account, and falls when payment is recorded.",
+            "Deleting a customer who has history is not allowed; the record is closed instead so the accounts stay whole."
+          ]
+        },
+        "admin_taxes": {
+          "title": "Taxes and VAT",
+          "purpose": "Charge the right tax, and report it correctly.",
+          "where": "Settings → Taxes, and the tax column on any sale or purchase.",
+          "steps": [
+            "Set up each tax rate once: the name and the percentage.",
+            "The rate is applied to a line when you record a sale or a purchase.",
+            "Prices can include tax or exclude it; the company setting decides, and it is set in Settings → Company.",
+            "Run the VAT report to see what you have collected and what you have paid."
+          ],
+          "expected": "Tax is charged on each line at the rate you set, and the VAT report agrees with the accounts.",
+          "notes": [
+            "A tax rate that is no longer used is switched off rather than deleted, so old documents stay correct.",
+            "The rate is stored on each line at the time of the sale, so changing a rate later does not rewrite history."
+          ]
+        },
+        "admin_reports": {
+          "title": "Financial reports",
+          "purpose": "Produce the figures the business and the tax office need.",
+          "where": "Reports in the left column.",
+          "steps": [
+            "Choose the report: General Ledger, Journal Entries, Trial Balance, Profit and Loss, Balance Sheet, Cash Flow, Aged Receivables, Aged Payables, VAT, or Inventory Valuation.",
+            "Set the date range you want.",
+            "Read it on screen, print it, or export it."
+          ],
+          "expected": "The report agrees with the accounts, because it is produced from the same entries.",
+          "notes": [
+            "Every report handles negative and decimal amounts, so a refund or a fractional quantity shows as it was recorded.",
+            "The Trial Balance and the Balance Sheet must balance. If one does not, there is an entry to find, not a report to doubt."
+          ]
+        },
+        "admin_records": {
+          "title": "Accounting records",
+          "purpose": "Find any entry again, and see who made it and when.",
+          "where": "Accounting → the list of entries, and Settings → Audit log.",
+          "steps": [
+            "Search the list of entries by date, by account, or by the reference on the document.",
+            "Open an entry to see both sides of it and the document that produced it.",
+            "The audit log shows who did what and when."
+          ],
+          "expected": "Any figure in any report can be traced back to the entry that produced it.",
+          "notes": [
+            "Entries are never erased. A mistake is corrected with a reversing entry, so the history stays complete.",
+            "Each entry records the user who posted it."
+          ]
+        },
+        "admin_permissions": {
+          "title": "Users, roles and permissions",
+          "purpose": "Let each person do their job and nothing more, and know who did what.",
+          "where": "Settings → Users. Only an administrator can open it.",
+          "steps": [
+            "Add a user with a name and a starting password; they change it when they first sign in.",
+            "Give them a role — Administrator, Accountant, Sales, Purchases, or Inventory — which decides what they can see and do.",
+            "Switch a user off when they leave rather than deleting them."
+          ],
+          "expected": "Each person sees the screens their work needs, and every action is recorded against their name.",
+          "notes": [
+            "Permissions are enforced by the program as well as by the menus, so hiding a button is not the only protection.",
+            "Give the smallest role that lets someone do their job."
+          ]
+        },
+        "admin_functions": {
+          "title": "Administrator functions",
+          "purpose": "The jobs only an administrator does: setting the company up, and keeping the data safe.",
+          "where": "JENESIS Settings & Access Point, and Settings in JENESIS Accounting & Business.",
+          "steps": [
+            "Set the company up: the name, the address, the tax number and the currency.",
+            "Make a backup before anything risky, and keep the backup file somewhere other than this computer.",
+            "Restore from a backup only when you mean to, and understand that it replaces the data.",
+            "Add the users and decide what each of them may do."
+          ],
+          "expected": "The company is set up correctly and there is always a copy of the data to fall back on.",
+          "notes": [
+            "A backup is only a backup if you have checked it restores. Test it before you need it.",
+            "Changing a user's access ends their current session, so warn them first."
+          ]
+        },
+        "admin_shortcuts": {
+          "title": "Keyboard shortcuts",
+          "purpose": "Move around the books without reaching for the mouse.",
+          "where": "Anywhere in JENESIS Accounting & Business. Press F1 for the full list.",
+          "steps": [
+            "F1 — open this guide.",
+            "Ctrl+Shift+L — the general ledger.",
+            "Ctrl+Shift+T — transfers.",
+            "Ctrl+Shift+K — the calculator.",
+            "Ctrl+Shift+M — the Messenger.",
+            "Alt+T — change the light or dark appearance.",
+            "Alt+L — change the language."
+          ],
+          "expected": "The screen you asked for opens straight away.",
+          "notes": [
+            "Shortcuts stay out of the way while you are typing.",
+            "A shortcut only works if your role allows what it does."
+          ]
+        },
+        "credits": {
+          "title": "Who made JENESIS",
+          "purpose": "Know who to contact about the program.",
+          "where": "This section appears at the end of every JENESIS guide.",
+          "steps": [
+            "JENESIS is created and developed by KAYIGANWA JACQUES."
+          ],
+          "expected": "You know who the program belongs to and who develops it.",
+          "notes": [
+            "This guide documents the program as it is. It describes only features that exist in JENESIS."
+          ]
+        }
+      }
+    },
+    "maintenance": {
+      "guideTitle": "How to use JENESIS Network & Maintenance",
+      "guideIntro": "A short guide to keeping the JENESIS service running: the network settings, connecting the other computers in the shop, and what to check when one of them cannot reach JENESIS.",
+      "closingNote": "Everything this application does concerns the service and the network. It never changes the accounts.",
+      "sections": {
+        "maint_interface": {
+          "title": "The Maintenance screen",
+          "purpose": "Keep the JENESIS service running and the computers on the network talking to it.",
+          "where": "JENESIS Network & Maintenance (the green application).",
+          "steps": [
+            "Open the application to see whether the service is running and which computers are connected.",
+            "The screen shows the state of the service, the address other computers use, and the list of computers found on the network.",
+            "Use the buttons to restart the service or to check the network again."
+          ],
+          "expected": "You can see at a glance whether other computers can reach JENESIS, and act if they cannot.",
+          "notes": [
+            "This application deliberately holds no accounting, sales, customer or product screens. It looks after the service, not the books.",
+            "Restarting the service briefly disconnects anyone using JENESIS on another computer, so do it when the shop is quiet."
+          ]
+        },
+        "maint_network": {
+          "title": "Network configuration",
+          "purpose": "Set the address and the port other computers use to reach JENESIS.",
+          "where": "The network section of JENESIS Network & Maintenance.",
+          "steps": [
+            "Check the address shown: it is the address of this computer on the local network.",
+            "The port is the number JENESIS listens on. Other computers need the same one.",
+            "Restart the service after changing anything, so the change takes effect."
+          ],
+          "expected": "The service comes back up on the address and port you set.",
+          "notes": [
+            "Sharing JENESIS with other computers is switched off until you turn it on. Nothing is shared by accident.",
+            "If the address of this computer changes, other computers will need to be pointed at the new one."
+          ]
+        },
+        "maint_connect": {
+          "title": "Connecting computers on the network",
+          "purpose": "Let the other computers in the shop use the same JENESIS data.",
+          "where": "The list of computers in JENESIS Network & Maintenance, and the connection settings on the other computer.",
+          "steps": [
+            "Make sure every computer is on the same local network.",
+            "On the other computer, open JENESIS and point it at the address and port shown here.",
+            "Check the computer appears in the list as reachable."
+          ],
+          "expected": "The other computer opens JENESIS and works on the same data as this one.",
+          "notes": [
+            "Both computers must be on the same network. A computer on a different network, or off, will not be found.",
+            "Finding computers on the network is switched off by default for privacy; turn it on here when you need it."
+          ]
+        },
+        "maint_manage": {
+          "title": "Managing connections",
+          "purpose": "See who is connected, and deal with a computer that should not be.",
+          "where": "The list of computers in JENESIS Network & Maintenance.",
+          "steps": [
+            "The list shows each computer found, whether it is answering, and whether it is connected now.",
+            "Press Refresh to look again.",
+            "Use the connection controls to allow or refuse a computer."
+          ],
+          "expected": "You know which computers can reach JENESIS, and you can cut one off.",
+          "notes": [
+            "A computer that has never been checked shows as unknown until you look for it.",
+            "A device on the network that is not running JENESIS is listed as such rather than being mistaken for a till."
+          ]
+        },
+        "maint_troubleshooting": {
+          "title": "Network troubleshooting",
+          "purpose": "Work out why a computer cannot reach JENESIS, and fix it.",
+          "where": "JENESIS Network & Maintenance.",
+          "steps": [
+            "'The other computer cannot connect' — check both are on the same network, that this computer is switched on, and that the port is not blocked by a firewall.",
+            "'A computer vanished from the list' — it may be switched off or asleep. Press Refresh to look again.",
+            "'It worked yesterday' — the address of this computer may have changed. Check the address shown here matches the one the other computer is using.",
+            "'JENESIS will not start' — restart the service from this screen and watch for the message saying it is running.",
+            "'A screen is blank' — report it with the start-up log, which this application writes so a failed start can always be explained afterwards."
+          ],
+          "expected": "You know which of the few usual causes it is, and what to do about it.",
+          "notes": [
+            "Anything you cannot solve here is an accounting question for JENESIS Accounting & Business, not a network one.",
+            "The service writes a log. It is the first place to look when something will not start."
+          ]
+        },
+        "maint_settings": {
+          "title": "Settings",
+          "purpose": "The handful of settings that belong to the service rather than to the accounts.",
+          "where": "The settings section of JENESIS Network & Maintenance.",
+          "steps": [
+            "Open the settings section to see what can be changed here.",
+            "Change only what you need to, and restart the service afterwards if you are asked to."
+          ],
+          "expected": "The service runs the way you have set it.",
+          "notes": [
+            "Company details, users, taxes, currencies and printing are set in JENESIS Settings & Access Point, not here.",
+            "This application never changes the accounts."
+          ]
+        },
+        "maint_shortcuts": {
+          "title": "Keyboard shortcuts",
+          "purpose": "Move around the screen without reaching for the mouse.",
+          "where": "Anywhere in JENESIS Network & Maintenance. Press F1 for the full list.",
+          "steps": [
+            "F1 — open this guide.",
+            "Alt+T — change the light or dark appearance.",
+            "Alt+L — change the language."
+          ],
+          "expected": "The screen you asked for opens straight away.",
+          "notes": [
+            "Shortcuts stay out of the way while you are typing.",
+            "There are deliberately few shortcuts here: this application has few screens."
+          ]
+        },
+        "credits": {
+          "title": "Who made JENESIS",
+          "purpose": "Know who to contact about the program.",
+          "where": "This section appears at the end of every JENESIS guide.",
+          "steps": [
+            "JENESIS is created and developed by KAYIGANWA JACQUES."
+          ],
+          "expected": "You know who the program belongs to and who develops it.",
+          "notes": [
+            "This guide documents the program as it is. It describes only features that exist in JENESIS."
+          ]
+        }
+      }
+    },
+    "settings": {
+      "guideTitle": "How to use JENESIS Settings & Access Point",
+      "guideIntro": "A short guide to setting JENESIS up: the printers, the shape of a receipt, the language, the light and dark appearance, and the options that shape how the business is recorded.",
+      "closingNote": "Everything you change here is about how JENESIS behaves. None of it erases what has already been recorded.",
+      "sections": {
+        "set_overview": {
+          "title": "What Settings is for",
+          "purpose": "Configure JENESIS: the company, the users, the taxes, the currencies, the backup, the appearance and printing.",
+          "where": "JENESIS Settings & Access Point (the yellow application), or Settings inside JENESIS Accounting & Business.",
+          "steps": [
+            "The tabs across the top are: Company, Users, Taxes, Audit, Currencies, Backup, Appearance and Printing.",
+            "Open the tab you need, change what you need, and save.",
+            "Some tabs need an administrator; if you are not one, they will not open."
+          ],
+          "expected": "JENESIS is set up the way your business works.",
+          "notes": [
+            "Settings change how the program behaves. They do not change the accounts that are already recorded.",
+            "If a tab is missing, your role does not include it. Ask an administrator."
+          ]
+        },
+        "set_printers": {
+          "title": "Printers",
+          "purpose": "Choose which printer prints what, and check it works before a customer is waiting.",
+          "where": "Printing, in the printer section.",
+          "steps": [
+            "Open the Printing tab. The list shows every printer on this computer, both those plugged in and those on the network.",
+            "Choose the printer you want from the list; leaving it on the default uses the one Windows would use.",
+            "Press Print a test receipt to check it works and is aligned.",
+            "Press Save these settings."
+          ],
+          "expected": "Receipts go to the printer you chose, and you have seen a test page come out of it.",
+          "notes": [
+            "A printer that is switched off, out of paper or jammed is shown in the list rather than hidden, so you can see it is there and not ready.",
+            "The printer you choose is remembered on this computer. Another computer keeps its own choice.",
+            "In a browser, without the JENESIS desktop application, printing goes through the browser's own print window."
+          ]
+        },
+        "set_receipts": {
+          "title": "Receipt layouts",
+          "purpose": "Decide what a receipt looks like: the paper, the text, and which details appear.",
+          "where": "Printing, in the paper, appearance and content sections.",
+          "steps": [
+            "Choose the paper: a 58 mm roll, an 80 mm roll, an A4 sheet, or a custom width if yours is different.",
+            "Set the text: the size, the typeface, whether it is bold, the line spacing and the four margins.",
+            "Type the title the receipt carries and the message at the bottom.",
+            "Tick the pieces of information you want: the logo, the business name, the address, the telephone, the email, the tax number, the document number, the date, the cashier, the customer, the item details, the tax breakdown, the totals, the payment method, the footer and the cut line.",
+            "Press Show the preview to see it exactly as it will print, and whether it fits the paper.",
+            "Press Save these settings."
+          ],
+          "expected": "The receipt prints the way you designed it, and stays that way.",
+          "notes": [
+            "These settings belong to the application you are in. Saving them in JENESIS Seller does not change JENESIS Accounting & Business, and the other way round.",
+            "The preview is the real print document at true size, so if a line is cut off there it will be cut off on paper.",
+            "Decimals and returns print correctly: 1.25 stays 1.25, and a returned item carries a minus and is marked as returned.",
+            "Printing never changes a sale, a payment or an entry. It only produces paper."
+          ]
+        },
+        "set_languages": {
+          "title": "Language",
+          "purpose": "Use JENESIS in English, French or Kinyarwanda.",
+          "where": "The language choice at the top of the screen, or press Alt+L.",
+          "steps": [
+            "Click the language at the top of the screen, or press Alt+L to move through the three.",
+            "Pick English, Français or Kinyarwanda."
+          ],
+          "expected": "The whole interface changes language at once, and your choice is remembered.",
+          "notes": [
+            "The language is yours alone: it does not change what other users see on their own computers.",
+            "Documents you have already printed stay in the language they were printed in."
+          ]
+        },
+        "set_theme": {
+          "title": "Light and dark appearance",
+          "purpose": "Work in bright light or in a dark room without straining your eyes.",
+          "where": "The appearance control at the top of the screen, or press Alt+T.",
+          "steps": [
+            "Press Alt+T, or click the appearance control, to move between light, dark and following the computer.",
+            "Following the computer means JENESIS matches the setting Windows is using."
+          ],
+          "expected": "The interface changes at once and your choice is remembered.",
+          "notes": [
+            "Each JENESIS application remembers its own appearance, so the till can be light while the back office is dark.",
+            "The colours of the four applications never change: Seller is red, Maintenance green, Accounting blue and Settings yellow, in both light and dark."
+          ]
+        },
+        "set_preferences": {
+          "title": "Preferences",
+          "purpose": "The choices that are yours and nobody else's.",
+          "where": "Across the top of the screen and in the Appearance tab.",
+          "steps": [
+            "Language, appearance, your password and your own details are yours alone.",
+            "Change your password from your name at the top right when the program asks you to, or when you want to."
+          ],
+          "expected": "JENESIS looks and reads the way you prefer, and the other users are unaffected.",
+          "notes": [
+            "Your language and appearance follow you, not the computer, so a shared till still feels like yours.",
+            "Some settings, like the company details and the taxes, belong to everybody and need an administrator."
+          ]
+        },
+        "set_options": {
+          "title": "Configuration options",
+          "purpose": "The settings that shape how the whole business is recorded.",
+          "where": "The Company, Taxes, Currencies and Backup tabs.",
+          "steps": [
+            "Company — the name, the address, the tax number, the financial year, the currency and how stock is valued.",
+            "Taxes — the rates you charge and pay, and whether prices include tax.",
+            "Currencies — the currencies you trade in and the exchange rates.",
+            "Backup — making a copy of the data and restoring it."
+          ],
+          "expected": "Sales, purchases and reports behave the way your business needs them to.",
+          "notes": [
+            "These settings affect everybody, so an administrator is the one who changes them.",
+            "A rate that is no longer used is switched off rather than deleted, so old documents stay correct."
+          ]
+        },
+        "set_troubleshooting": {
+          "title": "When a setting will not work",
+          "purpose": "Work out why a change did not take effect.",
+          "where": "Anywhere in JENESIS Settings & Access Point.",
+          "steps": [
+            "'I cannot open a tab' — it needs an administrator. Ask one, or sign in as one.",
+            "'My printer is not in the list' — check it is switched on and installed in Windows. Press Refresh to look again.",
+            "'The receipt is cut off' — the paper size does not match the roll. Try 58 mm or 80 mm, and check the preview.",
+            "'I saved the layout but the till prints the old way' — the setting belongs to the application you were in. Set it again in the application you print from.",
+            "'The language did not change everywhere' — a document already printed keeps the language it was printed in."
+          ],
+          "expected": "You know why it happened and what to do.",
+          "notes": [
+            "Nothing in Settings deletes the accounts. Even a restore is a deliberate act with a backup behind it."
+          ]
+        },
+        "credits": {
+          "title": "Who made JENESIS",
+          "purpose": "Know who to contact about the program.",
+          "where": "This section appears at the end of every JENESIS guide.",
+          "steps": [
+            "JENESIS is created and developed by KAYIGANWA JACQUES."
+          ],
+          "expected": "You know who the program belongs to and who develops it.",
+          "notes": [
+            "This guide documents the program as it is. It describes only features that exist in JENESIS."
+          ]
+        }
+      }
+    }
+  }
+}
