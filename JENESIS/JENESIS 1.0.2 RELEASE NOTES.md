@@ -495,7 +495,7 @@ that admits them.
 8. **Right-click was never clicked by a person.** Every action is exercised in
    code and over HTTP; whether the menu lands where the cursor is on a real
    screen is unverified.
-9. **The four Help guides have never been read on a screen.** All 108 sections
+9. **The four Help guides have never been read on a screen.** All 117 sections
    are proven to exist, to be complete, to be genuinely translated rather than
    English copied, and to render for the right application. Whether the prose
    reads well, and whether every instruction matches your business, is
