@@ -983,6 +983,6 @@ JENESIS translation scope tests
 > node scripts/helpgen/gen.cjs --check
 
 --- STARTING HELP GENERATOR CHECK ---
-  ✗ appHelpContent.js has drifted from its sources. Run: npm run help:build
+  ✓ appHelpContent.js matches its sources in scripts/helpgen/content/
 
---- 0 passed, 1 failed ---
+--- 1 passed, 0 failed ---
