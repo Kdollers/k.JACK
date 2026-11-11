@@ -219,6 +219,53 @@ async function main() {
     });
   }
 
+  // -------------------------------------------------------------------------
+  // Every screen, not just the one each application opens on.
+  //
+  // The checks above look at one view per application. A screen nobody renders
+  // can be broken in a language nobody tried — a Kinyarwanda string that never
+  // arrives, a number formatted into "NaN", a screen that throws — and nothing
+  // above would see it. So every view of every application is drawn in all
+  // three languages.
+  // -------------------------------------------------------------------------
+
+  for (const appId of APP_IDS) {
+    const app = APPS[appId];
+    const views = app.views || [];
+
+    check(`every JENESIS ${appId} screen draws, in English, French and Kinyarwanda`, () => {
+      assert.ok(views.length > 0, `${appId} declares no screens to draw`);
+      const broken = [];
+      for (const view of views) {
+        for (const lang of ['en', 'fr', 'rw']) {
+          let html = '';
+          try {
+            html = render({ appId, activeView: view, lang });
+          } catch (err) {
+            broken.push(`${view}/${lang} threw: ${err && err.message ? err.message : err}`);
+            continue;
+          }
+          if (html.length < 200) {
+            broken.push(`${view}/${lang} drew only ${html.length} characters`);
+          } else if (/>undefined<|NaN/.test(html)) {
+            broken.push(`${view}/${lang} printed "undefined" or "NaN"`);
+          }
+        }
+      }
+      assert.deepStrictEqual(broken, [],
+        `${views.length} screen(s) x 3 languages, these failed:\n      ` +
+        broken.slice(0, 10).join('\n      '));
+    });
+  }
+
+  check('the four applications between them draw every screen they offer', () => {
+    const total = APP_IDS.reduce((n, id) => n + (APPS[id].views || []).length, 0);
+    // A count rather than a fixed list, so adding a screen later does not
+    // silently shrink what is checked.
+    assert.ok(total >= 10, `the four applications offer ${total} screens between them`);
+    console.log(`      (${total} screens drawn, three languages each)`);
+  });
+
   check('Network & Maintenance offers no accounting, sales, purchase or stock screen', () => {
     const html = render({ appId: 'maintenance', activeView: 'maintenance' });
     // Its own menu must be exactly what the identity says it is.

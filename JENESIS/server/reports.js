@@ -591,21 +591,29 @@ function getArAging(companyId, asOfDate) {
       else daysOver90 = roundTo(daysOver90 + due, 2);
     }
 
-    const totalDue = roundTo(current + days30 + days60 + days90 + daysOver90, 2);
+    // The documents do not always add up to what the customer's account says,
+    // and when they do not, the difference is real money that the ageing was
+    // leaving out: a payment recorded without naming an invoice (the form
+    // offers "None"), or an opening balance brought forward. Both leave the
+    // balance reduced while the document still reads as outstanding, so the
+    // report showed a bill owed in full to a customer who was in credit.
+    //
+    // The difference is shown in the CURRENT bucket, because money not tied to
+    // a document has no age. Folding it in keeps the two things an ageing must
+    // guarantee: the buckets add up to the row's total, and the row's total is
+    // what the customer's account actually says.
+    const bucketSum = roundTo(current + days30 + days60 + days90 + daysOver90, 2);
+    const unallocated = roundTo(cust.current_balance - bucketSum, 2);
+    const totalDue = roundTo(cust.current_balance, 2);
 
     return {
       customerId: cust.id,
       customerCode: cust.code,
       customerName: cust.name,
       phone: cust.phone,
-      // The buckets are the truth whenever they say anything at all —
-      // including when they say the business owes the customer, which is a
-      // negative total and must be shown as one. Only when the open invoices
-      // genuinely cancel out does the report fall back to the customer's
-      // recorded balance, which is what covers an opening balance or a
-      // payment recorded before these tables were kept.
-      totalDue: totalDue !== 0 ? totalDue : cust.current_balance,
-      current,
+      totalDue,
+      unallocated,
+      current: roundTo(current + unallocated, 2),
       days30,
       days60,
       days90,
@@ -658,15 +666,22 @@ function getApAging(companyId, asOfDate) {
       else daysOver90 = roundTo(daysOver90 + due, 2);
     }
 
-    const totalDue = roundTo(current + days30 + days60 + days90 + daysOver90, 2);
+    // As with AR: a payment recorded without naming a bill leaves the
+    // supplier's balance reduced while the bill still reads as outstanding,
+    // so an overpaid supplier was reported as money owed. See the AR comment
+    // above for why the difference belongs in the current bucket.
+    const bucketSum = roundTo(current + days30 + days60 + days90 + daysOver90, 2);
+    const unallocated = roundTo(supp.current_balance - bucketSum, 2);
+    const totalDue = roundTo(supp.current_balance, 2);
 
     return {
       supplierId: supp.id,
       supplierCode: supp.code,
       supplierName: supp.name,
       phone: supp.phone,
-      totalDue: totalDue !== 0 ? totalDue : supp.current_balance,
-      current,
+      totalDue,
+      unallocated,
+      current: roundTo(current + unallocated, 2),
       days30,
       days60,
       days90,

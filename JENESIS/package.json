@@ -40,7 +40,7 @@
     "test:separation": "node tests/app-separation.test.js",
     "test:portability": "node tests/test-suite-portability.test.js",
     "test:network": "node tests/network-maintenance.test.js",
-    "test:all": "npm run test && npm run test:decimal && npm run test:receipt && npm run test:receiptui && npm run test:apphelp && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:appsrender && npm run test:separation && npm run test:network && npm run test:contextmenu && npm run test:seller && npm run test:accesspoint && npm run test:portability && npm run test:theme && npm run test:themeui && npm run test:ui-imports && npm run test:reportaudit && npm run test:helpgen",
+    "test:all": "npm run test && npm run test:decimal && npm run test:receipt && npm run test:receiptui && npm run test:apphelp && npm run test:auth && npm run test:security && npm run test:desktop && npm run test:ops && npm run test:migrations && npm run test:i18n && npm run test:fx && npm run test:fxreval && npm run test:settlement && npm run test:shortcuts && npm run test:fourapps && npm run test:prod && npm run test:messenger && npm run test:help && npm run test:reports && npm run test:screens && npm run test:money && npm run test:translations && npm run test:translationscope && npm run test:records && npm run test:datadir && npm run test:branding && npm run test:appgate && npm run test:appsrender && npm run test:separation && npm run test:network && npm run test:contextmenu && npm run test:seller && npm run test:accesspoint && npm run test:portability && npm run test:theme && npm run test:themeui && npm run test:ui-imports && npm run test:reportaudit && npm run test:helpgen && npm run test:e2e2",
     "desktop": "electron .",
     "desktop:pack": "npm run build && electron-builder --win --dir",
     "desktop:dist": "npm run build && electron-builder --win nsis",
@@ -59,7 +59,8 @@
     "test:reportaudit": "node tests/report-audit.test.js",
     "help:build": "node scripts/helpgen/gen.cjs",
     "help:check": "node scripts/helpgen/gen.cjs --check",
-    "test:helpgen": "node scripts/helpgen/gen.cjs --check"
+    "test:helpgen": "node scripts/helpgen/gen.cjs --check",
+    "test:e2e2": "node tests/end-to-end-scenarios.test.js"
   },
   "build": {
     "appId": "com.jenesis.accounting",
