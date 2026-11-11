@@ -1,6 +1,14 @@
 const { getDb } = require('./db');
 const { roundTo } = require('./accountingEngine');
 
+/**
+ * Quantities are stored to four decimal places — the accounting engine rounds
+ * every stock movement with roundTo(..., 4) — so a quantity must be reported
+ * at that precision. Rounding a quantity to the two decimals used for money
+ * quietly destroys a 0.125 kg lot.
+ */
+const QTY_DECIMALS = 4;
+
 function getDashboardStats(companyId, startDate, endDate) {
   const db = getDb();
   const dateFilter = startDate && endDate ? `AND date BETWEEN '${startDate}' AND '${endDate}'` : '';
@@ -542,20 +550,28 @@ function getArAging(companyId, asOfDate) {
   const db = getDb();
   const dateCutoff = asOfDate || new Date().toISOString().split('T')[0];
 
+  // A customer's balance can now be NEGATIVE, because JENESIS accepts refunds
+  // and returns: refund a customer more than they owed and the business owes
+  // THEM. That is a credit balance, it is real money, and an ageing report
+  // that filtered it out with `current_balance > 0` made it invisible — the
+  // very report an accountant reads to find out who is owed what.
+  // So the filter keeps every non-zero balance, in either direction.
   const customers = db.prepare(`
     SELECT id, code, name, phone, email, current_balance
     FROM customers
-    WHERE company_id = ? AND active = 1 AND current_balance > 0
+    WHERE company_id = ? AND active = 1 AND current_balance != 0
     ORDER BY current_balance DESC
   `).all(companyId);
 
   const rows = customers.map(cust => {
-    // Get unpaid/posted invoices for customer
+    // Get unpaid/posted invoices for customer. An overpaid invoice carries a
+    // negative balance_due and must be aged too, so the filter is "not
+    // settled" rather than "still owed".
     const invoices = db.prepare(`
       SELECT invoice_number, date, due_date, total, amount_paid, balance_due,
              julianday(?) - julianday(date) as days_old
       FROM sales_invoices
-      WHERE company_id = ? AND customer_id = ? AND status IN ('POSTED', 'PARTIALLY_PAID') AND balance_due > 0
+      WHERE company_id = ? AND customer_id = ? AND status IN ('POSTED', 'PARTIALLY_PAID') AND balance_due != 0
     `).all(dateCutoff, companyId, cust.id);
 
     let current = 0;
@@ -582,7 +598,13 @@ function getArAging(companyId, asOfDate) {
       customerCode: cust.code,
       customerName: cust.name,
       phone: cust.phone,
-      totalDue: totalDue > 0 ? totalDue : cust.current_balance,
+      // The buckets are the truth whenever they say anything at all —
+      // including when they say the business owes the customer, which is a
+      // negative total and must be shown as one. Only when the open invoices
+      // genuinely cancel out does the report fall back to the customer's
+      // recorded balance, which is what covers an opening balance or a
+      // payment recorded before these tables were kept.
+      totalDue: totalDue !== 0 ? totalDue : cust.current_balance,
       current,
       days30,
       days60,
@@ -602,10 +624,12 @@ function getApAging(companyId, asOfDate) {
   const db = getDb();
   const dateCutoff = asOfDate || new Date().toISOString().split('T')[0];
 
+  // As with AR, a supplier the business has overpaid carries a negative
+  // balance — the supplier owes it back — and must appear in the ageing.
   const suppliers = db.prepare(`
     SELECT id, code, name, phone, email, current_balance
     FROM suppliers
-    WHERE company_id = ? AND active = 1 AND current_balance > 0
+    WHERE company_id = ? AND active = 1 AND current_balance != 0
     ORDER BY current_balance DESC
   `).all(companyId);
 
@@ -614,7 +638,7 @@ function getApAging(companyId, asOfDate) {
       SELECT bill_number, date, due_date, total, amount_paid, balance_due,
              julianday(?) - julianday(date) as days_old
       FROM purchase_invoices
-      WHERE company_id = ? AND supplier_id = ? AND status IN ('POSTED', 'PARTIALLY_PAID') AND balance_due > 0
+      WHERE company_id = ? AND supplier_id = ? AND status IN ('POSTED', 'PARTIALLY_PAID') AND balance_due != 0
     `).all(dateCutoff, companyId, supp.id);
 
     let current = 0;
@@ -641,7 +665,7 @@ function getApAging(companyId, asOfDate) {
       supplierCode: supp.code,
       supplierName: supp.name,
       phone: supp.phone,
-      totalDue: totalDue > 0 ? totalDue : supp.current_balance,
+      totalDue: totalDue !== 0 ? totalDue : supp.current_balance,
       current,
       days30,
       days60,
@@ -756,7 +780,7 @@ function getSupplierStatement(companyId, supplierId, startDate, endDate) {
 
 function getInventoryValuation(companyId) {
   const db = getDb();
-  const products = db.prepare(`
+  const rawProducts = db.prepare(`
     SELECT p.id, p.sku, p.name, p.category, p.unit, p.cost_price, p.selling_price, p.current_stock,
            (p.current_stock * p.cost_price) as total_cost_value,
            (p.current_stock * p.selling_price) as total_retail_value,
@@ -766,9 +790,23 @@ function getInventoryValuation(companyId) {
     ORDER BY p.category ASC, p.name ASC
   `).all(companyId);
 
+  // A quantity is held to four decimals and money to two, and both are rounded
+  // on every row. Left raw, 1.25 kg at 10.3333 printed 12.916662500000001 in
+  // the row while the total below it read 12.92, so the column visibly failed
+  // to add up — and a report whose rows do not add up is not a report.
+  const products = rawProducts.map(p => ({
+    ...p,
+    current_stock: roundTo(p.current_stock || 0, QTY_DECIMALS),
+    total_cost_value: roundTo(p.total_cost_value || 0, 2),
+    total_retail_value: roundTo(p.total_retail_value || 0, 2)
+  }));
+
   const totalCostValue = roundTo(products.reduce((acc, p) => acc + (p.total_cost_value || 0), 0), 2);
   const totalRetailValue = roundTo(products.reduce((acc, p) => acc + (p.total_retail_value || 0), 0), 2);
-  const totalUnits = roundTo(products.reduce((acc, p) => acc + (p.current_stock || 0), 2), 2);
+  // Quantities are summed to quantity precision, not currency precision: a
+  // business that sells 0.125 kg lots must not see them rounded out of its
+  // own stock total.
+  const totalUnits = roundTo(products.reduce((acc, p) => acc + (p.current_stock || 0), 0), QTY_DECIMALS);
 
   return {
     products,
