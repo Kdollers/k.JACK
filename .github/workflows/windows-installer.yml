@@ -129,6 +129,18 @@ jobs:
           New-Item -ItemType Directory -Force -Path release | Out-Null
           Set-Content -Path release\checks.txt -Value $m.Groups[1].Value -Encoding ascii
           Write-Host "checks recorded for the release notes: $($m.Groups[1].Value)"
+          # The baseline database is the ground every test stands on: tests copy
+          # it and run the real migrations against the copy. A test that opens
+          # JENESIS/genesis.db itself migrates the baseline in place, and the
+          # next test then starts from a database nobody committed - so the
+          # migration tests silently have nothing left to migrate. Catch it
+          # here, where it is cheap, rather than downstream where it is not.
+          $dirty = git -C "$env:GITHUB_WORKSPACE" status --porcelain -- JENESIS/genesis.db
+          if ($dirty) {
+            Write-Host "::error::the test suite modified the baseline database: $dirty"
+            throw "JENESIS/genesis.db was modified by the test suite; it must stay at its committed state"
+          }
+          Write-Host "baseline database unchanged by the test suite"
 
       - name: Build the frontend and the NSIS installer
         run: npm run desktop:dist
