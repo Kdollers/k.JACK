@@ -401,14 +401,14 @@ is the first place to look.
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
 These are the files published by the build this page describes — GitHub Actions
-run 42921736471, commit `fbe7d27`. A later build carries different numbers; the
+run 42933650015, commit `c566e25`. A later build carries different numbers; the
 ones on the release page always belong to the file you are downloading.
 
 | File | Size (bytes) | SHA-256 |
 |---|---|---|
-| `JENESIS 1.0.2 Setup.exe` | _measured when this page is built_ | `` |
-| `JENESIS 1.0.2 Portable.zip` | _measured when this page is built_ | `` |
-| `JENESIS 1.0.2.zip` | _measured when this page is built_ | `` |
+| `JENESIS 1.0.2 Setup.exe` | 93,144,646 bytes (88.8 MB) | `8fcc2cdfef56157e940d55ab330a09f0fb5d543fab8ed191d44d15277642ad41` |
+| `JENESIS 1.0.2 Portable.zip` | 133,859,414 bytes (127.7 MB) | `15571760a597f7fa2c8c2989ef04d416ea4adf85f8c4fb7991cfaf8125e00664` |
+| `JENESIS 1.0.2.zip` | 6,546,939 bytes (6.2 MB) | `c0836a9eee5001f62e20c522e53ad45fef531a647800b4632eb48ad04cefad8f` |
 
 Built by GitHub Actions on branch `arena/a2c625e8-k-jack`, from the commit
 named on the release page (**713 automated checks** on that build, and the
