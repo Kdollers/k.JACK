@@ -62,6 +62,46 @@ jobs:
           set -o pipefail
           npm run test:all 2>&1 | tee test-all.log | node scripts/count-checks.mjs
 
+      # A failing run here leaves nothing to diagnose: the job log lives in
+      # GitHub's log service and cannot be read from outside it, and the Linux
+      # runner is the only place the suite runs against the real better-sqlite3
+      # rather than a substitute. This step keeps the transcript and a digest of
+      # everything that looks like a failure, and pushes them to the branch.
+      # ci-logs/** is in paths-ignore above, so pushing it cannot start another
+      # build, and a failed push must not fail a job the tests already passed.
+      - name: Keep the test transcript so a failure can be read
+        if: always()
+        working-directory: ${{ github.workspace }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          mkdir -p ci-logs
+          ID=${{ github.run_id }}
+          if [ -f JENESIS/test-all.log ]; then
+            cp JENESIS/test-all.log "ci-logs/linux-test-all-run$ID.txt"
+            {
+              echo "run $ID  commit ${{ github.sha }}"
+              echo "node $(node -v)  at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              echo
+              echo "=== the last suite npm started ==="
+              grep -oE 'test(:[A-Za-z0-9_-]+)?$' "ci-logs/linux-test-all-run$ID.txt" | tail -3
+              echo
+              echo "=== lines that look like a failure (first 120) ==="
+              grep -nE '✗|✘|FAILED|AssertionError|Error \[|Cannot find module|is not a function|npm ERR!|Exit handler|ERR_' "ci-logs/linux-test-all-run$ID.txt" | head -120
+              echo
+              echo "=== last 300 lines ==="
+              tail -n 300 "ci-logs/linux-test-all-run$ID.txt"
+            } > "ci-logs/linux-test-failure-$ID.txt" 2>&1 || true
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -A -f ci-logs
+          if git diff --cached --quiet; then echo "no transcript to commit"; else
+            git commit -m "ci: Linux test transcript for run $ID"
+            git push origin HEAD:"${GITHUB_REF_NAME}" || echo "could not push the transcript (non-fatal)"
+          fi
+
       - name: Build the frontend
         run: npm run build
 
