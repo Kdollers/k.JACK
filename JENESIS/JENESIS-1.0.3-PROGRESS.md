@@ -125,6 +125,69 @@ figures in the same transaction, at the same cost.
 The reconciliation check prints the gap on every run and fails if it ever exceeds the seeded
 variance, so a new disagreement cannot hide behind it.
 
+## 7. Five runs, and what each one changed
+
+The release was not reached in one attempt. Every failure is recorded here, because a build that
+passes first time tells you nothing about what was wrong before it.
+
+| Run | Outcome | What it proved / changed |
+|---|---|---|
+| 136 | failed | The suite crashed on the AR/AP fixture. Nothing published. |
+| 137 | failed | Same crash. Its transcript was then made readable. |
+| 138 | failed | Built and smoke-tested correctly, then **published nothing**. |
+| 139 | **success** | v1.0.3 published, tagged `7c531ab`. |
+| — | success | `attach-verification-report.yml` added the report. Built nothing. |
+
+**Run 136 and 137 — a fixture that only fails on the real database driver.**
+
+    RangeError: Too few parameter values were provided
+        at makeInvoice (tests/ar-ap-payment-scenarios.test.js:134)
+
+The statement inserts seventeen columns, ten of them bound: id, company, number, date, due date,
+customer, subtotal, total, balance due and created-by. The call bound nine. Tax and discount are
+hard-coded to zero in that fixture, so subtotal, total and balance due all carry the same amount —
+which is how one of the three came to be left out.
+
+It could not be found locally. This sandbox cannot compile `better-sqlite3`, so the tests run on
+Node's built-in `node:sqlite` through a shim, and `node:sqlite` does not check: it binds NULL to
+the gap and carries on. All 24 checks passed here and the suite crashed the moment it met the real
+driver.
+
+The shim now counts parameters the way `better-sqlite3` does and throws the same `RangeError` — too
+few, too many, missing or unexpected named parameter — with string literals and comments blanked
+first, so a question mark inside `'...'` is not counted as a parameter. The check is applied in
+`run()`, `get()` and `all()`. The whole suite was re-run beneath it: **771 checks, 0 failed, and no
+other file in the repository binds the wrong number of values.** The generator of the shim
+(`make-sqlite-shim.sh`, which is tracked) carries the same change, so the next sandbox reset cannot
+restore the forgiving version.
+
+**Run 137 — making a Linux failure readable.** A failing job on this repository was a closed book:
+the log lives in GitHub's log service, which cannot be reached from anywhere but a browser. The
+installer job already committed its transcript to `ci-logs/`; the tests job did not, and the tests
+job is the one that runs the suite against the real database driver. It does now, with `if:
+always()` so a passing run leaves the same evidence.
+
+**Run 138 — a complete build that published nothing.** Every real step passed, including the
+30-check smoke test of the installed application. The step that commits screenshots back to the
+branch was then rejected as a non-fast-forward, because the branch had moved during the half-hour
+build. It failed, and the two steps behind `if: success()` — the portable upload and the release —
+were skipped. A run that had done all of its work shipped none of it, because a *record* of the
+work could not be committed.
+
+`push-branch.sh` now retries on top of the branch as it stands and, failing that, says so and exits
+0. All three steps that commit to the branch use it. A record of a build can no longer cancel the
+build.
+
+**Run 139 — the release.** `v1.0.3`, tagged `7c531ab80f02c4b68cdda8ba432a1309049c97bf`, which is
+exactly the commit the installer was built from; the workflow resolves the tag and fails the build
+if it names any other. Publishing left 1.0.2 and 1.0.1 byte-for-byte unchanged.
+
+**Attaching the report.** Asset uploads cannot be made from the development environment, and the
+installer workflow ignores `*.md` — correctly, since a push that rebuilt the installer would
+invalidate every checksum the report quotes. A small workflow of its own now attaches it: it
+compiles nothing, refuses to create a release that does not exist, and is triggered by a change to
+the report itself. Pushing the report ran it and left the installer binary untouched.
+
 ---
 
 CREATED AND DEVELOPED BY KAYIGANWA JACQUES
