@@ -1,0 +1,311 @@
+run 43701473078  commit bcaf54d22eb924a629f03c32a19332a469a49f8e
+node v20.20.2  at 2026-11-15T09:55:53Z
+
+=== the last suite npm started ===
+test:helpgen
+test:e2e2
+test:arap
+
+=== lines that look like a failure (first 120) ===
+
+=== last 300 lines ===
+  ✓ connecting to a computer that has stopped is refused with a reason
+  ✓ refreshing measures every registered computer and records what it found
+  ✓ every diagnosis explains itself in words a person can act on
+  ✓ a service that is not JENESIS is named as such, not reported as online
+  ✓ nothing listening at an address is reported as refused, not as online
+  ✓ the network screens need the network permission, not a business one
+  ✓ the shipped database is never touched by these tests
+--- 16 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:contextmenu
+> node tests/context-menu.test.js
+
+--- RIGHT-CLICK MENU TESTS (one menu, four applications) ---
+  ✓ a live record offers Deactivate, and a retired one offers Activate — never both
+  ✓ Cut is never offered on a record — there is nothing to cut a row into
+  ✓ Paste appears only when something is actually waiting to be pasted
+  ✓ an action with no handler is not offered, however wide the permission
+  ✓ a text field offers Copy, Cut, Paste and Select all
+  ✓ a read-only selection offers Copy and Select all, but no Cut or Paste
+  ✓ the items come back in one stable order, so every menu reads the same way
+  ✓ a user without records:delete is never offered Delete
+  ✓ a user without records:deactivate is offered neither Deactivate nor Activate
+  ✓ a user who may not edit is not offered Edit
+  ✓ the menu reads the permission, and the service enforces it independently
+  ✓ every accounting document is a protected record type
+  ✓ Delete is shown disabled with a reason, never as a working action
+  ✓ a record the lifecycle does not cover is protected too
+  ✓ a deleted record with history is answered by the server, not by the menu
+  ✓ Delete and Deactivate go through a confirmation that names the record
+  ✓ the confirmation is owned by the provider, so no screen can forget to ask
+  ✓ the menu is opened from rows in Seller, Accounting, Maintenance and Settings
+  ✓ the menu covers tables, lists and records, not one kind of widget
+  ✓ background right-clicks are answered too, so no click is silently ignored
+  ✓ the menu is drawn with the application accent, not a fixed colour
+  ✓ the four identities bind an accent, and the menu reads whichever is active
+  ✓ the menu never swallows a key or a click it does not own
+  ✓ the menu closes on any other click, on scroll, on resize and on blur
+  ✓ the menu never hangs off the edge of the window
+  ✓ a record is copied as readable text, one field per line
+  ✓ several rows are copied as a table a spreadsheet will open
+  ✓ copying a record keeps it for pasting, and pasting never writes to the database
+
+--- 28 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:seller
+> node tests/seller-dashboard.test.js
+
+--- SELLER DASHBOARD TESTS (its own screen, the same database) ---
+  ✓ the Seller dashboard answers, and answers the counter's question
+  ✓ no accounting figure reaches the Seller dashboard, because none is asked for
+  ✓ the cash register is the till, not the balance sheet
+  ✓ the product search answers with a price and whether it is on the shelf
+  ✓ a Seller window cannot pull the reports, the ledger or the trial balance
+  ✓ a Seller window cannot touch the company record, the users or the backups
+  ✓ the Seller reaches the counter routes it needs, so nothing was over-blocked
+  ✓ a sale written by the Seller updates the same books the accountant reconciles
+  ✓ the shipped database is not modified by these tests
+
+--- 9 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:accesspoint
+> node tests/access-point.test.js
+
+--- SETTINGS & ACCESS POINT TESTS (one copy of the truth) ---
+  ✓ a tax rate can be created, and it appears on the list offered for new documents
+  ✓ deactivating a rate takes it off new transactions and leaves history alone
+  ✓ reactivating a rate puts it back on the list for new transactions
+  ✓ a rate nothing has used can be deleted, and an unused one only
+  ✓ editing a rate changes it, and every change is written to the audit trail
+  ✓ an invoice keeps the rate it was raised with, whatever happens to the rate later
+  ✓ a tax rate that is not ours cannot be touched, and the catalogue is served
+  ✓ an account is created, renamed, and given a new password when one is forgotten
+  ✓ a weak password is refused, even for an administrator resetting somebody else
+  ✓ an account that is part of the company history cannot be deleted, only closed
+  ✓ an account nobody depends on can be removed for good
+  ✓ an administrator cannot delete themselves, and never the last administrator
+  ✓ closing an application to a user takes effect on their very next request
+  ✓ a permission granted to one person works, and one taken away stops working
+  ✓ every configuration change is given a number the other windows can compare
+  ✓ the settings have left JENESIS Accounting & Business, not been copied
+  ✓ the shipped database is not modified by these tests
+
+--- 17 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:portability
+> node tests/test-suite-portability.test.js
+
+  - not run automatically: npm run test:e2e (drives a real browser with Playwright; neither the browser nor the Python package is installable in CI, so it stays a manual check)
+  ✓ access-point.test.js does not require a version-specific module directly
+  ✓ accounting-engine.test.js does not require a version-specific module directly
+  ✓ app-gate.test.js does not require a version-specific module directly
+  ✓ app-help.test.js does not require a version-specific module directly
+  ✓ app-separation.test.js does not require a version-specific module directly
+  ✓ ar-ap-payment-scenarios.test.js does not require a version-specific module directly
+  ✓ auth-security.test.js does not require a version-specific module directly
+  ✓ branding-consistency.test.js does not require a version-specific module directly
+  ✓ context-menu.test.js does not require a version-specific module directly
+  ✓ data-location-migration.test.js does not require a version-specific module directly
+  ✓ decimal-negative.test.js does not require a version-specific module directly
+  ✓ desktop-backend.test.js does not require a version-specific module directly
+  ✓ end-to-end-scenarios.test.js does not require a version-specific module directly
+  ✓ four-apps-render.test.js does not require a version-specific module directly
+  ✓ four-apps.test.js does not require a version-specific module directly
+  ✓ fx-revaluation-integrity.test.js does not require a version-specific module directly
+  ✓ fx-settlement.test.js does not require a version-specific module directly
+  ✓ help-content.test.js does not require a version-specific module directly
+  ✓ i18n-parity.test.js does not require a version-specific module directly
+  ✓ messenger.test.js does not require a version-specific module directly
+  ✓ migrations-v2.test.js does not require a version-specific module directly
+  ✓ money-format.test.js does not require a version-specific module directly
+  ✓ network-maintenance.test.js does not require a version-specific module directly
+  ✓ operations.test.js does not require a version-specific module directly
+  ✓ production-boot.test.js does not require a version-specific module directly
+  ✓ receipt-layout.test.js does not require a version-specific module directly
+  ✓ receipt-ui-render.test.js does not require a version-specific module directly
+  ✓ record-lifecycle.test.js does not require a version-specific module directly
+  ✓ report-audit.test.js does not require a version-specific module directly
+  ✓ reports-screens.test.js does not require a version-specific module directly
+  ✓ screens-render.test.js does not require a version-specific module directly
+  ✓ security-hardening.test.js does not require a version-specific module directly
+  ✓ seller-dashboard.test.js does not require a version-specific module directly
+  ✓ settlement-paid.test.js does not require a version-specific module directly
+  ✓ shortcuts.test.js does not require a version-specific module directly
+  ✓ test-suite-portability.test.js does not require a version-specific module directly
+  ✓ theme-render.test.js does not require a version-specific module directly
+  ✓ theme.test.js does not require a version-specific module directly
+  ✓ translation-coverage.test.js does not require a version-specific module directly
+  ✓ translation-scope.test.js does not require a version-specific module directly
+  ✓ ui-imports.test.js does not require a version-specific module directly
+  ✓ the shared opener reads genesis.db (31 tables via Database)
+  ✓ no exclusion is kept for a script that no longer exists
+  ✓ every test script either runs inside test:all or says why it cannot (42 scripts)
+  ✓ a clean transcript is counted as clean
+  ✓ a suite that died is counted as a failure, not as nothing
+  ✓ a suite that reports a failure fails the run
+  (driver: Database)
+--- 47 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:theme
+> node tests/theme.test.js
+
+--- THEME TESTS (Light Mode / Dark Mode / System Default) ---
+  ✓ Light Mode and Dark Mode can both be selected and resolved
+  ✓ System Default follows the operating system
+  ✓ Light Mode is the documented default when nothing is stored
+  ✓ the selected theme is persisted and read back (reload and restart)
+  ✓ switching theme updates the document immediately (no reload)
+  ✓ the header switch moves between the two explicit themes
+  ✓ a stored Dark Mode is painted before the interface loads
+  ✓ System Default is honoured at first paint
+  ✓ each application paints its own remembered theme
+  ✓ an application without a preference of its own inherits the shared one
+  ✓ an unreadable or empty preference falls back to Light Mode
+  ✓ Light and Dark define exactly the same token names
+  ✓ the tokens cover every role the design system needs
+  ✓ Dark Mode backgrounds are dark and its text is light
+  ✓ every colour class used in the interface is themed for Dark Mode
+    33 screens/components audited, 833 colour usages, all themed
+  ✓ every screen of the application is audited for both themes
+  ✓ the interface audit covers every screen of the application
+  ✓ Light Mode keeps accounting text readable (WCAG AA contrast)
+  ✓ Dark Mode keeps accounting text readable (WCAG AA contrast)
+    132 text/background pairs measured in both themes
+  ✓ no text/background pair in the interface falls below 4.5:1 in either theme
+  ✓ cards, panels and shells stay distinguishable from their background
+  ✓ the theme provider is mounted above the whole application
+  ✓ the theme provider stores, resolves and paints the preference
+  ✓ the header switch and the Settings control share the same manager
+  ✓ Settings offers an Appearance section with all three options
+  ✓ the theme is translated in English, French and Kinyarwanda
+  ✓ changing the theme never touches the accounting backend
+  ✓ the server and the database schema are unchanged by theming
+  ✓ the desktop bridge exposes the theme without weakening security
+  ✓ the shell validates the theme it receives and tints the window
+  ✓ printing keeps the light palette whatever the theme is
+  ✓ reduced-motion preferences are respected
+  ✓ native controls follow the theme through color-scheme
+  ✓ the production stylesheet carries both palettes
+--- 34 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:themeui
+> node tests/theme-render.test.js
+
+--- THEME RENDER TESTS (React, compiled with esbuild) ---
+  ✓ the theme UI compiles and renders
+  ✓ the Settings control offers Light, Dark and System with sun/moon/monitor icons
+  ✓ the control renders in French and Kinyarwanda
+  ✓ the stored preference is what the interface shows
+  ✓ an unknown stored value falls back to Light Mode
+  ✓ the header switch is a single button with an accessible name
+--- 6 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:ui-imports
+> node tests/ui-imports.test.js
+
+  ✓ every component drawn in the interface is imported or declared
+  ✓ the Messenger icon in the header is imported where it is drawn
+  ✓ every icon imported from lucide-react exists in the installed package
+  ✓ every relative import resolves to a real file
+  ✓ every named import is really exported by the module it comes from
+  ✓ the three applications are covered by the same rules
+  ✓ an undefined component is reported by this checker (self-test)
+--- 7 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:reportaudit
+> node tests/report-audit.test.js
+
+--- STARTING REPORT AUDIT (NEGATIVES AND DECIMALS) ---
+  ✓ AR ageing includes a customer whose balance is negative (credit balance)
+  ✓ AR ageing nets an overpaid invoice into the bucket it belongs to
+  ✓ AR ageing still shows an ordinary debtor, and totals the two correctly
+  ✓ AR total is the sum of the rows it printed
+  ✓ AP ageing includes a supplier who was overpaid (negative balance)
+  ✓ AP ageing buckets add up to the row total, negatives included
+  ✓ inventory valuation rounds each product row to the company currency
+  ✓ inventory valuation keeps a quantity finer than two decimals
+  ✓ inventory valuation rows add up to the totals it prints
+  ✓ trial balance is still balanced with the audit fixtures in place
+  ✓ balance sheet still balances with the audit fixtures in place
+  ✓ P&L reports a returned sale as negative revenue, not as zero
+  ✓ general ledger running balance handles a negative correction
+  ✓ tax (VAT) report nets a refund against the sales it reverses
+  ✓ cash flow nets a refund out of cash receipts
+  ✓ no report emits NaN, Infinity or null where a number belongs
+  ✓ every monetary figure a report returns is already rounded to 2 decimals
+
+--- REPORT AUDIT SUMMARY ---
+  17 checks passed, 0 failed
+
+> genesis-accounting@1.0.3 test:helpgen
+> node scripts/helpgen/gen.cjs --check
+
+--- STARTING HELP GENERATOR CHECK ---
+  ✓ appHelpContent.js matches its sources in scripts/helpgen/content/
+
+--- 1 passed, 0 failed ---
+
+> genesis-accounting@1.0.3 test:e2e2
+> node tests/end-to-end-scenarios.test.js
+
+--- STARTING END-TO-END BUSINESS SCENARIOS ---
+  ✓ the day was actually run — every step was recorded
+  ✓ a fractional purchase adds exactly what was bought
+  ✓ the stock never drifted by a rounding error along the way
+  ✓ a refund of 10.75 takes exactly 10.75 out of the bank
+  ✓ overpaying a supplier leaves a credit balance the AP report can see
+  ✓ the trial balance balances after the whole day
+  ✓ the balance sheet balances after the whole day
+  ✓ the P&L totals equal the sum of the rows it prints
+  ✓ the inventory valuation rows add up to the total it prints
+  ✓ the general ledger walks from its opening balance to its closing one
+  ✓ no journal entry that existed before this day was changed
+  ✓ no journal line that existed before this day was changed
+  ✓ the day added entries without rewriting any
+  ✓ every entry posted today is balanced in itself
+  ✓ no stored figure anywhere turned into NaN, Infinity or null
+  ✓ a quantity is never stored with less precision than it was entered
+  ✓ overpaying a supplier puts that supplier in credit
+  ✓ overpaying a customer puts that customer in credit
+  ✓ the AP ageing shows the supplier the business overpaid
+  ✓ the AR ageing shows the customer who overpaid
+  ✓ the ageing buckets still add up to the row they belong to
+  ✓ the books still balance with both parties in credit
+  ✓ no historical entry was rewritten by the overpayment scenarios either
+
+--- END-TO-END SCENARIOS SUMMARY ---
+  23 checks passed, 0 failed
+  stock 48 -> 57.9  ·  bank 6522.3 -> 6253.05
+
+> genesis-accounting@1.0.3 test:arap
+> node tests/ar-ap-payment-scenarios.test.js
+
+--- STARTING AR/AP PAYMENT SCENARIOS ---
+  ✓ a partial payment leaves exactly the unpaid part outstanding
+  ✓ the invoice itself records what was paid and what is left
+  ✓ a full payment leaves nothing outstanding
+  ✓ a fully paid invoice is not reported as owed
+  ✓ a customer overpayment is a credit, not a debt
+  ✓ an overpaid invoice does not stay open
+  ✓ a supplier overpayment is a credit, not an unpaid bill
+  ✓ an overpaid supplier is not reported as money the business owes
+  ✓ a supplier overpayment recorded with no document named still leaves a credit
+  ✓ a customer overpayment recorded with no document named still leaves a credit
+  ✓ an unallocated payment never leaves a document looking unpaid
+  ✓ three payments against one invoice are tracked after each one
+  ✓ the invoice totals what it was actually paid, not the last payment
+  ✓ every one of the three payments is on the statement
+  ✓ a credit note reduces what the customer owes
+  ✓ the credit note appears on the statement as a credit
+  ✓ a credit note can be settled by a payment for the reduced amount
+  ✓ a refund returns an overpayment and restores the balance
+  ✓ the refund is on the statement and brings it back to zero
+  ✓ every scenario leaves the outstanding balance it should
+  ✓ the receivables control account holds what all the customers owe together
+  ✓ the payables control account holds what all the suppliers are owed together
+  ✓ no figure in any ageing report is NaN, Infinity or missing
+  ✓ the trial balance and balance sheet still balance after all eight scenarios
+
+--- AR/AP PAYMENT SCENARIOS SUMMARY ---
+  24 checks passed, 0 failed
