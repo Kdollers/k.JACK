@@ -136,7 +136,11 @@ function makeInvoice(id, customerId, total) {
     // exists, and several fixtures here are created from the same starting
     // count, so two of them would otherwise ask for the same number.
     nextSequenceNumber(companyId, 'INVOICE', 'INV') + '-' + id,
-    TODAY, TODAY, customerId, total, total, user.id);
+    // Three money slots, in this order: subtotal, total, balance_due. Tax and
+    // discount are both zero here, so all three carry the same amount, and
+    // every one of them has to be bound -- a statement with ten placeholders
+    // given nine values is an error in better-sqlite3, not a shortcut.
+    TODAY, TODAY, customerId, total, total, total, user.id);
   db.prepare(`
     INSERT INTO sales_invoice_lines (id, invoice_id, description, quantity,
       unit_price, unit_cost, discount_percent, tax_rate, tax_amount, line_total)

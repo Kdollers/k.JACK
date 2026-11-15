@@ -88,7 +88,11 @@ jobs:
               grep -oE 'test(:[A-Za-z0-9_-]+)?$' "ci-logs/linux-test-all-run$ID.txt" | tail -3
               echo
               echo "=== lines that look like a failure (first 120) ==="
-              grep -nE '✗|✘|FAILED|AssertionError|Error \[|Cannot find module|is not a function|npm ERR!|Exit handler|ERR_' "ci-logs/linux-test-all-run$ID.txt" | head -120
+              # RangeError is listed explicitly. The first failure this caught
+              # was a RangeError from the database driver, and a pattern that
+              # only matched `Error [` -- the shape of a Node internal error --
+              # printed an empty digest for it.
+              grep -nE '✗|✘|FAILED|AssertionError|RangeError|TypeError|ReferenceError|SyntaxError|Cannot find module|is not a function|npm ERR!|Exit handler|ERR_' "ci-logs/linux-test-all-run$ID.txt" | head -120
               echo
               echo "=== last 300 lines ==="
               tail -n 300 "ci-logs/linux-test-all-run$ID.txt"

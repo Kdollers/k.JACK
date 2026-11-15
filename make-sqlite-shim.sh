@@ -24,8 +24,67 @@ const bindArgs = (args) => (args.length === 1 && Array.isArray(args[0]) ? args[0
 const isPlainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Uint8Array);
 const norm = (v) => (typeof v === 'boolean' ? (v ? 1 : 0) : v === undefined ? null : v);
 
+/**
+ * SANDBOX ONLY. Counts the parameters a statement actually declares.
+ *
+ * The real better-sqlite3 throws a RangeError when a statement is bound to the
+ * wrong number of values. node:sqlite tolerates the mismatch and fills the gap
+ * with NULL, so this sandbox passed a fixture that bound nine values to a
+ * statement with ten placeholders -- and CI, running the same file against the
+ * real driver, crashed on it. A substitute driver that is more forgiving than
+ * the thing it replaces is worse than no substitute at all, so the check is
+ * reproduced here: the sandbox now fails on the same code CI fails on.
+ *
+ * String literals, quoted identifiers and comments are blanked first, so a
+ * question mark inside '...' is text rather than a parameter.
+ */
+function countPlaceholders(sql) {
+  const text = String(sql)
+    .replace(/--[^\n]*/g, ' ')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/'(?:[^']|'')*'/g, " '' ")
+    .replace(/"(?:[^"]|"")*"/g, ' "" ')
+    .replace(/`(?:[^`])*`/g, ' `` ');
+  const named = new Set();
+  let anonymous = 0;
+  const re = /\?\d*|[@:$]\w+/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (m[0][0] === '?') anonymous += 1;
+    else named.add(m[0].slice(1));
+  }
+  return { anonymous, named };
+}
+
 class Statement {
-  constructor(db, sql) { this._db = db; this.sql = sql; this._stmt = db._prepare(sql); }
+  constructor(db, sql) {
+    this._db = db;
+    this.sql = sql;
+    this._stmt = db._prepare(sql);
+    this._params = countPlaceholders(sql);
+  }
+
+  /** Applies better-sqlite3's binding rules. Returns the object to bind by
+   *  name, or null when the values are positional. */
+  _binding(args) {
+    const obj = args.length === 1 && isPlainObject(args[0]) ? args[0] : null;
+    const { anonymous, named } = this._params;
+    if (obj) {
+      for (const name of named) {
+        if (!(name in obj)) throw new RangeError(`Missing named parameter "${name}"`);
+      }
+      for (const key of Object.keys(obj)) {
+        if (!named.has(key)) throw new RangeError(`Unexpected named parameter "${key}"`);
+      }
+      return obj;
+    }
+    const values = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+    if (named.size === 0) {
+      if (values.length < anonymous) throw new RangeError('Too few parameter values were provided');
+      if (values.length > anonymous) throw new RangeError('Too many parameter values were provided');
+    }
+    return null;
+  }
   _named(obj) {
     const keys = Object.keys(obj);
     const sql = this.sql.replace(/([@:$])(\w+)/g, (m, sigil, name) => {
@@ -40,8 +99,9 @@ class Statement {
     return { changes: Number(row.changes), lastInsertRowid: row.lastInsertRowid === undefined ? BigInt(0) : row.lastInsertRowid };
   }
   run(...args) {
-    if (args.length === 1 && isPlainObject(args[0])) {
-      const { stmt, values } = this._named(args[0]);
+    const obj = this._binding(args);
+    if (obj) {
+      const { stmt, values } = this._named(obj);
       stmt.run(...values.map(norm));
     } else {
       this._stmt.run(...bindArgs(args).map(norm));
@@ -49,14 +109,16 @@ class Statement {
     return this._info();
   }
   get(...args) {
-    const row = args.length === 1 && isPlainObject(args[0])
-      ? this._named(args[0]).stmt.get(...this._named(args[0]).values)
+    const obj = this._binding(args);
+    const row = obj
+      ? this._named(obj).stmt.get(...this._named(obj).values)
       : this._stmt.get(...bindArgs(args));
     return row ? toPlain(row) : undefined;
   }
   all(...args) {
-    const rows = args.length === 1 && isPlainObject(args[0])
-      ? this._named(args[0]).stmt.all(...this._named(args[0]).values)
+    const obj = this._binding(args);
+    const rows = obj
+      ? this._named(obj).stmt.all(...this._named(obj).values)
       : this._stmt.all(...bindArgs(args));
     return rows.map(toPlain);
   }
