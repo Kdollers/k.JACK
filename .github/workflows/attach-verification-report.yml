@@ -1,0 +1,70 @@
+name: Attach the verification report
+
+# Publishes JENESIS/JENESIS <version> VERIFICATION REPORT.md as an asset of the
+# release it describes. Builds nothing.
+#
+# The main workflow cannot do this, and it is right that it cannot. It ignores
+# *.md so that correcting a document cannot trigger a rebuild -- and a rebuild
+# would produce a different installer, which would invalidate every checksum
+# the report quotes. But the report is one of the files a release is meant to
+# ship, and it is finished *after* the build, not during it: the numbers it
+# records are measurements of a build that has already happened.
+#
+# So the report is attached here, by a run that compiles nothing and cannot
+# change a single byte of the installer it is describing.
+#
+# Nothing is ever created by this workflow. If the release does not exist yet,
+# it says so and stops -- a report must not conjure a release to sit under.
+
+on:
+  push:
+    paths:
+      - 'JENESIS/JENESIS *VERIFICATION REPORT.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    name: Attach the report to its release
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Upload it to the release it describes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          # The version the report describes is the version in package.json,
+          # which is the same number the installer was built and released under.
+          version=$(node -p "require('./JENESIS/package.json').version")
+          report="JENESIS/JENESIS $version VERIFICATION REPORT.md"
+
+          if [ ! -f "$report" ]; then
+            echo "There is no report for version $version at '$report'."
+            echo "Nothing attached."
+            exit 1
+          fi
+
+          if ! gh release view "v$version" >/dev/null 2>&1; then
+            echo "Release v$version does not exist yet, so there is nothing to"
+            echo "attach this to, and none is created. Build and publish the"
+            echo "release first; pushing this report again will then attach it."
+            exit 0
+          fi
+
+          # Dots, not spaces: how the other published documents are named.
+          asset="JENESIS.$version.VERIFICATION.REPORT.md"
+          cp "$report" "$asset"
+
+          gh release upload "v$version" "$asset" --clobber
+
+          echo "--- the report is now published beside the build it describes ---"
+          gh release view "v$version" --json assets \
+            --jq '.assets[] | select(.name | test("VERIFICATION")) | "\(.size) bytes  \(.name)"'

@@ -440,8 +440,54 @@ place.
 
 <!--BUILD_INFO_START-->
 
-*To be completed once the build finishes. This file is re-uploaded to the release with the real
-figures, so the copy you download is the completed one.*
+JENESIS 1.0.3 was built by GitHub Actions run **43702388660**, on a `windows-2022` hosted runner,
+from commit **7c531ab80f02c4b68cdda8ba432a1309049c97bf**. Every step of the Windows job passed:
+
+| Step | Result |
+|---|---|
+| Read the version (`1.0.3`) | PASS |
+| Install dependencies | PASS |
+| Full test suite (Windows) | PASS |
+| Build the frontend and the NSIS installer | PASS |
+| Verify the packaged application | PASS |
+| Smoke-test the installed application | PASS (30/30) |
+| Package the portable build and write checksums | PASS |
+| Package the source backup | PASS |
+| Stage, upload and publish | PASS |
+
+**What the smoke test did to the installed application.** It installed the real
+`JENESIS 1.0.3 Setup.exe`, launched it from the installed shortcut, walked first-run setup,
+signed in as a real user, posted an accounting entry, took a backup, closed the window, relaunched
+it and confirmed the data was still there, and finally uninstalled while keeping the business data.
+Thirty checks, all PASS.
+
+**How the credentials were typed.** A runner has no keyboard, so the sign-in was delivered three
+ways — the Chromium DevTools Protocol (real input events), `SendKeys`, and `WM_CHAR` posted into the
+window — and the run records which one reached the interface. This build: **confirmed via the
+DevTools Protocol** that the signed-in screen was reached. That is why
+`JENESIS-Seller-Dashboard.bmp` and `JENESIS-Settings-Signed-In.bmp` show the screens as a signed-in
+user sees them rather than the sign-in prompt.
+
+**Two failures came before this build, and both are recorded here because they changed the release.**
+
+1. *Run 136 and 137 — the suite crashed on the real database driver.* The AR/AP fixture bound nine
+   values to a statement with ten placeholders. It passed in this sandbox, because the sandbox
+   cannot compile `better-sqlite3` and runs the tests on Node's built-in `node:sqlite` through a
+   shim, and `node:sqlite` does not check. CI, on the real driver, threw
+   `RangeError: Too few parameter values were provided`. The missing value was bound, and the shim
+   was then made to count parameters the way the real driver does so that the sandbox fails on the
+   same code CI fails on. The whole suite was re-run under the strictened shim: 771 checks, 0
+   failed, and no other file in the repository binds the wrong number of values.
+
+2. *Run 138 — a full, correct build published nothing.* Every real step passed, including the smoke
+   test. The step that commits the screenshots back to the branch was then rejected as a
+   non-fast-forward because the branch had moved during the half-hour build, and the two steps
+   guarded by `if: success()` — the portable upload and the release — were skipped. Branch commits
+   are now best-effort and retried, and a record of the build can no longer cancel the build.
+
+**Nothing was published prematurely.** v1.0.3 did not exist until run 139 completed successfully.
+The installers of 1.0.2 and 1.0.1 were re-measured after this release and are byte-for-byte
+unchanged — see the note on the earlier releases immediately below.
 
 <!--BUILD_INFO_END-->
 
@@ -453,20 +499,51 @@ figures, so the copy you download is the completed one.*
 
 | | |
 |---|---|
-| Git commit SHA | *to be completed after the build* |
-| Git tag | *to be completed after the build* |
-| GitHub Actions run ID | *to be completed after the build* |
-| Built (UTC) | *to be completed after the build* |
-| Installer size | *to be completed after the build* |
-| Portable size | *to be completed after the build* |
-| Installer SHA-256 | *to be completed after the build* |
-| Portable SHA-256 | *to be completed after the build* |
+| Release | `v1.0.3` |
+| Version in `package.json` | `1.0.3` |
+| Git commit SHA | `7c531ab80f02c4b68cdda8ba432a1309049c97bf` |
+| Git tag | `v1.0.3` |
+| Tag object type | `commit` (lightweight — it names the commit directly) |
+| Tag resolves to | `7c531ab80f02c4b68cdda8ba432a1309049c97bf` |
+| Commit the installer was built from | `7c531ab80f02c4b68cdda8ba432a1309049c97bf` |
+| Tag matches the built commit | **YES** — verified against the run's `head_sha` |
+| GitHub Actions run ID | `43702388660` (run number 139) |
+| Workflow | `JENESIS Windows installer` |
+| Built (UTC) | 2026-11-15 10:16 UTC |
+| Installer (`JENESIS 1.0.3 Setup.exe`) | 93,142,753 bytes (88.8 MB) |
+| Portable (`JENESIS 1.0.3 Portable.zip`) | 133,860,593 bytes (127.7 MB) |
+| Source backup (`JENESIS 1.0.3.zip`) | 6,677,039 bytes (6.4 MB) |
+| Installer SHA-256 | `6e01f01853bbf4cf24e98c14fea6054b280d18b3cf68cbab2fd69c5a2f8a05b5` |
+| Portable SHA-256 | `1a644d430881992e3999f495452384b33ecc7d5e81a4f97f2924dac006e958d1` |
+| Source backup SHA-256 | `7ff6b0f653c26b84774a591e02acc2f59a542a4fd2011ec44195010856ef19da` |
+
+Every figure above was measured by the build that produced the files, not retyped afterwards. The
+sizes and hashes are those the run computed when it wrote the files; the sizes were independently
+re-read from the release API and agree to the byte. Verify a download with:
+
+```
+certutil -hashfile "JENESIS 1.0.3 Setup.exe" SHA256
+```
+
+and compare with the `.sha256` file published next to each download.
 
 <!--RELEASE_IDS_END-->
 
 The tag is created with `--target` pinned to the source commit, and a step in the workflow resolves
 the tag and **fails the build** if it names any other commit. Earlier tags are left exactly as they
-are.
+are — rewriting them would silently move the code nine published releases point at, which is the
+opposite of traceability.
+
+**The earlier releases were re-measured after v1.0.3 was published, and are untouched.** Publishing
+this release did not overwrite, rebuild or alter a single byte of 1.0.2 or 1.0.1:
+
+| Release | Installer (bytes) | Portable (bytes) | Source (bytes) |
+|---|---|---|---|
+| v1.0.3 | 93,142,753 | 133,860,593 | 6,677,039 |
+| v1.0.2 | 93,144,646 | 133,859,414 | 6,546,939 |
+| v1.0.1 | 93,144,759 | 133,858,567 | 6,468,905 |
+
+The v1.0.2 and v1.0.1 figures are the same to the byte as they were before this release existed.
 
 ---
 
@@ -485,7 +562,12 @@ are.
 
 ## 19. Final release recommendation
 
-**JENESIS 1.0.3 is ready to release, with 14 physical tests still outstanding.**
+**JENESIS 1.0.3 is released — and 14 physical tests are still outstanding.**
+
+It was published as `v1.0.3` by GitHub Actions run `43702388660`, and the tag names
+`7c531ab80f02c4b68cdda8ba432a1309049c97bf`, which is exactly the commit the installer was built
+from. It did not exist as a release until that run had finished every step successfully, and
+publishing it left 1.0.2 and 1.0.1 byte-for-byte unchanged.
 
 What justifies releasing:
 
