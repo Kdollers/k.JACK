@@ -326,6 +326,7 @@ jobs:
           # for what changed, what was tested and what was not.
           foreach ($doc in @(
             "JENESIS $version RELEASE NOTES.md",
+            "JENESIS $version VERIFICATION REPORT.md",
             "JENESIS-$version-PROGRESS.md",
             'DOWNLOAD.md',
             'README.md'
@@ -479,6 +480,7 @@ jobs:
           $signin = if (Test-Path release\interface-signin.txt) { (Get-Content release\interface-signin.txt -Raw).Trim() } else { 'not recorded' }
 
           $releaseName = "JENESIS $version"
+          $buildDate = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm') + ' UTC'
           $notes = @"
           $releaseName — JENESIS desktop business and accounting software.
           **Four applications in one installation, sharing one database.**
@@ -505,7 +507,7 @@ jobs:
           All four open **the same company database**. The shortcuts only choose
           which face of the same installation the window opens with.
 
-          ## What is new in 0.5.5
+          ## What is new in $version
 
           **Right-click works everywhere.** Copy, Cut, Paste, Edit, Delete,
           Deactivate, Activate and Select All on the records of all four
@@ -590,6 +592,27 @@ jobs:
           that is ``scripts\messenger-two-computers.cjs`` — run it from a second
           PC on your network against a running JENESIS.
 
+          ## Traceability
+
+          Every figure below is measured on this build. It is recorded so the
+          installer can be traced back to the exact source it came from.
+
+          | | |
+          |---|---|
+          | Release | ``$tag`` |
+          | Version in ``package.json`` | ``$version`` |
+          | Source commit | ``${{ github.sha }}`` |
+          | GitHub Actions run | ``${{ github.run_id }}`` |
+          | Built (UTC) | $buildDate |
+          | Workflow | ``${{ github.workflow }}`` |
+
+          The tag ``$tag`` is created **pinned to the source commit above**
+          (``--target``), and the run fails if the tag ends up naming any other
+          commit. Earlier releases were tagged without ``--target``, so their
+          tags name the repository's base commit rather than the code they were
+          built from; those tags are left as they are, and the commit each was
+          built from is recorded in its own release notes instead.
+
           Built, verified and smoke-tested by GitHub Actions, run
           ${{ github.run_id }}, commit ${{ github.sha }}.
           * $checks automated checks pass (whole suite, real SQLite database).
@@ -609,8 +632,44 @@ jobs:
             gh release upload $tag $assets --clobber --repo ${{ github.repository }}
           } else {
             Write-Host "creating release $tag"
-            gh release create $tag $assets --title "$releaseName" --notes-file ..\release-notes.md --repo ${{ github.repository }}
+            # --target is the whole point of this step. Without it gh creates
+            # the tag at the default branch's head, so every release from
+            # v0.5.0 to v1.0.2 named one base commit while its installer was
+            # built from another: the tag identified nothing.
+            gh release create $tag $assets --title "$releaseName" --notes-file ..\release-notes.md --target ${{ github.sha }} --repo ${{ github.repository }}
           }
+
+          # Now prove it. A release whose tag names a different commit than
+          # the one compiled is not reproducible, and the checksums below
+          # would describe code nobody can find.
+          #
+          # gh wrote the tag on the remote, so the local clone is told about
+          # it before anything tries to read it - otherwise rev-parse finds
+          # nothing, the comparison fails on an empty string, and a perfectly
+          # good release is rejected for the wrong reason.
+          git fetch --tags --force origin 2>$null | Out-Null
+          $tagSha = (git rev-parse "$tag^{commit}" 2>$null | Out-String).Trim()
+          if (-not $tagSha) {
+            # Fall back to asking the API directly rather than failing on a
+            # local fetch that did not bring the tag across.
+            $tagSha = (gh api "repos/${{ github.repository }}/git/ref/tags/$tag" --jq '.object.sha' 2>$null | Out-String).Trim()
+          }
+          $builtSha = '${{ github.sha }}'.Trim()
+          Write-Host "release $tag -> commit $tagSha"
+          Write-Host "this build    -> commit $builtSha"
+          if ($tagSha -ne $builtSha) {
+            Write-Host "::error::the tag $tag names $tagSha but this run built $builtSha"
+            throw "release $tag is not pinned to the commit that was built " +
+                  "($tagSha vs $builtSha). Bump the version so the release " +
+                  "gets a tag of its own, rather than pointing an existing " +
+                  "one at new code."
+          }
+          Write-Host "traceability confirmed: $tag is pinned to $builtSha"
+          # Created here rather than assumed: Out-File will not make the
+          # folder, and a diagnostic must never be the thing that fails a
+          # release that has already succeeded.
+          New-Item -ItemType Directory -Force -Path ..\ci-logs | Out-Null
+          "commit $builtSha" | Out-File -FilePath ..\ci-logs\release-commit.txt -Encoding ascii
 
       - name: Upload diagnostics when something fails
         if: failure()
