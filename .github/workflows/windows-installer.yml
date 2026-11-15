@@ -103,7 +103,7 @@ jobs:
           git add -A -f ci-logs
           if git diff --cached --quiet; then echo "no transcript to commit"; else
             git commit -m "ci: Linux test transcript for run $ID"
-            git push origin HEAD:"${GITHUB_REF_NAME}" || echo "could not push the transcript (non-fatal)"
+            bash "$GITHUB_WORKSPACE/push-branch.sh"
           fi
 
       - name: Build the frontend
@@ -443,7 +443,7 @@ jobs:
           git add -A -f screenshots
           if git diff --cached --quiet; then echo "the screenshots are unchanged"; else
             git commit -m "ci: screenshots of the installed applications, run ${{ github.run_id }}"
-            git push origin HEAD:"${GITHUB_REF_NAME}"
+            bash "$GITHUB_WORKSPACE/push-branch.sh"
           fi
 
       - name: Upload the portable package
@@ -748,11 +748,16 @@ jobs:
           if [ -f JENESIS/test-all.log ]; then cp JENESIS/test-all.log ci-logs/windows-test-all.txt; fi
           if [ -f JENESIS/release/smoke.txt ]; then cp JENESIS/release/smoke.txt ci-logs/smoke-score.txt; fi
           if [ -f JENESIS/release/interface-signin.txt ]; then cp JENESIS/release/interface-signin.txt ci-logs/interface-signin.txt; fi
+          # The sizes and SHA-256 hashes this build measured. The verification
+          # report has to quote them, and it can only quote what was measured
+          # here -- the job log cannot be read from outside GitHub's log
+          # service, so without this there is no way to obtain them at all.
+          if [ -f JENESIS/release/download-table.md ]; then cp JENESIS/release/download-table.md ci-logs/download-table.md; fi
           if [ -d "$APPDATA/JENESIS/logs" ]; then cp -r "$APPDATA/JENESIS/logs/." ci-logs/ || true; fi
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add -A -f ci-logs
           if git diff --cached --quiet; then echo "no diagnostics to commit"; else
             git commit -m "ci: Windows smoke-test diagnostics for run ${{ github.run_id }}"
-            git push origin HEAD:"${GITHUB_REF_NAME}"
+            bash "$GITHUB_WORKSPACE/push-branch.sh"
           fi
