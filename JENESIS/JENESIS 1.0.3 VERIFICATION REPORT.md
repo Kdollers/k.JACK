@@ -443,6 +443,12 @@ place.
 JENESIS 1.0.3 was built by GitHub Actions run **43702388660**, on a `windows-2022` hosted runner,
 from commit **7c531ab80f02c4b68cdda8ba432a1309049c97bf**. Every step of the Windows job passed:
 
+*This report is attached to the release by* `attach-verification-report.yml` *, a workflow that
+compiles nothing. It exists because the report is finished after the build, not during it — the
+numbers below are measurements of a build that had already happened — and because a push that
+rebuilt the installer would produce a different `Setup.exe` and every checksum here would then
+describe a file that no longer exists.*
+
 | Step | Result |
 |---|---|
 | Read the version (`1.0.3`) | PASS |
